@@ -194,22 +194,13 @@ export function LandingComunicados({ comunicados, estaLogueado = false }: { comu
                   />
                 </div>
               ) : viewing.archivoUrl && viewing.archivoTipo === "pdf" ? (
-                <div className="h-full overflow-y-auto p-8">
-                  <div className="flex flex-col items-center gap-6 py-12">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#C41E3A]/10 to-[#C41E3A]/5 shadow-lg shadow-[#C41E3A]/10">
-                      <FileTextIcon className="h-10 w-10 text-[#C41E3A]" />
-                    </div>
-                    <div className="text-center">
-                      <p className="font-bold text-lg">{viewing.archivoNombre}</p>
-                      <p className="text-sm text-muted-foreground mt-1">Documento PDF adjunto al comunicado</p>
-                    </div>
-                    <a href={viewing.archivoUrl} download={viewing.archivoNombre ?? "documento.pdf"} target="_blank" rel="noopener noreferrer">
-                      <Button size="lg" className="rounded-xl bg-[#C41E3A] hover:bg-[#a01830] text-white px-8">
-                        <DownloadIcon className="mr-2 h-5 w-5" />
-                        Descargar PDF
-                      </Button>
-                    </a>
-                  </div>
+                <div className="h-full flex flex-col">
+                  <iframe
+                    src={viewing.archivoUrl}
+                    title={viewing.archivoNombre ?? "Documento PDF"}
+                    className="w-full flex-1 rounded-b-2xl border-0"
+                    style={{ minHeight: 0 }}
+                  />
                 </div>
               ) : (
                 <div className="h-full overflow-y-auto p-8 text-center">

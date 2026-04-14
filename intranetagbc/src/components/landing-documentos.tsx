@@ -11,8 +11,10 @@ import {
   FileImage,
   CalendarDays,
   HardDrive,
+  XIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 
 type Doc = {
   id: string
@@ -34,6 +36,7 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
   const docsPublicados = documentos.filter((d) => d.estado === "publicado")
   const [categoriaActiva, setCategoriaActiva] = useState<string | null>(null)
   const [busqueda, setBusqueda] = useState("")
+  const [viewingDoc, setViewingDoc] = useState<Doc | null>(null)
 
   if (docsPublicados.length === 0) return null
 
@@ -116,6 +119,7 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
   }
 
   return (
+    <>
     <section id="documentos" className="border-y border-border/40 bg-gradient-to-b from-background to-muted/20">
       <div className="mx-auto max-w-7xl px-6 py-16 md:py-20">
         {/* Header */}
@@ -249,20 +253,14 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                   {/* Botones de acción */}
                   {doc.archivo && (
                     <div className="flex items-center gap-2 px-5 pb-5 pt-3">
-                      <a
-                        href={doc.archivo}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1"
+                      <Button
+                        size="sm"
+                        onClick={() => setViewingDoc(doc)}
+                        className={`flex-1 rounded-xl bg-gradient-to-r ${catPalette.gradient} text-white border-0 font-bold shadow-md hover:shadow-lg transition-all h-10 text-xs gap-2`}
                       >
-                        <Button
-                          size="sm"
-                          className={`w-full rounded-xl bg-gradient-to-r ${catPalette.gradient} text-white border-0 font-bold shadow-md hover:shadow-lg transition-all h-10 text-xs gap-2`}
-                        >
-                          <Eye className="h-4 w-4" />
-                          Visualizar
-                        </Button>
-                      </a>
+                        <Eye className="h-4 w-4" />
+                        Visualizar
+                      </Button>
                       <a
                         href={doc.archivo}
                         download={doc.nombreArchivo || doc.titulo}
@@ -296,5 +294,86 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
         )}
       </div>
     </section>
+
+    {/* ── Modal visor de documentos ── */}
+    {viewingDoc && (
+      <Dialog open={!!viewingDoc} onOpenChange={() => setViewingDoc(null)}>
+        <DialogContent className="h-[93vh] !w-[95vw] max-h-[93vh] !max-w-[95vw] sm:!max-w-[94vw] lg:!max-w-[90vw] xl:!max-w-[86vw] 2xl:!max-w-[1500px] !gap-0 !grid !grid-rows-[auto_auto_minmax(0,1fr)] overflow-hidden rounded-2xl border-0 bg-white p-0 shadow-2xl dark:bg-zinc-900 [&>button]:hidden">
+          <DialogTitle className="sr-only">{viewingDoc.titulo}</DialogTitle>
+
+          {/* Barra tricolor superior */}
+          <div className="flex h-2 w-full shrink-0">
+            <div className="flex-1 bg-[#C41E3A]" />
+            <div className="flex-1 bg-[#FFB300]" />
+            <div className="flex-1 bg-[#2E7D32]" />
+          </div>
+
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-border/20 bg-white/90 px-4 py-2.5 dark:bg-zinc-900/90">
+            <div className="min-w-0 flex-1">
+              <h3 className="line-clamp-1 text-sm font-bold tracking-tight md:text-base">{viewingDoc.titulo}</h3>
+              <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
+                {viewingDoc.createdAt && (
+                  <span className="flex items-center gap-1">
+                    <CalendarDays className="h-3 w-3" />
+                    {formatFecha(viewingDoc.createdAt)}
+                  </span>
+                )}
+                {viewingDoc.categoria && (
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${getCategoryPalette(viewingDoc.categoria).pill}`}>
+                    {viewingDoc.categoria}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="ml-3 flex shrink-0 items-center gap-2">
+              {viewingDoc.archivo && (
+                <a href={viewingDoc.archivo} download={viewingDoc.nombreArchivo || viewingDoc.titulo}>
+                  <Button size="sm" className="rounded-lg bg-[#C41E3A] text-white hover:bg-[#a01830]">
+                    <Download className="mr-2 h-4 w-4" />
+                    Descargar
+                  </Button>
+                </a>
+              )}
+              <button
+                onClick={() => setViewingDoc(null)}
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/50 bg-white transition-colors hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+              >
+                <XIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Contenido */}
+          <div className="relative min-h-0 flex-1 overflow-hidden">
+            {viewingDoc.archivo && viewingDoc.tipoArchivo?.startsWith("image/") ? (
+              <div className="h-full flex items-start justify-center overflow-auto rounded-b-2xl border border-border/30 bg-gradient-to-br from-zinc-100 to-zinc-50 dark:from-zinc-900 dark:to-zinc-950 p-2">
+                <img
+                  src={viewingDoc.archivo}
+                  alt={viewingDoc.titulo}
+                  className="block max-h-[calc(93vh-140px)] w-full max-w-[1180px] object-contain object-top"
+                  draggable={false}
+                />
+              </div>
+            ) : viewingDoc.archivo && viewingDoc.tipoArchivo === "application/pdf" ? (
+              <iframe
+                src={viewingDoc.archivo}
+                title={viewingDoc.titulo}
+                className="w-full h-full border-0 rounded-b-2xl"
+              />
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center p-8 text-center">
+                <FileText className="h-16 w-16 mb-4 text-muted-foreground/30" />
+                <p className="font-bold text-lg">{viewingDoc.titulo}</p>
+                {viewingDoc.descripcion && (
+                  <p className="mt-2 text-sm text-muted-foreground max-w-lg">{viewingDoc.descripcion}</p>
+                )}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    )}
+    </>
   )
 }
