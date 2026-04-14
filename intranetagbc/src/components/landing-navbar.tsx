@@ -218,13 +218,15 @@ export function LandingNavbar({ estaLogueado, esAdmin, usuario }: LandingNavbarP
           </div>
         </div>
 
-        {/* Barra de progreso dinámica — avanza con el scroll */}
-        <div className="relative h-[5px] w-full bg-[#FFD54F]/20 overflow-hidden">
+        {/* Barra de progreso dinámica — arcoíris */}
+        <div className="relative h-[5px] w-full bg-black/5 overflow-hidden">
           <div
-            className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#FFD54F] via-[#FFB300] to-[#FF8800] transition-[width] duration-150 ease-out"
-            style={{ width: `${scrollProgress}%` }}
+            className="absolute top-0 left-0 h-full transition-[width] duration-150 ease-out"
+            style={{
+              width: `${scrollProgress}%`,
+              backgroundImage: "linear-gradient(to right, #FF0000, #FF8800, #FFD500, #00CC44, #00AAFF, #4400FF, #AA00FF)",
+            }}
           />
-          {/* Brillo animado en la punta */}
           {scrollProgress > 0 && scrollProgress < 100 && (
             <div
               className="absolute top-0 h-full w-6 bg-gradient-to-r from-white/0 via-white/60 to-white/0 blur-[1px] transition-[left] duration-150 ease-out"
