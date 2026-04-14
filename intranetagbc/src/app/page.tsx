@@ -328,67 +328,6 @@ export default async function HomePage() {
       </section>
       )}
 
-      {/* ── Sucursales Carrusel (solo logueados) ── */}
-      {estaLogueado && seccionVisible("seccion_sucursales") && (
-      <section id="sucursales" className="border-b border-border/40 bg-muted/30 py-16 overflow-hidden scroll-mt-20">
-        <div className="mx-auto max-w-7xl px-6 mb-10">
-          <div className="flex flex-col items-center text-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-lg shadow-[#FFB300]/25">
-              <MapPin className="h-5 w-5" />
-            </div>
-            <h3 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Nuestras Sucursales</h3>
-            <p className="max-w-md text-sm text-muted-foreground">
-              Correos de Bolivia presente en todo el territorio nacional con 9 oficinas regionales
-            </p>
-          </div>
-        </div>
-
-        {/* Fila 1 — izquierda a derecha */}
-        <div className="relative mb-5">
-          <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-32 bg-gradient-to-r from-muted/30 via-muted/20 to-transparent" />
-          <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-32 bg-gradient-to-l from-muted/30 via-muted/20 to-transparent" />
-          <div className="animate-marquee flex w-max gap-5">
-            {[...sucursales, ...sucursales].map((sucursal, i) => (
-              <div
-                key={`row1-${i}`}
-                className="group flex shrink-0 items-start gap-4 rounded-2xl border border-border/50 bg-card px-6 py-5 shadow-sm transition-all duration-300 hover:border-[#FFB300]/40 hover:shadow-lg hover:shadow-[#FFB300]/10 hover:-translate-y-0.5 min-w-[300px]"
-              >
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${sucursal.tipo === "central" ? "bg-gradient-to-br from-[#FFB300] to-[#FF8800] text-[#1a1000]" : "bg-[#FFB300]/10 text-[#FFB300]"} transition-transform duration-300 group-hover:scale-110`}>
-                  {sucursal.tipo === "central" ? <Building2 className="h-5 w-5" /> : <MapPin className="h-5 w-5" />}
-                </div>
-                <div className="flex flex-col gap-1 min-w-0">
-                  <span className="text-sm font-bold whitespace-nowrap">{sucursal.nombre}</span>
-                  <span className="text-xs text-muted-foreground leading-snug line-clamp-2">{sucursal.direccion}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Fila 2 — derecha a izquierda */}
-        <div className="relative">
-          <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-32 bg-gradient-to-r from-muted/30 via-muted/20 to-transparent" />
-          <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-32 bg-gradient-to-l from-muted/30 via-muted/20 to-transparent" />
-          <div className="animate-marquee-reverse flex w-max gap-5">
-            {[...sucursales.slice().reverse(), ...sucursales.slice().reverse()].map((sucursal, i) => (
-              <div
-                key={`row2-${i}`}
-                className="group flex shrink-0 items-start gap-4 rounded-2xl border border-border/50 bg-card px-6 py-5 shadow-sm transition-all duration-300 hover:border-[#FF8800]/40 hover:shadow-lg hover:shadow-[#FF8800]/10 hover:-translate-y-0.5 min-w-[300px]"
-              >
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${sucursal.tipo === "central" ? "bg-gradient-to-br from-[#FF8800] to-[#F5061D] text-white" : "bg-[#FF8800]/10 text-[#FF8800]"} transition-transform duration-300 group-hover:scale-110`}>
-                  {sucursal.tipo === "central" ? <Building2 className="h-5 w-5" /> : <MapPin className="h-5 w-5" />}
-                </div>
-                <div className="flex flex-col gap-1 min-w-0">
-                  <span className="text-sm font-bold whitespace-nowrap">{sucursal.nombre}</span>
-                  <span className="text-xs text-muted-foreground leading-snug line-clamp-2">{sucursal.direccion}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      )}
-
       {/* ── Comunicados ── */}
       {seccionVisible("seccion_comunicados") && <LandingComunicados estaLogueado={estaLogueado} comunicados={comunicadosDb.map(c => ({
         id: c.id,
@@ -607,12 +546,61 @@ export default async function HomePage() {
         )
       })()}
 
-      {/* ── Mapa de Oficinas (solo logueados) ── */}
-      {estaLogueado && seccionVisible("seccion_mapa") && <BoliviaMap sucursalesDb={sucursalesDb} />}
-
       {/* ── Documentos Institucionales (solo logueados) ── */}
       {estaLogueado && seccionVisible("seccion_documentos") && (
         <LandingDocumentos documentos={documentosDb} />
+      )}
+
+      {/* ── Mapa de Oficinas (solo logueados) ── */}
+      {estaLogueado && seccionVisible("seccion_mapa") && <BoliviaMap sucursalesDb={sucursalesDb} />}
+
+      {/* ── Carrusel de Oficinas debajo del mapa (solo logueados) ── */}
+      {estaLogueado && seccionVisible("seccion_sucursales") && (
+      <section id="sucursales" className="bg-muted/30 pb-16 overflow-hidden scroll-mt-20">
+        {/* Fila 1 — izquierda a derecha */}
+        <div className="relative mb-5">
+          <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-32 bg-gradient-to-r from-muted/30 via-muted/20 to-transparent" />
+          <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-32 bg-gradient-to-l from-muted/30 via-muted/20 to-transparent" />
+          <div className="animate-marquee flex w-max gap-5">
+            {[...sucursales, ...sucursales].map((sucursal, i) => (
+              <div
+                key={`row1-${i}`}
+                className="group flex shrink-0 items-start gap-4 rounded-2xl border border-border/50 bg-card px-6 py-5 shadow-sm transition-all duration-300 hover:border-[#FFB300]/40 hover:shadow-lg hover:shadow-[#FFB300]/10 hover:-translate-y-0.5 min-w-[300px]"
+              >
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${sucursal.tipo === "central" ? "bg-gradient-to-br from-[#FFB300] to-[#FF8800] text-[#1a1000]" : "bg-[#FFB300]/10 text-[#FFB300]"} transition-transform duration-300 group-hover:scale-110`}>
+                  {sucursal.tipo === "central" ? <Building2 className="h-5 w-5" /> : <MapPin className="h-5 w-5" />}
+                </div>
+                <div className="flex flex-col gap-1 min-w-0">
+                  <span className="text-sm font-bold whitespace-nowrap">{sucursal.nombre}</span>
+                  <span className="text-xs text-muted-foreground leading-snug line-clamp-2">{sucursal.direccion}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Fila 2 — derecha a izquierda */}
+        <div className="relative">
+          <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-32 bg-gradient-to-r from-muted/30 via-muted/20 to-transparent" />
+          <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-32 bg-gradient-to-l from-muted/30 via-muted/20 to-transparent" />
+          <div className="animate-marquee-reverse flex w-max gap-5">
+            {[...sucursales.slice().reverse(), ...sucursales.slice().reverse()].map((sucursal, i) => (
+              <div
+                key={`row2-${i}`}
+                className="group flex shrink-0 items-start gap-4 rounded-2xl border border-border/50 bg-card px-6 py-5 shadow-sm transition-all duration-300 hover:border-[#FF8800]/40 hover:shadow-lg hover:shadow-[#FF8800]/10 hover:-translate-y-0.5 min-w-[300px]"
+              >
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${sucursal.tipo === "central" ? "bg-gradient-to-br from-[#FF8800] to-[#F5061D] text-white" : "bg-[#FF8800]/10 text-[#FF8800]"} transition-transform duration-300 group-hover:scale-110`}>
+                  {sucursal.tipo === "central" ? <Building2 className="h-5 w-5" /> : <MapPin className="h-5 w-5" />}
+                </div>
+                <div className="flex flex-col gap-1 min-w-0">
+                  <span className="text-sm font-bold whitespace-nowrap">{sucursal.nombre}</span>
+                  <span className="text-xs text-muted-foreground leading-snug line-clamp-2">{sucursal.direccion}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
       )}
 
       {/* ── Features ── */}

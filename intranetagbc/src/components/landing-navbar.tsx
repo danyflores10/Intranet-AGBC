@@ -39,13 +39,12 @@ const NAV_ITEMS_PUBLICOS: NavItem[] = [
 
 const NAV_ITEMS_LOGUEADO: NavItem[] = [
   { label: "Noticias", href: "#noticias", icon: Newspaper },
-  { label: "Comunicados", href: "#comunicados", icon: MegaphoneIcon },
   { label: "Aplicaciones", href: "#aplicaciones", icon: Globe },
-  { label: "Sucursales", href: "#sucursales", icon: MapPin },
+  { label: "Comunicados", href: "#comunicados", icon: MegaphoneIcon },
   { label: "Directorio", href: "#directorio", icon: Shield },
-  { label: "Equipo", href: "#equipo", icon: Users },
+  { label: "Personal", href: "#equipo", icon: Users },
   { label: "Documentos", href: "#documentos", icon: FileText },
-  { label: "Módulos", href: "#features", icon: Zap },
+  { label: "Oficinas", href: "#sucursales", icon: MapPin },
 ]
 
 export function LandingNavbar({ estaLogueado, esAdmin, usuario }: LandingNavbarProps) {
