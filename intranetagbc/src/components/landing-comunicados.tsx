@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import {
   MegaphoneIcon,
   CalendarIcon,
@@ -8,6 +8,8 @@ import {
   FileTextIcon,
   DownloadIcon,
   XIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from "lucide-react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -49,6 +51,10 @@ function ImageMagnifier({ src, alt }: { src: string; alt: string }) {
 
 export function LandingComunicados({ comunicados, estaLogueado = false }: { comunicados: ComunicadoLanding[]; estaLogueado?: boolean }) {
   const [viewing, setViewing] = useState<ComunicadoLanding | null>(null)
+  const [currentPage, setCurrentPage] = useState(0)
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  const ITEMS_PER_PAGE = 3
 
   // Auto-mostrar el primer comunicado destacado al entrar (una vez por sesión)
   useEffect(() => {
@@ -64,7 +70,27 @@ export function LandingComunicados({ comunicados, estaLogueado = false }: { comu
 
   if (comunicados.length === 0) return null
 
-  const visibles = estaLogueado ? comunicados : comunicados.slice(0, 3)
+  const visibles = estaLogueado ? comunicados : comunicados.slice(0, 6)
+  const totalPages = Math.ceil(visibles.length / ITEMS_PER_PAGE)
+
+  const scrollToPage = useCallback((page: number) => {
+    setCurrentPage(page)
+    if (scrollRef.current) {
+      const scrollWidth = scrollRef.current.scrollWidth
+      const pageWidth = scrollWidth / totalPages
+      scrollRef.current.scrollTo({ left: pageWidth * page, behavior: "smooth" })
+    }
+  }, [totalPages])
+
+  const prev = useCallback(() => {
+    const newPage = currentPage > 0 ? currentPage - 1 : totalPages - 1
+    scrollToPage(newPage)
+  }, [currentPage, totalPages, scrollToPage])
+
+  const next = useCallback(() => {
+    const newPage = currentPage < totalPages - 1 ? currentPage + 1 : 0
+    scrollToPage(newPage)
+  }, [currentPage, totalPages, scrollToPage])
 
   return (
     <>
@@ -83,14 +109,30 @@ export function LandingComunicados({ comunicados, estaLogueado = false }: { comu
             </p>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {visibles.map((com) => (
+          <div className="relative">
+            {/* Flecha izquierda */}
+            {totalPages > 1 && (
               <button
-                key={com.id}
                 type="button"
-                onClick={() => setViewing(com)}
-                className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card text-left transition-all duration-300 hover:border-[#FFB300]/30 hover:shadow-xl hover:shadow-[#FFB300]/5 hover:-translate-y-1"
+                onClick={prev}
+                className="absolute -left-4 top-1/2 z-20 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full border border-border/50 bg-card/90 text-muted-foreground shadow-lg backdrop-blur-sm transition-all hover:border-[#FFB300]/40 hover:bg-card hover:text-[#FF8800] hover:shadow-xl md:-left-6"
               >
+                <ChevronLeftIcon className="h-5 w-5" />
+              </button>
+            )}
+
+            {/* Carrusel */}
+            <div
+              ref={scrollRef}
+              className="flex snap-x snap-mandatory gap-6 overflow-x-hidden scroll-smooth"
+            >
+              {visibles.map((com) => (
+                <button
+                  key={com.id}
+                  type="button"
+                  onClick={() => setViewing(com)}
+                  className="group relative flex w-full min-w-[calc(100%/1)] snap-start flex-col overflow-hidden rounded-2xl border border-border/50 bg-card text-left transition-all duration-300 hover:border-[#FFB300]/30 hover:shadow-xl hover:shadow-[#FFB300]/5 hover:-translate-y-1 sm:min-w-[calc(50%-12px)] lg:min-w-[calc(33.333%-16px)]"
+                >
                 {/* Thumbnail */}
                 <div className="relative flex h-48 w-full items-center justify-center overflow-hidden bg-gradient-to-br from-[#FFB300]/10 via-[#FF8800]/5 to-[#F5061D]/10">
                   {com.archivoUrl && com.archivoTipo === "imagen" ? (
@@ -142,7 +184,37 @@ export function LandingComunicados({ comunicados, estaLogueado = false }: { comu
                 </div>
               </button>
             ))}
+            </div>
+
+            {/* Flecha derecha */}
+            {totalPages > 1 && (
+              <button
+                type="button"
+                onClick={next}
+                className="absolute -right-4 top-1/2 z-20 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full border border-border/50 bg-card/90 text-muted-foreground shadow-lg backdrop-blur-sm transition-all hover:border-[#FFB300]/40 hover:bg-card hover:text-[#FF8800] hover:shadow-xl md:-right-6"
+              >
+                <ChevronRightIcon className="h-5 w-5" />
+              </button>
+            )}
           </div>
+
+          {/* Dots de paginación */}
+          {totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-2">
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => scrollToPage(i)}
+                  className={`rounded-full transition-all duration-300 ${
+                    currentPage === i
+                      ? "h-3 w-3 bg-[#FFB300] shadow-md shadow-[#FFB300]/30"
+                      : "h-2.5 w-2.5 bg-[#FFB300]/25 hover:bg-[#FFB300]/50"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

@@ -26,6 +26,7 @@ import { LandingDocumentos } from "@/components/landing-documentos"
 import { LandingNoticias } from "@/components/landing-noticias"
 import { LandingNavbar } from "@/components/landing-navbar"
 import { BoliviaMap } from "@/components/bolivia-map"
+import { LandingAccesos } from "@/components/landing-accesos"
 import { obtenerComunicadosPublicados, obtenerAccesosDirectosActivos, obtenerBannersActivos } from "@/actions/comunicaciones"
 import { obtenerUsuarioRbacActual } from "@/lib/auth/session-access"
 import { obtenerSucursalesActivas } from "@/actions/sucursales"
@@ -277,61 +278,13 @@ export default async function HomePage() {
 
       {/* ── Aplicaciones (solo para usuarios logueados) ── */}
       {estaLogueado && seccionVisible("seccion_aplicaciones") && (
-      <section id="aplicaciones" className="border-y border-border/40 bg-muted/20 scroll-mt-20">
-        <div className="mx-auto max-w-7xl px-6 py-16 md:py-20">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#FFB300]/20 bg-[#FFB300]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#FF8800]">
-              <Globe className="h-3.5 w-3.5" />
-              Aplicaciones
-            </div>
-            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Acceso Rápido a Sistemas</h2>
-            <p className="mt-3 text-muted-foreground">
-              Enlaces institucionales administrados desde el panel de comunicaciones.
-            </p>
-          </div>
-
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {accesosDirectos.map((acceso) => (
-              <a
-                key={acceso.clave}
-                href={acceso.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#FFB300]/40 hover:shadow-lg hover:shadow-[#FFB300]/10"
-              >
-                {acceso.imagen?.trim() ? (
-                  <div className="relative aspect-[16/8] w-full overflow-hidden border-b border-border/40 bg-muted/30">
-                    <img
-                      src={acceso.imagen}
-                      alt={acceso.titulo}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                      loading="lazy"
-                    />
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
-                    <div className="absolute bottom-2 left-2 rounded-md bg-black/55 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
-                      Aplicación
-                    </div>
-                  </div>
-                ) : (
-                  <div className="relative flex aspect-[16/8] w-full items-center justify-center border-b border-border/40 bg-gradient-to-br from-[#FFB300]/25 via-[#FF8800]/15 to-[#F5061D]/20">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-lg shadow-[#FFB300]/30">
-                      <Lock className="h-6 w-6" />
-                    </div>
-                  </div>
-                )}
-                <div className="p-5">
-                  <p className="text-sm font-bold tracking-tight group-hover:text-[#FF8800]">{acceso.titulo}</p>
-                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{acceso.descripcion || "Enlace institucional"}</p>
-                  <div className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[#FF8800]">
-                    Abrir sistema
-                    <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
+        <LandingAccesos accesos={accesosDirectos.map(a => ({
+          clave: a.clave,
+          titulo: a.titulo,
+          descripcion: a.descripcion,
+          url: a.url,
+          imagen: a.imagen,
+        }))} />
       )}
 
       {/* ── Comunicados ── */}
