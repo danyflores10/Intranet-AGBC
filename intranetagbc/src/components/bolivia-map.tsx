@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import {
   MapPinIcon,
   ClockIcon,
@@ -96,25 +96,34 @@ function hexToRgba(hex: string, alpha: number): string {
 }
 
 export function BoliviaMap({ sucursalesDb }: BoliviaMapProps) {
-  const departments: DepartmentData[] =
-    sucursalesDb && sucursalesDb.length > 0
-      ? sucursalesDb.map((s) => ({
-          id: s.svgId ?? s.id,
-          name: s.departamento,
-          capital: s.capital,
-          pinX: parseFloat(s.pinX ?? "0"),
-          pinY: parseFloat(s.pinY ?? "0"),
-          color: s.color ?? "#FFB300",
-          foto: s.foto,
-          office: {
-            name: s.nombre,
-            address: s.direccion,
-            phone: s.telefono ?? "",
-            hours: s.horario ?? "",
-            maps: s.googleMaps ?? "",
-          },
-        }))
-      : defaultDepartments
+  const departments = useMemo<DepartmentData[]>(() => {
+    if (sucursalesDb && sucursalesDb.length > 0) {
+      return sucursalesDb.map((s) => ({
+        id: s.svgId ?? s.id,
+        name: s.departamento,
+        capital: s.capital,
+        pinX: parseFloat(s.pinX ?? "0"),
+        pinY: parseFloat(s.pinY ?? "0"),
+        color: s.color ?? "#FFB300",
+        foto: s.foto,
+        office: {
+          name: s.nombre,
+          address: s.direccion,
+          phone: s.telefono ?? "",
+          hours: s.horario ?? "",
+          maps: s.googleMaps ?? "",
+        },
+      }))
+    }
+
+    return defaultDepartments
+  }, [sucursalesDb])
+
+  // Dependencia estable para efectos que solo necesitan id/color.
+  const departmentsStyleKey = useMemo(
+    () => departments.map((dept) => `${dept.id}:${dept.color}`).join("|"),
+    [departments]
+  )
 
   const containerRef = useRef<HTMLDivElement>(null)
   const [selected, setSelected] = useState<string | null>(null)
@@ -190,7 +199,7 @@ export function BoliviaMap({ sucursalesDb }: BoliviaMapProps) {
         el.style.filter = "none"
       }
     })
-  }, [selected, hovered, svgReady, departments])
+  }, [selected, hovered, svgReady, departmentsStyleKey])
 
   /* ── Event handlers en los paths SVG ── */
   useEffect(() => {

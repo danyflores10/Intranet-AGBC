@@ -86,7 +86,6 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
       icon: "/image/LogoAmarillo.png",
       badge: "/image/LogoAmarillo.png",
       tag,
-      renotify: true,
       silent: true, // Ya manejamos el sonido nosotros
     })
 
