@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useEffect, useRef } from "react"
+import { useState, useTransition, useEffect, useRef, useCallback } from "react"
 import { BellIcon, CheckIcon, Trash2Icon, XIcon, CalendarIcon, InfoIcon, AlertTriangleIcon, MailIcon } from "lucide-react"
 import toast from "react-hot-toast"
 import {
@@ -44,8 +44,56 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
   const [count, setCount] = useState(countInicial)
   const [isPending, startTransition] = useTransition()
   const panelRef = useRef<HTMLDivElement>(null)
+  const prevIdsRef = useRef<Set<string>>(new Set(notificacionesIniciales.map((n) => n.id)))
 
-  // Refrescar cada 30 segundos
+  // Mostrar toast custom para una notificación nueva
+  const showNotifToast = useCallback((notif: Notificacion) => {
+    const tipoCfg = getTipoNotif(notif.tipo)
+    const Icon = tipoCfg.icon
+
+    toast.custom(
+      (t) => (
+        <div
+          className={`${
+            t.visible ? "animate-in fade-in slide-in-from-top-2" : "animate-out fade-out slide-out-to-top-2"
+          } pointer-events-auto flex w-full max-w-md overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-zinc-900 dark:ring-white/10`}
+        >
+          <div className="flex-1 p-4">
+            <div className="flex items-start gap-3">
+              <div
+                className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                style={{ backgroundColor: `${tipoCfg.color}15` }}
+              >
+                <Icon className="h-5 w-5" style={{ color: tipoCfg.color }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                  {notif.titulo}
+                </p>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                  {notif.mensaje}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="flex border-l border-gray-200 dark:border-zinc-700">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="flex w-full items-center justify-center rounded-none rounded-r-xl p-4 text-sm font-medium text-[#FF8800] transition-colors hover:text-[#FFB300] hover:bg-gray-50 dark:hover:bg-zinc-800 focus:outline-none"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        position: "top-center",
+        duration: 5000,
+      }
+    )
+  }, [])
+
+  // Refrescar cada 30 segundos y mostrar toast para notificaciones nuevas
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
@@ -53,12 +101,20 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
           obtenerNotificacionesUsuario(usuarioId),
           contarNotificacionesNoLeidas(usuarioId),
         ])
+
+        // Detectar notificaciones nuevas (que no existían antes)
+        const nuevas = newNotifs.filter((n) => !prevIdsRef.current.has(n.id))
+        nuevas.forEach((n) => showNotifToast(n))
+
+        // Actualizar referencia de IDs conocidos
+        prevIdsRef.current = new Set(newNotifs.map((n) => n.id))
+
         setNotificaciones(newNotifs)
         setCount(newCount)
       } catch { /* silencioso */ }
     }, 30000)
     return () => clearInterval(interval)
-  }, [usuarioId])
+  }, [usuarioId, showNotifToast])
 
   // Cerrar al hacer clic fuera
   useEffect(() => {

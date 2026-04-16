@@ -44,7 +44,7 @@ const NAV_ITEMS_LOGUEADO: NavItem[] = [
   { label: "Directorio", href: "#directorio", icon: Shield },
   { label: "Personal", href: "#equipo", icon: Users },
   { label: "Documentos", href: "#documentos", icon: FileText },
-  { label: "Oficinas", href: "#sucursales", icon: MapPin },
+  { label: "Oficinas", href: "#cobertura", icon: MapPin },
 ]
 
 export function LandingNavbar({ estaLogueado, esAdmin, usuario }: LandingNavbarProps) {
