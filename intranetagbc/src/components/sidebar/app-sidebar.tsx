@@ -30,27 +30,25 @@ export function AppSidebar({ usuario, ...props }: AppSidebarProps) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
+            <SidebarMenuButton size="lg" asChild className="justify-center">
               <Link href="/dashboard">
-                <div className="flex aspect-square size-8 items-center justify-center overflow-hidden rounded-lg">
+                <div className="flex items-center justify-center overflow-hidden">
                   <Image
                     src="/image/Logooriginal.png"
-                    alt="AGBC"
-                    width={32}
-                    height={32}
-                    className="size-8 object-contain dark:hidden"
+                    alt="Correos de Bolivia"
+                    width={140}
+                    height={50}
+                    className="h-10 w-auto object-contain dark:hidden"
+                    style={{ width: "auto" }}
                   />
                   <Image
                     src="/image/LogoAmarillo.png"
-                    alt="AGBC"
-                    width={32}
-                    height={32}
-                    className="hidden size-8 object-contain dark:block"
+                    alt="Correos de Bolivia"
+                    width={140}
+                    height={50}
+                    className="hidden h-10 w-auto object-contain dark:block"
+                    style={{ width: "auto" }}
                   />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-bold">Intranet AGBC</span>
-                  <span className="truncate text-xs text-muted-foreground">Correos de Bolivia</span>
                 </div>
               </Link>
             </SidebarMenuButton>

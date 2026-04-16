@@ -193,10 +193,10 @@ export function LandingNavbar({ estaLogueado, esAdmin, usuario }: LandingNavbarP
               ) : (
                 <>
                   <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex h-9 text-sm font-medium rounded-full hover:bg-[#FFB300]/10 hover:text-[#FF8800] transition-colors duration-300">
-                    <Link href="/login">Iniciar sesión</Link>
+                    <Link href="/">Iniciar sesión</Link>
                   </Button>
                   <Button size="sm" asChild className="h-10 px-6 text-sm font-bold bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-lg shadow-[#FFB300]/30 hover:shadow-xl hover:shadow-[#FFB300]/40 hover:scale-105 border-0 rounded-full transition-all duration-300">
-                    <Link href="/login">
+                    <Link href="/">
                       Acceder
                       <ArrowRight className="ml-1.5 h-4 w-4" />
                     </Link>
@@ -280,7 +280,7 @@ export function LandingNavbar({ estaLogueado, esAdmin, usuario }: LandingNavbarP
                   </Link>
                 ) : (
                   <Link
-                    href="/login"
+                    href="/"
                     className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] px-4 py-3 text-sm font-bold text-[#1a1000] shadow-lg shadow-[#FFB300]/25"
                   >
                     Acceder a la plataforma

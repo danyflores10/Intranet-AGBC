@@ -7,7 +7,7 @@ import { ConfiguracionModule } from "@/components/modules/configuracion-module"
 
 export default async function ConfiguracionPage() {
   const usuario = await obtenerUsuarioRbacActual()
-  if (!usuario) redirect("/login")
+  if (!usuario) redirect("/")
   if (!puedeAccederUsuario(usuario, { permissions: [PERMISOS.CONFIGURACION.VER], roles: ["administrador"] })) redirect("/dashboard")
 
   const configs = await obtenerConfiguracion()

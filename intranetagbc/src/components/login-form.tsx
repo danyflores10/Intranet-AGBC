@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2, Lock, Mail, User, Eye, EyeOff, ArrowRight, ArrowLeft, Shield, Sparkles } from "lucide-react"
+import { Loader2, Lock, Mail, User, Eye, EyeOff, ArrowRight, Shield, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
@@ -229,16 +229,7 @@ export function LoginForm({
 
       {/* ── Panel derecho: formularios ── */}
       <div className="flex w-full flex-col bg-background lg:w-[45%]">
-        {/* Botón volver */}
-        <div className="flex items-center px-6 pt-5 sm:px-12">
-          <Link
-            href="/"
-            className="group inline-flex items-center gap-2 rounded-xl border border-border/50 bg-card/80 px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm backdrop-blur-sm transition-all hover:border-[#FFB300]/30 hover:bg-card hover:text-foreground hover:shadow-md"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-            Volver al inicio
-          </Link>
-        </div>
+
         <div className="flex flex-1 flex-col items-center justify-center px-6 py-8 sm:px-12">
           {/* Logo en mobile */}
           <div className="lg:hidden mb-8">

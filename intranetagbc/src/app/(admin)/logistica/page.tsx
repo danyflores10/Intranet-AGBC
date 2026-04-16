@@ -7,7 +7,7 @@ import { LogisticaModule } from "@/components/modules/logistica-module"
 
 export default async function LogisticaPage() {
   const usuario = await obtenerUsuarioRbacActual()
-  if (!usuario) redirect("/login")
+  if (!usuario) redirect("/")
   if (!puedeAccederUsuario(usuario, { permissions: [PERMISOS.LOGISTICA.VER] })) redirect("/dashboard")
 
   const [inventario, solicitudes, proveedores] = await Promise.all([

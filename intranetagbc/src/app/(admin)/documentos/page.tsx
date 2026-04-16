@@ -7,7 +7,7 @@ import { DocumentosModule } from "@/components/modules/documentos-module"
 
 export default async function DocumentosPage() {
   const usuario = await obtenerUsuarioRbacActual()
-  if (!usuario) redirect("/login")
+  if (!usuario) redirect("/")
   if (!puedeAccederUsuario(usuario, { permissions: [PERMISOS.DOCUMENTOS.VER] })) redirect("/dashboard")
 
   const [documentos, categorias] = await Promise.all([

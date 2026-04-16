@@ -15,7 +15,7 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
   const usuario = await obtenerUsuarioRbacActual()
 
   if (!usuario) {
-    redirect("/login")
+    redirect("/")
   }
 
   const [notificaciones, countNoLeidas] = await Promise.all([

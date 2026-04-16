@@ -7,7 +7,7 @@ import { RrhhModule } from "@/components/modules/rrhh-module"
 
 export default async function RrhhPage() {
   const usuario = await obtenerUsuarioRbacActual()
-  if (!usuario) redirect("/login")
+  if (!usuario) redirect("/")
   if (!puedeAccederUsuario(usuario, { permissions: [PERMISOS.RRHH.VER] })) redirect("/dashboard")
 
   const [personal, directivosDb] = await Promise.all([

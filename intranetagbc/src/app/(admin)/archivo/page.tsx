@@ -7,7 +7,7 @@ import { ArchivoModule } from "@/components/modules/archivo-module"
 
 export default async function ArchivoPage() {
   const usuario = await obtenerUsuarioRbacActual()
-  if (!usuario) redirect("/login")
+  if (!usuario) redirect("/")
   if (!puedeAccederUsuario(usuario, { permissions: [PERMISOS.ARCHIVO.VER] })) redirect("/dashboard")
 
   const archivos = await obtenerArchivos()

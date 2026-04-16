@@ -12,7 +12,7 @@ import { DashboardModule } from "@/components/modules/dashboard-module"
 
 export default async function DashboardPage() {
   const usuario = await obtenerUsuarioRbacActual()
-  if (!usuario) redirect("/login")
+  if (!usuario) redirect("/")
 
   const hoy = new Date()
   const [counts, eventos, notificaciones, comunicadosPublicadosDb, bannersActivosDb, accesosDirectosDb] = await Promise.all([

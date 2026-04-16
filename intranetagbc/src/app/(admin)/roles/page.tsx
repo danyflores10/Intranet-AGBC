@@ -11,7 +11,7 @@ export default async function RolesPage() {
   const usuario = await obtenerUsuarioRbacActual()
 
   if (!usuario) {
-    redirect("/login")
+    redirect("/")
   }
   if (!puedeAccederUsuario(usuario, { permissions: [PERMISOS.ROLES.VER] })) redirect("/dashboard")
 

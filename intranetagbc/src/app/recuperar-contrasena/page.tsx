@@ -482,7 +482,7 @@ export default function RecuperarContrasenaPage() {
               asChild
               className="mt-8 w-full h-12 text-base font-bold rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-lg shadow-[#FFB300]/25 hover:shadow-xl hover:shadow-[#FFB300]/30 border-0 transition-all duration-300"
             >
-              <Link href="/login">
+              <Link href="/">
                 Ir a iniciar sesión
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
@@ -494,7 +494,7 @@ export default function RecuperarContrasenaPage() {
       {/* Back to login link */}
       {step !== "success" && (
         <Link
-          href="/login"
+          href="/"
           className="mt-6 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" />

@@ -1,4 +1,4 @@
-﻿import { redirect } from "next/navigation"
+import { redirect } from "next/navigation"
 
 import { obtenerRolesDisponibles, obtenerUsuarios } from "@/actions/usuarios"
 import { UsersModule } from "@/components/users/users-module"
@@ -11,7 +11,7 @@ export default async function UsuariosPage() {
   const usuario = await obtenerUsuarioRbacActual()
 
   if (!usuario) {
-    redirect("/login")
+    redirect("/")
   }
   if (!puedeAccederUsuario(usuario, { permissions: [PERMISOS.USUARIOS.VER] })) redirect("/dashboard")
 

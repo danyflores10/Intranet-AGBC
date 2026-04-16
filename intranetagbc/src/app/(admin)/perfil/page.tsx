@@ -7,10 +7,10 @@ import { PerfilModule } from "@/components/modules/perfil-module"
 
 export default async function PerfilPage() {
   const usuario = await obtenerUsuarioRbacActual()
-  if (!usuario) redirect("/login")
+  if (!usuario) redirect("/")
 
   const [perfil] = await db.select().from(users).where(eq(users.id, usuario.id)).limit(1)
-  if (!perfil) redirect("/login")
+  if (!perfil) redirect("/")
 
   return <PerfilModule perfil={{
     id: perfil.id,

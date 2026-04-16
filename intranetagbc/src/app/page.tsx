@@ -32,6 +32,7 @@ import { obtenerSucursalesActivas } from "@/actions/sucursales"
 import { obtenerPersonal, obtenerDirectivos } from "@/actions/rrhh"
 import { obtenerConfigPorGrupo } from "@/actions/configuracion"
 import { obtenerDocumentos } from "@/actions/documentos"
+import { LoginForm } from "@/components/login-form"
 
 const features = [
   {
@@ -125,9 +126,14 @@ export default async function HomePage() {
     headers: await headers(),
   })
 
+  // Si no hay sesión, mostrar el formulario de login
+  if (!session) {
+    return <LoginForm />
+  }
+
   const usuario = await obtenerUsuarioRbacActual()
   const esAdmin = usuario?.roles.includes("administrador") ?? false
-  const estaLogueado = !!session
+  const estaLogueado = true
 
   const [comunicadosDb, bannersDb, accesosDirectos, sucursalesDb, personalDb, directivosDb, seccionesConfig, documentosDb] = await Promise.all([
     obtenerComunicadosPublicados(),
@@ -239,7 +245,7 @@ export default async function HomePage() {
                 )
               ) : (
                 <Button size="lg" asChild className="h-13 px-10 text-base font-semibold bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-lg shadow-[#FFB300]/25 hover:shadow-xl hover:shadow-[#FFB300]/30 border-0">
-                  <Link href="/login">
+                  <Link href="/">
                     Comenzar ahora
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
@@ -717,7 +723,7 @@ export default async function HomePage() {
               )
             ) : (
               <Button size="lg" asChild className="h-13 px-10 text-base font-semibold bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-lg shadow-[#FFB300]/25 hover:shadow-xl hover:shadow-[#FFB300]/30 border-0">
-                <Link href="/login">
+                <Link href="/">
                   Acceder a la plataforma
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>

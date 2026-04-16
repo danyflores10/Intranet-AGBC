@@ -7,7 +7,7 @@ import { AuditoriaModule } from "@/components/modules/auditoria-module"
 
 export default async function AuditoriaPage() {
   const usuario = await obtenerUsuarioRbacActual()
-  if (!usuario) redirect("/login")
+  if (!usuario) redirect("/")
   if (!puedeAccederUsuario(usuario, { permissions: [PERMISOS.AUDITORIA.VER] })) redirect("/dashboard")
 
   const result = await obtenerStatsAuditoria()

@@ -112,7 +112,7 @@ export function NavUser({ usuario }: { usuario: UsuarioRbac }) {
 
     try {
       await authClient.signOut()
-      router.push("/login")
+      router.push("/")
       router.refresh()
     } finally {
       setIsSigningOut(false)

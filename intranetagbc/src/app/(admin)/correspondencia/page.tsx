@@ -7,7 +7,7 @@ import { CorrespondenciaModule } from "@/components/modules/correspondencia-modu
 
 export default async function CorrespondenciaPage() {
   const usuario = await obtenerUsuarioRbacActual()
-  if (!usuario) redirect("/login")
+  if (!usuario) redirect("/")
   if (!puedeAccederUsuario(usuario, { permissions: [PERMISOS.CORRESPONDENCIA.VER] })) redirect("/dashboard")
 
   const [todas, stats] = await Promise.all([

@@ -5,7 +5,7 @@ import { SeccionesLandingModule } from "@/components/modules/secciones-landing-m
 
 export default async function SeccionesLandingPage() {
   const usuario = await obtenerUsuarioRbacActual()
-  if (!usuario) redirect("/login")
+  if (!usuario) redirect("/")
   if (!usuario.roles.includes("administrador")) redirect("/dashboard")
 
   const configs = await obtenerConfigPorGrupo("secciones_landing")
