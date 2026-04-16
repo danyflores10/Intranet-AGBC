@@ -45,6 +45,18 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
   const [isPending, startTransition] = useTransition()
   const panelRef = useRef<HTMLDivElement>(null)
   const prevIdsRef = useRef<Set<string>>(new Set(notificacionesIniciales.map((n) => n.id)))
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  useEffect(() => {
+    audioRef.current = new Audio("/mp3/notificaciones.mp3")
+  }, [])
+
+  const playNotifSound = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0
+      audioRef.current.play().catch(() => {})
+    }
+  }, [])
 
   // Mostrar toast custom para una notificación nueva
   const showNotifToast = useCallback((notif: Notificacion) => {
@@ -104,6 +116,7 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
 
         // Detectar notificaciones nuevas (que no existían antes)
         const nuevas = newNotifs.filter((n) => !prevIdsRef.current.has(n.id))
+        if (nuevas.length > 0) playNotifSound()
         nuevas.forEach((n) => showNotifToast(n))
 
         // Actualizar referencia de IDs conocidos
@@ -114,7 +127,7 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
       } catch { /* silencioso */ }
     }, 30000)
     return () => clearInterval(interval)
-  }, [usuarioId, showNotifToast])
+  }, [usuarioId, showNotifToast, playNotifSound])
 
   // Cerrar al hacer clic fuera
   useEffect(() => {

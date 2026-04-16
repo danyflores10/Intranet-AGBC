@@ -10,7 +10,6 @@
   LifeBuoy,
   MapPin,
   Megaphone,
-  Send,
   Settings,
   Shield,
   UserPlus,
@@ -200,11 +199,6 @@ export const sidebarData: {
       title: "Soporte",
       url: "/soporte",
       icon: LifeBuoy,
-    },
-    {
-      title: "Feedback",
-      url: "#",
-      icon: Send,
     },
   ],
 }
