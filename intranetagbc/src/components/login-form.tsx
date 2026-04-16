@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2, Lock, Mail, User, Eye, EyeOff, ArrowRight, Shield, Sparkles } from "lucide-react"
@@ -54,6 +54,80 @@ function translateAuthError(msg: string): string {
     "Credenciales inválidas.": INVALID_CREDENTIALS_MESSAGE,
   }
   return map[msg] ?? msg
+}
+
+function TypewriterTitle() {
+  const fullText = "Intranet de Correos de Bolivia"
+  const boliviaStart = fullText.indexOf("Bolivia")
+  const [charCount, setCharCount] = useState(0)
+  const [phase, setPhase] = useState<"typing" | "pause" | "deleting" | "pauseEmpty">("typing")
+  const [showCursor, setShowCursor] = useState(true)
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>
+
+    if (phase === "typing") {
+      if (charCount < fullText.length) {
+        timeout = setTimeout(() => setCharCount((c) => c + 1), 70)
+      } else {
+        timeout = setTimeout(() => setPhase("pause"), 100)
+      }
+    } else if (phase === "pause") {
+      timeout = setTimeout(() => setPhase("deleting"), 2500)
+    } else if (phase === "deleting") {
+      if (charCount > 0) {
+        timeout = setTimeout(() => setCharCount((c) => c - 1), 35)
+      } else {
+        timeout = setTimeout(() => setPhase("pauseEmpty"), 100)
+      }
+    } else if (phase === "pauseEmpty") {
+      timeout = setTimeout(() => setPhase("typing"), 800)
+    }
+
+    return () => clearTimeout(timeout)
+  }, [charCount, phase])
+
+  useEffect(() => {
+    const interval = setInterval(() => setShowCursor((c) => !c), 530)
+    return () => clearInterval(interval)
+  }, [])
+
+  const displayed = fullText.slice(0, charCount)
+
+  const renderText = () => {
+    if (charCount <= boliviaStart) {
+      return <span className="text-[#FF8800]">{displayed}</span>
+    }
+    const before = displayed.slice(0, boliviaStart)
+    const boliviaPart = displayed.slice(boliviaStart)
+    return (
+      <>
+        <span className="text-[#FF8800]">{before}</span>
+        <span className="bg-gradient-to-r from-[#C41E3A] via-[#FFB300] to-[#2E7D32] bg-clip-text text-transparent">{boliviaPart}</span>
+      </>
+    )
+  }
+
+  return (
+    <div className="space-y-6 text-center">
+      <div className="inline-flex items-center gap-2 rounded-full border border-[#FFB300]/20 bg-[#FFB300]/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#FF8800] backdrop-blur-sm">
+        <Sparkles className="h-3.5 w-3.5" />
+        Plataforma Intranet
+      </div>
+      <h2 className="text-5xl font-extrabold tracking-tight text-foreground xl:text-6xl 2xl:text-7xl leading-[1.1] min-h-[2.6em]">
+        {renderText()}
+        <span
+          className={`inline-block w-[4px] h-[1em] align-middle ml-1.5 rounded-sm bg-gradient-to-b from-[#C41E3A] via-[#FFB300] to-[#2E7D32] transition-opacity duration-100 ${
+            showCursor ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      </h2>
+      <p className="mx-auto max-w-md text-base leading-relaxed text-muted-foreground">
+        Accede a todos los módulos de Correos de Bolivia: documentos,
+        correspondencia, trámites, RRHH y más.
+      </p>
+    </div>
+  )
 }
 
 export function LoginForm({
@@ -173,23 +247,7 @@ export function LoginForm({
             />
           </div>
 
-          <div className="space-y-6 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#FFB300]/20 bg-[#FFB300]/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#FF8800] backdrop-blur-sm">
-              <Sparkles className="h-3.5 w-3.5" />
-              Plataforma Intranet
-            </div>
-            <h2 className="text-4xl font-extrabold tracking-tight text-foreground xl:text-5xl leading-[1.1]">
-              Sistema de
-              <br />
-              <span className="bg-gradient-to-r from-[#FFB300] via-[#FF8800] to-[#F5061D] bg-clip-text text-transparent">
-                Gestión Interna
-              </span>
-            </h2>
-            <p className="mx-auto max-w-md text-base leading-relaxed text-muted-foreground">
-              Accede a todos los módulos de Correos de Bolivia: documentos,
-              correspondencia, trámites, RRHH y más.
-            </p>
-          </div>
+          <TypewriterTitle />
 
           <div className="mt-12 grid grid-cols-2 gap-3 max-w-sm">
             {[
