@@ -17,3 +17,4 @@ export * from './configuracion.schema';
 export * from './calendario.schema';
 export * from './notificaciones.schema';
 export * from './sucursales.schema';
+export * from './soporte.schema';

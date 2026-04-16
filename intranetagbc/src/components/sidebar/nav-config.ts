@@ -198,7 +198,7 @@ export const sidebarData: {
     },
     {
       title: "Soporte",
-      url: "#",
+      url: "/soporte",
       icon: LifeBuoy,
     },
     {

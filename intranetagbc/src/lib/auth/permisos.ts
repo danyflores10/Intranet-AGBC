@@ -126,6 +126,13 @@ export const PERMISOS_CONTACTOS = {
   ELIMINAR: "eliminar contactos",
 } as const
 
+export const PERMISOS_SOPORTE = {
+  VER: "ver soporte",
+  CREAR: "crear soporte",
+  EDITAR: "editar soporte",
+  ELIMINAR: "eliminar soporte",
+} as const
+
 export const PERMISOS = {
   ROLES: PERMISOS_ROLES,
   USUARIOS: PERMISOS_USUARIOS,
@@ -146,6 +153,7 @@ export const PERMISOS = {
   CONFIGURACION: PERMISOS_CONFIGURACION,
   CONTENIDOS: PERMISOS_CONTENIDOS,
   CONTACTOS: PERMISOS_CONTACTOS,
+  SOPORTE: PERMISOS_SOPORTE,
 } as const
 
 export type PermisoRol = (typeof PERMISOS_ROLES)[keyof typeof PERMISOS_ROLES]
