@@ -8,7 +8,6 @@ import {
 } from "lucide-react"
 import toast from "react-hot-toast"
 
-import { ModuleHeader } from "@/components/dashboard/module-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -148,7 +147,6 @@ export function CalendarioModule({ eventos }: Props) {
 
   return (
     <>
-      <ModuleHeader title="Calendario" />
       <div className="flex flex-1 flex-col gap-6 p-6">
 
         {/* ── Stats rápidos ── */}

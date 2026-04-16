@@ -4,7 +4,6 @@ import { useState, useTransition } from "react"
 import { SaveIcon } from "lucide-react"
 import toast from "react-hot-toast"
 
-import { ModuleHeader } from "@/components/dashboard/module-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -70,7 +69,6 @@ export function ConfiguracionModule({ configs }: Props) {
 
   return (
     <>
-      <ModuleHeader title="Configuración" />
       <div className="flex flex-1 flex-col gap-6 p-6">
         <div className="flex items-center justify-between">
           <div>

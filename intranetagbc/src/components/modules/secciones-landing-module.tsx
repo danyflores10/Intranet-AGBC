@@ -3,11 +3,9 @@
 import * as React from "react"
 import {
   Eye,
-  EyeOff,
   Save,
   Image as ImageIcon,
   Globe,
-  BarChart3,
   MapPin,
   Megaphone,
   Shield,

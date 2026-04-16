@@ -1,6 +1,5 @@
 "use client"
 
-import { ModuleHeader } from "@/components/dashboard/module-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileTextIcon, UsersIcon, MailIcon, PackageIcon, ClipboardListIcon, MegaphoneIcon } from "lucide-react"
 
@@ -29,7 +28,6 @@ export function ReportesModule({ counts }: Props) {
 
   return (
     <>
-      <ModuleHeader title="Reportes" />
       <div className="flex flex-1 flex-col gap-6 p-6">
         <div>
           <h2 className="text-xl font-bold tracking-tight">Reportes del sistema</h2>

@@ -10,11 +10,8 @@ import {
   Trash2Icon,
   MailIcon,
   MailOpenIcon,
-  XIcon,
 } from "lucide-react"
 import toast from "react-hot-toast"
-
-import { ModuleHeader } from "@/components/dashboard/module-header"
 import { DataTable } from "@/components/dashboard/data-table"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { Button } from "@/components/ui/button"
@@ -136,8 +133,6 @@ export function CorrespondenciaModule({ entrada, salida, stats }: Correspondenci
 
   return (
     <>
-      <ModuleHeader title="Correspondencia" />
-
       <div className="flex flex-1 flex-col gap-6 p-6">
         <div className="flex items-center gap-2 border-b border-border/40 pb-0">
           {tabs.map((t) => (

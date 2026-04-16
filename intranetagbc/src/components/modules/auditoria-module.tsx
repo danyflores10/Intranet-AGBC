@@ -1,6 +1,5 @@
 "use client"
 
-import { ModuleHeader } from "@/components/dashboard/module-header"
 import { DataTable } from "@/components/dashboard/data-table"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -69,7 +68,6 @@ function formatFechaRelativa(date: Date) {
 export function AuditoriaModule({ logs, stats }: Props) {
   return (
     <>
-      <ModuleHeader title="Auditoría del Sistema" />
       <div className="flex flex-1 flex-col gap-6 p-6">
         <div>
           <h2 className="text-xl font-bold tracking-tight">Centro de Auditoría</h2>

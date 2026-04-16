@@ -7,12 +7,9 @@ import {
   PencilIcon,
   Trash2Icon,
   UsersIcon,
-  BookOpenIcon,
   MailIcon,
   PhoneIcon,
   BuildingIcon,
-  BriefcaseIcon,
-  CalendarDaysIcon,
   SearchIcon,
   BadgeCheckIcon,
   CameraIcon,
@@ -21,7 +18,6 @@ import {
 } from "lucide-react"
 import toast from "react-hot-toast"
 
-import { ModuleHeader } from "@/components/dashboard/module-header"
 import { DataTable } from "@/components/dashboard/data-table"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { Button } from "@/components/ui/button"
@@ -99,9 +95,6 @@ interface Props {
   directivos: DirectivoRow[]
 }
 
-/* ═══════════════════════════════════════════════════════════
-   Componente de upload de foto reutilizable
-   ═══════════════════════════════════════════════════════════ */
 function FotoUploader({
   fotoUrl,
   onUploaded,
@@ -203,25 +196,19 @@ function FotoUploader({
   )
 }
 
-/* ═══════════════════════════════════════════════════════════
-   Módulo RRHH principal
-   ═══════════════════════════════════════════════════════════ */
 export function RrhhModule({ personal, directivos }: Props) {
   const [tab, setTab] = useState<Tab>("personal")
   const [isPending, startTransition] = useTransition()
 
-  // ── Personal state ──
   const [pDialogOpen, setPDialogOpen] = useState(false)
   const [pEditItem, setPEditItem] = useState<PersonalRow | null>(null)
   const [pFotoUrl, setPFotoUrl] = useState<string | null>(null)
 
-  // ── Directivos state ──
   const [dDialogOpen, setDDialogOpen] = useState(false)
   const [dEditItem, setDEditItem] = useState<DirectivoRow | null>(null)
   const [dFotoUrl, setDFotoUrl] = useState<string | null>(null)
   const [dirBusqueda, setDirBusqueda] = useState("")
 
-  /* ── Personal form submit ── */
   async function handlePersonalSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
@@ -301,7 +288,6 @@ export function RrhhModule({ personal, directivos }: Props) {
 
   return (
     <>
-      <ModuleHeader title="Recursos Humanos" />
       <div className="flex flex-1 flex-col gap-6 p-6">
         {/* ── Tabs ── */}
         <div className="flex items-center gap-2 border-b border-border/40 pb-0">
@@ -324,9 +310,6 @@ export function RrhhModule({ personal, directivos }: Props) {
           ))}
         </div>
 
-        {/* ══════════════════════════════════════════════
-            TAB: PERSONAL
-           ══════════════════════════════════════════════ */}
         {tab === "personal" && (
           <>
             {/* Header + botón */}
@@ -391,7 +374,6 @@ export function RrhhModule({ personal, directivos }: Props) {
               </Card>
             </div>
 
-            {/* Tabla */}
             <DataTable
               data={personal as unknown as Record<string, unknown>[]}
               searchKey="nombre"
@@ -479,9 +461,6 @@ export function RrhhModule({ personal, directivos }: Props) {
           </>
         )}
 
-        {/* ══════════════════════════════════════════════
-            TAB: DIRECTORIO / JEFES
-           ══════════════════════════════════════════════ */}
         {tab === "directorio" && (
           <>
             {/* Header + botón */}
@@ -533,7 +512,6 @@ export function RrhhModule({ personal, directivos }: Props) {
               </Card>
             </div>
 
-            {/* Búsqueda */}
             <div className="relative max-w-md">
               <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -544,7 +522,6 @@ export function RrhhModule({ personal, directivos }: Props) {
               />
             </div>
 
-            {/* Cards directivo */}
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {dirFiltrados.map((d) => {
                 const color = getColor(d.nombre)
@@ -553,13 +530,11 @@ export function RrhhModule({ personal, directivos }: Props) {
                     key={d.id}
                     className="group relative overflow-hidden rounded-2xl border border-border/40 bg-card transition-all duration-300 hover:border-[#FFB300]/30 hover:shadow-lg hover:shadow-[#FFB300]/5 hover:-translate-y-0.5"
                   >
-                    {/* Banner decorativo */}
                     <div
                       className="h-20 w-full"
                       style={{ background: `linear-gradient(135deg, ${color}22, ${color}55)` }}
                     />
 
-                    {/* Avatar / foto */}
                     <div className="flex justify-center -mt-10">
                       {d.foto ? (
                         <div className="relative h-20 w-20 overflow-hidden rounded-full border-4 border-card shadow-xl">
@@ -600,7 +575,6 @@ export function RrhhModule({ personal, directivos }: Props) {
                       </div>
                     </div>
 
-                    {/* Estado + acciones */}
                     <div className="absolute top-3 right-3 flex items-center gap-1.5">
                       <button
                         type="button"
@@ -652,9 +626,6 @@ export function RrhhModule({ personal, directivos }: Props) {
         )}
       </div>
 
-      {/* ═══════════════════════════════════════════════
-          DIALOG: CREAR/EDITAR PERSONAL
-         ═══════════════════════════════════════════════ */}
       <Dialog
         open={pDialogOpen}
         onOpenChange={(o) => {
@@ -749,9 +720,6 @@ export function RrhhModule({ personal, directivos }: Props) {
         </DialogContent>
       </Dialog>
 
-      {/* ═══════════════════════════════════════════════
-          DIALOG: CREAR/EDITAR DIRECTIVO
-         ═══════════════════════════════════════════════ */}
       <Dialog
         open={dDialogOpen}
         onOpenChange={(o) => {

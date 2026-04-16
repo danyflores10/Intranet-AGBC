@@ -1,6 +1,5 @@
 "use client"
 
-import { ModuleHeader } from "@/components/dashboard/module-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   FileTextIcon,
@@ -13,8 +12,6 @@ import {
   CalendarIcon,
   ShieldCheckIcon,
   FolderOpenIcon,
-  ArchiveIcon,
-  BriefcaseIcon,
   LayoutDashboardIcon,
   BellIcon,
   PartyPopperIcon,
@@ -24,6 +21,7 @@ import {
   Link2Icon,
   Zap,
 } from "lucide-react"
+import Link from "next/link"
 
 interface EventoRow {
   id: string
@@ -126,7 +124,6 @@ export function DashboardModule({ counts, user, eventos = [], notificaciones = [
 
   return (
     <>
-      <ModuleHeader title={esAdmin ? "Panel de Control" : "Mi Panel"} />
       <div className="flex flex-1 flex-col gap-6 p-6">
         {/* Bienvenida */}
         <div className="rounded-2xl border border-border/40 bg-gradient-to-r from-[#FFB300]/5 via-white to-[#2E7D32]/5 dark:from-[#FFB300]/10 dark:via-zinc-900 dark:to-[#2E7D32]/10 p-6">
@@ -283,22 +280,22 @@ export function DashboardModule({ counts, user, eventos = [], notificaciones = [
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <MegaphoneIcon className="h-4 w-4 text-amber-600" />
                     Comunicados
-                    <a href="/#comunicados" className="ml-auto text-xs font-semibold text-[#FF8800] hover:underline">
+                    <Link href="/#comunicados" className="ml-auto text-xs font-semibold text-[#FF8800] hover:underline">
                       Ver más →
-                    </a>
+                    </Link>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {seccionesPublicas?.comunicados?.length ? (
                     <div className="space-y-2">
                       {seccionesPublicas.comunicados.slice(0, 3).map((c) => (
-                        <a key={c.id} href="/#comunicados" className="block rounded-lg p-2 hover:bg-muted/50 transition-colors">
+                        <Link key={c.id} href="/#comunicados" className="block rounded-lg p-2 hover:bg-muted/50 transition-colors">
                           <p className="text-sm font-semibold line-clamp-1">{c.titulo}</p>
                           <p className="text-xs text-muted-foreground">
                             {new Date(c.fecha + "T12:00:00").toLocaleDateString("es-BO")}
                             {c.destacado ? " · Destacado" : ""}
                           </p>
-                        </a>
+                        </Link>
                       ))}
                     </div>
                   ) : (
@@ -312,19 +309,19 @@ export function DashboardModule({ counts, user, eventos = [], notificaciones = [
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <Zap className="h-4 w-4 text-[#C41E3A]" />
                     Noticias
-                    <a href="/#noticias" className="ml-auto text-xs font-semibold text-[#FF8800] hover:underline">
+                    <Link href="/#noticias" className="ml-auto text-xs font-semibold text-[#FF8800] hover:underline">
                       Ver más →
-                    </a>
+                    </Link>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {seccionesPublicas?.banners?.length ? (
                     <div className="space-y-2">
                       {seccionesPublicas.banners.slice(0, 3).map((b) => (
-                        <a key={b.id} href="/#noticias" className="block rounded-lg p-2 hover:bg-muted/50 transition-colors">
+                        <Link key={b.id} href="/#noticias" className="block rounded-lg p-2 hover:bg-muted/50 transition-colors">
                           <p className="text-sm font-semibold line-clamp-1">{b.titulo}</p>
                           <p className="text-xs text-muted-foreground line-clamp-1">{b.descripcion || "Noticia institucional"}</p>
-                        </a>
+                        </Link>
                       ))}
                     </div>
                   ) : (
@@ -338,9 +335,9 @@ export function DashboardModule({ counts, user, eventos = [], notificaciones = [
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <Link2Icon className="h-4 w-4 text-blue-600" />
                     Accesos Directos
-                    <a href="/#aplicaciones" className="ml-auto text-xs font-semibold text-[#FF8800] hover:underline">
+                    <Link href="/#aplicaciones" className="ml-auto text-xs font-semibold text-[#FF8800] hover:underline">
                       Ver más →
-                    </a>
+                    </Link>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>

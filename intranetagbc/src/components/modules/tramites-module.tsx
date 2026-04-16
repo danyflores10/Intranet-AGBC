@@ -4,7 +4,6 @@ import { useState, useTransition } from "react"
 import { PlusIcon, PencilIcon, Trash2Icon, ClipboardListIcon } from "lucide-react"
 import toast from "react-hot-toast"
 
-import { ModuleHeader } from "@/components/dashboard/module-header"
 import { DataTable } from "@/components/dashboard/data-table"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { Button } from "@/components/ui/button"
@@ -64,7 +63,6 @@ export function TramitesModule({ tramites }: Props) {
 
   return (
     <>
-      <ModuleHeader title="Trámites" />
       <div className="flex flex-1 flex-col gap-6 p-6">
         <div className="flex items-center justify-between">
           <div>

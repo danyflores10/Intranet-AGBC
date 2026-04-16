@@ -8,7 +8,6 @@ import {
   MapPinIcon,
   PhoneIcon,
   ClockIcon,
-  ImageIcon,
   UploadIcon,
   XIcon,
   BuildingIcon,
@@ -17,7 +16,6 @@ import {
 } from "lucide-react"
 import toast from "react-hot-toast"
 
-import { ModuleHeader } from "@/components/dashboard/module-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -241,7 +239,6 @@ export function SucursalesModule({ sucursales: sucursalesInit }: Props) {
 
   return (
     <>
-      <ModuleHeader title="Sucursales" />
       <div className="flex flex-1 flex-col gap-6 p-6">
         <div className="flex items-center justify-between">
           <div>
@@ -342,7 +339,6 @@ export function SucursalesModule({ sucursales: sucursalesInit }: Props) {
         )}
       </div>
 
-      {/* ── Dialog crear/editar ── */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="!w-[94vw] !max-w-[94vw] sm:!max-w-[860px] lg:!max-w-[980px] max-h-[92vh] overflow-y-auto overflow-x-hidden p-0">
           <div className="flex h-1.5 w-full rounded-t-lg overflow-hidden">
@@ -360,7 +356,6 @@ export function SucursalesModule({ sucursales: sucursalesInit }: Props) {
               </DialogDescription>
             </DialogHeader>
 
-            {/* Departamento selector */}
             <div className="space-y-1.5">
               <Label>Departamento *</Label>
               <select
@@ -448,7 +443,6 @@ export function SucursalesModule({ sucursales: sucursalesInit }: Props) {
               <input ref={fileRef} type="file" accept="image/*" onChange={handleFotoUpload} className="hidden" />
             </div>
 
-            {/* Campos avanzados (ocultos si se seleccionó depto) */}
             <details className="text-xs">
               <summary className="cursor-pointer text-muted-foreground hover:text-foreground transition-colors font-medium">
                 Parámetros del mapa (avanzado)
@@ -489,7 +483,6 @@ export function SucursalesModule({ sucursales: sucursalesInit }: Props) {
         </DialogContent>
       </Dialog>
 
-      {/* ── Dialog eliminar ── */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="max-w-sm p-0">
           <div className="flex h-1.5 w-full rounded-t-lg overflow-hidden">

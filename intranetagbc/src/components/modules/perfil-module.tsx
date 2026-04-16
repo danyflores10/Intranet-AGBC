@@ -14,7 +14,6 @@ import {
 } from "lucide-react"
 import toast from "react-hot-toast"
 
-import { ModuleHeader } from "@/components/dashboard/module-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -140,7 +139,6 @@ export function PerfilModule({ perfil }: Props) {
 
   return (
     <>
-      <ModuleHeader title="Mi Perfil" />
       <div className="flex flex-1 flex-col gap-6 p-6">
         {/* ── Header hero con avatar ── */}
         <Card className="border-border/40 overflow-hidden relative">
