@@ -19,6 +19,7 @@ import {
   enviarMensaje,
   actualizarEstadoTicket,
 } from "@/actions/soporte"
+import { getSocket } from "@/lib/socket"
 
 // ─── Types ───
 type Usuario = {
@@ -38,22 +39,12 @@ type Ticket = {
   prioridad: string
   solicitanteId: string
   agenteId: string | null
-  cerradoAt: Date | null
-  createdAt: Date
-  updatedAt: Date
+  cerradoAt: Date | string | null
+  createdAt: Date | string
+  updatedAt: Date | string
 }
 
-type Mensaje = {
-  id: string
-  ticketId: string
-  emisorId: string
-  contenido: string | null
-  tipoMensaje: string
-  archivoUrl: string | null
-  archivoNombre: string | null
-  archivoTipo: string | null
-  createdAt: Date
-}
+type Mensaje = SoporteSocketMessage
 
 interface Props {
   tickets: Ticket[]
@@ -99,15 +90,15 @@ function isPdf(tipo: string | null) {
   return tipo?.toLowerCase() === "pdf"
 }
 
-function formatHora(date: Date) {
+function formatHora(date: Date | string) {
   return new Date(date).toLocaleTimeString("es-BO", { hour: "2-digit", minute: "2-digit" })
 }
 
-function formatFecha(date: Date) {
+function formatFecha(date: Date | string) {
   return new Date(date).toLocaleDateString("es-BO", { day: "2-digit", month: "short" })
 }
 
-function formatFechaCompleta(date: Date) {
+function formatFechaCompleta(date: Date | string) {
   const d = new Date(date)
   const hoy = new Date()
   const ayer = new Date(hoy)
@@ -120,7 +111,7 @@ function formatFechaCompleta(date: Date) {
 
 // ─── Component ───
 export function SoporteModule({ tickets: initialTickets, usuarios, currentUserId }: Props) {
-  const [tickets] = useState(initialTickets)
+  const [tickets, setTickets] = useState(initialTickets)
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
   const [mensajes, setMensajes] = useState<Mensaje[]>([])
   const [nuevoMensaje, setNuevoMensaje] = useState("")
@@ -141,8 +132,33 @@ export function SoporteModule({ tickets: initialTickets, usuarios, currentUserId
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
+  const selectedTicketIdRef = useRef<string | null>(null)
 
   const usuariosMap = new Map(usuarios.map(u => [u.id, u]))
+
+  const ordenarTicketsPorActividad = useCallback((items: Ticket[]) => {
+    return [...items].sort((a, b) => {
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    })
+  }, [])
+
+  const actualizarTicketActividad = useCallback((ticketId: string, updatedAt: Date | string) => {
+    const updatedAtDate = new Date(updatedAt)
+
+    setTickets(prev =>
+      ordenarTicketsPorActividad(
+        prev.map(ticket => (
+          ticket.id === ticketId ? { ...ticket, updatedAt: updatedAtDate } : ticket
+        ))
+      )
+    )
+
+    setSelectedTicket(prev => (
+      prev && prev.id === ticketId
+        ? { ...prev, updatedAt: updatedAtDate }
+        : prev
+    ))
+  }, [ordenarTicketsPorActividad])
 
   // ─── Cargar mensajes del ticket seleccionado ───
   const cargarMensajes = useCallback(async (ticketId: string) => {
@@ -151,11 +167,52 @@ export function SoporteModule({ tickets: initialTickets, usuarios, currentUserId
   }, [])
 
   useEffect(() => {
-    if (!selectedTicket) return
-    cargarMensajes(selectedTicket.id)
-    const interval = setInterval(() => cargarMensajes(selectedTicket.id), 4000)
-    return () => clearInterval(interval)
-  }, [selectedTicket, cargarMensajes])
+    selectedTicketIdRef.current = selectedTicket?.id ?? null
+  }, [selectedTicket?.id])
+
+  useEffect(() => {
+    const socket = getSocket()
+
+    const onTicketMessageNew = (payload: TicketMessageNewPayload) => {
+      const { message, ticketUpdatedAt } = payload
+
+      actualizarTicketActividad(message.ticketId, ticketUpdatedAt)
+
+      if (selectedTicketIdRef.current !== message.ticketId) return
+
+      setMensajes(prev => {
+        if (prev.some(msg => msg.id === message.id)) return prev
+
+        const next = [...prev, message]
+        next.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+        return next
+      })
+    }
+
+    socket.on("ticket:message:new", onTicketMessageNew)
+
+    return () => {
+      socket.off("ticket:message:new", onTicketMessageNew)
+    }
+  }, [actualizarTicketActividad])
+
+  useEffect(() => {
+    if (!selectedTicket?.id) {
+      setMensajes([])
+      return
+    }
+
+    const socket = getSocket()
+    const ticketId = selectedTicket.id
+
+    setMensajes([])
+    void cargarMensajes(ticketId)
+    socket.emit("ticket:join", ticketId)
+
+    return () => {
+      socket.emit("ticket:leave", ticketId)
+    }
+  }, [selectedTicket?.id, cargarMensajes])
 
   // ─── Auto-scroll a último mensaje ───
   useEffect(() => {
@@ -208,6 +265,12 @@ export function SoporteModule({ tickets: initialTickets, usuarios, currentUserId
         setNewDialogOpen(false)
         setSelectedAgente(null)
         setSearchAgente("")
+        setTickets(prev =>
+          ordenarTicketsPorActividad([
+            ticket,
+            ...prev.filter(t => t.id !== ticket.id),
+          ])
+        )
         setSelectedTicket(ticket)
         setMobileShowChat(true)
         toast.success("Conversación de soporte iniciada")
@@ -232,7 +295,6 @@ export function SoporteModule({ tickets: initialTickets, usuarios, currentUserId
           contenido,
           tipoMensaje: "texto",
         })
-        await cargarMensajes(selectedTicket.id)
       } catch {
         toast.error("Error al enviar mensaje")
         setNuevoMensaje(contenido)
@@ -266,7 +328,6 @@ export function SoporteModule({ tickets: initialTickets, usuarios, currentUserId
           archivoNombre: result.nombre,
           archivoTipo: result.tipo,
         })
-        await cargarMensajes(selectedTicket.id)
         toast.success("Archivo enviado")
       } catch {
         toast.error("Error al enviar archivo")
@@ -280,6 +341,11 @@ export function SoporteModule({ tickets: initialTickets, usuarios, currentUserId
     startTransition(async () => {
       try {
         await actualizarEstadoTicket(selectedTicket.id, estado, currentUserId)
+        setTickets(prev =>
+          prev.map(ticket => (
+            ticket.id === selectedTicket.id ? { ...ticket, estado } : ticket
+          ))
+        )
         setSelectedTicket({ ...selectedTicket, estado })
         await cargarMensajes(selectedTicket.id)
         toast.success(`Ticket ${getEstadoLabel(estado).toLowerCase()}`)
@@ -318,7 +384,6 @@ export function SoporteModule({ tickets: initialTickets, usuarios, currentUserId
         archivoNombre: callType === "video" ? "Videollamada" : "Llamada de voz",
         archivoTipo: "llamada",
       })
-      await cargarMensajes(selectedTicket.id)
     })
     setCallDialogOpen(false)
   }

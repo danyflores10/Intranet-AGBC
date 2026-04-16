@@ -4,7 +4,7 @@ import { db } from "@/db"
 import { ticketsSoporte, mensajesSoporte } from "@/db/schema/soporte.schema"
 import { users } from "@/db/schema/users.schema"
 import { notificaciones } from "@/db/schema/notificaciones.schema"
-import { eq, desc, or, and, count } from "drizzle-orm"
+import { eq, desc, or, count } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 // ─── Obtener usuarios activos ───
@@ -108,8 +108,9 @@ export async function enviarMensaje(data: {
   }).returning()
 
   // Actualizar timestamp del ticket
+  const updatedAt = new Date()
   await db.update(ticketsSoporte)
-    .set({ updatedAt: new Date() })
+    .set({ updatedAt })
     .where(eq(ticketsSoporte.id, data.ticketId))
 
   // Notificar al otro participante
@@ -133,6 +134,23 @@ export async function enviarMensaje(data: {
       })
     }
   }
+
+  const payload: TicketMessageNewPayload = {
+    message: {
+      id: mensaje.id,
+      ticketId: mensaje.ticketId,
+      emisorId: mensaje.emisorId,
+      contenido: mensaje.contenido,
+      tipoMensaje: mensaje.tipoMensaje,
+      archivoUrl: mensaje.archivoUrl,
+      archivoNombre: mensaje.archivoNombre,
+      archivoTipo: mensaje.archivoTipo,
+      createdAt: mensaje.createdAt,
+    },
+    ticketUpdatedAt: updatedAt,
+  }
+
+  global.io?.to(`ticket:${data.ticketId}`).emit("ticket:message:new", payload)
 
   revalidatePath("/soporte")
   return mensaje
