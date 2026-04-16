@@ -80,17 +80,17 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
 
   function getFileIcon(tipo: string | null) {
     if (!tipo) return FileIcon
-    if (tipo === "application/pdf") return FileText
-    if (tipo.startsWith("image/")) return FileImage
+    if (tipo.includes("pdf")) return FileText
+    if (["jpg", "jpeg", "png", "webp", "gif"].some(ext => tipo.includes(ext)) || tipo.startsWith("image/")) return FileImage
     return FileIcon
   }
 
   function getFileColor(tipo: string | null) {
     if (!tipo) return { bg: "bg-slate-500/10", text: "text-slate-600 dark:text-slate-400", icon: "text-slate-500", label: "Archivo" }
-    if (tipo === "application/pdf") return { bg: "bg-red-500/10", text: "text-red-700 dark:text-red-400", icon: "text-red-500", label: "PDF" }
-    if (tipo.startsWith("image/")) return { bg: "bg-emerald-500/10", text: "text-emerald-700 dark:text-emerald-400", icon: "text-emerald-500", label: "Imagen" }
-    if (tipo.includes("word") || tipo.includes("document")) return { bg: "bg-blue-500/10", text: "text-blue-700 dark:text-blue-400", icon: "text-blue-500", label: "Word" }
-    if (tipo.includes("excel") || tipo.includes("spreadsheet")) return { bg: "bg-green-500/10", text: "text-green-700 dark:text-green-400", icon: "text-green-500", label: "Excel" }
+    if (tipo.includes("pdf")) return { bg: "bg-red-500/10", text: "text-red-700 dark:text-red-400", icon: "text-red-500", label: "PDF" }
+    if (["jpg", "jpeg", "png", "webp", "gif"].some(ext => tipo.includes(ext)) || tipo.startsWith("image/")) return { bg: "bg-emerald-500/10", text: "text-emerald-700 dark:text-emerald-400", icon: "text-emerald-500", label: "Imagen" }
+    if (["doc", "docx"].some(ext => tipo.includes(ext)) || tipo.includes("word")) return { bg: "bg-blue-500/10", text: "text-blue-700 dark:text-blue-400", icon: "text-blue-500", label: "Word" }
+    if (["xls", "xlsx"].some(ext => tipo.includes(ext)) || tipo.includes("excel")) return { bg: "bg-green-500/10", text: "text-green-700 dark:text-green-400", icon: "text-green-500", label: "Excel" }
     return { bg: "bg-slate-500/10", text: "text-slate-600 dark:text-slate-400", icon: "text-slate-500", label: "Archivo" }
   }
 
@@ -346,7 +346,13 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
 
           {/* Contenido */}
           <div className="relative min-h-0 flex-1 overflow-hidden">
-            {viewingDoc.archivo && viewingDoc.tipoArchivo?.startsWith("image/") ? (
+            {viewingDoc.archivo && viewingDoc.tipoArchivo?.includes("pdf") ? (
+              <iframe
+                src={viewingDoc.archivo}
+                title={viewingDoc.titulo}
+                className="w-full h-full border-0 rounded-b-2xl"
+              />
+            ) : viewingDoc.archivo && viewingDoc.tipoArchivo && ["jpg", "jpeg", "png", "webp", "gif"].some(ext => viewingDoc.tipoArchivo!.includes(ext)) ? (
               <div className="h-full flex items-start justify-center overflow-auto rounded-b-2xl border border-border/30 bg-gradient-to-br from-zinc-100 to-zinc-50 dark:from-zinc-900 dark:to-zinc-950 p-2">
                 <img
                   src={viewingDoc.archivo}
@@ -355,7 +361,7 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                   draggable={false}
                 />
               </div>
-            ) : viewingDoc.archivo && viewingDoc.tipoArchivo === "application/pdf" ? (
+            ) : viewingDoc.archivo ? (
               <iframe
                 src={viewingDoc.archivo}
                 title={viewingDoc.titulo}

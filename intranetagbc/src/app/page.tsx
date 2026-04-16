@@ -4,15 +4,9 @@ import { headers } from "next/headers"
 import {
   Shield,
   Users,
-  FileText,
-  BarChart3,
   Mail,
   Clock,
   ArrowRight,
-  Zap,
-  Lock,
-  Globe,
-  ChevronRight,
   Sparkles,
   MapPin,
   Building2,
@@ -34,45 +28,6 @@ import { obtenerPersonal, obtenerDirectivos } from "@/actions/rrhh"
 import { obtenerConfigPorGrupo } from "@/actions/configuracion"
 import { obtenerDocumentos } from "@/actions/documentos"
 import { LoginForm } from "@/components/login-form"
-
-const features = [
-  {
-    icon: Users,
-    title: "Gestión de Personal",
-    description: "Administra empleados, asistencia, vacaciones y nómina desde un solo lugar.",
-    color: "from-[#FFB300] to-[#FF8800]",
-  },
-  {
-    icon: FileText,
-    title: "Documentos Digitales",
-    description: "Crea, firma y archiva documentos con trazabilidad completa.",
-    color: "from-[#FF8800] to-[#F5061D]",
-  },
-  {
-    icon: Mail,
-    title: "Correspondencia",
-    description: "Control total del flujo de correspondencia interna y externa.",
-    color: "from-[#FFB300] to-[#FF8800]",
-  },
-  {
-    icon: BarChart3,
-    title: "Reportes en Tiempo Real",
-    description: "Dashboards interactivos con métricas clave de tu organización.",
-    color: "from-[#FF8800] to-[#F5061D]",
-  },
-  {
-    icon: Clock,
-    title: "Trámites Ágiles",
-    description: "Digitaliza y acelera los procesos burocráticos internos.",
-    color: "from-[#FFB300] to-[#FF8800]",
-  },
-  {
-    icon: Shield,
-    title: "Auditoría y Seguridad",
-    description: "Registro detallado de cada acción con control de acceso por roles.",
-    color: "from-[#940533] to-[#C0012A]",
-  },
-]
 
 const defaultSucursales = [
   {
@@ -252,12 +207,6 @@ export default async function HomePage() {
                   </Link>
                 </Button>
               )}
-              <Button variant="outline" size="lg" className="h-13 px-10 text-base font-semibold" asChild>
-                <Link href="#features">
-                  Explorar módulos
-                  <ChevronRight className="ml-1 h-5 w-5" />
-                </Link>
-              </Button>
             </div>
           </div>
         </div>
@@ -561,90 +510,6 @@ export default async function HomePage() {
         </div>
       </section>
       )}
-
-      {/* ── Features ── */}
-      {seccionVisible("seccion_features") && (
-      <section id="features" className="scroll-mt-20">
-        <div className="mx-auto max-w-7xl px-6 py-24 md:py-32">
-          <div className="mx-auto max-w-2xl text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#FFB300]/20 bg-[#FFB300]/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#FF8800]">
-              <Zap className="h-3.5 w-3.5" />
-              Módulos
-            </div>
-            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl">
-              Todo lo que necesitas
-            </h2>
-            <p className="mt-4 text-muted-foreground text-lg">
-              Herramientas integradas para optimizar cada proceso de tu institución.
-            </p>
-          </div>
-
-          <div className="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature) => (
-              <div
-                key={feature.title}
-                className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card p-7 transition-all duration-300 hover:border-[#FFB300]/30 hover:shadow-xl hover:shadow-[#FFB300]/5 hover:-translate-y-1"
-              >
-                <div className={`mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${feature.color} text-white shadow-md transition-transform duration-300 group-hover:scale-110`}>
-                  <feature.icon className="h-5 w-5" />
-                </div>
-                <h3 className="text-lg font-bold">{feature.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {feature.description}
-                </p>
-                <div className="pointer-events-none absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-gradient-to-br from-[#FFB300]/5 to-transparent blur-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      )}
-
-      {/* ── Security banner ── */}
-      <section className="border-t border-border/40">
-        <div className="mx-auto max-w-7xl px-6 py-24 md:py-32">
-          <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#1a1000] via-[#2a1800] to-[#1a1000] p-10 md:p-16">
-            {/* Decorative */}
-            <div className="pointer-events-none absolute -right-20 -top-20 h-80 w-80 rounded-full bg-[#FFB300]/15 blur-[100px]" />
-            <div className="pointer-events-none absolute -bottom-16 -left-16 h-60 w-60 rounded-full bg-[#FF8800]/10 blur-[80px]" />
-            <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-40 w-40 rounded-full bg-[#940533]/10 blur-[60px]" />
-
-            <div className="relative grid items-center gap-12 md:grid-cols-2">
-              <div>
-                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#FFB300]/20 bg-[#FFB300]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#FFB300]">
-                  <Shield className="h-3.5 w-3.5" />
-                  Seguridad
-                </div>
-                <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl md:text-5xl">
-                  Seguridad de nivel empresarial
-                </h2>
-                <p className="mt-5 text-white/60 text-base leading-relaxed">
-                  Encriptación de extremo a extremo, autenticación multifactor y registro
-                  completo de auditoría para los más altos estándares.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { icon: Lock, text: "Encriptación AES-256" },
-                  { icon: Shield, text: "Control por roles" },
-                  { icon: Globe, text: "Acceso seguro remoto" },
-                  { icon: Clock, text: "Auditoría 24/7" },
-                ].map((item) => (
-                  <div
-                    key={item.text}
-                    className="flex items-start gap-3 rounded-2xl border border-white/5 bg-white/5 p-5 backdrop-blur-sm"
-                  >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#FFB300] to-[#FF8800] text-[#1a1000]">
-                      <item.icon className="h-4 w-4" />
-                    </div>
-                    <span className="text-sm font-semibold text-white/90 leading-snug">{item.text}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ── CTA ── */}
       <section className="border-t border-border/40">

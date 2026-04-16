@@ -33,7 +33,6 @@ interface LandingNavbarProps {
 }
 
 const NAV_ITEMS_PUBLICOS: NavItem[] = [
-  { label: "Módulos", href: "#features", icon: Zap },
   { label: "Comunicados", href: "#comunicados", icon: MegaphoneIcon },
 ]
 
