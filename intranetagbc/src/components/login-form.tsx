@@ -123,15 +123,12 @@ export function LoginForm({
 
   return (
     <div className={cn("flex min-h-svh", className)} {...props}>
-      {/* ── Panel izquierdo decorativo ── */}
       <div className="relative hidden w-[55%] overflow-hidden bg-background lg:flex lg:flex-col lg:justify-between">
-        {/* Aurora animated gradient */}
+
         <div className="pointer-events-none absolute inset-0 animate-aurora bg-gradient-to-br from-[#FFB300]/15 via-transparent to-[#FF8800]/10" />
 
-        {/* Grid pattern overlay */}
         <div className="pointer-events-none absolute inset-0 hero-grid-pattern animate-grid-pulse" />
 
-        {/* Animated blobs */}
         <div className="pointer-events-none absolute inset-0">
           <div className="animate-landing-blob absolute -top-20 -left-20 h-96 w-96 rounded-full bg-[#FFB300]/12 blur-[100px]" />
           <div className="animate-landing-blob-delay absolute -bottom-20 -right-20 h-80 w-80 rounded-full bg-[#FF8800]/10 blur-[90px]" />
@@ -140,12 +137,10 @@ export function LoginForm({
           <div className="animate-landing-blob-delay absolute top-2/3 right-1/3 h-56 w-56 rounded-full bg-[#FFB300]/6 blur-[90px]" />
         </div>
 
-        {/* Shimmer line */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="animate-shimmer absolute top-1/3 left-0 h-[1px] w-[400px] bg-gradient-to-r from-transparent via-[#FFB300]/25 to-transparent" />
         </div>
 
-        {/* Floating particles */}
         <div className="pointer-events-none absolute inset-0">
           <div className="animate-particle absolute top-[20%] left-[15%] h-2 w-2 rounded-full bg-[#FFB300]/30" style={{ animationDelay: '0s' }} />
           <div className="animate-particle absolute top-[50%] left-[70%] h-1.5 w-1.5 rounded-full bg-[#FF8800]/25" style={{ animationDelay: '2s' }} />
@@ -153,11 +148,9 @@ export function LoginForm({
           <div className="animate-particle absolute top-[30%] left-[85%] h-2.5 w-2.5 rounded-full bg-[#FFB300]/15" style={{ animationDelay: '1s' }} />
         </div>
 
-        {/* Bottom gradient fade */}
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
 
-        {/* Content */}
-        <div className="relative z-10 flex flex-1 flex-col justify-center px-14 xl:px-20">
+        <div className="relative z-10 flex flex-1 flex-col justify-center items-center px-14 xl:px-20">
           {/* Logo */}
           <div className="mb-12">
             <Image
@@ -180,8 +173,7 @@ export function LoginForm({
             />
           </div>
 
-          {/* Main heading */}
-          <div className="space-y-6">
+          <div className="space-y-6 text-center">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#FFB300]/20 bg-[#FFB300]/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#FF8800] backdrop-blur-sm">
               <Sparkles className="h-3.5 w-3.5" />
               Plataforma Intranet
@@ -193,13 +185,12 @@ export function LoginForm({
                 Gestión Interna
               </span>
             </h2>
-            <p className="max-w-md text-base leading-relaxed text-muted-foreground">
+            <p className="mx-auto max-w-md text-base leading-relaxed text-muted-foreground">
               Accede a todos los módulos de Correos de Bolivia: documentos,
               correspondencia, trámites, RRHH y más.
             </p>
           </div>
 
-          {/* Floating module cards */}
           <div className="mt-12 grid grid-cols-2 gap-3 max-w-sm">
             {[
               { icon: Mail, label: "Correspondencia" },
@@ -218,7 +209,6 @@ export function LoginForm({
           </div>
         </div>
 
-        {/* Bottom branding */}
         <div className="relative z-10 px-14 pb-8 xl:px-20">
           <div className="flex items-center gap-3 text-muted-foreground/50 text-xs">
             <Shield className="h-4 w-4" />
@@ -227,11 +217,10 @@ export function LoginForm({
         </div>
       </div>
 
-      {/* ── Panel derecho: formularios ── */}
       <div className="flex w-full flex-col bg-background lg:w-[45%]">
 
         <div className="flex flex-1 flex-col items-center justify-center px-6 py-8 sm:px-12">
-          {/* Logo en mobile */}
+
           <div className="lg:hidden mb-8">
             <Image
               src="/image/Logooriginal.png"
@@ -252,7 +241,6 @@ export function LoginForm({
           </div>
 
           <div className="w-full max-w-[420px]">
-            {/* Logo arriba del card en desktop */}
             <div className="hidden lg:flex justify-center mb-8">
               <Image
                 src="/image/Logooriginal.png"
@@ -272,10 +260,8 @@ export function LoginForm({
               />
             </div>
 
-            {/* Card contenedor del formulario */}
             <div className="rounded-2xl border border-border/60 bg-card p-8 shadow-xl shadow-black/5 dark:shadow-black/20 animate-pulse-glow">
               {mode === "signIn" ? (
-                /* ── Sign In Form ── */
                 <form
                   noValidate
                   onSubmit={signInForm.handleSubmit(onSubmitSignIn)}
@@ -377,7 +363,6 @@ export function LoginForm({
                   </FieldGroup>
                 </form>
               ) : (
-                /* ── Sign Up Form ── */
                 <form
                   noValidate
                   onSubmit={signUpForm.handleSubmit(onSubmitSignUp)}
@@ -517,7 +502,6 @@ export function LoginForm({
               )}
             </div>
 
-            {/* Bottom text */}
             <div className="mt-6 text-center text-xs text-muted-foreground">
               <p>&copy; {new Date().getFullYear()} Agencia Boliviana de Correos. Plataforma de uso interno.</p>
             </div>
