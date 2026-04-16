@@ -151,14 +151,6 @@ export const sidebarData: {
           },
         },
         {
-          title: "Logistica",
-          url: "/logistica",
-          icon: Activity,
-          access: {
-            permissions: [PERMISOS.LOGISTICA.VER],
-          },
-        },
-        {
           title: "Calendario",
           url: "/calendario",
           icon: CalendarDays,

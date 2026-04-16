@@ -9,7 +9,6 @@ export * from './user-roles.schema';
 export * from './correspondencia.schema';
 export * from './documentos.schema';
 export * from './tramites.schema';
-export * from './logistica.schema';
 export * from './rrhh.schema';
 export * from './comunicaciones.schema';
 export * from './archivos.schema';

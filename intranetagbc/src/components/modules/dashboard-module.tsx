@@ -5,7 +5,6 @@ import {
   FileTextIcon,
   UsersIcon,
   MailIcon,
-  PackageIcon,
   ClipboardListIcon,
   MegaphoneIcon,
   UserIcon,
@@ -50,7 +49,6 @@ interface Props {
     documentos: number
     correspondencia: number
     tramites: number
-    inventario: number
     personal: number
     comunicados: number
     usuarios: number
@@ -95,7 +93,6 @@ export function DashboardModule({ counts, user, eventos = [], notificaciones = [
     { label: "Documentos", count: counts.documentos, icon: FileTextIcon, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-950/30", href: "/documentos" },
     { label: "Correspondencia", count: counts.correspondencia, icon: MailIcon, color: "text-green-600", bg: "bg-green-50 dark:bg-green-950/30", href: "/correspondencia" },
     { label: "Trámites", count: counts.tramites, icon: ClipboardListIcon, color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-950/30", href: "/tramites" },
-    { label: "Inventario", count: counts.inventario, icon: PackageIcon, color: "text-orange-600", bg: "bg-orange-50 dark:bg-orange-950/30", href: "/logistica" },
     { label: "Personal", count: counts.personal, icon: UsersIcon, color: "text-teal-600", bg: "bg-teal-50 dark:bg-teal-950/30", href: "/rrhh" },
     { label: "Comunicados", count: counts.comunicados, icon: MegaphoneIcon, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/30", href: "/comunicaciones" },
     { label: "Usuarios", count: counts.usuarios, icon: UserIcon, color: "text-indigo-600", bg: "bg-indigo-50 dark:bg-indigo-950/30", href: "/usuarios" },

@@ -1,14 +1,13 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { FileTextIcon, UsersIcon, MailIcon, PackageIcon, ClipboardListIcon, MegaphoneIcon } from "lucide-react"
+import { FileTextIcon, UsersIcon, MailIcon, ClipboardListIcon, MegaphoneIcon } from "lucide-react"
 
 interface Props {
   counts: {
     documentos: number
     correspondencia: number
     tramites: number
-    inventario: number
     personal: number
     comunicados: number
     usuarios: number
@@ -20,7 +19,6 @@ export function ReportesModule({ counts }: Props) {
     { label: "Documentos", count: counts.documentos, icon: FileTextIcon, color: "text-blue-600" },
     { label: "Correspondencia", count: counts.correspondencia, icon: MailIcon, color: "text-green-600" },
     { label: "Trámites", count: counts.tramites, icon: ClipboardListIcon, color: "text-purple-600" },
-    { label: "Inventario", count: counts.inventario, icon: PackageIcon, color: "text-orange-600" },
     { label: "Personal", count: counts.personal, icon: UsersIcon, color: "text-teal-600" },
     { label: "Comunicados", count: counts.comunicados, icon: MegaphoneIcon, color: "text-amber-600" },
     { label: "Usuarios", count: counts.usuarios, icon: UsersIcon, color: "text-indigo-600" },
