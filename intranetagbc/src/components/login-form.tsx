@@ -348,18 +348,6 @@ export function LoginForm({
                       </Button>
                     </Field>
 
-                    <FieldDescription className="text-center text-sm">
-                      ¿No tienes cuenta?{" "}
-                      <button
-                        type="button"
-                        className="font-bold text-[#FF8800] underline underline-offset-4 hover:text-[#FFB300] transition-colors"
-                        onClick={() => {
-                          setMode("signUp")
-                        }}
-                      >
-                        Crear cuenta
-                      </button>
-                    </FieldDescription>
                   </FieldGroup>
                 </form>
               ) : (

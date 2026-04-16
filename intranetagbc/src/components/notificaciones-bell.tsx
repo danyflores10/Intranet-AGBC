@@ -46,9 +46,20 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
   const panelRef = useRef<HTMLDivElement>(null)
   const prevIdsRef = useRef<Set<string>>(new Set(notificacionesIniciales.map((n) => n.id)))
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const notifPermissionRef = useRef<NotificationPermission>("default")
 
+  // Precargar audio y pedir permiso de notificaciones nativas
   useEffect(() => {
     audioRef.current = new Audio("/mp3/notificaciones.mp3")
+
+    if ("Notification" in window) {
+      notifPermissionRef.current = Notification.permission
+      if (Notification.permission === "default") {
+        Notification.requestPermission().then((perm) => {
+          notifPermissionRef.current = perm
+        })
+      }
+    }
   }, [])
 
   const playNotifSound = useCallback(() => {
@@ -56,6 +67,39 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
       audioRef.current.currentTime = 0
       audioRef.current.play().catch(() => {})
     }
+  }, [])
+
+  // Mostrar notificación nativa del navegador (como WhatsApp Web)
+  const showBrowserNotification = useCallback((notif: Notificacion) => {
+    if (!("Notification" in window) || Notification.permission !== "granted") return
+
+    const tipoLabels: Record<string, string> = {
+      calendario: "📅 Calendario",
+      info: "ℹ️ Información",
+      alerta: "⚠️ Alerta",
+      correspondencia: "✉️ Correspondencia",
+    }
+
+    const tag = `notif-${notif.id}`
+    const nativeNotif = new Notification(notif.titulo, {
+      body: notif.mensaje,
+      icon: "/image/LogoAmarillo.png",
+      badge: "/image/LogoAmarillo.png",
+      tag,
+      renotify: true,
+      silent: true, // Ya manejamos el sonido nosotros
+    })
+
+    nativeNotif.onclick = () => {
+      window.focus()
+      if (notif.enlace) {
+        window.location.href = notif.enlace
+      }
+      nativeNotif.close()
+    }
+
+    // Auto cerrar después de 8 segundos
+    setTimeout(() => nativeNotif.close(), 8000)
   }, [])
 
   // Mostrar toast custom para una notificación nueva
@@ -117,7 +161,10 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
         // Detectar notificaciones nuevas (que no existían antes)
         const nuevas = newNotifs.filter((n) => !prevIdsRef.current.has(n.id))
         if (nuevas.length > 0) playNotifSound()
-        nuevas.forEach((n) => showNotifToast(n))
+        nuevas.forEach((n) => {
+          showNotifToast(n)
+          showBrowserNotification(n)
+        })
 
         // Actualizar referencia de IDs conocidos
         prevIdsRef.current = new Set(newNotifs.map((n) => n.id))
@@ -127,7 +174,7 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
       } catch { /* silencioso */ }
     }, 30000)
     return () => clearInterval(interval)
-  }, [usuarioId, showNotifToast, playNotifSound])
+  }, [usuarioId, showNotifToast, playNotifSound, showBrowserNotification])
 
   // Cerrar al hacer clic fuera
   useEffect(() => {

@@ -88,6 +88,13 @@ interface BoliviaMapProps {
   sucursalesDb?: SucursalFromDb[]
 }
 
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 export function BoliviaMap({ sucursalesDb }: BoliviaMapProps) {
   const departments: DepartmentData[] =
     sucursalesDb && sucursalesDb.length > 0
@@ -137,45 +144,53 @@ export function BoliviaMap({ sucursalesDb }: BoliviaMapProps) {
         const style = document.createElementNS("http://www.w3.org/2000/svg", "style")
         style.textContent = `
           .cb-bolivia-dept {
-            fill: rgba(47, 95, 170, 0.06);
-            stroke: #94a3b8;
-            stroke-width: 2;
             stroke-linecap: round;
             stroke-linejoin: round;
             cursor: pointer;
-            transition: all 0.3s ease;
-          }
-          .cb-bolivia-dept:hover {
-            fill: rgba(255, 179, 0, 0.2);
-            stroke: #FFB300;
-            stroke-width: 3;
-          }
-          .cb-bolivia-dept.is-active {
-            fill: rgba(47, 95, 170, 0.06);
-            stroke: #94a3b8;
-            stroke-width: 2;
-          }
-          .cb-bolivia-dept.dept-selected {
-            fill: rgba(255, 136, 0, 0.25) !important;
-            stroke: #FF8800 !important;
-            stroke-width: 4 !important;
-            filter: drop-shadow(0 0 6px rgba(255, 136, 0, 0.3));
+            transition: all 0.35s cubic-bezier(.4,0,.2,1);
           }
         `
         svgEl.prepend(style)
         svgEl.querySelectorAll(".is-active").forEach((el) => el.classList.remove("is-active"))
+
+        /* Aplicar color único por departamento */
+        departments.forEach((dept) => {
+          const path = svgEl.querySelector(`path[data-id="${dept.id}"]`) as SVGPathElement | null
+          if (path) {
+            path.style.fill = hexToRgba(dept.color, 0.12)
+            path.style.stroke = dept.color + "70"
+            path.style.strokeWidth = "2"
+          }
+        })
+
         setSvgReady(true)
       })
   }, [])
 
-  /* ── Sincronizar clase seleccionada ── */
+  /* ── Sincronizar estilos por departamento (hover / selección) ── */
   useEffect(() => {
     if (!svgReady || !containerRef.current) return
-    containerRef.current.querySelectorAll("path[data-id]").forEach((p) => {
-      const id = p.getAttribute("data-id")
-      p.classList.toggle("dept-selected", id === selected)
+    departments.forEach((dept) => {
+      const el = containerRef.current!.querySelector(`path[data-id="${dept.id}"]`) as SVGPathElement | null
+      if (!el) return
+      if (dept.id === selected) {
+        el.style.fill = hexToRgba(dept.color, 0.32)
+        el.style.stroke = dept.color
+        el.style.strokeWidth = "4"
+        el.style.filter = `drop-shadow(0 0 10px ${hexToRgba(dept.color, 0.4)})`
+      } else if (dept.id === hovered) {
+        el.style.fill = hexToRgba(dept.color, 0.25)
+        el.style.stroke = dept.color
+        el.style.strokeWidth = "3"
+        el.style.filter = `drop-shadow(0 0 8px ${hexToRgba(dept.color, 0.3)})`
+      } else {
+        el.style.fill = hexToRgba(dept.color, 0.12)
+        el.style.stroke = dept.color + "70"
+        el.style.strokeWidth = "2"
+        el.style.filter = "none"
+      }
     })
-  }, [selected, svgReady])
+  }, [selected, hovered, svgReady, departments])
 
   /* ── Event handlers en los paths SVG ── */
   useEffect(() => {
@@ -241,23 +256,23 @@ export function BoliviaMap({ sucursalesDb }: BoliviaMapProps) {
                     >
                       <div className="relative">
                         <MapPinIcon
-                          className={`h-7 w-7 drop-shadow-lg transition-colors duration-300 ${
-                            selected === dept.id ? "text-[#FF8800]" : hovered === dept.id ? "text-[#FFB300]" : "text-[#C41E3A]"
-                          }`}
+                          className="h-7 w-7 drop-shadow-lg transition-all duration-300"
+                          style={{ color: dept.color }}
                           fill="currentColor"
                           strokeWidth={1.5}
                           stroke="white"
                         />
                         {selected === dept.id && (
-                          <span className="absolute -inset-1 animate-ping rounded-full bg-[#FF8800]/20" />
+                          <span className="absolute -inset-1 animate-ping rounded-full" style={{ backgroundColor: dept.color + "33" }} />
                         )}
                       </div>
                       <div
                         className={`absolute left-1/2 -translate-x-1/2 top-full mt-0.5 whitespace-nowrap text-[10px] font-bold px-1.5 py-0.5 rounded-md transition-all duration-300 ${
                           selected === dept.id
-                            ? "bg-[#FF8800] text-white shadow-md"
+                            ? "text-white shadow-md"
                             : "bg-white/90 dark:bg-zinc-800/90 text-foreground shadow-sm border border-border/30"
                         }`}
+                        style={selected === dept.id ? { backgroundColor: dept.color } : undefined}
                       >
                         {dept.capital}
                       </div>
