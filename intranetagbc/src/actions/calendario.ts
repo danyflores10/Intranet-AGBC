@@ -1,10 +1,11 @@
 "use server"
 
 import { db } from "@/db"
-import { eventosCalendario, notificaciones, users } from "@/db/schema"
+import { eventosCalendario, users } from "@/db/schema"
 import { eq, desc, gte, lte, and } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { registrarAuditLog } from "@/actions/auditoria"
+import { crearNotificacionesRealtime } from "@/lib/notificaciones-realtime"
 
 export type EventoCalendarioData = {
   titulo: string
@@ -142,6 +143,6 @@ async function notificarEventoATodos(
 
   // Insert en lotes de 100
   for (let i = 0; i < inserts.length; i += 100) {
-    await db.insert(notificaciones).values(inserts.slice(i, i + 100))
+    await crearNotificacionesRealtime(inserts.slice(i, i + 100))
   }
 }

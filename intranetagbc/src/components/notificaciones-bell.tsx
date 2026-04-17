@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect, useRef, useCallback } from "react"
 import { BellIcon, CheckIcon, Trash2Icon, XIcon, CalendarIcon, InfoIcon, AlertTriangleIcon, MailIcon } from "lucide-react"
 import toast from "react-hot-toast"
+import { usePathname } from "next/navigation"
 import {
   obtenerNotificacionesUsuario,
   contarNotificacionesNoLeidas,
@@ -10,6 +11,7 @@ import {
   marcarTodasLeidas,
   eliminarNotificacion,
 } from "@/actions/notificaciones"
+import { getSocket } from "@/lib/socket"
 
 interface Notificacion {
   id: string
@@ -18,7 +20,7 @@ interface Notificacion {
   tipo: string
   leida: boolean
   enlace: string | null
-  createdAt: Date
+  createdAt: Date | string
 }
 
 interface Props {
@@ -43,10 +45,101 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
   const [notificaciones, setNotificaciones] = useState(notificacionesIniciales)
   const [count, setCount] = useState(countInicial)
   const [isPending, startTransition] = useTransition()
+  const pathname = usePathname()
   const panelRef = useRef<HTMLDivElement>(null)
-  const prevIdsRef = useRef<Set<string>>(new Set(notificacionesIniciales.map((n) => n.id)))
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const notifPermissionRef = useRef<NotificationPermission>("default")
+  const notificacionesRef = useRef<Notificacion[]>(notificacionesIniciales)
+  const countRef = useRef(countInicial)
+  const isOnSoportePage = pathname?.startsWith("/soporte") ?? false
+
+  const setCountSafe = useCallback((nextCount: number) => {
+    const normalized = Math.max(0, nextCount)
+    countRef.current = normalized
+    setCount(normalized)
+  }, [])
+
+  const incrementarCount = useCallback(() => {
+    setCountSafe(countRef.current + 1)
+  }, [setCountSafe])
+
+  const decrementarCount = useCallback(() => {
+    setCountSafe(countRef.current - 1)
+  }, [setCountSafe])
+
+  const insertarNotificacionLocal = useCallback((notif: Notificacion) => {
+    const prev = notificacionesRef.current
+    if (prev.some((n) => n.id === notif.id)) return false
+
+    const next = [notif, ...prev].slice(0, 50)
+    notificacionesRef.current = next
+    setNotificaciones(next)
+    return true
+  }, [])
+
+  const marcarNotificacionLeidaLocal = useCallback((id: string) => {
+    const prev = notificacionesRef.current
+    let found = false
+    let unreadWasUpdated = false
+
+    const next = prev.map((notif) => {
+      if (notif.id !== id) return notif
+      found = true
+      if (!notif.leida) unreadWasUpdated = true
+      return notif.leida ? notif : { ...notif, leida: true }
+    })
+
+    if (!found) return false
+
+    notificacionesRef.current = next
+    setNotificaciones(next)
+    if (unreadWasUpdated) {
+      decrementarCount()
+    }
+
+    return true
+  }, [decrementarCount])
+
+  const marcarTodasLeidasLocal = useCallback(() => {
+    const prev = notificacionesRef.current
+    let hasUnread = false
+
+    const next = prev.map((notif) => {
+      if (!notif.leida) hasUnread = true
+      return notif.leida ? notif : { ...notif, leida: true }
+    })
+
+    if (!hasUnread) return false
+
+    notificacionesRef.current = next
+    setNotificaciones(next)
+    setCountSafe(0)
+    return true
+  }, [setCountSafe])
+
+  const eliminarNotificacionLocal = useCallback((id: string) => {
+    const prev = notificacionesRef.current
+    const target = prev.find((n) => n.id === id)
+    if (!target) return false
+
+    const next = prev.filter((n) => n.id !== id)
+    notificacionesRef.current = next
+    setNotificaciones(next)
+
+    if (!target.leida) {
+      decrementarCount()
+    }
+
+    return true
+  }, [decrementarCount])
+
+  useEffect(() => {
+    notificacionesRef.current = notificaciones
+  }, [notificaciones])
+
+  useEffect(() => {
+    countRef.current = count
+  }, [count])
 
   // Precargar audio y pedir permiso de notificaciones nativas
   useEffect(() => {
@@ -72,13 +165,6 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
   // Mostrar notificación nativa del navegador (como WhatsApp Web)
   const showBrowserNotification = useCallback((notif: Notificacion) => {
     if (!("Notification" in window) || Notification.permission !== "granted") return
-
-    const tipoLabels: Record<string, string> = {
-      calendario: "📅 Calendario",
-      info: "ℹ️ Información",
-      alerta: "⚠️ Alerta",
-      correspondencia: "✉️ Correspondencia",
-    }
 
     const tag = `notif-${notif.id}`
     const nativeNotif = new Notification(notif.titulo, {
@@ -148,32 +234,113 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
     )
   }, [])
 
-  // Refrescar cada 30 segundos y mostrar toast para notificaciones nuevas
+  const normalizarNotificacion = useCallback((payload: NotificacionSocketPayload): Notificacion => {
+    return {
+      id: payload.id,
+      titulo: payload.titulo,
+      mensaje: payload.mensaje,
+      tipo: payload.tipo,
+      leida: payload.leida,
+      enlace: payload.enlace ?? null,
+      createdAt: payload.createdAt,
+    }
+  }, [])
+
+  const sincronizarNotificaciones = useCallback(async () => {
+    try {
+      const [newNotifs, newCount] = await Promise.all([
+        obtenerNotificacionesUsuario(usuarioId),
+        contarNotificacionesNoLeidas(usuarioId),
+      ])
+
+      notificacionesRef.current = newNotifs
+      setNotificaciones(newNotifs)
+      setCountSafe(newCount)
+    } catch {
+      // silencioso
+    }
+  }, [setCountSafe, usuarioId])
+
+  // Suscripcion realtime para notificaciones
   useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const [newNotifs, newCount] = await Promise.all([
-          obtenerNotificacionesUsuario(usuarioId),
-          contarNotificacionesNoLeidas(usuarioId),
-        ])
+    const socket = getSocket()
 
-        // Detectar notificaciones nuevas (que no existían antes)
-        const nuevas = newNotifs.filter((n) => !prevIdsRef.current.has(n.id))
-        if (nuevas.length > 0) playNotifSound()
-        nuevas.forEach((n) => {
-          showNotifToast(n)
-          showBrowserNotification(n)
-        })
+    const onConnect = () => {
+      socket.emit("user:join", usuarioId)
+      void sincronizarNotificaciones()
+    }
 
-        // Actualizar referencia de IDs conocidos
-        prevIdsRef.current = new Set(newNotifs.map((n) => n.id))
+    const onNotificationNew = (payload: NotificacionSocketPayload) => {
+      if (payload.usuarioId !== usuarioId) return
 
-        setNotificaciones(newNotifs)
-        setCount(newCount)
-      } catch { /* silencioso */ }
-    }, 30000)
-    return () => clearInterval(interval)
-  }, [usuarioId, showNotifToast, playNotifSound, showBrowserNotification])
+      const notif = normalizarNotificacion(payload)
+      const shouldAutoRead = isOnSoportePage && notif.tipo === "soporte"
+      const notifForList = shouldAutoRead ? { ...notif, leida: true } : notif
+      const inserted = insertarNotificacionLocal(notifForList)
+      if (!inserted) return
+
+      if (shouldAutoRead) {
+        void marcarNotificacionLeida(notif.id)
+        return
+      }
+
+      if (!notif.leida) {
+        incrementarCount()
+      }
+      playNotifSound()
+      showNotifToast(notif)
+      showBrowserNotification(notif)
+    }
+
+    const onNotificationRead = (payload: NotificationReadPayload) => {
+      if (payload.usuarioId !== usuarioId) return
+      marcarNotificacionLeidaLocal(payload.id)
+    }
+
+    const onNotificationReadAll = (payload: NotificationReadAllPayload) => {
+      if (payload.usuarioId !== usuarioId) return
+      marcarTodasLeidasLocal()
+    }
+
+    const onNotificationDelete = (payload: NotificationDeletePayload) => {
+      if (payload.usuarioId !== usuarioId) return
+      eliminarNotificacionLocal(payload.id)
+    }
+
+    socket.emit("user:join", usuarioId)
+    const syncTimeout = window.setTimeout(() => {
+      void sincronizarNotificaciones()
+    }, 0)
+
+    socket.on("connect", onConnect)
+    socket.on("notification:new", onNotificationNew)
+    socket.on("notification:read", onNotificationRead)
+    socket.on("notification:read-all", onNotificationReadAll)
+    socket.on("notification:delete", onNotificationDelete)
+
+    return () => {
+      window.clearTimeout(syncTimeout)
+      socket.emit("user:leave", usuarioId)
+      socket.off("connect", onConnect)
+      socket.off("notification:new", onNotificationNew)
+      socket.off("notification:read", onNotificationRead)
+      socket.off("notification:read-all", onNotificationReadAll)
+      socket.off("notification:delete", onNotificationDelete)
+    }
+  }, [
+    eliminarNotificacionLocal,
+    incrementarCount,
+    insertarNotificacionLocal,
+    isOnSoportePage,
+    marcarNotificacionLeidaLocal,
+    marcarTodasLeidasLocal,
+    normalizarNotificacion,
+    playNotifSound,
+    showBrowserNotification,
+    showNotifToast,
+    sincronizarNotificaciones,
+    usuarioId,
+  ])
 
   // Cerrar al hacer clic fuera
   useEffect(() => {
@@ -189,16 +356,14 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
   function handleMarcarLeida(id: string) {
     startTransition(async () => {
       await marcarNotificacionLeida(id)
-      setNotificaciones((prev) => prev.map((n) => n.id === id ? { ...n, leida: true } : n))
-      setCount((c) => Math.max(0, c - 1))
+      marcarNotificacionLeidaLocal(id)
     })
   }
 
   function handleMarcarTodas() {
     startTransition(async () => {
       await marcarTodasLeidas(usuarioId)
-      setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })))
-      setCount(0)
+      marcarTodasLeidasLocal()
       toast.success("Todas las notificaciones marcadas como leídas")
     })
   }
@@ -206,15 +371,11 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
   function handleEliminar(id: string) {
     startTransition(async () => {
       await eliminarNotificacion(id)
-      setNotificaciones((prev) => {
-        const removed = prev.find((n) => n.id === id)
-        if (removed && !removed.leida) setCount((c) => Math.max(0, c - 1))
-        return prev.filter((n) => n.id !== id)
-      })
+      eliminarNotificacionLocal(id)
     })
   }
 
-  function formatTiempo(date: Date) {
+  function formatTiempo(date: Date | string) {
     const ahora = new Date()
     const diff = ahora.getTime() - new Date(date).getTime()
     const mins = Math.floor(diff / 60000)
@@ -399,3 +560,4 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
     </div>
   )
 }
+

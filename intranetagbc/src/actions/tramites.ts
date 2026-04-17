@@ -3,10 +3,10 @@
 import { db } from "@/db"
 import { solicitudes } from "@/db/schema/tramites.schema"
 import { users } from "@/db/schema/users.schema"
-import { notificaciones } from "@/db/schema/notificaciones.schema"
 import { eq, desc, or } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { registrarAuditLog } from "@/actions/auditoria"
+import { crearNotificacionRealtime } from "@/lib/notificaciones-realtime"
 
 export async function obtenerSolicitudes() {
   return db
@@ -96,7 +96,7 @@ export async function crearSolicitud(data: {
     const solicitante = await db.select({ firstName: users.firstName, lastNamePaternal: users.lastNamePaternal })
       .from(users).where(eq(users.id, data.solicitanteId)).limit(1)
     const nombre = solicitante[0] ? `${solicitante[0].firstName} ${solicitante[0].lastNamePaternal}` : "Un usuario"
-    await db.insert(notificaciones).values({
+    await crearNotificacionRealtime({
       titulo: `Nueva solicitud: ${codigo}`,
       mensaje: `${nombre} te envió una solicitud de ${data.tipo.replace(/_/g, " ")}`,
       tipo: "solicitud",
@@ -143,7 +143,7 @@ export async function actualizarSolicitud(id: string, data: Partial<{
 
       if (respuestaNueva) {
         // Notificar al solicitante de la respuesta
-        await db.insert(notificaciones).values({
+        await crearNotificacionRealtime({
           titulo: `Respuesta a tu solicitud ${actualizado.codigo}`,
           mensaje: `Tu solicitud fue respondida${estadoCambio ? ` y marcada como ${estadoLabel}` : ""}`,
           tipo: "solicitud",
@@ -153,7 +153,7 @@ export async function actualizarSolicitud(id: string, data: Partial<{
         })
       } else if (estadoCambio) {
         // Solo cambio de estado
-        await db.insert(notificaciones).values({
+        await crearNotificacionRealtime({
           titulo: `Solicitud ${actualizado.codigo} ${estadoLabel}`,
           mensaje: `El estado de tu solicitud cambió a: ${estadoLabel}`,
           tipo: "solicitud",

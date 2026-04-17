@@ -34,6 +34,16 @@ app
         if (!ticketId || typeof ticketId !== "string") return
         socket.leave(`ticket:${ticketId}`)
       })
+
+      socket.on("user:join", (userId) => {
+        if (!userId || typeof userId !== "string") return
+        socket.join(`user:${userId}`)
+      })
+
+      socket.on("user:leave", (userId) => {
+        if (!userId || typeof userId !== "string") return
+        socket.leave(`user:${userId}`)
+      })
     })
 
     httpServer

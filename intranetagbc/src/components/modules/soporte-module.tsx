@@ -19,6 +19,7 @@ import {
   enviarMensaje,
   actualizarEstadoTicket,
 } from "@/actions/soporte"
+import { marcarNotificacionesSoporteLeidas } from "@/actions/notificaciones"
 import { getSocket } from "@/lib/socket"
 
 // ─── Types ───
@@ -171,6 +172,10 @@ export function SoporteModule({ tickets: initialTickets, usuarios, currentUserId
   }, [selectedTicket?.id])
 
   useEffect(() => {
+    void marcarNotificacionesSoporteLeidas(currentUserId)
+  }, [currentUserId])
+
+  useEffect(() => {
     const socket = getSocket()
 
     const onTicketMessageNew = (payload: TicketMessageNewPayload) => {
@@ -179,6 +184,9 @@ export function SoporteModule({ tickets: initialTickets, usuarios, currentUserId
       actualizarTicketActividad(message.ticketId, ticketUpdatedAt)
 
       if (selectedTicketIdRef.current !== message.ticketId) return
+      if (message.emisorId !== currentUserId) {
+        void marcarNotificacionesSoporteLeidas(currentUserId)
+      }
 
       setMensajes(prev => {
         if (prev.some(msg => msg.id === message.id)) return prev
@@ -194,7 +202,7 @@ export function SoporteModule({ tickets: initialTickets, usuarios, currentUserId
     return () => {
       socket.off("ticket:message:new", onTicketMessageNew)
     }
-  }, [actualizarTicketActividad])
+  }, [actualizarTicketActividad, currentUserId])
 
   useEffect(() => {
     if (!selectedTicket?.id) {
@@ -207,12 +215,13 @@ export function SoporteModule({ tickets: initialTickets, usuarios, currentUserId
 
     setMensajes([])
     void cargarMensajes(ticketId)
+    void marcarNotificacionesSoporteLeidas(currentUserId)
     socket.emit("ticket:join", ticketId)
 
     return () => {
       socket.emit("ticket:leave", ticketId)
     }
-  }, [selectedTicket?.id, cargarMensajes])
+  }, [selectedTicket?.id, cargarMensajes, currentUserId])
 
   // ─── Auto-scroll a último mensaje ───
   useEffect(() => {

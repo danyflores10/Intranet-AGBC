@@ -3,9 +3,9 @@
 import { db } from "@/db"
 import { ticketsSoporte, mensajesSoporte } from "@/db/schema/soporte.schema"
 import { users } from "@/db/schema/users.schema"
-import { notificaciones } from "@/db/schema/notificaciones.schema"
 import { eq, desc, or, count } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
+import { crearNotificacionRealtime } from "@/lib/notificaciones-realtime"
 
 // ─── Obtener usuarios activos ───
 export async function obtenerUsuariosSoporte() {
@@ -65,7 +65,7 @@ export async function crearTicketSoporte(data: {
   })
 
   // Notificación al agente
-  await db.insert(notificaciones).values({
+  await crearNotificacionRealtime({
     titulo: "Nueva solicitud de soporte",
     mensaje: `Has recibido una nueva solicitud de soporte: ${data.asunto}`,
     tipo: "soporte",
@@ -120,7 +120,7 @@ export async function enviarMensaje(data: {
       ? ticket.agenteId
       : ticket.solicitanteId
     if (destinatarioId) {
-      await db.insert(notificaciones).values({
+      await crearNotificacionRealtime({
         titulo: "Nuevo mensaje de soporte",
         mensaje: data.contenido
           ? data.contenido.substring(0, 200)
@@ -188,7 +188,7 @@ export async function actualizarEstadoTicket(
       ? ticket.agenteId
       : ticket.solicitanteId
     if (destinatarioId) {
-      await db.insert(notificaciones).values({
+      await crearNotificacionRealtime({
         titulo: `Ticket de soporte ${estadoLabel[estado] ?? estado}`,
         mensaje: `El ticket ${ticket.codigo} ha sido ${estadoLabel[estado] ?? estado}`,
         tipo: "soporte",
