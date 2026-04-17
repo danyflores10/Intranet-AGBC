@@ -5,7 +5,8 @@ import {
   PlusIcon, SearchIcon, SendIcon, PaperclipIcon, UserIcon,
   PhoneIcon, VideoIcon, XIcon, ImageIcon, FileIcon, DownloadIcon,
   LifeBuoyIcon, CheckCircle2Icon, ClockIcon, MessageSquareIcon,
-  FileTextIcon, ChevronLeftIcon, CircleDotIcon,
+  FileTextIcon, ChevronLeftIcon, CircleDotIcon, MonitorSmartphoneIcon,
+  CopyIcon, CheckIcon, MonitorIcon, ArrowRightIcon,
 } from "lucide-react"
 import toast from "react-hot-toast"
 
@@ -139,6 +140,10 @@ export function SoporteModule({
   const [showAgenteDropdown, setShowAgenteDropdown] = useState(false)
   const [selectedAgente, setSelectedAgente] = useState<Usuario | null>(null)
   const [mobileShowChat, setMobileShowChat] = useState(Boolean(initialSelectedTicket))
+  const [anydeskDialogOpen, setAnydeskDialogOpen] = useState(false)
+  const [anydeskMode, setAnydeskMode] = useState<"solicitar" | "compartir">("solicitar")
+  const [anydeskId, setAnydeskId] = useState("")
+  const [anydeskCopied, setAnydeskCopied] = useState<string | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -407,6 +412,65 @@ export function SoporteModule({
     setCallDialogOpen(false)
   }
 
+  // ─── AnyDesk: solicitar o compartir ID ───
+  function abrirAnydeskDialog(modo: "solicitar" | "compartir") {
+    setAnydeskMode(modo)
+    setAnydeskId("")
+    setAnydeskDialogOpen(true)
+  }
+
+  async function handleAnydeskEnviar() {
+    if (!selectedTicket) return
+
+    if (anydeskMode === "solicitar") {
+      // Enviar mensaje pidiendo el ID de AnyDesk
+      startTransition(async () => {
+        try {
+          await enviarMensaje({
+            ticketId: selectedTicket.id,
+            emisorId: currentUserId,
+            contenido: "SOLICITUD_ANYDESK",
+            tipoMensaje: "anydesk",
+            archivoNombre: "solicitar",
+          })
+          setAnydeskDialogOpen(false)
+          toast.success("Solicitud de AnyDesk enviada")
+        } catch {
+          toast.error("Error al enviar solicitud")
+        }
+      })
+    } else {
+      // Compartir mi ID de AnyDesk
+      const id = anydeskId.trim()
+      if (!id) {
+        toast.error("Ingresa tu ID de AnyDesk")
+        return
+      }
+      startTransition(async () => {
+        try {
+          await enviarMensaje({
+            ticketId: selectedTicket.id,
+            emisorId: currentUserId,
+            contenido: id,
+            tipoMensaje: "anydesk",
+            archivoNombre: "compartir",
+          })
+          setAnydeskDialogOpen(false)
+          setAnydeskId("")
+          toast.success("ID de AnyDesk compartido")
+        } catch {
+          toast.error("Error al compartir ID")
+        }
+      })
+    }
+  }
+
+  function copiarAnydeskId(id: string) {
+    navigator.clipboard.writeText(id)
+    setAnydeskCopied(id)
+    setTimeout(() => setAnydeskCopied(null), 2000)
+  }
+
   // ─── Abrir visor de archivo ───
   function openFileViewer(url: string, nombre: string, tipo: string) {
     setFileViewerUrl(url)
@@ -602,6 +666,14 @@ export function SoporteModule({
                         <>
                           <button
                             type="button"
+                            title="AnyDesk - Acceso remoto"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg transition-all hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+                            onClick={() => abrirAnydeskDialog("solicitar")}
+                          >
+                            <MonitorSmartphoneIcon className="h-4.5 w-4.5" />
+                          </button>
+                          <button
+                            type="button"
                             title="Llamada de voz"
                             className="inline-flex h-9 w-9 items-center justify-center rounded-lg transition-all hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-950/30 dark:hover:text-green-400"
                             onClick={() => iniciarLlamada("audio")}
@@ -681,6 +753,97 @@ export function SoporteModule({
                               )}
                               {msg.contenido}
                             </button>
+                          </div>
+                        )
+                      }
+
+                      // Mensaje de AnyDesk
+                      if (msg.tipoMensaje === "anydesk") {
+                        const esSolicitud = msg.archivoNombre === "solicitar"
+                        const esMioAnydesk = msg.emisorId === currentUserId
+                        const emisorAnydesk = usuariosMap.get(msg.emisorId)
+
+                        if (esSolicitud) {
+                          // Tarjeta de solicitud de AnyDesk
+                          return (
+                            <div key={msg.id} className="flex justify-center my-3">
+                              <div className="rounded-2xl overflow-hidden border border-red-200 dark:border-red-800/50 shadow-sm max-w-sm w-full">
+                                {/* Header rojo AnyDesk */}
+                                <div className="bg-gradient-to-r from-red-500 to-red-600 px-4 py-2.5 flex items-center gap-2">
+                                  <MonitorSmartphoneIcon className="h-4 w-4 text-white" />
+                                  <span className="text-sm font-semibold text-white">AnyDesk - Acceso Remoto</span>
+                                </div>
+                                <div className="bg-gradient-to-b from-red-50 to-white dark:from-red-950/20 dark:to-background p-4">
+                                  <p className="text-sm text-center font-medium">
+                                    {esMioAnydesk ? "Solicitaste" : `${emisorAnydesk ? emisorAnydesk.firstName : "El agente"} solicita`} el ID de AnyDesk para conectarse de forma remota
+                                  </p>
+                                  {!esMioAnydesk && (
+                                    <button
+                                      type="button"
+                                      onClick={() => abrirAnydeskDialog("compartir")}
+                                      className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 text-sm font-semibold transition-all hover:shadow-lg hover:shadow-red-500/25"
+                                    >
+                                      <MonitorIcon className="h-4 w-4" />
+                                      Compartir mi ID de AnyDesk
+                                    </button>
+                                  )}
+                                  <p className="text-[10px] text-muted-foreground text-center mt-2">
+                                    {formatHora(msg.createdAt)}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        }
+
+                        // Tarjeta con ID de AnyDesk compartido
+                        return (
+                          <div key={msg.id} className="flex justify-center my-3">
+                            <div className="rounded-2xl overflow-hidden border border-red-200 dark:border-red-800/50 shadow-sm max-w-sm w-full">
+                              {/* Header rojo AnyDesk */}
+                              <div className="bg-gradient-to-r from-red-500 to-red-600 px-4 py-2.5 flex items-center gap-2">
+                                <MonitorSmartphoneIcon className="h-4 w-4 text-white" />
+                                <span className="text-sm font-semibold text-white">AnyDesk - ID Compartido</span>
+                              </div>
+                              <div className="bg-gradient-to-b from-red-50 to-white dark:from-red-950/20 dark:to-background p-4">
+                                <p className="text-xs text-muted-foreground text-center mb-2">
+                                  {esMioAnydesk ? "Compartiste tu" : `${emisorAnydesk ? emisorAnydesk.firstName : "Usuario"} compartió su`} ID de AnyDesk
+                                </p>
+                                {/* ID grande y copiable */}
+                                <div className="flex items-center justify-center gap-2 bg-white dark:bg-background border border-red-100 dark:border-red-900/30 rounded-xl px-4 py-3">
+                                  <MonitorIcon className="h-5 w-5 text-red-500 flex-shrink-0" />
+                                  <span className="text-lg font-mono font-bold tracking-wider text-foreground">
+                                    {msg.contenido}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    title="Copiar ID"
+                                    onClick={() => copiarAnydeskId(msg.contenido ?? "")}
+                                    className="inline-flex h-7 w-7 items-center justify-center rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors flex-shrink-0"
+                                  >
+                                    {anydeskCopied === msg.contenido ? (
+                                      <CheckIcon className="h-3.5 w-3.5 text-green-500" />
+                                    ) : (
+                                      <CopyIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                                    )}
+                                  </button>
+                                </div>
+                                {/* Botón conectar */}
+                                {!esMioAnydesk && (
+                                  <button
+                                    type="button"
+                                    onClick={() => window.open(`anydesk:${msg.contenido}`, "_self")}
+                                    className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 text-sm font-semibold transition-all hover:shadow-lg hover:shadow-red-500/25"
+                                  >
+                                    <ArrowRightIcon className="h-4 w-4" />
+                                    Conectar con AnyDesk
+                                  </button>
+                                )}
+                                <p className="text-[10px] text-muted-foreground text-center mt-2">
+                                  {formatHora(msg.createdAt)}
+                                </p>
+                              </div>
+                            </div>
                           </div>
                         )
                       }
@@ -1030,6 +1193,116 @@ export function SoporteModule({
               >
                 {callType === "video" ? <VideoIcon className="h-4 w-4" /> : <PhoneIcon className="h-4 w-4" />}
                 Iniciar {callType === "video" ? "videollamada" : "llamada"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ═══════════════════════════════════════════ */}
+      {/* Dialog: AnyDesk - Acceso Remoto            */}
+      {/* ═══════════════════════════════════════════ */}
+      <Dialog open={anydeskDialogOpen} onOpenChange={setAnydeskDialogOpen}>
+        <DialogContent className="p-0 gap-0 overflow-hidden rounded-2xl max-w-sm border-0 shadow-2xl">
+          <div className="flex h-1.5 w-full">
+            <div className="flex-1 bg-red-500" />
+            <div className="flex-1 bg-red-600" />
+            <div className="flex-1 bg-red-700" />
+          </div>
+          <div className="p-6">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-lg">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-red-500/20 to-red-600/20">
+                  <MonitorSmartphoneIcon className="h-5 w-5 text-red-500" />
+                </div>
+                AnyDesk - Acceso Remoto
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="mt-4 space-y-3">
+              {/* Tabs: Solicitar / Compartir */}
+              <div className="flex rounded-lg bg-muted/50 p-1 gap-1">
+                <button
+                  type="button"
+                  onClick={() => setAnydeskMode("solicitar")}
+                  className={`flex-1 rounded-md px-3 py-2 text-xs font-semibold transition-all ${
+                    anydeskMode === "solicitar"
+                      ? "bg-red-500 text-white shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Solicitar ID
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAnydeskMode("compartir")}
+                  className={`flex-1 rounded-md px-3 py-2 text-xs font-semibold transition-all ${
+                    anydeskMode === "compartir"
+                      ? "bg-red-500 text-white shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Compartir mi ID
+                </button>
+              </div>
+
+              {anydeskMode === "solicitar" ? (
+                <div className="text-center py-4 space-y-3">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-red-100 to-red-200 dark:from-red-950/40 dark:to-red-900/40">
+                    <MonitorSmartphoneIcon className="h-8 w-8 text-red-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Solicitar acceso remoto</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Se enviará un mensaje al usuario solicitando su ID de AnyDesk para poder conectarse de forma remota a su equipo.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3 py-2">
+                  <div className="text-center">
+                    <p className="text-sm font-medium">Compartir tu ID de AnyDesk</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Ingresa tu ID o dirección de AnyDesk para que el otro participante pueda conectarse.
+                    </p>
+                  </div>
+                  <div className="relative">
+                    <MonitorIcon className="absolute left-3 top-3 h-4 w-4 text-red-400" />
+                    <Input
+                      placeholder="Ej: 123 456 789 o mi-equipo"
+                      className="pl-9 rounded-lg text-center font-mono text-lg tracking-wider h-11"
+                      value={anydeskId}
+                      onChange={e => setAnydeskId(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground text-center">
+                    Abre AnyDesk en tu equipo para ver tu ID (parte superior de la ventana)
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4 border-t mt-4">
+              <Button variant="outline" onClick={() => setAnydeskDialogOpen(false)} className="rounded-lg">
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleAnydeskEnviar}
+                disabled={isPending || (anydeskMode === "compartir" && !anydeskId.trim())}
+                className="gap-2 rounded-lg font-semibold bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md shadow-red-500/20 hover:shadow-lg hover:shadow-red-500/30"
+              >
+                {anydeskMode === "solicitar" ? (
+                  <>
+                    <SendIcon className="h-4 w-4" />
+                    {isPending ? "Enviando..." : "Solicitar ID"}
+                  </>
+                ) : (
+                  <>
+                    <MonitorSmartphoneIcon className="h-4 w-4" />
+                    {isPending ? "Compartiendo..." : "Compartir ID"}
+                  </>
+                )}
               </Button>
             </div>
           </div>
