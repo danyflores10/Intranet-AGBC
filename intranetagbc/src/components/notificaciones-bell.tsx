@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect, useRef, useCallback } from "react"
 import { BellIcon, CheckIcon, Trash2Icon, XIcon, CalendarIcon, InfoIcon, AlertTriangleIcon, MailIcon } from "lucide-react"
 import toast from "react-hot-toast"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   obtenerNotificacionesUsuario,
   contarNotificacionesNoLeidas,
@@ -46,6 +46,7 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
   const [count, setCount] = useState(countInicial)
   const [isPending, startTransition] = useTransition()
   const pathname = usePathname()
+  const router = useRouter()
   const panelRef = useRef<HTMLDivElement>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const notifPermissionRef = useRef<NotificationPermission>("default")
@@ -162,6 +163,18 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
     }
   }, [])
 
+  const handleAbrirNotificacion = useCallback((notif: Notificacion) => {
+    if (!notif.leida) {
+      marcarNotificacionLeidaLocal(notif.id)
+      void marcarNotificacionLeida(notif.id)
+    }
+
+    if (notif.enlace) {
+      setOpen(false)
+      router.push(notif.enlace)
+    }
+  }, [marcarNotificacionLeidaLocal, router])
+
   // Mostrar notificación nativa del navegador (como WhatsApp Web)
   const showBrowserNotification = useCallback((notif: Notificacion) => {
     if (!("Notification" in window) || Notification.permission !== "granted") return
@@ -177,15 +190,13 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
 
     nativeNotif.onclick = () => {
       window.focus()
-      if (notif.enlace) {
-        window.location.href = notif.enlace
-      }
+      handleAbrirNotificacion(notif)
       nativeNotif.close()
     }
 
     // Auto cerrar después de 8 segundos
     setTimeout(() => nativeNotif.close(), 8000)
-  }, [])
+  }, [handleAbrirNotificacion])
 
   // Mostrar toast custom para una notificación nueva
   const showNotifToast = useCallback((notif: Notificacion) => {
@@ -199,7 +210,14 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
             t.visible ? "animate-in fade-in slide-in-from-top-2" : "animate-out fade-out slide-out-to-top-2"
           } pointer-events-auto flex w-full max-w-md overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-zinc-900 dark:ring-white/10`}
         >
-          <div className="flex-1 p-4">
+          <button
+            type="button"
+            onClick={() => {
+              toast.dismiss(t.id)
+              handleAbrirNotificacion(notif)
+            }}
+            className="flex-1 p-4 text-left"
+          >
             <div className="flex items-start gap-3">
               <div
                 className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
@@ -216,7 +234,7 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
                 </p>
               </div>
             </div>
-          </div>
+          </button>
           <div className="flex border-l border-gray-200 dark:border-zinc-700">
             <button
               onClick={() => toast.dismiss(t.id)}
@@ -232,7 +250,7 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
         duration: 5000,
       }
     )
-  }, [])
+  }, [handleAbrirNotificacion])
 
   const normalizarNotificacion = useCallback((payload: NotificacionSocketPayload): Notificacion => {
     return {
@@ -480,7 +498,10 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
                           <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${tipoCfg.bg} transition-transform duration-200 group-hover:scale-110`}>
                             <Icon className="h-4 w-4" style={{ color: tipoCfg.color }} />
                           </div>
-                          <div className="flex-1 min-w-0">
+                          <div
+                            className="flex-1 min-w-0 cursor-pointer"
+                            onClick={() => handleAbrirNotificacion(n)}
+                          >
                             <div className="flex items-start gap-2">
                               <div className="flex-1 min-w-0">
                                 <p className="text-[13px] font-bold leading-snug">{n.titulo}</p>
@@ -493,7 +514,10 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
                               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button
                                   type="button"
-                                  onClick={() => handleMarcarLeida(n.id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleMarcarLeida(n.id)
+                                  }}
                                   className="inline-flex h-7 items-center gap-1 rounded-lg px-2 text-[11px] font-medium text-[#FF8800] hover:bg-[#FFB300]/10"
                                   title="Marcar como leída"
                                 >
@@ -502,7 +526,10 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => handleEliminar(n.id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleEliminar(n.id)
+                                  }}
                                   className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10"
                                   title="Eliminar"
                                 >
@@ -534,14 +561,20 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
                           <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted/50">
                             <Icon className="h-3.5 w-3.5 text-muted-foreground/50" />
                           </div>
-                          <div className="flex-1 min-w-0">
+                          <div
+                            className="flex-1 min-w-0 cursor-pointer"
+                            onClick={() => handleAbrirNotificacion(n)}
+                          >
                             <p className="text-[12px] font-semibold leading-snug truncate">{n.titulo}</p>
                             <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{n.mensaje}</p>
                             <p className="text-[10px] text-muted-foreground/40 mt-1.5 font-medium">{formatTiempo(n.createdAt)}</p>
                           </div>
                           <button
                             type="button"
-                            onClick={() => handleEliminar(n.id)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleEliminar(n.id)
+                            }}
                             className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground/40 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 transition-all"
                             title="Eliminar"
                           >

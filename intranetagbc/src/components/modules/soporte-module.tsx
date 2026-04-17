@@ -51,6 +51,7 @@ interface Props {
   tickets: Ticket[]
   usuarios: Usuario[]
   currentUserId: string
+  ticketInicialId?: string | null
 }
 
 // ─── Helpers ───
@@ -111,9 +112,18 @@ function formatFechaCompleta(date: Date | string) {
 }
 
 // ─── Component ───
-export function SoporteModule({ tickets: initialTickets, usuarios, currentUserId }: Props) {
+export function SoporteModule({
+  tickets: initialTickets,
+  usuarios,
+  currentUserId,
+  ticketInicialId = null,
+}: Props) {
+  const initialSelectedTicket = ticketInicialId
+    ? initialTickets.find((ticket) => ticket.id === ticketInicialId) ?? null
+    : null
+
   const [tickets, setTickets] = useState(initialTickets)
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(initialSelectedTicket)
   const [mensajes, setMensajes] = useState<Mensaje[]>([])
   const [nuevoMensaje, setNuevoMensaje] = useState("")
   const [searchTicket, setSearchTicket] = useState("")
@@ -128,7 +138,7 @@ export function SoporteModule({ tickets: initialTickets, usuarios, currentUserId
   const [searchAgente, setSearchAgente] = useState("")
   const [showAgenteDropdown, setShowAgenteDropdown] = useState(false)
   const [selectedAgente, setSelectedAgente] = useState<Usuario | null>(null)
-  const [mobileShowChat, setMobileShowChat] = useState(false)
+  const [mobileShowChat, setMobileShowChat] = useState(Boolean(initialSelectedTicket))
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)

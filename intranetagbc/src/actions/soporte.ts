@@ -7,6 +7,30 @@ import { eq, desc, or, count } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { crearNotificacionRealtime } from "@/lib/notificaciones-realtime"
 
+function nombreCompletoUsuario(usuario?: {
+  firstName: string
+  lastNamePaternal: string
+  lastNameMaternal: string | null
+}) {
+  if (!usuario) return "Usuario"
+  return [usuario.firstName, usuario.lastNamePaternal, usuario.lastNameMaternal]
+    .filter(Boolean)
+    .join(" ")
+}
+
+async function obtenerNombreUsuario(userId: string) {
+  const [usuario] = await db.select({
+    firstName: users.firstName,
+    lastNamePaternal: users.lastNamePaternal,
+    lastNameMaternal: users.lastNameMaternal,
+  })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1)
+
+  return nombreCompletoUsuario(usuario)
+}
+
 // ─── Obtener usuarios activos ───
 export async function obtenerUsuariosSoporte() {
   return db
@@ -65,12 +89,13 @@ export async function crearTicketSoporte(data: {
   })
 
   // Notificación al agente
+  const solicitanteNombre = await obtenerNombreUsuario(data.solicitanteId)
   await crearNotificacionRealtime({
-    titulo: "Nueva solicitud de soporte",
-    mensaje: `Has recibido una nueva solicitud de soporte: ${data.asunto}`,
+    titulo: `Nueva solicitud de ${solicitanteNombre}`,
+    mensaje: `${solicitanteNombre} inició un chat de soporte: ${data.asunto}`,
     tipo: "soporte",
     usuarioId: data.agenteId,
-    enlace: "/soporte",
+    enlace: `/soporte?ticket=${ticket.id}`,
     creadoPor: data.solicitanteId,
   })
 
@@ -120,16 +145,17 @@ export async function enviarMensaje(data: {
       ? ticket.agenteId
       : ticket.solicitanteId
     if (destinatarioId) {
+      const emisorNombre = await obtenerNombreUsuario(data.emisorId)
       await crearNotificacionRealtime({
-        titulo: "Nuevo mensaje de soporte",
+        titulo: `Mensaje de ${emisorNombre}`,
         mensaje: data.contenido
-          ? data.contenido.substring(0, 200)
+          ? `${emisorNombre}: ${data.contenido.substring(0, 180)}`
           : data.archivoNombre
-            ? `Archivo adjunto: ${data.archivoNombre}`
-            : "Nuevo mensaje",
+            ? `${emisorNombre} envió un archivo: ${data.archivoNombre}`
+            : `${emisorNombre} envió un mensaje`,
         tipo: "soporte",
         usuarioId: destinatarioId,
-        enlace: "/soporte",
+        enlace: `/soporte?ticket=${data.ticketId}`,
         creadoPor: data.emisorId,
       })
     }
@@ -188,12 +214,13 @@ export async function actualizarEstadoTicket(
       ? ticket.agenteId
       : ticket.solicitanteId
     if (destinatarioId) {
+      const actorNombre = await obtenerNombreUsuario(userId)
       await crearNotificacionRealtime({
-        titulo: `Ticket de soporte ${estadoLabel[estado] ?? estado}`,
-        mensaje: `El ticket ${ticket.codigo} ha sido ${estadoLabel[estado] ?? estado}`,
+        titulo: `Ticket ${ticket.codigo} actualizado`,
+        mensaje: `${actorNombre} cambió el estado a: ${estadoLabel[estado] ?? estado}`,
         tipo: "soporte",
         usuarioId: destinatarioId,
-        enlace: "/soporte",
+        enlace: `/soporte?ticket=${ticketId}`,
         creadoPor: userId,
       })
     }
