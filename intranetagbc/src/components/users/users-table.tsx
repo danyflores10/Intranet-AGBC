@@ -68,21 +68,29 @@ export function UsersTable({ users, canEdit, canDelete, onEdit, onDelete }: User
         {
           key: "name",
           label: "Nombre",
-          render: (row) => <span className="font-medium">{row.name}</span>,
+          render: (row) => (
+            <div>
+              <span className="font-medium">{row.name}</span>
+              <span className="block text-xs text-muted-foreground sm:hidden">{row.email || "Sin correo"}</span>
+            </div>
+          ),
         },
         {
           key: "email",
           label: "Correo personal",
+          className: "hidden sm:table-cell",
           render: (row) => <span className="text-sm text-muted-foreground">{row.email || "Sin correo"}</span>,
         },
         {
           key: "institutionalEmail",
           label: "Correo institucional",
+          className: "hidden lg:table-cell",
           render: (row) => <span className="text-sm text-muted-foreground">{row.institutionalEmail}</span>,
         },
         {
           key: "nationalId",
           label: "CI",
+          className: "hidden xl:table-cell",
           render: (row) => <span className="font-mono text-xs text-muted-foreground">{row.nationalId}</span>,
         },
         {
@@ -116,12 +124,14 @@ export function UsersTable({ users, canEdit, canDelete, onEdit, onDelete }: User
         },
         {
           key: "emailVerified",
-          label: "Estado de Verificacion de email",
+          label: "Verificación",
+          className: "hidden md:table-cell",
           render: (row) => <VerifiedBadge verified={row.emailVerified} />,
         },
         {
           key: "updatedAt",
           label: "Actualizado",
+          className: "hidden xl:table-cell",
           render: (row) => (
             <span className="text-xs text-muted-foreground">{formatDate(row.updatedAt)}</span>
           ),

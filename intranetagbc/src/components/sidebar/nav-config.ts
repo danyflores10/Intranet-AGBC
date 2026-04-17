@@ -10,7 +10,6 @@
   LifeBuoy,
   MapPin,
   Megaphone,
-  Settings,
   Shield,
   UserPlus,
   Users,
@@ -167,15 +166,6 @@ export const sidebarData: {
       icon: Shield,
       access: {
         permissions: [PERMISOS.AUDITORIA.VER],
-      },
-    },
-    {
-      title: "Configuracion",
-      url: "/configuracion",
-      icon: Settings,
-      access: {
-        permissions: [PERMISOS.CONFIGURACION.VER],
-        roles: ["administrador"],
       },
     },
     {

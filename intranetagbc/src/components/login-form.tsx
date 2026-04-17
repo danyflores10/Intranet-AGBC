@@ -13,21 +13,16 @@ import { cn } from "@/lib/utils"
 import toast from "react-hot-toast"
 import {
   signInSchema,
-  signUpSchema,
   type SignInInput,
-  type SignUpInput,
 } from "@/lib/validations/auth"
 import { Button } from "@/components/ui/button"
 import {
   Field,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-
-type AuthMode = "signIn" | "signUp"
 const INVALID_CREDENTIALS_MESSAGE = "Credenciales invalidas."
 
 function extractErrorMessage(error: unknown) {
@@ -135,18 +130,11 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter()
-  const [mode, setMode] = useState<AuthMode>("signIn")
   const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const signInForm = useForm<SignInInput>({
     resolver: zodResolver(signInSchema),
     defaultValues: { email: "", password: "" },
-  })
-
-  const signUpForm = useForm<SignUpInput>({
-    resolver: zodResolver(signUpSchema),
-    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
   })
 
   async function onSubmitSignIn(values: SignInInput) {
@@ -170,30 +158,7 @@ export function LoginForm({
     }
   }
 
-  async function onSubmitSignUp(values: SignUpInput) {
-    try {
-      const result = await authClient.signUp.email({
-        name: values.name,
-        email: values.email,
-        password: values.password,
-        callbackURL: "/",
-      })
-      if (result.error) {
-        const msg = translateAuthError(result.error.message ?? "No se pudo crear la cuenta.")
-        toast.error(msg)
-        return
-      }
-      toast.success("Cuenta creada exitosamente")
-      router.replace("/")
-      router.refresh()
-    } catch (error) {
-      const msg = extractErrorMessage(error)
-      toast.error(msg)
-    }
-  }
-
   const isSignInPending = signInForm.formState.isSubmitting
-  const isSignUpPending = signUpForm.formState.isSubmitting
 
   return (
     <div className={cn("flex min-h-svh", className)} {...props}>
@@ -319,233 +284,94 @@ export function LoginForm({
             </div>
 
             <div className="rounded-2xl border border-border/60 bg-card p-8 shadow-xl shadow-black/5 dark:shadow-black/20 animate-pulse-glow">
-              {mode === "signIn" ? (
-                <form
-                  noValidate
-                  onSubmit={signInForm.handleSubmit(onSubmitSignIn)}
-                  className="animate-fade-in"
-                >
-                  <FieldGroup>
-                    <div className="mb-6 text-center">
-                      <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent sm:text-4xl">
-                        Bienvenido
-                      </h1>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Ingresa tus credenciales para acceder al sistema
-                      </p>
+              <form
+                noValidate
+                onSubmit={signInForm.handleSubmit(onSubmitSignIn)}
+                className="animate-fade-in"
+              >
+                <FieldGroup>
+                  <div className="mb-6 text-center">
+                    <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent sm:text-4xl">
+                      Bienvenido
+                    </h1>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Ingresa tus credenciales para acceder al sistema
+                    </p>
+                  </div>
+
+                  <Field>
+                    <FieldLabel htmlFor="signin-email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Correo electrónico
+                    </FieldLabel>
+                    <div className="relative group">
+                      <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-[#FFB300]" />
+                      <Input
+                        id="signin-email"
+                        type="email"
+                        autoComplete="email"
+                        placeholder="tu@correos.gob.bo"
+                        className="h-12 pl-11 rounded-xl border-border/60 bg-muted/30 text-sm transition-all focus:border-[#FFB300]/50 focus:ring-[#FFB300]/20 focus:bg-background"
+                        {...signInForm.register("email")}
+                      />
                     </div>
+                    <FieldError errors={[signInForm.formState.errors.email]} />
+                  </Field>
 
-                    <Field>
-                      <FieldLabel htmlFor="signin-email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Correo electrónico
-                      </FieldLabel>
-                      <div className="relative group">
-                        <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-[#FFB300]" />
-                        <Input
-                          id="signin-email"
-                          type="email"
-                          autoComplete="email"
-                          placeholder="tu@correos.gob.bo"
-                          className="h-12 pl-11 rounded-xl border-border/60 bg-muted/30 text-sm transition-all focus:border-[#FFB300]/50 focus:ring-[#FFB300]/20 focus:bg-background"
-                          {...signInForm.register("email")}
-                        />
-                      </div>
-                      <FieldError errors={[signInForm.formState.errors.email]} />
-                    </Field>
-
-                    <Field>
-                      <div className="flex items-center justify-between">
-                        <FieldLabel htmlFor="signin-password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                          Contraseña
-                        </FieldLabel>
-                        <Link
-                          href="/recuperar-contrasena"
-                          className="text-xs font-medium text-[#FF8800] underline-offset-4 hover:text-[#FFB300] hover:underline transition-colors"
-                        >
-                          ¿Olvidaste tu contraseña?
-                        </Link>
-                      </div>
-                      <div className="relative group">
-                        <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-[#FFB300]" />
-                        <Input
-                          id="signin-password"
-                          type={showPassword ? "text" : "password"}
-                          autoComplete="current-password"
-                          className="h-12 pl-11 pr-11 rounded-xl border-border/60 bg-muted/30 text-sm transition-all focus:border-[#FFB300]/50 focus:ring-[#FFB300]/20 focus:bg-background"
-                          {...signInForm.register("password")}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                          tabIndex={-1}
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                      <FieldError errors={[signInForm.formState.errors.password]} />
-                    </Field>
-
-                    <Field>
-                      <Button
-                        type="submit"
-                        className="w-full h-12 text-base font-bold rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-lg shadow-[#FFB300]/25 hover:shadow-xl hover:shadow-[#FFB300]/30 hover:brightness-110 border-0 transition-all duration-300"
-                        disabled={isSignInPending}
-                      >
-                        {isSignInPending ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Ingresando...
-                          </>
-                        ) : (
-                          <>
-                            Iniciar sesión
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                          </>
-                        )}
-                      </Button>
-                    </Field>
-
-                  </FieldGroup>
-                </form>
-              ) : (
-                <form
-                  noValidate
-                  onSubmit={signUpForm.handleSubmit(onSubmitSignUp)}
-                  className="animate-fade-in"
-                >
-                  <FieldGroup>
-                    <div className="mb-6 text-center">
-                      <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent sm:text-4xl">
-                        Crear cuenta
-                      </h1>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Completa los datos para registrarte en el sistema
-                      </p>
-                    </div>
-
-                    <Field>
-                      <FieldLabel htmlFor="signup-name" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Nombre completo
-                      </FieldLabel>
-                      <div className="relative group">
-                        <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-[#FFB300]" />
-                        <Input
-                          id="signup-name"
-                          autoComplete="name"
-                          placeholder="Juan Pérez"
-                          className="h-12 pl-11 rounded-xl border-border/60 bg-muted/30 text-sm transition-all focus:border-[#FFB300]/50 focus:ring-[#FFB300]/20 focus:bg-background"
-                          {...signUpForm.register("name")}
-                        />
-                      </div>
-                      <FieldError errors={[signUpForm.formState.errors.name]} />
-                    </Field>
-
-                    <Field>
-                      <FieldLabel htmlFor="signup-email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Correo electrónico
-                      </FieldLabel>
-                      <div className="relative group">
-                        <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-[#FFB300]" />
-                        <Input
-                          id="signup-email"
-                          type="email"
-                          autoComplete="email"
-                          placeholder="tu@correos.gob.bo"
-                          className="h-12 pl-11 rounded-xl border-border/60 bg-muted/30 text-sm transition-all focus:border-[#FFB300]/50 focus:ring-[#FFB300]/20 focus:bg-background"
-                          {...signUpForm.register("email")}
-                        />
-                      </div>
-                      <FieldError errors={[signUpForm.formState.errors.email]} />
-                    </Field>
-
-                    <Field>
-                      <FieldLabel htmlFor="signup-password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <Field>
+                    <div className="flex items-center justify-between">
+                      <FieldLabel htmlFor="signin-password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         Contraseña
                       </FieldLabel>
-                      <div className="relative group">
-                        <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-[#FFB300]" />
-                        <Input
-                          id="signup-password"
-                          type={showPassword ? "text" : "password"}
-                          autoComplete="new-password"
-                          placeholder="Mínimo 8 caracteres"
-                          className="h-12 pl-11 pr-11 rounded-xl border-border/60 bg-muted/30 text-sm transition-all focus:border-[#FFB300]/50 focus:ring-[#FFB300]/20 focus:bg-background"
-                          {...signUpForm.register("password")}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                          tabIndex={-1}
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                      <FieldError errors={[signUpForm.formState.errors.password]} />
-                    </Field>
-
-                    <Field>
-                      <FieldLabel htmlFor="signup-confirm-password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Confirmar contraseña
-                      </FieldLabel>
-                      <div className="relative group">
-                        <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-[#FFB300]" />
-                        <Input
-                          id="signup-confirm-password"
-                          type={showConfirmPassword ? "text" : "password"}
-                          autoComplete="new-password"
-                          placeholder="Repite tu contraseña"
-                          className="h-12 pl-11 pr-11 rounded-xl border-border/60 bg-muted/30 text-sm transition-all focus:border-[#FFB300]/50 focus:ring-[#FFB300]/20 focus:bg-background"
-                          {...signUpForm.register("confirmPassword")}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                          tabIndex={-1}
-                        >
-                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                      <FieldError errors={[signUpForm.formState.errors.confirmPassword]} />
-                    </Field>
-
-                    <Field>
-                      <Button
-                        type="submit"
-                        className="w-full h-12 text-base font-bold rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-lg shadow-[#FFB300]/25 hover:shadow-xl hover:shadow-[#FFB300]/30 hover:brightness-110 border-0 transition-all duration-300"
-                        disabled={isSignUpPending}
+                      <Link
+                        href="/recuperar-contrasena"
+                        className="text-xs font-medium text-[#FF8800] underline-offset-4 hover:text-[#FFB300] hover:underline transition-colors"
                       >
-                        {isSignUpPending ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Creando cuenta...
-                          </>
-                        ) : (
-                          <>
-                            Registrarse
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                          </>
-                        )}
-                      </Button>
-                    </Field>
-
-                    <FieldDescription className="text-center text-sm">
-                      ¿Ya tienes cuenta?{" "}
+                        ¿Olvidaste tu contraseña?
+                      </Link>
+                    </div>
+                    <div className="relative group">
+                      <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-[#FFB300]" />
+                      <Input
+                        id="signin-password"
+                        type={showPassword ? "text" : "password"}
+                        autoComplete="current-password"
+                        className="h-12 pl-11 pr-11 rounded-xl border-border/60 bg-muted/30 text-sm transition-all focus:border-[#FFB300]/50 focus:ring-[#FFB300]/20 focus:bg-background"
+                        {...signInForm.register("password")}
+                      />
                       <button
                         type="button"
-                        className="font-bold text-[#FF8800] underline underline-offset-4 hover:text-[#FFB300] transition-colors"
-                        onClick={() => {
-                          setMode("signIn")
-                        }}
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        tabIndex={-1}
                       >
-                        Iniciar sesión
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
-                    </FieldDescription>
-                  </FieldGroup>
-                </form>
-              )}
+                    </div>
+                    <FieldError errors={[signInForm.formState.errors.password]} />
+                  </Field>
+
+                  <Field>
+                    <Button
+                      type="submit"
+                      className="w-full h-12 text-base font-bold rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-lg shadow-[#FFB300]/25 hover:shadow-xl hover:shadow-[#FFB300]/30 hover:brightness-110 border-0 transition-all duration-300"
+                      disabled={isSignInPending}
+                    >
+                      {isSignInPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Ingresando...
+                        </>
+                      ) : (
+                        <>
+                          Iniciar sesión
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
+                  </Field>
+
+                </FieldGroup>
+              </form>
             </div>
 
             <div className="mt-6 text-center text-xs text-muted-foreground">

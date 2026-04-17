@@ -71,6 +71,9 @@ export const auth = betterAuth({
     minPasswordLength: 8,
     maxPasswordLength: 128,
     invalidEmailOrPasswordError: INVALID_CREDENTIALS_ERROR,
+    signUp: {
+      enabled: false,
+    },
   },
   rateLimit: {
     window: 60,
