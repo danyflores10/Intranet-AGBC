@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 
     // Check if user exists
     const { rows: users } = await pool.query(
-      'SELECT id FROM "user" WHERE email = $1 LIMIT 1',
+      'SELECT id FROM "users" WHERE email = $1 LIMIT 1',
       [normalizedEmail]
     )
 
@@ -60,14 +60,14 @@ export async function POST(req: NextRequest) {
 
     // Delete old verification entries for this email
     await pool.query(
-      'DELETE FROM "verification" WHERE identifier = $1',
+      'DELETE FROM "verifications" WHERE identifier = $1',
       [identifier]
     )
 
     // Store verification code (expires in 10 minutes)
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
     await pool.query(
-      'INSERT INTO "verification" (id, identifier, value, expires_at, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW())',
+      'INSERT INTO "verifications" (id, identifier, value, expires_at, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW())',
       [id, identifier, code, expiresAt]
     )
 

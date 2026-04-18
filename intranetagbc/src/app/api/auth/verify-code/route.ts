@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     const identifier = `reset:${normalizedEmail}`
 
     const { rows } = await pool.query(
-      'SELECT value, expires_at FROM "verification" WHERE identifier = $1',
+      'SELECT value, expires_at FROM "verifications" WHERE identifier = $1',
       [identifier]
     )
 

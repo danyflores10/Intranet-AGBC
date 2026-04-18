@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
     // Verify code is still valid
     const { rows: verifyRows } = await pool.query(
-      'SELECT value, expires_at FROM "verification" WHERE identifier = $1',
+      'SELECT value, expires_at FROM "verifications" WHERE identifier = $1',
       [identifier]
     )
 
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 
     // Find user
     const { rows: users } = await pool.query(
-      'SELECT id FROM "user" WHERE email = $1 LIMIT 1',
+      'SELECT id FROM "users" WHERE email = $1 LIMIT 1',
       [normalizedEmail]
     )
 
@@ -62,13 +62,13 @@ export async function POST(req: NextRequest) {
 
     // Update password in the credential account
     await pool.query(
-      'UPDATE "account" SET password = $1, updated_at = NOW() WHERE user_id = $2',
+      'UPDATE "accounts" SET password = $1, updated_at = NOW() WHERE user_id = $2',
       [hashedPassword, userId]
     )
 
     // Delete used verification entries
     await pool.query(
-      'DELETE FROM "verification" WHERE identifier = $1',
+      'DELETE FROM "verifications" WHERE identifier = $1',
       [identifier]
     )
 
