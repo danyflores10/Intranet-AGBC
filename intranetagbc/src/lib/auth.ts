@@ -139,11 +139,12 @@ export const auth = betterAuth({
             .from(schema.users)
             .where(eq(schema.users.id, session.userId))
             .limit(1)
-          const nombre = user ? `${user.firstName} ${user.lastNamePaternal}` : session.userId
+
           await db.insert(auditLogs).values({
-            usuario: nombre,
+            usuario: session.userId,
             accion: "Inició sesión",
             modulo: "Autenticación",
+            ip: session.ipAddress ?? undefined,
             resultado: "Exitoso",
             detalles: user?.email ? `Email: ${user.email}` : undefined,
           })

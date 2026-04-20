@@ -11,9 +11,17 @@ export const auditLogs = pgTable(
     accion: varchar('accion', { length: 200 }).notNull(),
     modulo: varchar('modulo', { length: 100 }).notNull(),
     ip: varchar('ip', { length: 100 }),
+    ubicacionCiudad: varchar('ubicacion_ciudad', { length: 120 }),
+    ubicacionPais: varchar('ubicacion_pais', { length: 120 }),
+    ubicacionCodigoPais: varchar('ubicacion_codigo_pais', { length: 10 }),
     resultado: varchar('resultado', { length: 20 }).notNull().default('Exitoso'),
     detalles: text('detalles'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => [index('audit_logs_usuario_idx').on(t.usuario), index('audit_logs_modulo_idx').on(t.modulo)],
+  (t) => [
+    index('audit_logs_usuario_idx').on(t.usuario),
+    index('audit_logs_modulo_idx').on(t.modulo),
+    index('audit_logs_created_at_idx').on(t.createdAt),
+    index('audit_logs_resultado_idx').on(t.resultado),
+  ],
 );

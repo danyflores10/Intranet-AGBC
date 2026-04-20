@@ -11,5 +11,17 @@ export default async function AuditoriaPage() {
   if (!puedeAccederUsuario(usuario, { permissions: [PERMISOS.AUDITORIA.VER] })) redirect("/dashboard")
 
   const result = await obtenerStatsAuditoria()
-  return <AuditoriaModule logs={result.logs} stats={{ total: result.total, exitosos: result.exitosos, fallidos: result.fallidos, modulos: result.modulos }} />
+
+  return (
+    <AuditoriaModule
+      logs={result.logs}
+      userDirectory={result.userDirectory}
+      stats={{
+        total: result.total,
+        exitosos: result.exitosos,
+        fallidos: result.fallidos,
+        modulos: result.modulos,
+      }}
+    />
+  )
 }

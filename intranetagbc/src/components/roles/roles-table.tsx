@@ -301,7 +301,7 @@ export function RolesTable({
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 px-4 py-4 sm:px-5">
         <div>
           <h3 className="text-base font-semibold text-slate-900">Roles</h3>
-          <p className="text-xs text-slate-500">Control de modulos y permisos por cada rol</p>
+          <p className="text-xs text-slate-500">Control de módulos y permisos por cada rol</p>
         </div>
 
         {canCreate ? (
@@ -323,7 +323,7 @@ export function RolesTable({
               setQuery(event.target.value)
               setPage(1)
             }}
-            placeholder="Buscar rol o modulo..."
+            placeholder="Buscar rol o módulo..."
             className="h-9 border-slate-200 bg-slate-50 pl-9 text-sm text-slate-800 placeholder:text-slate-400 focus-visible:ring-violet-200"
           />
         </div>
@@ -337,7 +337,7 @@ export function RolesTable({
                 className="h-9 border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
               >
                 <ArrowUpDownIcon className="mr-2 h-4 w-4" />
-                Sort
+                Ordenar
               </Button>
             </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
@@ -347,7 +347,7 @@ export function RolesTable({
                   setPage(1)
                 }}
               >
-                Mas reciente
+                Más reciente
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -363,7 +363,7 @@ export function RolesTable({
                   setPage(1)
                 }}
               >
-                Mas modulos
+                Más módulos
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -376,7 +376,7 @@ export function RolesTable({
                 className="h-9 border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
               >
                 <FilterIcon className="mr-2 h-4 w-4" />
-                Filter
+                Filtrar
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
@@ -442,16 +442,16 @@ export function RolesTable({
                 Rol
               </th>
               <th className="border-b border-r border-slate-200/80 px-4 py-3 text-left text-sm font-medium text-slate-700">
-                Modulos Permitidos
+                Módulos Permitidos
               </th>
               <th className="border-b border-r border-slate-200/80 px-4 py-3 text-left text-sm font-medium text-slate-700">
                 Permisos Generales
               </th>
               <th className="border-b border-r border-slate-200/80 px-4 py-3 text-left text-sm font-medium text-slate-700">
-                Ultima Actualizacion
+                Última Actualización
               </th>
               <th className="w-16 border-b border-slate-200/80 px-3 py-3 text-center text-sm font-medium text-slate-700">
-                Accion
+                Acción
               </th>
             </tr>
           </thead>
@@ -462,7 +462,7 @@ export function RolesTable({
                   colSpan={6}
                   className="px-4 py-12 text-center text-sm text-slate-500"
                 >
-                  No hay roles que coincidan con la busqueda.
+                  No hay roles que coincidan con la búsqueda.
                 </td>
               </tr>
             ) : (
@@ -494,7 +494,7 @@ export function RolesTable({
                     </td>
                     <td className="border-r border-slate-200/70 px-4 py-3 align-top">
                       {row.modules.length === 0 ? (
-                        <span className="text-xs text-slate-500">Sin modulos</span>
+                        <span className="text-xs text-slate-500">Sin módulos</span>
                       ) : (
                         <div className="flex flex-wrap gap-1.5">
                           {row.modules.slice(0, 5).map((module) => (
@@ -592,7 +592,7 @@ export function RolesTable({
             onClick={() => setPage(Math.max(1, currentPage - 1))}
             className="h-9 px-3 text-sm text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-300"
           >
-            Previous
+            Anterior
           </button>
 
           {paginationItems.map((item, index) =>
@@ -626,7 +626,7 @@ export function RolesTable({
             onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
             className="h-9 border-l border-slate-200 px-3 text-sm text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-300"
           >
-            Next
+            Siguiente
           </button>
         </div>
       </div>

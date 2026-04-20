@@ -514,6 +514,23 @@ export async function editarRol(
 
       if (seEnvioPermisos) {
         await replacePermissions(tx, roleIdLimpio, permissionIdsLimpios);
+
+        const [rolConTimestampActualizado] = await tx
+          .update(roles)
+          .set({
+            updatedAt: new Date(),
+          })
+          .where(eq(roles.id, roleIdLimpio))
+          .returning({
+            id: roles.id,
+            name: roles.name,
+            createdAt: roles.createdAt,
+            updatedAt: roles.updatedAt,
+          });
+
+        if (rolConTimestampActualizado) {
+          rolTx = rolConTimestampActualizado;
+        }
       }
 
       const permisos = await findPermissionsByRoleId(roleIdLimpio, tx);
@@ -621,6 +638,14 @@ export async function reemplazarPermisosDeRol(
 
     const rolActualizado = await db.transaction(async (tx) => {
       await replacePermissions(tx, roleIdLimpio, permissionIdsLimpios);
+
+      await tx
+        .update(roles)
+        .set({
+          updatedAt: new Date(),
+        })
+        .where(eq(roles.id, roleIdLimpio));
+
       const permisos = await findPermissionsByRoleId(roleIdLimpio, tx);
       const rolTx = await findRoleById(roleIdLimpio, tx);
 
