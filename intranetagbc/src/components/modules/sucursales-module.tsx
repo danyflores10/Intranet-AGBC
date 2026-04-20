@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useTransition } from "react"
+import { useMemo, useRef, useState, useTransition } from "react"
 import {
   PlusIcon,
   PencilIcon,
@@ -34,6 +34,8 @@ import {
   actualizarSucursal,
   eliminarSucursal,
 } from "@/actions/sucursales"
+import { PERMISOS } from "@/lib/auth/permisos"
+import { crearContextoAcceso, puedeAcceder, type UsuarioRbac } from "@/lib/rbac"
 
 interface SucursalRow {
   id: string
@@ -54,6 +56,7 @@ interface SucursalRow {
 
 interface Props {
   sucursales: SucursalRow[]
+  usuario: UsuarioRbac
 }
 
 const DEPARTAMENTOS_BOLIVIA = [
@@ -68,7 +71,7 @@ const DEPARTAMENTOS_BOLIVIA = [
   { depto: "Tarija", capital: "Tarija", svgId: "BOT", pinX: "37", pinY: "72.5", color: "#607D8B" },
 ]
 
-export function SucursalesModule({ sucursales: sucursalesInit }: Props) {
+export function SucursalesModule({ sucursales: sucursalesInit, usuario }: Props) {
   const [items, setItems] = useState(sucursalesInit)
   const [busqueda, setBusqueda] = useState("")
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -80,6 +83,19 @@ export function SucursalesModule({ sucursales: sucursalesInit }: Props) {
   const [fotoPreview, setFotoPreview] = useState<string | null>(null)
   const [fotoUrl, setFotoUrl] = useState<string | null>(null)
   const [uploadingFoto, setUploadingFoto] = useState(false)
+  const accessContext = useMemo(() => crearContextoAcceso(usuario), [usuario])
+  const canCreateSucursal = useMemo(
+    () => puedeAcceder({ permissions: [PERMISOS.SUCURSALES.CREAR] }, accessContext),
+    [accessContext],
+  )
+  const canEditSucursal = useMemo(
+    () => puedeAcceder({ permissions: [PERMISOS.SUCURSALES.EDITAR] }, accessContext),
+    [accessContext],
+  )
+  const canDeleteSucursal = useMemo(
+    () => puedeAcceder({ permissions: [PERMISOS.SUCURSALES.ELIMINAR] }, accessContext),
+    [accessContext],
+  )
 
   // Formulario
   const [form, setForm] = useState({
@@ -104,6 +120,10 @@ export function SucursalesModule({ sucursales: sucursalesInit }: Props) {
   )
 
   function openCreate() {
+    if (!canCreateSucursal) {
+      return
+    }
+
     setEditando(null)
     setForm({
       departamento: "",
@@ -124,6 +144,10 @@ export function SucursalesModule({ sucursales: sucursalesInit }: Props) {
   }
 
   function openEdit(row: SucursalRow) {
+    if (!canEditSucursal) {
+      return
+    }
+
     setEditando(row)
     setForm({
       departamento: row.departamento,
@@ -187,6 +211,17 @@ export function SucursalesModule({ sucursales: sucursalesInit }: Props) {
       toast.error("Complete los campos obligatorios")
       return
     }
+
+    if (editando && !canEditSucursal) {
+      toast.error("No tienes permiso para editar sucursales")
+      return
+    }
+
+    if (!editando && !canCreateSucursal) {
+      toast.error("No tienes permiso para crear sucursales")
+      return
+    }
+
     startTransition(async () => {
       try {
         if (editando) {
@@ -219,12 +254,21 @@ export function SucursalesModule({ sucursales: sucursalesInit }: Props) {
   }
 
   function confirmDelete(id: string) {
+    if (!canDeleteSucursal) {
+      return
+    }
+
     setEliminandoId(id)
     setDeleteDialogOpen(true)
   }
 
   function handleDelete() {
     if (!eliminandoId) return
+    if (!canDeleteSucursal) {
+      toast.error("No tienes permiso para eliminar sucursales")
+      return
+    }
+
     startTransition(async () => {
       try {
         await eliminarSucursal(eliminandoId)
@@ -245,13 +289,15 @@ export function SucursalesModule({ sucursales: sucursalesInit }: Props) {
             <h2 className="text-xl font-bold tracking-tight">Administración de Sucursales</h2>
             <p className="text-sm text-muted-foreground">Gestiona las oficinas regionales mostradas en el mapa</p>
           </div>
-          <Button
-            onClick={openCreate}
-            className="bg-gradient-to-r from-[#C41E3A] to-[#a01830] text-white font-semibold shadow-md shadow-[#C41E3A]/20 hover:shadow-lg"
-          >
-            <PlusIcon className="mr-2 h-4 w-4" />
-            Nueva sucursal
-          </Button>
+          {canCreateSucursal ? (
+            <Button
+              onClick={openCreate}
+              className="bg-gradient-to-r from-[#C41E3A] to-[#a01830] text-white font-semibold shadow-md shadow-[#C41E3A]/20 hover:shadow-lg"
+            >
+              <PlusIcon className="mr-2 h-4 w-4" />
+              Nueva sucursal
+            </Button>
+          ) : null}
         </div>
 
         {/* Búsqueda */}
@@ -318,12 +364,16 @@ export function SucursalesModule({ sucursales: sucursalesInit }: Props) {
                         <ExternalLinkIcon className="h-3.5 w-3.5" />
                       </a>
                     )}
-                    <button onClick={() => openEdit(s)} className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-[#FFB300]/10 hover:text-[#FF8800] transition-colors" title="Editar">
-                      <PencilIcon className="h-3.5 w-3.5" />
-                    </button>
-                    <button onClick={() => confirmDelete(s.id)} className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 transition-colors" title="Eliminar">
-                      <Trash2Icon className="h-3.5 w-3.5" />
-                    </button>
+                    {canEditSucursal ? (
+                      <button onClick={() => openEdit(s)} className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-[#FFB300]/10 hover:text-[#FF8800] transition-colors" title="Editar">
+                        <PencilIcon className="h-3.5 w-3.5" />
+                      </button>
+                    ) : null}
+                    {canDeleteSucursal ? (
+                      <button onClick={() => confirmDelete(s.id)} className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 transition-colors" title="Eliminar">
+                        <Trash2Icon className="h-3.5 w-3.5" />
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               </CardContent>
@@ -339,22 +389,23 @@ export function SucursalesModule({ sucursales: sucursalesInit }: Props) {
         )}
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="!w-[94vw] !max-w-[94vw] sm:!max-w-[860px] lg:!max-w-[980px] max-h-[92vh] overflow-y-auto overflow-x-hidden p-0">
-          <div className="flex h-1.5 w-full rounded-t-lg overflow-hidden">
-            <div className="flex-1 bg-[#C41E3A]" />
-            <div className="flex-1 bg-[#FFB300]" />
-            <div className="flex-1 bg-[#2E7D32]" />
-          </div>
-          <div className="p-6 space-y-5">
-            <DialogHeader>
-              <DialogTitle className="text-lg font-bold">
-                {editando ? "Editar sucursal" : "Nueva sucursal"}
-              </DialogTitle>
-              <DialogDescription>
-                {editando ? "Modifique la información de la oficina regional" : "Complete los datos de la nueva oficina regional"}
-              </DialogDescription>
-            </DialogHeader>
+      {canCreateSucursal || canEditSucursal ? (
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="!w-[94vw] !max-w-[94vw] sm:!max-w-[860px] lg:!max-w-[980px] max-h-[92vh] overflow-y-auto overflow-x-hidden p-0">
+            <div className="flex h-1.5 w-full rounded-t-lg overflow-hidden">
+              <div className="flex-1 bg-[#C41E3A]" />
+              <div className="flex-1 bg-[#FFB300]" />
+              <div className="flex-1 bg-[#2E7D32]" />
+            </div>
+            <div className="p-6 space-y-5">
+              <DialogHeader>
+                <DialogTitle className="text-lg font-bold">
+                  {editando ? "Editar sucursal" : "Nueva sucursal"}
+                </DialogTitle>
+                <DialogDescription>
+                  {editando ? "Modifique la información de la oficina regional" : "Complete los datos de la nueva oficina regional"}
+                </DialogDescription>
+              </DialogHeader>
 
             <div className="space-y-1.5">
               <Label>Departamento *</Label>
@@ -467,45 +518,48 @@ export function SucursalesModule({ sucursales: sucursalesInit }: Props) {
               </div>
             </details>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={isPending}
-                className="bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] font-semibold shadow-md shadow-[#FFB300]/20"
-              >
-                {isPending ? "Guardando..." : editando ? "Actualizar" : "Crear sucursal"}
-              </Button>
-            </DialogFooter>
-          </div>
-        </DialogContent>
-      </Dialog>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isPending}
+                  className="bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] font-semibold shadow-md shadow-[#FFB300]/20"
+                >
+                  {isPending ? "Guardando..." : editando ? "Actualizar" : "Crear sucursal"}
+                </Button>
+              </DialogFooter>
+            </div>
+          </DialogContent>
+        </Dialog>
+      ) : null}
 
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="max-w-sm p-0">
-          <div className="flex h-1.5 w-full rounded-t-lg overflow-hidden">
-            <div className="flex-1 bg-[#C41E3A]" />
-            <div className="flex-1 bg-[#FFB300]" />
-            <div className="flex-1 bg-[#2E7D32]" />
-          </div>
-          <div className="p-6 space-y-4">
-            <DialogHeader>
-              <DialogTitle>¿Eliminar sucursal?</DialogTitle>
-              <DialogDescription>Esta acción no se puede deshacer.</DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button variant="destructive" onClick={handleDelete} disabled={isPending}>
-                {isPending ? "Eliminando..." : "Eliminar"}
-              </Button>
-            </DialogFooter>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {canDeleteSucursal ? (
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent className="max-w-sm p-0">
+            <div className="flex h-1.5 w-full rounded-t-lg overflow-hidden">
+              <div className="flex-1 bg-[#C41E3A]" />
+              <div className="flex-1 bg-[#FFB300]" />
+              <div className="flex-1 bg-[#2E7D32]" />
+            </div>
+            <div className="p-6 space-y-4">
+              <DialogHeader>
+                <DialogTitle>¿Eliminar sucursal?</DialogTitle>
+                <DialogDescription>Esta acción no se puede deshacer.</DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button variant="destructive" onClick={handleDelete} disabled={isPending}>
+                  {isPending ? "Eliminando..." : "Eliminar"}
+                </Button>
+              </DialogFooter>
+            </div>
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </>
   )
 }

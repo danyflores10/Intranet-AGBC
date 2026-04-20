@@ -20,9 +20,16 @@ import {
 type RoleCreateDialogProps = {
   permissions: Permission[]
   onCreated: (role: Role) => void
+  triggerLabel?: string
+  triggerClassName?: string
 }
 
-export function RoleCreateDialog({ permissions, onCreated }: RoleCreateDialogProps) {
+export function RoleCreateDialog({
+  permissions,
+  onCreated,
+  triggerLabel,
+  triggerClassName,
+}: RoleCreateDialogProps) {
   const [open, setOpen] = useState(false)
   const [pending, setPending] = useState(false)
 
@@ -52,12 +59,17 @@ export function RoleCreateDialog({ permissions, onCreated }: RoleCreateDialogPro
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] border-0 font-semibold shadow-md shadow-[#FFB300]/20">
+        <Button
+          className={
+            triggerClassName ??
+            "bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] border-0 font-semibold shadow-md shadow-[#FFB300]/20"
+          }
+        >
           <PlusIcon className="mr-2 h-4 w-4" />
-          Nuevo rol
+          {triggerLabel ?? "Nuevo rol"}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden rounded-2xl">
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] p-0 gap-0 overflow-hidden rounded-2xl">
         <div className="flex h-1.5 w-full"><div className="flex-1 bg-[#C41E3A]"/><div className="flex-1 bg-[#FFB300]"/><div className="flex-1 bg-[#2E7D32]"/></div>
         <div className="p-6">
         <DialogHeader>

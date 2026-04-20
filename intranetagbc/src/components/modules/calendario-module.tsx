@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { crearEvento, actualizarEvento, eliminarEvento } from "@/actions/calendario"
+import { PERMISOS } from "@/lib/auth/permisos"
+import { crearContextoAcceso, puedeAcceder, type UsuarioRbac } from "@/lib/rbac"
 
 interface EventoRow {
   id: string
@@ -29,6 +31,7 @@ interface EventoRow {
 
 interface Props {
   eventos: EventoRow[]
+  usuario: UsuarioRbac
 }
 
 const TIPOS_EVENTO = [
@@ -49,7 +52,7 @@ function getTipoConfig(tipo: string) {
   return TIPOS_EVENTO.find((t) => t.value === tipo) ?? TIPOS_EVENTO[3]
 }
 
-export function CalendarioModule({ eventos }: Props) {
+export function CalendarioModule({ eventos, usuario }: Props) {
   const hoy = new Date()
   const [anio, setAnio] = useState(hoy.getFullYear())
   const [mes, setMes] = useState(hoy.getMonth())
@@ -58,6 +61,31 @@ export function CalendarioModule({ eventos }: Props) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
   const [isPending, startTransition] = useTransition()
+  const accessContext = useMemo(() => crearContextoAcceso(usuario), [usuario])
+  const canCreateEvento = useMemo(
+    () =>
+      puedeAcceder(
+        { permissions: [PERMISOS.CALENDARIO.CREAR, PERMISOS.AGENDA.CREAR] },
+        accessContext,
+      ),
+    [accessContext],
+  )
+  const canEditEvento = useMemo(
+    () =>
+      puedeAcceder(
+        { permissions: [PERMISOS.CALENDARIO.EDITAR, PERMISOS.AGENDA.EDITAR] },
+        accessContext,
+      ),
+    [accessContext],
+  )
+  const canDeleteEvento = useMemo(
+    () =>
+      puedeAcceder(
+        { permissions: [PERMISOS.CALENDARIO.ELIMINAR, PERMISOS.AGENDA.ELIMINAR] },
+        accessContext,
+      ),
+    [accessContext],
+  )
 
   const primerDia = new Date(anio, mes, 1)
   const ultimoDia = new Date(anio, mes + 1, 0)
@@ -86,20 +114,51 @@ export function CalendarioModule({ eventos }: Props) {
   }
 
   function openCreate(fecha?: string) {
+    if (!canCreateEvento) {
+      return
+    }
+
     setEditEvento(null)
     setSelectedDate(fecha ?? null)
     setDialogOpen(true)
   }
 
   function openEdit(evento: EventoRow) {
+    if (!canEditEvento) {
+      return
+    }
+
     setEditEvento(evento)
     setSelectedDate(null)
     setDialogOpen(true)
   }
 
+  function handleDeleteEvent(eventId: string) {
+    if (!canDeleteEvento) {
+      toast.error("No tienes permiso para eliminar eventos")
+      return
+    }
+
+    startTransition(async () => {
+      await eliminarEvento(eventId)
+      toast.success("Evento eliminado")
+    })
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
+
+    if (editEvento && !canEditEvento) {
+      toast.error("No tienes permiso para editar eventos")
+      return
+    }
+
+    if (!editEvento && !canCreateEvento) {
+      toast.error("No tienes permiso para crear eventos")
+      return
+    }
+
     startTransition(async () => {
       try {
         const payload = {
@@ -294,14 +353,16 @@ export function CalendarioModule({ eventos }: Props) {
 
           {/* ── Panel lateral ── */}
           <div className="w-full lg:w-[340px] space-y-5">
-            <Button
-              size="lg"
-              onClick={() => openCreate()}
-              className="w-full rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] border-0 font-bold shadow-lg shadow-[#FFB300]/20 h-12 text-sm gap-2 hover:shadow-xl hover:shadow-[#FFB300]/30 transition-all"
-            >
-              <PlusIcon className="h-5 w-5" />
-              Nuevo evento
-            </Button>
+            {canCreateEvento ? (
+              <Button
+                size="lg"
+                onClick={() => openCreate()}
+                className="w-full rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] border-0 font-bold shadow-lg shadow-[#FFB300]/20 h-12 text-sm gap-2 hover:shadow-xl hover:shadow-[#FFB300]/30 transition-all"
+              >
+                <PlusIcon className="h-5 w-5" />
+                Nuevo evento
+              </Button>
+            ) : null}
 
             {/* Eventos del día seleccionado */}
             {selectedDay !== null && (
@@ -317,15 +378,17 @@ export function CalendarioModule({ eventos }: Props) {
                     <div className="py-6 text-center">
                       <SparklesIcon className="h-8 w-8 mx-auto mb-2 text-muted-foreground/20" />
                       <p className="text-xs text-muted-foreground">Sin eventos este día</p>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="mt-3 rounded-xl text-xs h-8"
-                        onClick={() => openCreate(`${anio}-${String(mes + 1).padStart(2, "0")}-${String(selectedDay).padStart(2, "0")}`)}
-                      >
-                        <PlusIcon className="h-3 w-3 mr-1" />
-                        Agregar evento
-                      </Button>
+                      {canCreateEvento ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-3 rounded-xl text-xs h-8"
+                          onClick={() => openCreate(`${anio}-${String(mes + 1).padStart(2, "0")}-${String(selectedDay).padStart(2, "0")}`)}
+                        >
+                          <PlusIcon className="h-3 w-3 mr-1" />
+                          Agregar evento
+                        </Button>
+                      ) : null}
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -346,19 +409,25 @@ export function CalendarioModule({ eventos }: Props) {
                               <p className="text-[11px] text-muted-foreground font-medium mt-0.5">{cfg.label}</p>
                               {ev.descripcion && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{ev.descripcion}</p>}
                             </div>
-                            <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button type="button" onClick={() => openEdit(ev)} className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-[#FFB300]/10 hover:text-[#FF8800]">
-                                <PencilIcon className="h-3 w-3" />
-                              </button>
-                              <button
-                                type="button"
-                                disabled={isPending}
-                                onClick={() => startTransition(async () => { await eliminarEvento(ev.id); toast.success("Evento eliminado") })}
-                                className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 disabled:opacity-50"
-                              >
-                                <Trash2Icon className="h-3 w-3" />
-                              </button>
-                            </div>
+                            {canEditEvento || canDeleteEvento ? (
+                              <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                {canEditEvento ? (
+                                  <button type="button" onClick={() => openEdit(ev)} className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-[#FFB300]/10 hover:text-[#FF8800]">
+                                    <PencilIcon className="h-3 w-3" />
+                                  </button>
+                                ) : null}
+                                {canDeleteEvento ? (
+                                  <button
+                                    type="button"
+                                    disabled={isPending}
+                                    onClick={() => handleDeleteEvent(ev.id)}
+                                    className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 disabled:opacity-50"
+                                  >
+                                    <Trash2Icon className="h-3 w-3" />
+                                  </button>
+                                ) : null}
+                              </div>
+                            ) : null}
                           </div>
                         )
                       })}
@@ -433,19 +502,25 @@ export function CalendarioModule({ eventos }: Props) {
                             )}
                           </div>
 
-                          <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity pt-1">
-                            <button type="button" onClick={() => openEdit(ev)} className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-[#FFB300]/10 hover:text-[#FF8800]">
-                              <PencilIcon className="h-3 w-3" />
-                            </button>
-                            <button
-                              type="button"
-                              disabled={isPending}
-                              onClick={() => startTransition(async () => { await eliminarEvento(ev.id); toast.success("Evento eliminado") })}
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 disabled:opacity-50"
-                            >
-                              <Trash2Icon className="h-3 w-3" />
-                            </button>
-                          </div>
+                          {canEditEvento || canDeleteEvento ? (
+                            <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity pt-1">
+                              {canEditEvento ? (
+                                <button type="button" onClick={() => openEdit(ev)} className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-[#FFB300]/10 hover:text-[#FF8800]">
+                                  <PencilIcon className="h-3 w-3" />
+                                </button>
+                              ) : null}
+                              {canDeleteEvento ? (
+                                <button
+                                  type="button"
+                                  disabled={isPending}
+                                  onClick={() => handleDeleteEvent(ev.id)}
+                                  className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 disabled:opacity-50"
+                                >
+                                  <Trash2Icon className="h-3 w-3" />
+                                </button>
+                              ) : null}
+                            </div>
+                          ) : null}
                         </div>
                       )
                     })}
@@ -458,17 +533,18 @@ export function CalendarioModule({ eventos }: Props) {
       </div>
 
       {/* ── Dialog crear/editar evento ── */}
-      <Dialog open={dialogOpen} onOpenChange={(v) => { if (!v) { setDialogOpen(false); setEditEvento(null); setSelectedDate(null) } }}>
-        <DialogContent className="!w-[95vw] !max-w-[95vw] sm:!max-w-[600px] max-h-[92vh] overflow-y-auto p-0 gap-0 rounded-2xl border-border/50">
-          <div className="flex h-1.5 w-full rounded-t-2xl overflow-hidden"><div className="flex-1 bg-[#C41E3A]"/><div className="flex-1 bg-[#FFB300]"/><div className="flex-1 bg-[#2E7D32]"/></div>
-          <DialogHeader className="px-6 pt-5 pb-0">
-            <DialogTitle className="text-xl font-bold tracking-tight">
-              {editEvento ? "Editar evento" : "Nuevo evento"}
-            </DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              {editEvento ? "Modifica los datos del evento" : "Crea un evento y notifica a todos los trabajadores"}
-            </p>
-          </DialogHeader>
+      {canCreateEvento || canEditEvento ? (
+        <Dialog open={dialogOpen} onOpenChange={(v) => { if (!v) { setDialogOpen(false); setEditEvento(null); setSelectedDate(null) } }}>
+          <DialogContent className="!w-[95vw] !max-w-[95vw] sm:!max-w-[600px] max-h-[92vh] overflow-y-auto p-0 gap-0 rounded-2xl border-border/50">
+            <div className="flex h-1.5 w-full rounded-t-2xl overflow-hidden"><div className="flex-1 bg-[#C41E3A]"/><div className="flex-1 bg-[#FFB300]"/><div className="flex-1 bg-[#2E7D32]"/></div>
+            <DialogHeader className="px-6 pt-5 pb-0">
+              <DialogTitle className="text-xl font-bold tracking-tight">
+                {editEvento ? "Editar evento" : "Nuevo evento"}
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                {editEvento ? "Modifica los datos del evento" : "Crea un evento y notifica a todos los trabajadores"}
+              </p>
+            </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-5 px-6 pb-6 pt-4">
             <div className="space-y-2">
@@ -514,9 +590,10 @@ export function CalendarioModule({ eventos }: Props) {
                 {isPending ? "Guardando..." : editEvento ? "Guardar cambios" : "Crear evento"}
               </Button>
             </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+            </form>
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </>
   )
 }

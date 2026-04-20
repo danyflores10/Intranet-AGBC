@@ -1,16 +1,13 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { ShieldCheckIcon, TableIcon, GridIcon } from "lucide-react"
+import { ShieldCheckIcon } from "lucide-react"
 
-import { RoleCreateDialog } from "@/components/roles/role-create-dialog"
 import { RoleDeleteDialog } from "@/components/roles/role-delete-dialog"
 import { RoleEditDialog } from "@/components/roles/role-edit-dialog"
-import { PermissionsGrid } from "@/components/roles/permissions-grid"
 import { RolesTable } from "@/components/roles/roles-table"
 import type { Permission, Role } from "@/types/roles"
 import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { PERMISOS } from "@/lib/auth/permisos"
 import { crearContextoAcceso, puedeAcceder, type UsuarioRbac } from "@/lib/rbac"
 
@@ -34,7 +31,6 @@ export function RolesModule({
   const [roles, setRoles] = useState<Role[]>(() => ordenarRoles(initialRoles))
   const [roleToEdit, setRoleToEdit] = useState<Role | null>(null)
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null)
-  const [view, setView] = useState<"grid" | "table">("grid")
   const accessContext = useMemo(() => crearContextoAcceso(usuario), [usuario])
   const canCreateRole = useMemo(
     () => puedeAcceder({ permissions: [PERMISOS.ROLES.CREAR] }, accessContext),
@@ -79,10 +75,6 @@ export function RolesModule({
             Crea roles, define permisos y administra el acceso al sistema.
           </p>
         </div>
-
-        {canCreateRole ? (
-          <RoleCreateDialog permissions={availablePermissions} onCreated={handleRoleCreated} />
-        ) : null}
       </div>
 
       {initialMessage ? (
@@ -121,54 +113,24 @@ export function RolesModule({
         </Card>
       </div>
 
-      {/* View toggle */}
-      <div className="flex items-center gap-1 rounded-lg border border-border/40 bg-muted/30 p-1 w-fit">
-        <Button
-          type="button"
-          variant={view === "grid" ? "default" : "ghost"}
-          size="sm"
-          className={view === "grid" ? "bg-[#FFB300] text-[#1a1000] hover:bg-[#FF8800] shadow-sm" : ""}
-          onClick={() => setView("grid")}
-        >
-          <GridIcon className="mr-1.5 h-4 w-4" />
-          Matriz
-        </Button>
-        <Button
-          type="button"
-          variant={view === "table" ? "default" : "ghost"}
-          size="sm"
-          className={view === "table" ? "bg-[#FFB300] text-[#1a1000] hover:bg-[#FF8800] shadow-sm" : ""}
-          onClick={() => setView("table")}
-        >
-          <TableIcon className="mr-1.5 h-4 w-4" />
-          Tabla
-        </Button>
-      </div>
-
-      {view === "grid" ? (
-        <PermissionsGrid
-          roles={roles}
-          permissions={availablePermissions}
-          canEdit={canEditRole}
-          onRoleUpdated={handleRoleUpdated}
-        />
-      ) : (
-        <RolesTable
-          roles={roles}
-          canEdit={canEditRole}
-          canDelete={canDeleteRole}
-          onEdit={(role) => {
-            if (canEditRole) {
-              setRoleToEdit(role)
-            }
-          }}
-          onDelete={(role) => {
-            if (canDeleteRole) {
-              setRoleToDelete(role)
-            }
-          }}
-        />
-      )}
+      <RolesTable
+        roles={roles}
+        availablePermissions={availablePermissions}
+        canCreate={canCreateRole}
+        canEdit={canEditRole}
+        canDelete={canDeleteRole}
+        onRoleCreated={handleRoleCreated}
+        onEdit={(role) => {
+          if (canEditRole) {
+            setRoleToEdit(role)
+          }
+        }}
+        onDelete={(role) => {
+          if (canDeleteRole) {
+            setRoleToDelete(role)
+          }
+        }}
+      />
 
       {canEditRole ? (
         <RoleEditDialog

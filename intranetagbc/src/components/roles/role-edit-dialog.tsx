@@ -67,7 +67,7 @@ export function RoleEditDialog({
         }
       }}
     >
-      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden rounded-2xl">
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] p-0 gap-0 overflow-hidden rounded-2xl">
         <div className="flex h-1.5 w-full"><div className="flex-1 bg-[#C41E3A]"/><div className="flex-1 bg-[#FFB300]"/><div className="flex-1 bg-[#2E7D32]"/></div>
         <div className="p-6">
         <DialogHeader>

@@ -11,5 +11,5 @@ export default async function SucursalesPage() {
   if (!puedeAccederUsuario(usuario, { permissions: [PERMISOS.SUCURSALES.VER], roles: ["administrador"] })) redirect("/dashboard")
 
   const sucursales = await obtenerSucursales()
-  return <SucursalesModule sucursales={sucursales} />
+  return <SucursalesModule sucursales={sucursales} usuario={usuario} />
 }

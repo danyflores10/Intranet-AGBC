@@ -12,5 +12,5 @@ export default async function CalendarioPage() {
 
   const eventos = await obtenerEventos()
 
-  return <CalendarioModule eventos={eventos} />
+  return <CalendarioModule eventos={eventos} usuario={usuario} />
 }
