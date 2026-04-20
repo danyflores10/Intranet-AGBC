@@ -11,6 +11,8 @@ import {
   MapPin,
   Building2,
   CalendarDays,
+  Phone,
+  Briefcase,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -269,41 +271,48 @@ export default async function HomePage() {
         }
 
         return (
-          <section id="directorio" className="border-y border-border/40 bg-gradient-to-b from-muted/10 to-muted/25 scroll-mt-20">
+          <section id="directorio" className="scroll-mt-20" style={{ background: "#e8e8e8" }}>
             <div className="mx-auto max-w-7xl px-6 py-20 md:py-24">
               <div className="mx-auto max-w-2xl text-center mb-14">
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#C41E3A]/20 bg-[#C41E3A]/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#C41E3A]">
                   <Shield className="h-3.5 w-3.5" />
                   Autoridades
                 </div>
-                <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl">
+                <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl text-gray-800">
                   Directorio Institucional
                 </h2>
-                <p className="mt-4 text-muted-foreground text-lg">
+                <p className="mt-4 text-gray-500 text-lg">
                   Jefes y directores que lideran nuestra institución
                 </p>
               </div>
 
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {dirActivos.map((d) => {
                   const color = AVATAR_COLORS[hashN(d.nombre) % AVATAR_COLORS.length]
                   return (
                     <div
                       key={d.id}
-                      className="group relative overflow-hidden rounded-2xl border border-border/40 bg-card transition-all duration-300 hover:border-[#C41E3A]/30 hover:shadow-xl hover:shadow-[#C41E3A]/5 hover:-translate-y-1"
+                      className="group relative flex flex-col items-center rounded-3xl pt-10 pb-8 px-6 transition-all duration-300 hover:-translate-y-1"
+                      style={{
+                        background: "#e8e8e8",
+                        boxShadow: "8px 8px 16px #c5c5c5, -8px -8px 16px #ffffff",
+                      }}
                     >
-                      {/* Banner con gradiente institucional */}
-                      <div className="h-24 w-full bg-gradient-to-br from-[#C41E3A] via-[#a01830] to-[#940533]" />
-
-                      {/* Foto o avatar */}
-                      <div className="flex justify-center -mt-12">
+                      {/* Avatar con ring neumórfico */}
+                      <div
+                        className="relative rounded-full p-1.5 mb-5 transition-transform duration-300 group-hover:scale-105"
+                        style={{
+                          background: "#e8e8e8",
+                          boxShadow: "4px 4px 10px #c5c5c5, -4px -4px 10px #ffffff, inset 2px 2px 5px #c5c5c5, inset -2px -2px 5px #ffffff",
+                        }}
+                      >
                         {d.foto ? (
-                          <div className="relative h-24 w-24 overflow-hidden rounded-full border-4 border-card shadow-xl transition-transform duration-300 group-hover:scale-105">
+                          <div className="relative h-28 w-28 overflow-hidden rounded-full">
                             <Image src={d.foto} alt={d.nombre} fill className="object-cover" />
                           </div>
                         ) : (
                           <div
-                            className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-card text-2xl font-bold text-white shadow-xl transition-transform duration-300 group-hover:scale-105"
+                            className="flex h-28 w-28 items-center justify-center rounded-full text-3xl font-bold text-white"
                             style={{ backgroundColor: color }}
                           >
                             {initials(d.nombre)}
@@ -311,34 +320,76 @@ export default async function HomePage() {
                         )}
                       </div>
 
-                      <div className="p-5 pt-3 text-center">
-                        <h3 className="font-bold text-base">{d.nombre}</h3>
-                        <p className="text-sm font-medium text-[#C41E3A] mt-1">{d.cargo}</p>
+                      {/* Nombre y cargo */}
+                      <h3 className="text-lg font-bold text-gray-800 text-center">{d.nombre}</h3>
+                      <p className="text-sm text-gray-500 mt-1 text-center">{d.cargo}</p>
 
-                        <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#FFB300]/10 px-3 py-1 text-xs font-semibold text-[#FF8800]">
-                          <Building2 className="h-3 w-3" />
-                          {d.unidad}
-                        </div>
-
-                        {(d.email || d.telefono) && (
-                          <div className="mt-4 space-y-2 text-left mx-auto max-w-[220px]">
-                            {d.email && (
-                              <a
-                                href={`mailto:${d.email}`}
-                                className="flex items-center gap-2 text-xs text-muted-foreground hover:text-[#C41E3A] transition-colors"
-                                title={d.email}
-                              >
-                                <Mail className="h-3.5 w-3.5 shrink-0 text-[#C41E3A]" />
-                                <span className="truncate">{d.email}</span>
-                              </a>
-                            )}
-                            {d.telefono && (
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <Clock className="h-3.5 w-3.5 shrink-0 text-[#C41E3A]" />
-                                <span>{d.telefono}</span>
-                              </div>
-                            )}
+                      {/* Iconos de contacto en fila (estilo redes sociales) */}
+                      <div className="flex items-center justify-center gap-3 mt-5">
+                        {d.email && (
+                          <a
+                            href={`mailto:${d.email}`}
+                            title={d.email}
+                            className="flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200 hover:scale-110"
+                            style={{
+                              background: "#e8e8e8",
+                              boxShadow: "3px 3px 8px #c5c5c5, -3px -3px 8px #ffffff",
+                            }}
+                          >
+                            <Mail className="h-4 w-4 text-[#C41E3A]" />
+                          </a>
+                        )}
+                        {d.telefono && (
+                          <div
+                            title={d.telefono}
+                            className="flex h-10 w-10 items-center justify-center rounded-full"
+                            style={{
+                              background: "#e8e8e8",
+                              boxShadow: "3px 3px 8px #c5c5c5, -3px -3px 8px #ffffff",
+                            }}
+                          >
+                            <Phone className="h-4 w-4 text-[#1A73E8]" />
                           </div>
+                        )}
+                        <div
+                          className="flex h-10 w-10 items-center justify-center rounded-full"
+                          style={{
+                            background: "#e8e8e8",
+                            boxShadow: "3px 3px 8px #c5c5c5, -3px -3px 8px #ffffff",
+                          }}
+                        >
+                          <Building2 className="h-4 w-4 text-[#F29900]" />
+                        </div>
+                      </div>
+
+                      {/* Departamento badge */}
+                      <div
+                        className="mt-5 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold text-gray-600"
+                        style={{
+                          background: "#e8e8e8",
+                          boxShadow: "inset 2px 2px 5px #c5c5c5, inset -2px -2px 5px #ffffff",
+                        }}
+                      >
+                        <Briefcase className="h-3 w-3 text-[#C41E3A]" />
+                        {d.unidad}
+                      </div>
+
+                      {/* Divider */}
+                      <div className="w-full mt-6 mb-4 border-t" style={{ borderColor: "#d5d5d5" }} />
+
+                      {/* Info de contacto al pie */}
+                      <div className="flex items-center justify-center gap-6 text-xs text-gray-500 w-full">
+                        {d.email && (
+                          <a href={`mailto:${d.email}`} className="flex items-center gap-1.5 hover:text-[#C41E3A] transition-colors truncate max-w-[140px]" title={d.email}>
+                            <Mail className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{d.email}</span>
+                          </a>
+                        )}
+                        {d.telefono && (
+                          <span className="flex items-center gap-1.5">
+                            <Phone className="h-3 w-3 shrink-0" />
+                            {d.telefono}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -370,44 +421,48 @@ export default async function HomePage() {
         }
 
         return (
-          <section id="equipo" className="border-y border-border/40 bg-muted/15 scroll-mt-20">
+          <section id="equipo" className="scroll-mt-20" style={{ background: "#e8e8e8" }}>
             <div className="mx-auto max-w-7xl px-6 py-20 md:py-24">
               <div className="mx-auto max-w-2xl text-center mb-14">
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#FFB300]/20 bg-[#FFB300]/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#FF8800]">
                   <Users className="h-3.5 w-3.5" />
                   Nuestro Equipo
                 </div>
-                <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl">
+                <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl text-gray-800">
                   Personal Institucional
                 </h2>
-                <p className="mt-4 text-muted-foreground text-lg">
+                <p className="mt-4 text-gray-500 text-lg">
                   Los profesionales que hacen posible nuestro servicio día a día
                 </p>
               </div>
 
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {equipoActivo.map((p) => {
                   const color = AVATAR_COLORS2[hashN2(p.nombre) % AVATAR_COLORS2.length]
                   return (
                     <div
                       key={p.id}
-                      className="group relative overflow-hidden rounded-2xl border border-border/40 bg-card transition-all duration-300 hover:border-[#FFB300]/30 hover:shadow-xl hover:shadow-[#FFB300]/5 hover:-translate-y-1"
+                      className="group relative flex flex-col items-center rounded-3xl pt-10 pb-8 px-6 transition-all duration-300 hover:-translate-y-1"
+                      style={{
+                        background: "#e8e8e8",
+                        boxShadow: "8px 8px 16px #c5c5c5, -8px -8px 16px #ffffff",
+                      }}
                     >
-                      {/* Banner */}
+                      {/* Avatar con ring neumórfico */}
                       <div
-                        className="h-20 w-full"
-                        style={{ background: `linear-gradient(135deg, ${color}33, ${color}55)` }}
-                      />
-
-                      {/* Foto o avatar */}
-                      <div className="flex justify-center -mt-10">
+                        className="relative rounded-full p-1.5 mb-5 transition-transform duration-300 group-hover:scale-105"
+                        style={{
+                          background: "#e8e8e8",
+                          boxShadow: "4px 4px 10px #c5c5c5, -4px -4px 10px #ffffff, inset 2px 2px 5px #c5c5c5, inset -2px -2px 5px #ffffff",
+                        }}
+                      >
                         {p.foto ? (
-                          <div className="relative h-20 w-20 overflow-hidden rounded-full border-4 border-card shadow-xl transition-transform duration-300 group-hover:scale-105">
+                          <div className="relative h-24 w-24 overflow-hidden rounded-full">
                             <Image src={p.foto} alt={p.nombre} fill className="object-cover" />
                           </div>
                         ) : (
                           <div
-                            className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-card text-xl font-bold text-white shadow-xl transition-transform duration-300 group-hover:scale-105"
+                            className="flex h-24 w-24 items-center justify-center rounded-full text-2xl font-bold text-white"
                             style={{ backgroundColor: color }}
                           >
                             {initials2(p.nombre)}
@@ -415,34 +470,76 @@ export default async function HomePage() {
                         )}
                       </div>
 
-                      <div className="p-5 pt-3 text-center">
-                        <h3 className="font-bold text-base">{p.nombre}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{p.cargo}</p>
+                      {/* Nombre y cargo */}
+                      <h3 className="text-base font-bold text-gray-800 text-center">{p.nombre}</h3>
+                      <p className="text-sm text-gray-500 mt-1 text-center">{p.cargo}</p>
 
-                        <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#FFB300]/10 px-3 py-1 text-xs font-semibold text-[#FF8800]">
-                          <Shield className="h-3 w-3" />
-                          {p.unidad}
-                        </div>
-
-                        {(p.email || p.telefono) && (
-                          <div className="mt-4 space-y-2 text-left mx-auto max-w-[200px]">
-                            {p.email && (
-                              <a
-                                href={`mailto:${p.email}`}
-                                className="flex items-center gap-2 text-xs text-muted-foreground hover:text-[#FF8800] transition-colors"
-                                title={p.email}
-                              >
-                                <Mail className="h-3.5 w-3.5 shrink-0 text-[#FF8800]" />
-                                <span className="truncate">{p.email}</span>
-                              </a>
-                            )}
-                            {p.telefono && (
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <Clock className="h-3.5 w-3.5 shrink-0 text-[#FF8800]" />
-                                <span>{p.telefono}</span>
-                              </div>
-                            )}
+                      {/* Iconos de contacto en fila */}
+                      <div className="flex items-center justify-center gap-3 mt-5">
+                        {p.email && (
+                          <a
+                            href={`mailto:${p.email}`}
+                            title={p.email}
+                            className="flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 hover:scale-110"
+                            style={{
+                              background: "#e8e8e8",
+                              boxShadow: "3px 3px 8px #c5c5c5, -3px -3px 8px #ffffff",
+                            }}
+                          >
+                            <Mail className="h-3.5 w-3.5 text-[#FF8800]" />
+                          </a>
+                        )}
+                        {p.telefono && (
+                          <div
+                            title={p.telefono}
+                            className="flex h-9 w-9 items-center justify-center rounded-full"
+                            style={{
+                              background: "#e8e8e8",
+                              boxShadow: "3px 3px 8px #c5c5c5, -3px -3px 8px #ffffff",
+                            }}
+                          >
+                            <Phone className="h-3.5 w-3.5 text-[#1A73E8]" />
                           </div>
+                        )}
+                        <div
+                          className="flex h-9 w-9 items-center justify-center rounded-full"
+                          style={{
+                            background: "#e8e8e8",
+                            boxShadow: "3px 3px 8px #c5c5c5, -3px -3px 8px #ffffff",
+                          }}
+                        >
+                          <Building2 className="h-3.5 w-3.5 text-[#0B8043]" />
+                        </div>
+                      </div>
+
+                      {/* Departamento badge */}
+                      <div
+                        className="mt-5 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold text-gray-600"
+                        style={{
+                          background: "#e8e8e8",
+                          boxShadow: "inset 2px 2px 5px #c5c5c5, inset -2px -2px 5px #ffffff",
+                        }}
+                      >
+                        <Shield className="h-3 w-3 text-[#FF8800]" />
+                        {p.unidad}
+                      </div>
+
+                      {/* Divider */}
+                      <div className="w-full mt-6 mb-4 border-t" style={{ borderColor: "#d5d5d5" }} />
+
+                      {/* Info de contacto al pie */}
+                      <div className="flex items-center justify-center gap-5 text-xs text-gray-500 w-full flex-wrap">
+                        {p.email && (
+                          <a href={`mailto:${p.email}`} className="flex items-center gap-1.5 hover:text-[#FF8800] transition-colors truncate max-w-[130px]" title={p.email}>
+                            <Mail className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{p.email}</span>
+                          </a>
+                        )}
+                        {p.telefono && (
+                          <span className="flex items-center gap-1.5">
+                            <Phone className="h-3 w-3 shrink-0" />
+                            {p.telefono}
+                          </span>
                         )}
                       </div>
                     </div>
