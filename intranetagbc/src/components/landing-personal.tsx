@@ -174,7 +174,7 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
     <section
       id="equipo"
       className="scroll-mt-20 overflow-hidden"
-      style={{ background: "#e8e8e8" }}
+      style={{ background: "var(--landing-neumo-bg)" }}
     >
       <div className="mx-auto max-w-7xl px-6 py-20 md:py-28">
         {/* ── Header ── */}
@@ -183,10 +183,10 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
             <Users className="h-3.5 w-3.5" />
             Nuestro Equipo
           </div>
-          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl text-gray-800">
+          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl text-gray-800 dark:text-gray-100">
             Personal Institucional
           </h2>
-          <p className="mt-4 text-gray-500 text-lg">
+          <p className="mt-4 text-gray-500 text-lg dark:text-gray-300">
             Los profesionales que hacen posible nuestro servicio día a día
           </p>
         </div>
@@ -196,30 +196,30 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
           <div
             className="relative flex items-center rounded-full px-5 py-3"
             style={{
-              background: "#e8e8e8",
-              boxShadow: "inset 3px 3px 6px #c5c5c5, inset -3px -3px 6px #ffffff",
+              background: "var(--landing-neumo-bg)",
+              boxShadow: "inset 3px 3px 6px var(--landing-neumo-shadow-dark), inset -3px -3px 6px var(--landing-neumo-shadow-light)",
             }}
           >
-            <SearchIcon className="h-4 w-4 text-gray-400 shrink-0" />
+            <SearchIcon className="h-4 w-4 text-gray-400 dark:text-gray-500 shrink-0" />
             <input
               type="text"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setActive(0) }}
               placeholder="Buscar por nombre, cargo o unidad..."
-              className="ml-3 w-full bg-transparent text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
+              className="ml-3 w-full bg-transparent text-sm text-gray-700 placeholder:text-gray-400 dark:text-gray-100 dark:placeholder:text-gray-500 focus:outline-none"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => { setSearch(""); setActive(0) }}
-                className="ml-2 flex h-6 w-6 items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-300/40 transition-colors"
+                className="ml-2 flex h-6 w-6 items-center justify-center rounded-full text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-300/40 dark:hover:bg-gray-700/35 transition-colors"
               >
                 <XIcon className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
           {search && (
-            <p className="text-center text-xs text-gray-400 mt-2">
+            <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-2">
               {total} resultado{total !== 1 ? "s" : ""} encontrado{total !== 1 ? "s" : ""}
             </p>
           )}
@@ -232,9 +232,9 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
             type="button"
             onClick={() => go(-1)}
             aria-label="Anterior"
-            className="absolute left-2 sm:left-4 md:left-8 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-white text-gray-700 shadow-lg transition-all duration-200 hover:scale-110 hover:shadow-xl active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300]"
+            className="absolute left-2 sm:left-4 md:left-8 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-white dark:bg-[#101010] text-gray-700 dark:text-gray-100 shadow-lg transition-all duration-200 hover:scale-110 hover:shadow-xl active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300]"
             style={{
-              boxShadow: "4px 4px 12px #c5c5c5, -4px -4px 12px #ffffff",
+              boxShadow: "4px 4px 12px var(--landing-neumo-shadow-dark), -4px -4px 12px var(--landing-neumo-shadow-light)",
             }}
           >
             <ChevronLeftIcon className="h-5 w-5" />
@@ -284,10 +284,10 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
                         isActive ? "ring-2 ring-[#FFB300]/30" : ""
                       }`}
                       style={{
-                        background: "#e8e8e8",
+                        background: "var(--landing-neumo-bg)",
                         boxShadow: isActive
-                          ? "12px 12px 24px #bebebe, -12px -12px 24px #ffffff, 0 0 30px rgba(255,179,0,0.08)"
-                          : "8px 8px 16px #c5c5c5, -8px -8px 16px #ffffff",
+                          ? "12px 12px 24px var(--landing-neumo-shadow-deep), -12px -12px 24px var(--landing-neumo-shadow-high), 0 0 30px rgba(255,179,0,0.08)"
+                          : "8px 8px 16px var(--landing-neumo-shadow-dark), -8px -8px 16px var(--landing-neumo-shadow-light)",
                         height: "400px",
                       }}
                     >
@@ -295,9 +295,9 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
                       <div
                         className="relative rounded-full p-1.5 mb-4 transition-transform duration-300"
                         style={{
-                          background: "#e8e8e8",
+                          background: "var(--landing-neumo-bg)",
                           boxShadow:
-                            "4px 4px 10px #c5c5c5, -4px -4px 10px #ffffff, inset 2px 2px 5px #c5c5c5, inset -2px -2px 5px #ffffff",
+                            "4px 4px 10px var(--landing-neumo-shadow-dark), -4px -4px 10px var(--landing-neumo-shadow-light), inset 2px 2px 5px var(--landing-neumo-shadow-dark), inset -2px -2px 5px var(--landing-neumo-shadow-light)",
                         }}
                       >
                         {p.foto ? (
@@ -320,12 +320,12 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
                       </div>
 
                       {/* Name */}
-                      <h3 className="text-base font-bold text-gray-800 text-center leading-tight mt-1">
+                      <h3 className="text-base font-bold text-gray-800 dark:text-gray-100 text-center leading-tight mt-1">
                         {p.nombre}
                       </h3>
 
                       {/* Cargo */}
-                      <p className="text-xs text-gray-500 mt-1 text-center uppercase tracking-wide font-semibold">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-center uppercase tracking-wide font-semibold">
                         {p.cargo}
                       </p>
 
@@ -337,9 +337,9 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
                             title={p.email}
                             className="flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 hover:scale-110"
                             style={{
-                              background: "#f0f0f0",
+                              background: "var(--landing-neumo-soft-bg)",
                               boxShadow:
-                                "3px 3px 6px #c5c5c5, -3px -3px 6px #ffffff",
+                                "3px 3px 6px var(--landing-neumo-shadow-dark), -3px -3px 6px var(--landing-neumo-shadow-light)",
                             }}
                           >
                             <Mail className="h-3.5 w-3.5 text-[#FF8800]" />
@@ -350,9 +350,9 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
                             title={p.telefono}
                             className="flex h-9 w-9 items-center justify-center rounded-full"
                             style={{
-                              background: "#f0f0f0",
+                              background: "var(--landing-neumo-soft-bg)",
                               boxShadow:
-                                "3px 3px 6px #c5c5c5, -3px -3px 6px #ffffff",
+                                "3px 3px 6px var(--landing-neumo-shadow-dark), -3px -3px 6px var(--landing-neumo-shadow-light)",
                             }}
                           >
                             <Phone className="h-3.5 w-3.5 text-[#1A73E8]" />
@@ -361,9 +361,9 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
                         <div
                           className="flex h-9 w-9 items-center justify-center rounded-full"
                           style={{
-                            background: "#f0f0f0",
+                            background: "var(--landing-neumo-soft-bg)",
                             boxShadow:
-                              "3px 3px 6px #c5c5c5, -3px -3px 6px #ffffff",
+                              "3px 3px 6px var(--landing-neumo-shadow-dark), -3px -3px 6px var(--landing-neumo-shadow-light)",
                           }}
                         >
                           <Building2 className="h-3.5 w-3.5 text-[#0B8043]" />
@@ -372,11 +372,11 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
 
                       {/* Unit badge */}
                       <div
-                        className="mt-4 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold text-gray-600"
+                        className="mt-4 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300"
                         style={{
-                          background: "#e8e8e8",
+                          background: "var(--landing-neumo-bg)",
                           boxShadow:
-                            "inset 2px 2px 5px #c5c5c5, inset -2px -2px 5px #ffffff",
+                            "inset 2px 2px 5px var(--landing-neumo-shadow-dark), inset -2px -2px 5px var(--landing-neumo-shadow-light)",
                         }}
                       >
                         <Shield className="h-3 w-3 text-[#FF8800]" />
@@ -386,11 +386,11 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
                       {/* Divider */}
                       <div
                         className="w-full mt-4 mb-3 border-t"
-                        style={{ borderColor: "#d5d5d5" }}
+                        style={{ borderColor: "var(--landing-neumo-divider)" }}
                       />
 
                       {/* Contact info footer */}
-                      <div className="flex items-center justify-center gap-4 text-[11px] text-gray-500 w-full flex-wrap">
+                      <div className="flex items-center justify-center gap-4 text-[11px] text-gray-500 dark:text-gray-400 w-full flex-wrap">
                         {p.email && (
                           <a
                             href={`mailto:${p.email}`}
@@ -420,9 +420,9 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
             type="button"
             onClick={() => go(1)}
             aria-label="Siguiente"
-            className="absolute right-2 sm:right-4 md:right-8 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-white text-gray-700 shadow-lg transition-all duration-200 hover:scale-110 hover:shadow-xl active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300]"
+            className="absolute right-2 sm:right-4 md:right-8 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-white dark:bg-[#101010] text-gray-700 dark:text-gray-100 shadow-lg transition-all duration-200 hover:scale-110 hover:shadow-xl active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300]"
             style={{
-              boxShadow: "4px 4px 12px #c5c5c5, -4px -4px 12px #ffffff",
+              boxShadow: "4px 4px 12px var(--landing-neumo-shadow-dark), -4px -4px 12px var(--landing-neumo-shadow-light)",
             }}
           >
             <ChevronRightIcon className="h-5 w-5" />
@@ -440,7 +440,7 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
               className={`rounded-full transition-all duration-300 focus:outline-none ${
                 dotIdx === safeActive
                   ? "h-3.5 w-3.5 bg-[#1A73E8] shadow-md shadow-[#1A73E8]/40"
-                  : "h-2.5 w-2.5 bg-gray-400/50 hover:bg-gray-400"
+                  : "h-2.5 w-2.5 bg-gray-400/50 hover:bg-gray-400 dark:bg-gray-600/60 dark:hover:bg-gray-500"
               }`}
             />
           ))}
@@ -448,9 +448,9 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
 
         {/* Active person name below dots */}
         {total > 0 && (
-          <p className="text-center mt-4 text-sm font-semibold text-gray-600 transition-all duration-300">
+          <p className="text-center mt-4 text-sm font-semibold text-gray-600 dark:text-gray-300 transition-all duration-300">
             {filtered[safeActive]?.nombre}
-            <span className="ml-2 text-xs font-normal text-gray-400">
+            <span className="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500">
               {safeActive + 1} / {total}
             </span>
           </p>
@@ -458,7 +458,7 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
 
         {/* No results message */}
         {total === 0 && search && (
-          <p className="text-center mt-4 text-sm text-gray-400">
+          <p className="text-center mt-4 text-sm text-gray-400 dark:text-gray-500">
             No se encontraron resultados para &ldquo;{search}&rdquo;
           </p>
         )}
