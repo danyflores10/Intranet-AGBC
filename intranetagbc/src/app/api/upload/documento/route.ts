@@ -5,6 +5,7 @@ import { createId } from "@paralleldrive/cuid2"
 
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
+import { PERMISOS } from "@/lib/auth/permisos"
 
 const MAX_SIZE = 10 * 1024 * 1024 // 10 MB
 const ALLOWED_TYPES: Record<string, string> = {
@@ -22,11 +23,68 @@ const ALLOWED_TYPES: Record<string, string> = {
   "text/csv": "csv",
 }
 
+const ROL_SUPER_ADMIN = "super_admin"
+
+function normalizarTexto(value: string): string {
+  return value.trim().toLowerCase()
+}
+
+function getLegacyPermissionAlias(permission: string): string | null {
+  const tokens = normalizarTexto(permission).split(/\s+/).filter(Boolean)
+
+  if (tokens.length < 2) {
+    return null
+  }
+
+  const [action, ...resourceTokens] = tokens
+  const resource = resourceTokens.join("_")
+
+  if (resource.length === 0) {
+    return null
+  }
+
+  return `${resource}.${action}`
+}
+
+function tienePermiso(permissions: string[], permisoRequerido: string): boolean {
+  const permisoNormalizado = normalizarTexto(permisoRequerido)
+  const alias = getLegacyPermissionAlias(permisoNormalizado)
+
+  return permissions.some((permiso) => {
+    const normalizedPermission = normalizarTexto(permiso)
+    return (
+      normalizedPermission === permisoNormalizado
+      || (alias !== null && normalizedPermission === alias)
+    )
+  })
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: await headers() })
-    if (!session?.user?.id) {
+    const usuario = session?.user as {
+      id?: string
+      roles?: string[]
+      permissions?: string[]
+    } | undefined
+
+    if (!usuario?.id) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    }
+
+    const roles = usuario.roles ?? []
+    const permissions = usuario.permissions ?? []
+    const esSuperAdmin = roles.some((rol) => normalizarTexto(rol) === ROL_SUPER_ADMIN)
+    const puedeSubir =
+      esSuperAdmin
+      || tienePermiso(permissions, PERMISOS.DOCUMENTOS.CREAR)
+      || tienePermiso(permissions, PERMISOS.DOCUMENTOS.EDITAR)
+
+    if (!puedeSubir) {
+      return NextResponse.json(
+        { error: "No tienes permisos para subir archivos de documentos" },
+        { status: 403 },
+      )
     }
 
     const formData = await request.formData()

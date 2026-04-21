@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useRef } from "react"
+import { useState, useTransition, useRef, useMemo } from "react"
 import {
   PlusIcon,
   FileTextIcon,
@@ -29,6 +29,8 @@ import {
   crearDocumento, actualizarDocumento, eliminarDocumento,
   crearCategoria, actualizarCategoria, eliminarCategoria,
 } from "@/actions/documentos"
+import { PERMISOS } from "@/lib/auth/permisos"
+import { crearContextoAcceso, puedeAcceder, type UsuarioRbac } from "@/lib/rbac"
 
 type Tab = "todos" | "archivos" | "categorias"
 
@@ -41,6 +43,7 @@ interface DocRow {
 interface Props {
   documentos: DocRow[]
   categorias: Array<{ id: string; nombre: string; descripcion: string | null; createdAt: Date }>
+  usuario: UsuarioRbac
 }
 
 function getFileIcon(tipo: string | null) {
@@ -61,7 +64,7 @@ function getFileColor(tipo: string | null) {
   return "#6B7280"
 }
 
-export function DocumentosModule({ documentos, categorias }: Props) {
+export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   const [tab, setTab] = useState<Tab>("todos")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [catDialogOpen, setCatDialogOpen] = useState(false)
@@ -72,6 +75,19 @@ export function DocumentosModule({ documentos, categorias }: Props) {
   const [uploading, setUploading] = useState(false)
   const [uploadedFile, setUploadedFile] = useState<{ url: string; nombre: string; tipo: string; tamano: string } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const accessContext = useMemo(() => crearContextoAcceso(usuario), [usuario])
+  const canCreateDocumento = useMemo(
+    () => puedeAcceder({ permissions: [PERMISOS.DOCUMENTOS.CREAR] }, accessContext),
+    [accessContext],
+  )
+  const canEditDocumento = useMemo(
+    () => puedeAcceder({ permissions: [PERMISOS.DOCUMENTOS.EDITAR] }, accessContext),
+    [accessContext],
+  )
+  const canDeleteDocumento = useMemo(
+    () => puedeAcceder({ permissions: [PERMISOS.DOCUMENTOS.ELIMINAR] }, accessContext),
+    [accessContext],
+  )
 
   const docsConArchivo = documentos.filter((d) => d.archivo)
   const docsSinArchivo = documentos.filter((d) => !d.archivo)
@@ -99,6 +115,17 @@ export function DocumentosModule({ documentos, categorias }: Props) {
   async function handleDocSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
+
+    if (editDoc && !canEditDocumento) {
+      toast.error("No tienes permiso para editar documentos")
+      return
+    }
+
+    if (!editDoc && !canCreateDocumento) {
+      toast.error("No tienes permiso para crear documentos")
+      return
+    }
+
     startTransition(async () => {
       try {
         const payload: Record<string, string | undefined> = {
@@ -131,6 +158,17 @@ export function DocumentosModule({ documentos, categorias }: Props) {
   async function handleCatSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
+
+    if (editCat && !canEditDocumento) {
+      toast.error("No tienes permiso para editar categorías")
+      return
+    }
+
+    if (!editCat && !canCreateDocumento) {
+      toast.error("No tienes permiso para crear categorías")
+      return
+    }
+
     startTransition(async () => {
       try {
         if (editCat) {
@@ -153,12 +191,20 @@ export function DocumentosModule({ documentos, categorias }: Props) {
   }
 
   function openCreateDoc() {
+    if (!canCreateDocumento) {
+      return
+    }
+
     setEditDoc(null)
     setUploadedFile(null)
     setDialogOpen(true)
   }
 
   function openEditDoc(doc: DocRow) {
+    if (!canEditDocumento) {
+      return
+    }
+
     setEditDoc(doc)
     if (doc.archivo && doc.nombreArchivo) {
       setUploadedFile({ url: doc.archivo, nombre: doc.nombreArchivo, tipo: doc.tipoArchivo ?? "", tamano: doc.tamano ?? "" })
@@ -166,6 +212,38 @@ export function DocumentosModule({ documentos, categorias }: Props) {
       setUploadedFile(null)
     }
     setDialogOpen(true)
+  }
+
+  function handleDeleteDoc(documentId: string) {
+    if (!canDeleteDocumento) {
+      toast.error("No tienes permiso para eliminar documentos")
+      return
+    }
+
+    startTransition(async () => {
+      try {
+        await eliminarDocumento(documentId)
+        toast.success("Eliminado")
+      } catch {
+        toast.error("Error al eliminar")
+      }
+    })
+  }
+
+  function handleDeleteCategory(categoryId: string) {
+    if (!canDeleteDocumento) {
+      toast.error("No tienes permiso para eliminar categorías")
+      return
+    }
+
+    startTransition(async () => {
+      try {
+        await eliminarCategoria(categoryId)
+        toast.success("Eliminada")
+      } catch {
+        toast.error("Error al eliminar")
+      }
+    })
   }
 
   return (
@@ -196,10 +274,12 @@ export function DocumentosModule({ documentos, categorias }: Props) {
               {tab === "todos" ? "Repositorio centralizado de documentación" : tab === "archivos" ? "Documentos con archivos adjuntos para visualizar y descargar" : "Organiza documentos por tipo"}
             </p>
           </div>
-          <Button className="bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] border-0 font-semibold shadow-md shadow-[#FFB300]/20"
-            onClick={() => { if (tab === "categorias") { setEditCat(null); setCatDialogOpen(true) } else { openCreateDoc() } }}>
-            <PlusIcon className="mr-2 h-4 w-4" />{tab === "categorias" ? "Nueva categoría" : "Nuevo documento"}
-          </Button>
+          {canCreateDocumento ? (
+            <Button className="bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] border-0 font-semibold shadow-md shadow-[#FFB300]/20"
+              onClick={() => { if (tab === "categorias") { setEditCat(null); setCatDialogOpen(true) } else { openCreateDoc() } }}>
+              <PlusIcon className="mr-2 h-4 w-4" />{tab === "categorias" ? "Nueva categoría" : "Nuevo documento"}
+            </Button>
+          ) : null}
         </div>
 
         {/* ── Tab: Todos los documentos ── */}
@@ -242,9 +322,13 @@ export function DocumentosModule({ documentos, categorias }: Props) {
                         <DownloadIcon className="h-4 w-4" /></a>
                     </>
                   )}
-                  <button type="button" title="Editar" className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-[#FFB300]/40 hover:bg-[#FFB300]/10 hover:text-[#FF8800] hover:shadow-md active:scale-95" onClick={() => openEditDoc(row as unknown as DocRow)}><PencilIcon className="h-4 w-4" /></button>
-                  <button type="button" title="Eliminar" disabled={isPending} className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-red-300 hover:bg-red-50 hover:text-red-600 hover:shadow-md dark:hover:border-red-500/30 dark:hover:bg-red-500/10 dark:hover:text-red-400 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
-                    onClick={() => startTransition(async () => { await eliminarDocumento(row.id); toast.success("Eliminado") })}><Trash2Icon className="h-4 w-4" /></button>
+                  {canEditDocumento ? (
+                    <button type="button" title="Editar" className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-[#FFB300]/40 hover:bg-[#FFB300]/10 hover:text-[#FF8800] hover:shadow-md active:scale-95" onClick={() => openEditDoc(row as unknown as DocRow)}><PencilIcon className="h-4 w-4" /></button>
+                  ) : null}
+                  {canDeleteDocumento ? (
+                    <button type="button" title="Eliminar" disabled={isPending} className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-red-300 hover:bg-red-50 hover:text-red-600 hover:shadow-md dark:hover:border-red-500/30 dark:hover:bg-red-500/10 dark:hover:text-red-400 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
+                      onClick={() => handleDeleteDoc(row.id)}><Trash2Icon className="h-4 w-4" /></button>
+                  ) : null}
                 </div>
               )}
             />
@@ -268,9 +352,11 @@ export function DocumentosModule({ documentos, categorias }: Props) {
                   </div>
                   <p className="text-sm font-semibold text-muted-foreground">No hay archivos subidos</p>
                   <p className="text-xs text-muted-foreground/60">Crea un documento y adjunta un archivo</p>
-                  <Button size="sm" className="mt-2 rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] border-0" onClick={openCreateDoc}>
-                    <PlusIcon className="h-4 w-4 mr-1" />Subir documento
-                  </Button>
+                  {canCreateDocumento ? (
+                    <Button size="sm" className="mt-2 rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] border-0" onClick={openCreateDoc}>
+                      <PlusIcon className="h-4 w-4 mr-1" />Subir documento
+                    </Button>
+                  ) : null}
                 </CardContent>
               </Card>
             ) : (
@@ -319,9 +405,11 @@ export function DocumentosModule({ documentos, categorias }: Props) {
                             <a href={doc.archivo!} download={doc.nombreArchivo ?? "archivo"} className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold text-green-600 hover:bg-green-50 dark:hover:bg-green-500/10 transition-colors">
                               <DownloadIcon className="h-3.5 w-3.5" />Descargar
                             </a>
-                            <button type="button" onClick={() => openEditDoc(doc)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-[#FFB300]/10 hover:text-[#FF8800] transition-colors">
-                              <PencilIcon className="h-3.5 w-3.5" />
-                            </button>
+                            {canEditDocumento ? (
+                              <button type="button" onClick={() => openEditDoc(doc)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-[#FFB300]/10 hover:text-[#FF8800] transition-colors">
+                                <PencilIcon className="h-3.5 w-3.5" />
+                              </button>
+                            ) : null}
                           </div>
                         </div>
                       </CardContent>
@@ -342,29 +430,36 @@ export function DocumentosModule({ documentos, categorias }: Props) {
               )},
               { key: "descripcion", label: "Descripción", render: (row) => <span className="text-muted-foreground text-sm">{row.descripcion || "-"}</span> },
             ]}
-            actions={(row) => (
-              <div className="flex items-center justify-end gap-2">
-                <button type="button" title="Editar" className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-[#FFB300]/40 hover:bg-[#FFB300]/10 hover:text-[#FF8800] hover:shadow-md active:scale-95" onClick={() => { setEditCat(row); setCatDialogOpen(true) }}><PencilIcon className="h-4 w-4" /></button>
-                <button type="button" title="Eliminar" disabled={isPending} className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-red-300 hover:bg-red-50 hover:text-red-600 hover:shadow-md dark:hover:border-red-500/30 dark:hover:bg-red-500/10 dark:hover:text-red-400 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
-                  onClick={() => startTransition(async () => { await eliminarCategoria(row.id); toast.success("Eliminada") })}><Trash2Icon className="h-4 w-4" /></button>
-              </div>
-            )}
+            actions={canEditDocumento || canDeleteDocumento
+              ? (row) => (
+                <div className="flex items-center justify-end gap-2">
+                  {canEditDocumento ? (
+                    <button type="button" title="Editar" className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-[#FFB300]/40 hover:bg-[#FFB300]/10 hover:text-[#FF8800] hover:shadow-md active:scale-95" onClick={() => { setEditCat(row); setCatDialogOpen(true) }}><PencilIcon className="h-4 w-4" /></button>
+                  ) : null}
+                  {canDeleteDocumento ? (
+                    <button type="button" title="Eliminar" disabled={isPending} className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-red-300 hover:bg-red-50 hover:text-red-600 hover:shadow-md dark:hover:border-red-500/30 dark:hover:bg-red-500/10 dark:hover:text-red-400 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
+                      onClick={() => handleDeleteCategory(row.id)}><Trash2Icon className="h-4 w-4" /></button>
+                  ) : null}
+                </div>
+              )
+              : undefined}
           />
         )}
       </div>
 
       {/* ── Dialog crear/editar documento ── */}
-      <Dialog open={dialogOpen} onOpenChange={(v) => { if (!v) { setDialogOpen(false); setEditDoc(null); setUploadedFile(null) } }}>
-        <DialogContent className="!w-[95vw] !max-w-[95vw] sm:!max-w-[600px] max-h-[92vh] overflow-y-auto p-0 gap-0 rounded-2xl border-border/50">
-          <div className="flex h-1.5 w-full rounded-t-2xl overflow-hidden"><div className="flex-1 bg-[#C41E3A]"/><div className="flex-1 bg-[#FFB300]"/><div className="flex-1 bg-[#2E7D32]"/></div>
-          <DialogHeader className="px-6 pt-5 pb-0">
-            <DialogTitle className="text-xl font-bold tracking-tight">
-              {editDoc ? "Editar documento" : "Nuevo documento"}
-            </DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              {editDoc ? "Modifica los datos del documento" : "Crea un documento y adjunta un archivo"}
-            </p>
-          </DialogHeader>
+      {canCreateDocumento || canEditDocumento ? (
+        <Dialog open={dialogOpen} onOpenChange={(v) => { if (!v) { setDialogOpen(false); setEditDoc(null); setUploadedFile(null) } }}>
+          <DialogContent className="!w-[95vw] !max-w-[95vw] sm:!max-w-[600px] max-h-[92vh] overflow-y-auto p-0 gap-0 rounded-2xl border-border/50">
+            <div className="flex h-1.5 w-full rounded-t-2xl overflow-hidden"><div className="flex-1 bg-[#C41E3A]"/><div className="flex-1 bg-[#FFB300]"/><div className="flex-1 bg-[#2E7D32]"/></div>
+            <DialogHeader className="px-6 pt-5 pb-0">
+              <DialogTitle className="text-xl font-bold tracking-tight">
+                {editDoc ? "Editar documento" : "Nuevo documento"}
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                {editDoc ? "Modifica los datos del documento" : "Crea un documento y adjunta un archivo"}
+              </p>
+            </DialogHeader>
 
           <form onSubmit={handleDocSubmit} className="space-y-5 px-6 pb-6 pt-4">
             <div className="space-y-2">
@@ -465,24 +560,27 @@ export function DocumentosModule({ documentos, categorias }: Props) {
               </Button>
             </div>
           </form>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      ) : null}
 
       {/* ── Dialog Categorías ── */}
-      <Dialog open={catDialogOpen} onOpenChange={setCatDialogOpen}>
-        <DialogContent className="p-0 gap-0 overflow-hidden rounded-2xl">
-          <div className="flex h-1.5 w-full"><div className="flex-1 bg-[#C41E3A]"/><div className="flex-1 bg-[#FFB300]"/><div className="flex-1 bg-[#2E7D32]"/></div>
-          <div className="p-6"><DialogHeader><DialogTitle>{editCat ? "Editar categoría" : "Nueva categoría"}</DialogTitle></DialogHeader>
-          <form onSubmit={handleCatSubmit} className="space-y-4 pt-2">
-            <div className="space-y-2"><Label className="text-sm font-semibold">Nombre *</Label><Input name="nombre" required defaultValue={editCat?.nombre} className="h-11 rounded-xl" /></div>
-            <div className="space-y-2"><Label className="text-sm font-semibold">Descripción</Label><Input name="descripcion" defaultValue={editCat?.descripcion ?? ""} className="h-11 rounded-xl" /></div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" className="rounded-xl" onClick={() => setCatDialogOpen(false)}>Cancelar</Button>
-              <Button type="submit" disabled={isPending} className="rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] border-0 font-semibold shadow-md shadow-[#FFB300]/20">{isPending ? "Guardando..." : "Guardar"}</Button>
-            </div>
-          </form></div>
-        </DialogContent>
-      </Dialog>
+      {canCreateDocumento || canEditDocumento ? (
+        <Dialog open={catDialogOpen} onOpenChange={setCatDialogOpen}>
+          <DialogContent className="p-0 gap-0 overflow-hidden rounded-2xl">
+            <div className="flex h-1.5 w-full"><div className="flex-1 bg-[#C41E3A]"/><div className="flex-1 bg-[#FFB300]"/><div className="flex-1 bg-[#2E7D32]"/></div>
+            <div className="p-6"><DialogHeader><DialogTitle>{editCat ? "Editar categoría" : "Nueva categoría"}</DialogTitle></DialogHeader>
+            <form onSubmit={handleCatSubmit} className="space-y-4 pt-2">
+              <div className="space-y-2"><Label className="text-sm font-semibold">Nombre *</Label><Input name="nombre" required defaultValue={editCat?.nombre} className="h-11 rounded-xl" /></div>
+              <div className="space-y-2"><Label className="text-sm font-semibold">Descripción</Label><Input name="descripcion" defaultValue={editCat?.descripcion ?? ""} className="h-11 rounded-xl" /></div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" className="rounded-xl" onClick={() => setCatDialogOpen(false)}>Cancelar</Button>
+                <Button type="submit" disabled={isPending} className="rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] border-0 font-semibold shadow-md shadow-[#FFB300]/20">{isPending ? "Guardando..." : "Guardar"}</Button>
+              </div>
+            </form></div>
+          </DialogContent>
+        </Dialog>
+      ) : null}
 
       {/* ── Dialog Preview de archivo ── */}
       <Dialog open={!!previewDoc} onOpenChange={(v) => { if (!v) setPreviewDoc(null) }}>

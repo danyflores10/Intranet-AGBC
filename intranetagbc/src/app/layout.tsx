@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit, Space_Grotesk } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
+import { FullscreenToggle } from "@/components/fullscreen-toggle";
 import { Toaster } from "react-hot-toast";
 import "@/styles/globals.css";
 
@@ -77,6 +78,7 @@ export default function RootLayout({
             }}
           />
           {children}
+          <FullscreenToggle />
         </ThemeProvider>
       </body>
     </html>

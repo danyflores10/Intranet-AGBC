@@ -5,7 +5,6 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { obtenerUsuarioRbacActual } from "@/lib/auth/session-access"
 import { obtenerNotificacionesUsuario, contarNotificacionesNoLeidas } from "@/actions/notificaciones"
 import { NotificacionesBell } from "@/components/notificaciones-bell"
-import { ModeToggle } from "@/components/mode-toggle"
 
 type AdminLayoutProps = Readonly<{
   children: React.ReactNode
@@ -37,7 +36,6 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
               notificacionesIniciales={notificaciones}
               countInicial={countNoLeidas}
             />
-            <ModeToggle />
           </div>
         </header>
         <main className="flex flex-1 flex-col overflow-y-auto">

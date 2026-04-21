@@ -15,5 +15,5 @@ export default async function DocumentosPage() {
     obtenerCategorias(),
   ])
 
-  return <DocumentosModule documentos={documentos} categorias={categorias} />
+  return <DocumentosModule documentos={documentos} categorias={categorias} usuario={usuario} />
 }
