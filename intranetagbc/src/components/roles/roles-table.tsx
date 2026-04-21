@@ -46,10 +46,10 @@ const ACTION_LABELS: Record<ActionKey, string> = {
 }
 
 const ACTION_PILL_STYLES: Record<ActionKey, string> = {
-  ver: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  crear: "border-cyan-200 bg-cyan-50 text-cyan-700",
-  editar: "border-amber-200 bg-amber-50 text-amber-700",
-  eliminar: "border-rose-200 bg-rose-50 text-rose-700",
+  ver: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/35 dark:bg-emerald-500/10 dark:text-emerald-300",
+  crear: "border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-500/35 dark:bg-cyan-500/10 dark:text-cyan-300",
+  editar: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/35 dark:bg-amber-500/10 dark:text-amber-300",
+  eliminar: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/35 dark:bg-rose-500/10 dark:text-rose-300",
 }
 
 const MODULE_LABEL_MAP: Record<string, string> = {
@@ -60,12 +60,12 @@ const MODULE_LABEL_MAP: Record<string, string> = {
 }
 
 const MODULE_PILL_STYLES = [
-  "border-violet-200 bg-violet-50 text-violet-700",
-  "border-emerald-200 bg-emerald-50 text-emerald-700",
-  "border-cyan-200 bg-cyan-50 text-cyan-700",
-  "border-amber-200 bg-amber-50 text-amber-700",
-  "border-sky-200 bg-sky-50 text-sky-700",
-  "border-indigo-200 bg-indigo-50 text-indigo-700",
+  "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-500/35 dark:bg-violet-500/10 dark:text-violet-300",
+  "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/35 dark:bg-emerald-500/10 dark:text-emerald-300",
+  "border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-500/35 dark:bg-cyan-500/10 dark:text-cyan-300",
+  "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/35 dark:bg-amber-500/10 dark:text-amber-300",
+  "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-500/35 dark:bg-sky-500/10 dark:text-sky-300",
+  "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-500/35 dark:bg-indigo-500/10 dark:text-indigo-300",
 ] as const
 
 type SortKey = "actualizacion" | "nombre" | "modulos"
@@ -297,11 +297,11 @@ export function RolesTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 px-4 py-4 sm:px-5">
+    <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-4 py-4 sm:px-5">
         <div>
-          <h3 className="text-base font-semibold text-slate-900">Roles</h3>
-          <p className="text-xs text-slate-500">Control de módulos y permisos por cada rol</p>
+          <h3 className="text-base font-semibold text-foreground">Roles</h3>
+          <p className="text-xs text-muted-foreground">Control de módulos y permisos por cada rol</p>
         </div>
 
         {canCreate ? (
@@ -309,14 +309,14 @@ export function RolesTable({
             permissions={availablePermissions}
             onCreated={onRoleCreated}
             triggerLabel="Añadir Rol"
-            triggerClassName="h-9 rounded-lg border border-violet-200 bg-violet-50 px-3 text-sm font-semibold text-violet-700 shadow-none hover:bg-violet-100"
+            triggerClassName="h-9 rounded-lg border border-violet-200 bg-violet-50 px-3 text-sm font-semibold text-violet-700 shadow-none hover:bg-violet-100 dark:border-violet-500/35 dark:bg-violet-500/10 dark:text-violet-300 dark:hover:bg-violet-500/20"
           />
         ) : null}
       </div>
 
-      <div className="flex flex-col gap-3 border-b border-slate-200/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+      <div className="flex flex-col gap-3 border-b border-border/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div className="relative w-full sm:max-w-md">
-          <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(event) => {
@@ -324,7 +324,7 @@ export function RolesTable({
               setPage(1)
             }}
             placeholder="Buscar rol o módulo..."
-            className="h-9 border-slate-200 bg-slate-50 pl-9 text-sm text-slate-800 placeholder:text-slate-400 focus-visible:ring-violet-200"
+            className="h-9 border-border bg-background pl-9 text-sm text-foreground placeholder:text-muted-foreground focus-visible:ring-violet-200 dark:focus-visible:ring-violet-500/30"
           />
         </div>
 
@@ -334,7 +334,7 @@ export function RolesTable({
               <Button
                 type="button"
                 variant="outline"
-                className="h-9 border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+                className="h-9 border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 <ArrowUpDownIcon className="mr-2 h-4 w-4" />
                 Ordenar
@@ -373,7 +373,7 @@ export function RolesTable({
               <Button
                 type="button"
                 variant="outline"
-                className="h-9 border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+                className="h-9 border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 <FilterIcon className="mr-2 h-4 w-4" />
                 Filtrar
@@ -428,29 +428,29 @@ export function RolesTable({
 
       <div className="overflow-x-auto">
         <table className="min-w-[980px] w-full border-collapse">
-          <thead className="bg-slate-50/80">
+          <thead className="bg-muted/40">
             <tr>
-              <th className="w-12 border-b border-r border-slate-200/80 px-3 py-3 text-left">
+              <th className="w-12 border-b border-r border-border/70 px-3 py-3 text-left">
                 <Checkbox
                   checked={allPageSelected ? true : somePageSelected ? "indeterminate" : false}
                   onCheckedChange={setPageSelection}
                   aria-label="Seleccionar todos los roles de la pagina"
-                  className="border-slate-300 data-checked:bg-violet-600 data-checked:border-violet-600"
+                  className="border-border data-checked:bg-violet-600 data-checked:border-violet-600"
                 />
               </th>
-              <th className="border-b border-r border-slate-200/80 px-4 py-3 text-left text-sm font-medium text-slate-700">
+              <th className="border-b border-r border-border/70 px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                 Rol
               </th>
-              <th className="border-b border-r border-slate-200/80 px-4 py-3 text-left text-sm font-medium text-slate-700">
+              <th className="border-b border-r border-border/70 px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                 Módulos Permitidos
               </th>
-              <th className="border-b border-r border-slate-200/80 px-4 py-3 text-left text-sm font-medium text-slate-700">
+              <th className="border-b border-r border-border/70 px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                 Permisos Generales
               </th>
-              <th className="border-b border-r border-slate-200/80 px-4 py-3 text-left text-sm font-medium text-slate-700">
+              <th className="border-b border-r border-border/70 px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                 Última Actualización
               </th>
-              <th className="w-16 border-b border-slate-200/80 px-3 py-3 text-center text-sm font-medium text-slate-700">
+              <th className="w-16 border-b border-border/70 px-3 py-3 text-center text-sm font-medium text-muted-foreground">
                 Acción
               </th>
             </tr>
@@ -460,7 +460,7 @@ export function RolesTable({
               <tr>
                 <td
                   colSpan={6}
-                  className="px-4 py-12 text-center text-sm text-slate-500"
+                  className="px-4 py-12 text-center text-sm text-muted-foreground"
                 >
                   No hay roles que coincidan con la búsqueda.
                 </td>
@@ -474,27 +474,27 @@ export function RolesTable({
                 return (
                   <tr
                     key={row.role.id}
-                    className="border-b border-slate-200/70 transition-colors hover:bg-slate-50/60"
+                    className="border-b border-border/60 transition-colors hover:bg-muted/40"
                   >
-                    <td className="border-r border-slate-200/70 px-3 py-3 align-top">
+                    <td className="border-r border-border/60 px-3 py-3 align-top">
                       <Checkbox
                         checked={selectedRoleIdsInData.includes(row.role.id)}
                         onCheckedChange={(checked) => setRowSelection(row.role.id, checked)}
                         aria-label={`Seleccionar rol ${row.role.name}`}
-                        className="border-slate-300 data-checked:bg-violet-600 data-checked:border-violet-600"
+                        className="border-border data-checked:bg-violet-600 data-checked:border-violet-600"
                       />
                     </td>
-                    <td className="border-r border-slate-200/70 px-4 py-3 align-top">
+                    <td className="border-r border-border/60 px-4 py-3 align-top">
                       <div className="space-y-0.5">
-                        <p className="text-sm font-semibold text-slate-800">{row.role.name}</p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-sm font-semibold text-foreground">{row.role.name}</p>
+                        <p className="text-xs text-muted-foreground">
                           {row.role.permissions.length} permisos asignados
                         </p>
                       </div>
                     </td>
-                    <td className="border-r border-slate-200/70 px-4 py-3 align-top">
+                    <td className="border-r border-border/60 px-4 py-3 align-top">
                       {row.modules.length === 0 ? (
-                        <span className="text-xs text-slate-500">Sin módulos</span>
+                        <span className="text-xs text-muted-foreground">Sin módulos</span>
                       ) : (
                         <div className="flex flex-wrap gap-1.5">
                           {row.modules.slice(0, 5).map((module) => (
@@ -509,16 +509,16 @@ export function RolesTable({
                             </span>
                           ))}
                           {row.modules.length > 5 ? (
-                            <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                            <span className="inline-flex items-center rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
                               +{row.modules.length - 5}
                             </span>
                           ) : null}
                         </div>
                       )}
                     </td>
-                    <td className="border-r border-slate-200/70 px-4 py-3 align-top">
+                    <td className="border-r border-border/60 px-4 py-3 align-top">
                       {activeActions.length === 0 ? (
-                        <span className="text-xs text-slate-500">Sin acciones</span>
+                        <span className="text-xs text-muted-foreground">Sin acciones</span>
                       ) : (
                         <div className="flex flex-wrap gap-1.5">
                           {activeActions.map((action) => (
@@ -535,8 +535,8 @@ export function RolesTable({
                         </div>
                       )}
                     </td>
-                    <td className="border-r border-slate-200/70 px-4 py-3 align-top">
-                      <span className="text-sm text-slate-600">
+                    <td className="border-r border-border/60 px-4 py-3 align-top">
+                      <span className="text-sm text-muted-foreground">
                         {formatUpdatedAt(row.role.updatedAt)}
                       </span>
                     </td>
@@ -546,7 +546,7 @@ export function RolesTable({
                           <DropdownMenuTrigger asChild>
                             <button
                               type="button"
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                               aria-label={`Acciones de ${row.role.name}`}
                             >
                               <MoreVerticalIcon className="h-4 w-4" />
@@ -561,7 +561,7 @@ export function RolesTable({
                             {canDelete ? (
                               <DropdownMenuItem
                                 onClick={() => onDelete(row.role)}
-                                className="text-red-600 focus:text-red-600"
+                                className="text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-300"
                               >
                                 Eliminar rol
                               </DropdownMenuItem>
@@ -569,7 +569,7 @@ export function RolesTable({
                           </DropdownMenuContent>
                         </DropdownMenu>
                       ) : (
-                        <span className="text-sm text-slate-300">-</span>
+                        <span className="text-sm text-muted-foreground/60">-</span>
                       )}
                     </td>
                   </tr>
@@ -580,17 +580,17 @@ export function RolesTable({
         </table>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-slate-200/80 bg-slate-50/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-        <p className="text-xs text-slate-500">
+      <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/35 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <p className="text-xs text-muted-foreground">
           Mostrando {showingFrom} - {showingTo} de {filteredRows.length} roles
         </p>
 
-        <div className="inline-flex overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div className="inline-flex overflow-hidden rounded-lg border border-border bg-background">
           <button
             type="button"
             disabled={currentPage <= 1}
             onClick={() => setPage(Math.max(1, currentPage - 1))}
-            className="h-9 px-3 text-sm text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-300"
+            className="h-9 px-3 text-sm text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:text-muted-foreground/50"
           >
             Anterior
           </button>
@@ -599,7 +599,7 @@ export function RolesTable({
             item === "ellipsis" ? (
               <span
                 key={`ellipsis-${index}`}
-                className="inline-flex h-9 min-w-10 items-center justify-center border-l border-slate-200 px-2 text-sm text-slate-400"
+                className="inline-flex h-9 min-w-10 items-center justify-center border-l border-border px-2 text-sm text-muted-foreground/80"
               >
                 ...
               </span>
@@ -609,10 +609,10 @@ export function RolesTable({
                 type="button"
                 onClick={() => setPage(item)}
                 className={cn(
-                  "h-9 min-w-10 border-l border-slate-200 px-3 text-sm transition-colors",
+                  "h-9 min-w-10 border-l border-border px-3 text-sm transition-colors",
                   currentPage === item
-                    ? "bg-slate-100 font-semibold text-slate-800"
-                    : "text-slate-600 hover:bg-slate-50",
+                    ? "bg-muted font-semibold text-foreground"
+                    : "text-muted-foreground hover:bg-muted",
                 )}
               >
                 {item}
@@ -624,7 +624,7 @@ export function RolesTable({
             type="button"
             disabled={currentPage >= totalPages}
             onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
-            className="h-9 border-l border-slate-200 px-3 text-sm text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-300"
+            className="h-9 border-l border-border px-3 text-sm text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:text-muted-foreground/50"
           >
             Siguiente
           </button>

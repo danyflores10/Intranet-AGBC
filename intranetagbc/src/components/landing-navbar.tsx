@@ -11,7 +11,6 @@ import {
   Shield,
   Users,
   FileText,
-  Zap,
   ArrowRight,
   Menu,
   X,
@@ -60,29 +59,30 @@ export function LandingNavbar({ estaLogueado, esAdmin, usuario }: LandingNavbarP
       setScrolled(window.scrollY > 20)
       setShowTop(window.scrollY > 400)
 
-      // Progreso de scroll
       const docHeight = document.documentElement.scrollHeight - window.innerHeight
       const progress = docHeight > 0 ? (window.scrollY / docHeight) * 100 : 0
       setScrollProgress(Math.min(100, Math.max(0, progress)))
 
-      // Detectar sección activa
       const sections = navItems.map((item) => item.href.replace("#", ""))
       let found = ""
+
       for (const id of sections) {
         const el = document.getElementById(id)
         if (el) {
           const rect = el.getBoundingClientRect()
-          if (rect.top <= 120 && rect.bottom > 120) {
+          if (rect.top <= 140 && rect.bottom > 140) {
             found = id
             break
           }
         }
       }
+
       setActiveSection(found)
     }
 
     window.addEventListener("scroll", handleScroll, { passive: true })
     handleScroll()
+
     return () => window.removeEventListener("scroll", handleScroll)
   }, [navItems])
 
@@ -90,8 +90,9 @@ export function LandingNavbar({ estaLogueado, esAdmin, usuario }: LandingNavbarP
     setMobileOpen(false)
     const id = href.replace("#", "")
     const el = document.getElementById(id)
+
     if (el) {
-      const top = el.getBoundingClientRect().top + window.scrollY - 80
+      const top = el.getBoundingClientRect().top + window.scrollY - 100
       window.scrollTo({ top, behavior: "smooth" })
     }
   }, [])
@@ -104,72 +105,83 @@ export function LandingNavbar({ estaLogueado, esAdmin, usuario }: LandingNavbarP
     <>
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled
-            ? "shadow-lg shadow-[#FFB300]/8"
-            : ""
+          scrolled ? "shadow-lg shadow-[#FFB300]/8" : ""
         }`}
       >
-        {/* Barra principal */}
-        <div className="bg-background border-b border-[#FFB300]/15">
-          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 lg:px-6">
-            {/* Logo */}
+        <div className="border-b border-[#FFB300]/15 bg-background">
+          {/* Grid 3 columnas iguales: logo | nav centrado | acciones */}
+          <div className="mx-auto flex h-24 max-w-7xl items-center justify-between gap-2 px-4 lg:px-6">
+
+            {/* Logo — columna izquierda */}
             <Link href="/" className="flex shrink-0 items-center gap-2" onClick={scrollToTop}>
               <Image
                 src="/image/Logooriginal.png"
                 alt="Correos de Bolivia"
-                width={140}
-                height={40}
-                className="h-10 w-auto object-contain dark:hidden"
+                width={180}
+                height={60}
+                className="h-14 w-auto object-contain dark:hidden"
                 style={{ width: "auto" }}
                 priority
               />
               <Image
                 src="/image/LogoAmarillo.png"
                 alt="Correos de Bolivia"
-                width={140}
-                height={40}
-                className="hidden h-10 w-auto object-contain dark:block"
+                width={180}
+                height={60}
+                className="hidden h-14 w-auto object-contain dark:block"
                 style={{ width: "auto" }}
                 priority
               />
             </Link>
 
-            {/* Nav links desktop */}
-            <div className="hidden lg:flex items-center gap-0.5">
+            {/* Nav desktop — columna central, centrado */}
+            <div className="hidden lg:flex flex-1 items-center justify-center gap-0.5 xl:gap-1">
               {navItems.map((item) => {
                 const isActive = activeSection === item.href.replace("#", "")
+
                 return (
                   <button
                     key={item.href}
                     type="button"
                     onClick={() => scrollToSection(item.href)}
-                    className={`group relative flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ${
+                    className={`group relative flex items-center gap-1.5 rounded-full px-3 py-2.5 text-sm font-medium transition-all duration-300 ${
                       isActive
-                        ? "text-[#1a1000] bg-gradient-to-r from-[#FFB300]/25 to-[#FF8800]/20 shadow-sm shadow-[#FFB300]/10"
-                        : "text-foreground/70 hover:text-[#FF8800] hover:bg-[#FFB300]/8"
+                        ? "bg-gradient-to-r from-[#FFB300]/25 to-[#FF8800]/20 text-[#1a1000] dark:text-[#FFE8A3] dark:from-[#FFB300]/20 dark:to-[#FF8800]/15"
+                        : "text-foreground/80 hover:bg-[#FFB300]/8 hover:text-[#FF8800] dark:text-white/90 dark:hover:bg-[#FFB300]/10 dark:hover:text-[#FFD166]"
                     }`}
                   >
-                    <item.icon className={`h-4 w-4 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-[#FF8800]" : ""}`} />
-                    <span>{item.label}</span>
+                    <item.icon
+                      className={`h-4 w-4 transition-transform duration-300 group-hover:scale-110 ${
+                        isActive ? "text-[#FF8800] dark:text-[#FFD166]" : "text-current"
+                      }`}
+                    />
+                    <span className="hidden xl:inline">{item.label}</span>
+
                     {isActive && (
-                      <span className="absolute -bottom-[11px] left-1/2 -translate-x-1/2 h-[3px] w-8 rounded-full bg-gradient-to-r from-[#FFB300] to-[#FF8800]" />
+                      <span className="absolute -bottom-[11px] left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-gradient-to-r from-[#FFB300] to-[#FF8800]" />
                     )}
                   </button>
                 )
               })}
             </div>
 
-            {/* Right side */}
-            <div className="flex items-center gap-3">
+            {/* Acciones — derecha */}
+            <div className="flex shrink-0 items-center gap-2">
               {estaLogueado ? (
                 <>
-                  <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex h-9 text-sm font-semibold rounded-full hover:bg-[#FFB300]/10 hover:text-[#FF8800] transition-colors duration-300">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    asChild
+                    className="hidden h-9 rounded-full text-xs font-semibold transition-colors duration-300 hover:bg-[#FFB300]/10 hover:text-[#FF8800] xl:inline-flex"
+                  >
                     <Link href="/dashboard">
                       {esAdmin ? "Panel Admin" : "Mi Panel"}
                     </Link>
                   </Button>
+
                   <div className="flex items-center gap-2.5">
-                    <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#FFB300]/40 bg-gradient-to-br from-[#FFB300]/20 to-[#FF8800]/20 shadow-sm ring-2 ring-[#FFB300]/10 ring-offset-1 ring-offset-background">
+                    <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#FFB300]/40 bg-gradient-to-br from-[#FFB300]/20 to-[#FF8800]/20 shadow-sm ring-2 ring-[#FFB300]/10 ring-offset-1 ring-offset-background">
                       {usuario?.image ? (
                         <img
                           src={usuario.image}
@@ -177,24 +189,36 @@ export function LandingNavbar({ estaLogueado, esAdmin, usuario }: LandingNavbarP
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <span className="text-sm font-bold text-[#FF8800]">
+                        <span className="text-sm font-bold text-[#FF8800] dark:text-[#FFD166]">
                           {usuario?.name?.charAt(0)?.toUpperCase() ?? "U"}
                         </span>
                       )}
                       <div className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-background bg-emerald-500" />
                     </div>
-                    <span className="text-sm font-medium text-foreground hidden md:inline max-w-[120px] truncate">
+
+                    <span className="hidden max-w-[90px] truncate text-xs font-medium text-foreground xl:inline">
                       {usuario?.name}
                     </span>
                   </div>
+
                   <LogoutButton />
                 </>
               ) : (
                 <>
-                  <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex h-9 text-sm font-medium rounded-full hover:bg-[#FFB300]/10 hover:text-[#FF8800] transition-colors duration-300">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    asChild
+                    className="hidden h-10 rounded-full text-sm font-medium transition-colors duration-300 hover:bg-[#FFB300]/10 hover:text-[#FF8800] sm:inline-flex"
+                  >
                     <Link href="/">Iniciar sesión</Link>
                   </Button>
-                  <Button size="sm" asChild className="h-10 px-6 text-sm font-bold bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-lg shadow-[#FFB300]/30 hover:shadow-xl hover:shadow-[#FFB300]/40 hover:scale-105 border-0 rounded-full transition-all duration-300">
+
+                  <Button
+                    size="sm"
+                    asChild
+                    className="h-10 rounded-full border-0 bg-gradient-to-r from-[#FFB300] to-[#FF8800] px-6 text-sm font-bold text-[#1a1000] shadow-lg shadow-[#FFB300]/30 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#FFB300]/40"
+                  >
                     <Link href="/">
                       Acceder
                       <ArrowRight className="ml-1.5 h-4 w-4" />
@@ -203,11 +227,10 @@ export function LandingNavbar({ estaLogueado, esAdmin, usuario }: LandingNavbarP
                 </>
               )}
 
-              {/* Hamburger mobile */}
               <button
                 type="button"
                 onClick={() => setMobileOpen(!mobileOpen)}
-                className="flex lg:hidden h-9 w-9 items-center justify-center rounded-full text-foreground hover:bg-[#FFB300]/10 transition-colors"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-[#FFB300]/10 lg:hidden"
                 aria-label="Menú"
               >
                 {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -216,13 +239,14 @@ export function LandingNavbar({ estaLogueado, esAdmin, usuario }: LandingNavbarP
           </div>
         </div>
 
-        {/* Barra de progreso dinámica — arcoíris */}
-        <div className="relative h-[5px] w-full bg-black/5 overflow-hidden">
+        {/* Barra de progreso */}
+        <div className="relative h-[6px] w-full overflow-hidden bg-black/5 dark:bg-white/5">
           <div
             className="absolute top-0 left-0 h-full transition-[width] duration-150 ease-out"
             style={{
               width: `${scrollProgress}%`,
-              backgroundImage: "linear-gradient(to right, #FF0000, #FF8800, #FFD500, #00CC44, #00AAFF, #4400FF, #AA00FF)",
+              backgroundImage:
+                "linear-gradient(to right, #FF0000, #FF8800, #FFD500, #00CC44, #00AAFF, #4400FF, #AA00FF)",
             }}
           />
           {scrollProgress > 0 && scrollProgress < 100 && (
@@ -234,14 +258,18 @@ export function LandingNavbar({ estaLogueado, esAdmin, usuario }: LandingNavbarP
         </div>
       </nav>
 
-      {/* Mobile menu overlay */}
+      {/* Mobile menu */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <div className="absolute top-[74px] left-0 right-0 max-h-[70vh] overflow-y-auto border-b border-[#FFB300]/20 bg-background/98 backdrop-blur-xl shadow-xl shadow-[#FFB300]/10">
-            <div className="p-4 space-y-1">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
+          <div className="absolute top-[102px] left-0 right-0 max-h-[70vh] overflow-y-auto border-b border-[#FFB300]/20 bg-background/98 shadow-xl shadow-[#FFB300]/10 backdrop-blur-xl">
+            <div className="space-y-1 p-4">
               {navItems.map((item) => {
                 const isActive = activeSection === item.href.replace("#", "")
+
                 return (
                   <button
                     key={item.href}
@@ -249,26 +277,30 @@ export function LandingNavbar({ estaLogueado, esAdmin, usuario }: LandingNavbarP
                     onClick={() => scrollToSection(item.href)}
                     className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 ${
                       isActive
-                        ? "text-[#FF8800] bg-gradient-to-r from-[#FFB300]/15 to-transparent"
-                        : "text-foreground hover:bg-[#FFB300]/5 hover:text-[#FF8800]"
+                        ? "bg-gradient-to-r from-[#FFB300]/15 to-transparent text-[#FF8800] dark:text-[#FFD166]"
+                        : "text-foreground hover:bg-[#FFB300]/5 hover:text-[#FF8800] dark:text-white/90 dark:hover:text-[#FFD166]"
                     }`}
                   >
-                    <div className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-300 ${
-                      isActive
-                        ? "bg-gradient-to-br from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-md shadow-[#FFB300]/25"
-                        : "bg-muted/50 text-muted-foreground"
-                    }`}>
+                    <div
+                      className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-300 ${
+                        isActive
+                          ? "bg-gradient-to-br from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-md shadow-[#FFB300]/25"
+                          : "bg-muted/50 text-muted-foreground dark:bg-white/10 dark:text-white/70"
+                      }`}
+                    >
                       <item.icon className="h-4 w-4" />
                     </div>
-                    <span>{item.label}</span>
+
+                    <span className="hidden xl:inline">{item.label}</span>
+
                     {isActive && (
-                      <div className="ml-auto h-1.5 w-1.5 rounded-full bg-[#FF8800]" />
+                      <div className="ml-auto h-1.5 w-1.5 rounded-full bg-[#FF8800] dark:bg-[#FFD166]" />
                     )}
                   </button>
                 )
               })}
 
-              <div className="border-t border-[#FFB300]/15 pt-3 mt-3">
+              <div className="mt-3 border-t border-[#FFB300]/15 pt-3">
                 {estaLogueado ? (
                   <Link
                     href="/dashboard"
@@ -297,10 +329,10 @@ export function LandingNavbar({ estaLogueado, esAdmin, usuario }: LandingNavbarP
         type="button"
         onClick={scrollToTop}
         aria-label="Volver arriba"
-        className={`fixed bottom-6 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-xl shadow-[#FFB300]/30 transition-all duration-500 hover:shadow-2xl hover:shadow-[#FFB300]/40 hover:scale-110 active:scale-95 ${
+        className={`fixed bottom-6 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-xl shadow-[#FFB300]/30 transition-all duration-500 hover:scale-110 hover:shadow-2xl hover:shadow-[#FFB300]/40 active:scale-95 ${
           showTop
             ? "translate-y-0 opacity-100"
-            : "translate-y-16 opacity-0 pointer-events-none"
+            : "pointer-events-none translate-y-16 opacity-0"
         }`}
       >
         <ChevronUp className="h-5 w-5" strokeWidth={3} />

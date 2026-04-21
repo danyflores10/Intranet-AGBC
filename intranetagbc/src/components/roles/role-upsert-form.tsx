@@ -38,10 +38,10 @@ const ACTION_LABELS: Record<ActionKey, string> = {
 }
 
 const ACTION_BADGE_STYLES: Record<ActionKey, string> = {
-  ver: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  crear: "border-cyan-200 bg-cyan-50 text-cyan-700",
-  editar: "border-amber-200 bg-amber-50 text-amber-700",
-  eliminar: "border-rose-200 bg-rose-50 text-rose-700",
+  ver: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/35 dark:bg-emerald-500/10 dark:text-emerald-300",
+  crear: "border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-500/35 dark:bg-cyan-500/10 dark:text-cyan-300",
+  editar: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/35 dark:bg-amber-500/10 dark:text-amber-300",
+  eliminar: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/35 dark:bg-rose-500/10 dark:text-rose-300",
 }
 
 const MODULE_LABELS: Record<string, string> = {
@@ -181,7 +181,7 @@ function getActionBadgeClass(action: string): string {
     return ACTION_BADGE_STYLES[action as ActionKey]
   }
 
-  return "border-slate-200 bg-slate-100 text-slate-700"
+  return "border-border bg-muted text-muted-foreground"
 }
 
 function sortPermissionsByAction(a: Permission, b: Permission): number {
@@ -336,7 +336,7 @@ export function RoleUpsertForm({
             placeholder="Ej: jefe_rrhh"
             {...form.register("name")}
             autoFocus
-            className="h-11 rounded-xl border-slate-200 bg-slate-50 px-3.5 text-sm shadow-sm transition-all focus-visible:border-[#FFB300] focus-visible:ring-4 focus-visible:ring-[#FFB300]/25"
+            className="h-11 rounded-xl border-border bg-background px-3.5 text-sm shadow-sm transition-all focus-visible:border-[#FFB300] focus-visible:ring-4 focus-visible:ring-[#FFB300]/25"
           />
           {form.formState.errors.name ? (
             <p className="text-xs font-medium text-red-600">
@@ -352,7 +352,7 @@ export function RoleUpsertForm({
               <p className="text-sm text-muted-foreground">
                 Selecciona los permisos que estaran disponibles para este rol.
               </p>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 {selectedCount} de {totalPermissions} permisos seleccionados
               </p>
             </div>
@@ -362,7 +362,7 @@ export function RoleUpsertForm({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 rounded-lg border-slate-200 bg-white text-slate-700"
+                className="h-8 rounded-lg border-border bg-background text-foreground hover:bg-muted"
                 onClick={selectAllPermissions}
                 disabled={pending || permissions.length === 0}
               >
@@ -373,7 +373,7 @@ export function RoleUpsertForm({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-8 rounded-lg text-slate-600"
+                className="h-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
                 onClick={clearPermissions}
                 disabled={pending || selectedCount === 0}
               >
@@ -384,8 +384,8 @@ export function RoleUpsertForm({
           </div>
 
           {groupedPermissions.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-              <p className="text-sm text-slate-500">No hay permisos registrados todavia.</p>
+            <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
+              <p className="text-sm text-muted-foreground">No hay permisos registrados todavia.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -400,18 +400,18 @@ export function RoleUpsertForm({
                 return (
                   <div
                     key={group.moduleKey}
-                    className="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 shadow-xs"
+                    className="rounded-xl border border-border bg-muted/30 p-3.5 shadow-xs"
                   >
                     <div className="mb-3 flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2.5">
-                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600">
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground">
                           <Icon className="h-4 w-4" />
                         </span>
                         <div>
-                          <h5 className="text-sm font-semibold text-slate-800">
+                          <h5 className="text-sm font-semibold text-foreground">
                             {group.moduleLabel}
                           </h5>
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-muted-foreground">
                             {selectedInModule} de {modulePermissionIds.length} seleccionados
                           </p>
                         </div>
@@ -422,7 +422,7 @@ export function RoleUpsertForm({
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-7 rounded-md px-2 text-xs text-slate-600"
+                          className="h-7 rounded-md px-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
                           onClick={() => selectModulePermissions(modulePermissionIds)}
                           disabled={pending || allModuleSelected}
                         >
@@ -432,7 +432,7 @@ export function RoleUpsertForm({
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-7 rounded-md px-2 text-xs text-slate-600"
+                          className="h-7 rounded-md px-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
                           onClick={() => clearModulePermissions(modulePermissionIds)}
                           disabled={pending || selectedInModule === 0}
                         >
@@ -455,7 +455,7 @@ export function RoleUpsertForm({
                               "flex cursor-pointer items-center gap-2.5 rounded-lg border px-2.5 py-2 transition-colors",
                               checked
                                 ? "border-[#FFB300]/40 bg-[#FFB300]/10"
-                                : "border-slate-200 bg-white hover:border-slate-300",
+                                : "border-border bg-background hover:border-border/80 hover:bg-muted/60",
                             )}
                           >
                             <Checkbox
@@ -465,7 +465,7 @@ export function RoleUpsertForm({
                                 togglePermission(permission.id, value === true)
                               }
                               disabled={pending}
-                              className="border-slate-300 data-checked:border-[#FFB300] data-checked:bg-[#FFB300] data-checked:text-[#1a1000]"
+                              className="border-border data-checked:border-[#FFB300] data-checked:bg-[#FFB300] data-checked:text-[#1a1000]"
                             />
                             <div className="min-w-0 space-y-1">
                               <span
@@ -476,7 +476,7 @@ export function RoleUpsertForm({
                               >
                                 {getActionLabel(action)}
                               </span>
-                              <p className="truncate text-[11px] text-slate-500">
+                              <p className="truncate text-[11px] text-muted-foreground">
                                 {permission.name}
                               </p>
                             </div>
@@ -492,7 +492,7 @@ export function RoleUpsertForm({
         </section>
       </div>
 
-      <div className="sticky bottom-0 mt-5 border-t border-slate-200 bg-white/95 px-1 pt-4 backdrop-blur supports-[backdrop-filter]:bg-white/85">
+      <div className="sticky bottom-0 mt-5 border-t border-border bg-background/95 px-1 pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/85">
         <div className="flex justify-end">
           <Button
             type="submit"
