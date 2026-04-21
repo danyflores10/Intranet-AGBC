@@ -431,24 +431,24 @@ function getStatusStyles(status: AuditStatus): {
 } {
   if (status === "Fallido") {
     return {
-      text: "text-red-700",
-      badge: "border-red-200 bg-red-50",
-      icon: <XCircleIcon className="h-4 w-4 text-red-600" />,
+      text: "text-red-700 dark:text-red-300",
+      badge: "border-red-200 bg-red-50 dark:border-red-500/35 dark:bg-red-500/10",
+      icon: <XCircleIcon className="h-4 w-4 text-red-600 dark:text-red-400" />,
     }
   }
 
   if (status === "Advertencia") {
     return {
-      text: "text-amber-700",
-      badge: "border-amber-200 bg-amber-50",
-      icon: <AlertTriangleIcon className="h-4 w-4 text-amber-600" />,
+      text: "text-amber-700 dark:text-amber-300",
+      badge: "border-amber-200 bg-amber-50 dark:border-amber-500/35 dark:bg-amber-500/10",
+      icon: <AlertTriangleIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />,
     }
   }
 
   return {
-    text: "text-emerald-700",
-    badge: "border-emerald-200 bg-emerald-50",
-    icon: <CheckCircle2Icon className="h-4 w-4 text-emerald-600" />,
+    text: "text-emerald-700 dark:text-emerald-300",
+    badge: "border-emerald-200 bg-emerald-50 dark:border-emerald-500/35 dark:bg-emerald-500/10",
+    icon: <CheckCircle2Icon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />,
   }
 }
 
@@ -468,12 +468,12 @@ function getActionIcon(accion: string): ReactNode {
 
 function getActionStyles(accion: string): string {
   const value = normalizeText(accion)
-  if (value.includes("inicio sesion") || value.includes("login")) return "bg-blue-50 text-blue-700 border-blue-200"
-  if (value.includes("cerro sesion") || value.includes("logout")) return "bg-slate-100 text-slate-700 border-slate-200"
-  if (value.includes("elimino")) return "bg-red-50 text-red-700 border-red-200"
-  if (value.includes("creo") || value.includes("registro")) return "bg-emerald-50 text-emerald-700 border-emerald-200"
-  if (value.includes("edito") || value.includes("actualizo") || value.includes("modific")) return "bg-amber-50 text-amber-700 border-amber-200"
-  return "bg-violet-50 text-violet-700 border-violet-200"
+  if (value.includes("inicio sesion") || value.includes("login")) return "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/35 dark:bg-blue-500/10 dark:text-blue-300"
+  if (value.includes("cerro sesion") || value.includes("logout")) return "border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-500/35 dark:bg-slate-500/10 dark:text-slate-300"
+  if (value.includes("elimino")) return "border-red-200 bg-red-50 text-red-700 dark:border-red-500/35 dark:bg-red-500/10 dark:text-red-300"
+  if (value.includes("creo") || value.includes("registro")) return "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/35 dark:bg-emerald-500/10 dark:text-emerald-300"
+  if (value.includes("edito") || value.includes("actualizo") || value.includes("modific")) return "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/35 dark:bg-amber-500/10 dark:text-amber-300"
+  return "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-500/35 dark:bg-violet-500/10 dark:text-violet-300"
 }
 
 function getInitials(name: string): string {
@@ -814,7 +814,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
               <CheckCircle2Icon className="h-6 w-6 text-emerald-600" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-emerald-700">{filteredStats.exitosos}</div>
+              <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{filteredStats.exitosos}</div>
               <div className="text-xs text-muted-foreground">Exitosos</div>
             </div>
           </CardContent>
@@ -826,7 +826,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
               <XCircleIcon className="h-6 w-6 text-red-600" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-red-700">{filteredStats.fallidos}</div>
+              <div className="text-2xl font-bold text-red-700 dark:text-red-400">{filteredStats.fallidos}</div>
               <div className="text-xs text-muted-foreground">Fallidos</div>
             </div>
           </CardContent>
@@ -838,7 +838,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
               <AlertTriangleIcon className="h-6 w-6 text-amber-600" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-amber-700">{filteredStats.advertencias}</div>
+              <div className="text-2xl font-bold text-amber-700 dark:text-amber-400">{filteredStats.advertencias}</div>
               <div className="text-xs text-muted-foreground">Advertencias</div>
             </div>
           </CardContent>
@@ -857,11 +857,11 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
         </Card>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-slate-200/80 px-4 py-4 sm:px-5">
+      <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-border/70 px-4 py-4 sm:px-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="relative w-full lg:max-w-md">
-              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={query}
                 onChange={(event) =>
@@ -870,7 +870,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
                   })
                 }
                 placeholder="Buscar por usuario, acción, módulo o IP..."
-                className="h-9 border-slate-200 bg-slate-50 pl-9 text-sm text-slate-800 placeholder:text-slate-400"
+                className="h-9 border-border bg-background pl-9 text-sm text-foreground placeholder:text-muted-foreground"
               />
             </div>
 
@@ -879,7 +879,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-9 border-slate-200 bg-slate-50 text-slate-700"
+                  className="h-9 border-border bg-background text-foreground hover:bg-muted"
                 >
                   <DownloadIcon className="mr-2 h-4 w-4" />
                   Exportar
@@ -900,7 +900,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
             <div className="space-y-1">
-              <label htmlFor="date-from" className="text-xs font-semibold text-slate-500">
+              <label htmlFor="date-from" className="text-xs font-semibold text-muted-foreground">
                 Desde
               </label>
               <Input
@@ -912,12 +912,12 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
                     setDateFrom(event.target.value)
                   })
                 }
-                className="h-9 border-slate-200 bg-slate-50"
+                className="h-9 border-border bg-background"
               />
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="date-to" className="text-xs font-semibold text-slate-500">
+              <label htmlFor="date-to" className="text-xs font-semibold text-muted-foreground">
                 Hasta
               </label>
               <Input
@@ -929,16 +929,16 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
                     setDateTo(event.target.value)
                   })
                 }
-                className="h-9 border-slate-200 bg-slate-50"
+                className="h-9 border-border bg-background"
               />
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="modulo" className="text-xs font-semibold text-slate-500">
+              <label htmlFor="modulo" className="text-xs font-semibold text-muted-foreground">
                 Módulo
               </label>
               <div className="relative">
-                <FilterIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <FilterIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <select
                   id="modulo"
                   value={moduleFilter}
@@ -947,7 +947,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
                       setModuleFilter(event.target.value)
                     })
                   }
-                  className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-[#FFB300]/20"
+                  className="h-9 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-[#FFB300]/25"
                 >
                   <option value="todos">Todos los módulos</option>
                   {moduleOptions.map((modulo) => (
@@ -960,11 +960,11 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="estado" className="text-xs font-semibold text-slate-500">
+              <label htmlFor="estado" className="text-xs font-semibold text-muted-foreground">
                 Estado
               </label>
               <div className="relative">
-                <ArrowUpDownIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <ArrowUpDownIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <select
                   id="estado"
                   value={statusFilter}
@@ -973,7 +973,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
                       setStatusFilter(event.target.value as "todos" | AuditStatus)
                     })
                   }
-                  className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-[#FFB300]/20"
+                  className="h-9 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-[#FFB300]/25"
                 >
                   <option value="todos">Todos los estados</option>
                   <option value="Exitoso">Exitoso</option>
@@ -987,27 +987,27 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
 
         <div className="overflow-x-auto">
           <table className="min-w-[1180px] w-full border-collapse">
-            <thead className="bg-slate-50/80">
+            <thead className="bg-muted/40">
               <tr>
-                <th className="border-b border-r border-slate-200/80 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <th className="border-b border-r border-border/70 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Fecha
                 </th>
-                <th className="border-b border-r border-slate-200/80 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <th className="border-b border-r border-border/70 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Usuario
                 </th>
-                <th className="border-b border-r border-slate-200/80 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <th className="border-b border-r border-border/70 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Acción
                 </th>
-                <th className="border-b border-r border-slate-200/80 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <th className="border-b border-r border-border/70 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Módulo
                 </th>
-                <th className="border-b border-r border-slate-200/80 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <th className="border-b border-r border-border/70 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   IP y Ubicación
                 </th>
-                <th className="border-b border-r border-slate-200/80 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <th className="border-b border-r border-border/70 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Estado
                 </th>
-                <th className="border-b border-slate-200/80 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <th className="border-b border-border/70 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Detalles
                 </th>
               </tr>
@@ -1015,7 +1015,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
             <tbody>
               {pagedRows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-14 text-center text-sm text-slate-500">
+                  <td colSpan={7} className="px-4 py-14 text-center text-sm text-muted-foreground">
                     No hay registros para los filtros seleccionados.
                   </td>
                 </tr>
@@ -1026,48 +1026,48 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
                   return (
                     <tr
                       key={row.id}
-                      className="border-b border-slate-200/70 transition-colors hover:bg-slate-50/60"
+                      className="border-b border-border/60 transition-colors hover:bg-muted/40"
                     >
-                      <td className="border-r border-slate-200/70 px-4 py-3 align-top">
-                        <p className="text-sm font-semibold text-slate-800">{row.fechaRelativa}</p>
-                        <p className="text-xs text-slate-500">{row.fechaLarga}</p>
+                      <td className="border-r border-border/60 px-4 py-3 align-top">
+                        <p className="text-sm font-semibold text-foreground">{row.fechaRelativa}</p>
+                        <p className="text-xs text-muted-foreground">{row.fechaLarga}</p>
                       </td>
 
-                      <td className="border-r border-slate-200/70 px-4 py-3 align-top">
+                      <td className="border-r border-border/60 px-4 py-3 align-top">
                         <div className="flex items-start gap-2.5">
                           <Avatar size="sm">
                             <AvatarImage src={row.usuario.avatar} alt={row.usuario.nombre} />
                             <AvatarFallback>{getInitials(row.usuario.nombre)}</AvatarFallback>
                           </Avatar>
                           <div className="space-y-0.5 min-w-0">
-                            <p className="text-sm font-semibold text-slate-800 truncate">{row.usuario.nombre}</p>
-                            <p className="text-xs text-slate-500 truncate">{row.usuario.email ?? "Sin correo asociado"}</p>
-                            <p className="text-[11px] text-slate-400 truncate">ID: {row.usuario.idCrudo}</p>
+                            <p className="text-sm font-semibold text-foreground truncate">{row.usuario.nombre}</p>
+                            <p className="text-xs text-muted-foreground truncate">{row.usuario.email ?? "Sin correo asociado"}</p>
+                            <p className="text-[11px] text-muted-foreground/80 truncate">ID: {row.usuario.idCrudo}</p>
                           </div>
                         </div>
                       </td>
 
-                      <td className="border-r border-slate-200/70 px-4 py-3 align-top">
+                      <td className="border-r border-border/60 px-4 py-3 align-top">
                         <div className="flex items-start gap-2">
                           <span className={cn("inline-flex h-7 w-7 items-center justify-center rounded-lg border", getActionStyles(row.accion))}>
                             {getActionIcon(row.accion)}
                           </span>
-                          <p className="text-sm text-slate-700">{row.accion}</p>
+                          <p className="text-sm text-foreground">{row.accion}</p>
                         </div>
                       </td>
 
-                      <td className="border-r border-slate-200/70 px-4 py-3 align-top">
-                        <span className="inline-flex items-center rounded-full border border-[#FFB300]/20 bg-[#FFB300]/10 px-2.5 py-1 text-xs font-semibold text-[#B77000]">
+                      <td className="border-r border-border/60 px-4 py-3 align-top">
+                        <span className="inline-flex items-center rounded-full border border-[#FFB300]/30 bg-[#FFB300]/10 px-2.5 py-1 text-xs font-semibold text-[#B77000] dark:border-[#FFB300]/45 dark:bg-[#FFB300]/20 dark:text-[#FFD166]">
                           {row.modulo}
                         </span>
                       </td>
 
-                      <td className="border-r border-slate-200/70 px-4 py-3 align-top">
-                        <p className="font-mono text-xs text-slate-700">{row.ip}</p>
-                        <p className="text-xs text-slate-500">{row.ubicacion}</p>
+                      <td className="border-r border-border/60 px-4 py-3 align-top">
+                        <p className="font-mono text-xs text-foreground">{row.ip}</p>
+                        <p className="text-xs text-muted-foreground">{row.ubicacion}</p>
                       </td>
 
-                      <td className="border-r border-slate-200/70 px-4 py-3 align-top">
+                      <td className="border-r border-border/60 px-4 py-3 align-top">
                         <span
                           className={cn(
                             "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold",
@@ -1086,13 +1086,13 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
                             type="button"
                             size="sm"
                             variant="outline"
-                            className="h-8 rounded-lg border-slate-200 text-slate-700"
+                            className="h-8 rounded-lg border-border text-foreground hover:bg-muted"
                             onClick={() => setSelectedLog(row)}
                           >
                             Ver cambios
                           </Button>
                         ) : (
-                          <p className="text-xs text-slate-500 line-clamp-2 max-w-[260px]">
+                          <p className="text-xs text-muted-foreground line-clamp-2 max-w-[260px]">
                             {row.detallesTexto}
                           </p>
                         )}
@@ -1105,18 +1105,18 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
           </table>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-slate-200/80 bg-slate-50/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-          <p className="text-xs text-slate-500">
+        <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/35 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+          <p className="text-xs text-muted-foreground">
             Mostrando {showingFrom} - {showingTo} de {filteredRows.length} registros
-            <span className="ml-2 text-slate-400">(Total histórico: {stats.total})</span>
+            <span className="ml-2 text-muted-foreground/80">(Total histórico: {stats.total})</span>
           </p>
 
-          <div className="inline-flex overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <div className="inline-flex overflow-hidden rounded-lg border border-border bg-background">
             <button
               type="button"
               disabled={currentPage <= 1}
               onClick={() => setPage(Math.max(1, currentPage - 1))}
-              className="h-9 px-3 text-sm text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-300"
+              className="h-9 px-3 text-sm text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:text-muted-foreground/50"
             >
               Anterior
             </button>
@@ -1125,7 +1125,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
               item === "ellipsis" ? (
                 <span
                   key={`ellipsis-${index}`}
-                  className="inline-flex h-9 min-w-10 items-center justify-center border-l border-slate-200 px-2 text-sm text-slate-400"
+                  className="inline-flex h-9 min-w-10 items-center justify-center border-l border-border px-2 text-sm text-muted-foreground/80"
                 >
                   ...
                 </span>
@@ -1135,10 +1135,10 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
                   type="button"
                   onClick={() => setPage(item)}
                   className={cn(
-                    "h-9 min-w-10 border-l border-slate-200 px-3 text-sm transition-colors",
+                    "h-9 min-w-10 border-l border-border px-3 text-sm transition-colors",
                     currentPage === item
-                      ? "bg-slate-100 font-semibold text-slate-800"
-                      : "text-slate-600 hover:bg-slate-50",
+                      ? "bg-muted font-semibold text-foreground"
+                      : "text-muted-foreground hover:bg-muted",
                   )}
                 >
                   {item}
@@ -1150,7 +1150,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
               type="button"
               disabled={currentPage >= totalPages}
               onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
-              className="h-9 border-l border-slate-200 px-3 text-sm text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-300"
+              className="h-9 border-l border-border px-3 text-sm text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:text-muted-foreground/50"
             >
               Siguiente
             </button>
@@ -1171,15 +1171,15 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Valor Anterior</p>
-                  <pre className="max-h-[360px] overflow-auto rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Valor Anterior</p>
+                  <pre className="max-h-[360px] overflow-auto rounded-xl border border-border bg-muted/40 p-3 text-xs text-foreground">
 {JSON.stringify(selectedLog.detalles.cambios?.antes ?? {}, null, 2)}
                   </pre>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Valor Nuevo</p>
-                  <pre className="max-h-[360px] overflow-auto rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Valor Nuevo</p>
+                  <pre className="max-h-[360px] overflow-auto rounded-xl border border-border bg-muted/40 p-3 text-xs text-foreground">
 {JSON.stringify(selectedLog.detalles.cambios?.despues ?? {}, null, 2)}
                   </pre>
                 </div>
@@ -1187,10 +1187,10 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
 
               {selectedLog.detalles.metadata ? (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Metadatos del Evento
                   </p>
-                  <pre className="max-h-[200px] overflow-auto rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+                  <pre className="max-h-[200px] overflow-auto rounded-xl border border-border bg-muted/40 p-3 text-xs text-foreground">
 {JSON.stringify(selectedLog.detalles.metadata, null, 2)}
                   </pre>
                 </div>
