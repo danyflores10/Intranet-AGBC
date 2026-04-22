@@ -223,7 +223,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
     startTransition(async () => {
       try {
         await eliminarDocumento(documentId)
-        toast.success("Eliminado")
+        toast.success("Movido a papelera")
       } catch {
         toast.error("Error al eliminar")
       }

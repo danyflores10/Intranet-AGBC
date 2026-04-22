@@ -100,7 +100,7 @@ export const sidebarData: {
               },
             },
             {
-              title: "Archivos",
+              title: "Papelera",
               url: "/archivo",
               icon: Archive,
               access: {

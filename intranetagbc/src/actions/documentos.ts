@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/db"
-import { documentos, documentoCategorias } from "@/db/schema"
+import { documentos, documentoCategorias, archivos } from "@/db/schema"
 import { eq, desc } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { registrarAuditLog } from "@/actions/auditoria"
@@ -128,9 +128,73 @@ export async function actualizarDocumento(id: string, data: Partial<{
 
 export async function eliminarDocumento(id: string) {
   const sesion = await autorizarAccion(PERMISOS.DOCUMENTOS.ELIMINAR)
-  await db.delete(documentos).where(eq(documentos.id, id))
-  await registrarAuditLog({ usuario: sesion.id, accion: `Eliminó documento ID: ${id}`, modulo: "Documentos", resultado: "Exitoso" })
+
+  const [doc] = await db
+    .select({
+      id: documentos.id,
+      titulo: documentos.titulo,
+      categoriaId: documentos.categoriaId,
+      categoria: documentoCategorias.nombre,
+      autor: documentos.autor,
+      estado: documentos.estado,
+      archivo: documentos.archivo,
+      nombreArchivo: documentos.nombreArchivo,
+      tipoArchivo: documentos.tipoArchivo,
+      tamano: documentos.tamano,
+      descripcion: documentos.descripcion,
+      createdAt: documentos.createdAt,
+      updatedAt: documentos.updatedAt,
+    })
+    .from(documentos)
+    .leftJoin(documentoCategorias, eq(documentos.categoriaId, documentoCategorias.id))
+    .where(eq(documentos.id, id))
+
+  if (!doc) {
+    throw new Error("Documento no encontrado.")
+  }
+
+  const payloadPapelera = {
+    source: "documentos",
+    version: 1,
+    deletedAt: new Date().toISOString(),
+    documento: {
+      id: doc.id,
+      titulo: doc.titulo,
+      categoriaId: doc.categoriaId,
+      categoria: doc.categoria,
+      autor: doc.autor,
+      estado: doc.estado,
+      archivo: doc.archivo,
+      nombreArchivo: doc.nombreArchivo,
+      tipoArchivo: doc.tipoArchivo,
+      tamano: doc.tamano,
+      descripcion: doc.descripcion,
+      createdAt: doc.createdAt.toISOString(),
+      updatedAt: doc.updatedAt.toISOString(),
+    },
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.insert(archivos).values({
+      nombre: doc.titulo,
+      tipo: "papelera_documento",
+      categoria: doc.categoria ?? "Sin categoría",
+      ubicacion: "PAPELERA",
+      descripcion: JSON.stringify(payloadPapelera),
+      estado: "papelera",
+    })
+
+    await tx.delete(documentos).where(eq(documentos.id, id))
+  })
+
+  await registrarAuditLog({
+    usuario: sesion.id,
+    accion: `Movió documento a papelera: ${doc.titulo}`,
+    modulo: "Documentos",
+    resultado: "Exitoso",
+  })
   revalidatePath("/documentos")
+  revalidatePath("/archivo")
 }
 
 export async function crearCategoria(data: { nombre: string; descripcion?: string }) {
