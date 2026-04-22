@@ -414,13 +414,13 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
       {/* Dialog: Crear/Editar solicitud             */}
       {/* ═══════════════════════════════════════════ */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="p-0 gap-0 overflow-hidden rounded-2xl max-w-lg border-0 shadow-2xl">
+        <DialogContent className="p-0 gap-0 overflow-hidden rounded-2xl w-[95vw] sm:w-[92vw] md:w-[88vw] lg:w-[920px] !max-w-[920px] border-0 shadow-2xl">
           <div className="flex h-1.5 w-full">
             <div className="flex-1 bg-[#C41E3A]" />
             <div className="flex-1 bg-[#FFB300]" />
             <div className="flex-1 bg-[#2E7D32]" />
           </div>
-          <div className="max-h-[80vh] overflow-y-auto p-6">
+          <div className="max-h-[84vh] overflow-y-auto p-6 md:p-7">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-lg">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#FFB300]/20 to-[#FF8800]/20">
@@ -429,9 +429,9 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                 {editItem ? "Editar solicitud" : "Nueva solicitud"}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+            <form onSubmit={handleSubmit} className="mt-4 grid gap-4 md:grid-cols-2">
               {/* Tipo */}
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 md:col-span-1">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tipo de solicitud *</Label>
                 <select name="tipo" required
                   className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm transition-colors focus:border-[#FFB300] focus:ring-1 focus:ring-[#FFB300]/30 outline-none"
@@ -444,8 +444,21 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                 </select>
               </div>
 
+              {/* Prioridad */}
+              <div className="space-y-1.5 md:col-span-1">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Prioridad</Label>
+                <select name="prioridad"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm transition-colors focus:border-[#FFB300] focus:ring-1 focus:ring-[#FFB300]/30 outline-none"
+                  defaultValue={editItem?.prioridad ?? "media"}
+                >
+                  <option value="baja">Baja</option>
+                  <option value="media">Media</option>
+                  <option value="alta">Alta</option>
+                </select>
+              </div>
+
               {/* Destinatario */}
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 md:col-span-2">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Dirigido a</Label>
                 <div className="relative">
                   <UserIcon className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -499,22 +512,9 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                 </div>
               </div>
 
-              {/* Prioridad */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Prioridad</Label>
-                <select name="prioridad"
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm transition-colors focus:border-[#FFB300] focus:ring-1 focus:ring-[#FFB300]/30 outline-none"
-                  defaultValue={editItem?.prioridad ?? "media"}
-                >
-                  <option value="baja">Baja</option>
-                  <option value="media">Media</option>
-                  <option value="alta">Alta</option>
-                </select>
-              </div>
-
               {/* Estado (solo edición) */}
               {editItem && (
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 md:col-span-1">
                   <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Estado</Label>
                   <select name="estado"
                     className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm transition-colors focus:border-[#FFB300] focus:ring-1 focus:ring-[#FFB300]/30 outline-none"
@@ -528,9 +528,9 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
               )}
 
               {/* Descripción */}
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 md:col-span-2">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Descripción / Motivo</Label>
-                <textarea name="descripcion" rows={3}
+                <textarea name="descripcion" rows={4}
                   className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm resize-none transition-colors focus:border-[#FFB300] focus:ring-1 focus:ring-[#FFB300]/30 outline-none"
                   placeholder="Describa el motivo de su solicitud..."
                   defaultValue={editItem?.descripcion ?? ""}
@@ -538,7 +538,7 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
               </div>
 
               {/* Archivo adjunto */}
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 md:col-span-2">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Documento adjunto</Label>
                 <div
                   className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border/60 bg-muted/30 p-4 transition-colors hover:border-[#FFB300]/40 hover:bg-[#FFB300]/5 cursor-pointer"
@@ -571,7 +571,7 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
               </div>
 
               {/* Botones */}
-              <div className="flex justify-end gap-2 pt-3 border-t">
+              <div className="flex justify-end gap-2 pt-3 border-t md:col-span-2">
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="rounded-lg">
                   Cancelar
                 </Button>
