@@ -51,6 +51,21 @@ function initials(n: string) {
     .join("")
 }
 
+function buildPhoneHref(phone?: string | null) {
+  if (!phone) return null
+
+  const compact = phone.trim()
+  if (compact.length === 0) return null
+
+  const normalized = compact
+    .replace(/[^\d+]/g, "")
+    .replace(/(?!^)\+/g, "")
+
+  if (!/\d{6,}/.test(normalized)) return null
+
+  return `tel:${normalized}`
+}
+
 /* ── Component ── */
 export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] }) {
   const [active, setActive] = useState(0)
@@ -58,8 +73,6 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
   const [search, setSearch] = useState("")
   const touchStartX = useRef(0)
   const containerRef = useRef<HTMLDivElement>(null)
-
-  if (directivos.length === 0) return null
 
   const normalizar = (s: string) =>
     s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
@@ -169,6 +182,8 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
   if (dotStart + maxDots > total) dotStart = Math.max(0, total - maxDots)
   const dots = Array.from({ length: maxDots }, (_, i) => dotStart + i)
 
+  if (directivos.length === 0) return null
+
   return (
     <section
       id="directorio"
@@ -260,6 +275,7 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
                 const color =
                   AVATAR_COLORS[hashN(d.nombre) % AVATAR_COLORS.length]
                 const isActive = index === safeActive
+                const phoneHref = buildPhoneHref(d.telefono)
 
                 return (
                   <div
@@ -345,17 +361,33 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
                           </a>
                         )}
                         {d.telefono && (
-                          <div
-                            title={d.telefono}
-                            className="flex h-10 w-10 items-center justify-center rounded-full"
-                            style={{
-                              background: "var(--landing-neumo-soft-bg)",
-                              boxShadow:
-                                "3px 3px 6px var(--landing-neumo-shadow-dark), -3px -3px 6px var(--landing-neumo-shadow-light)",
-                            }}
-                          >
-                            <Phone className="h-4 w-4 text-[#1A73E8]" />
-                          </div>
+                          phoneHref ? (
+                            <a
+                              href={phoneHref}
+                              title={`Llamar a ${d.telefono}`}
+                              aria-label={`Llamar a ${d.nombre}`}
+                              className="flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200 hover:scale-110"
+                              style={{
+                                background: "var(--landing-neumo-soft-bg)",
+                                boxShadow:
+                                  "3px 3px 6px var(--landing-neumo-shadow-dark), -3px -3px 6px var(--landing-neumo-shadow-light)",
+                              }}
+                            >
+                              <Phone className="h-4 w-4 text-[#1A73E8]" />
+                            </a>
+                          ) : (
+                            <div
+                              title={d.telefono}
+                              className="flex h-10 w-10 items-center justify-center rounded-full"
+                              style={{
+                                background: "var(--landing-neumo-soft-bg)",
+                                boxShadow:
+                                  "3px 3px 6px var(--landing-neumo-shadow-dark), -3px -3px 6px var(--landing-neumo-shadow-light)",
+                              }}
+                            >
+                              <Phone className="h-4 w-4 text-[#1A73E8]" />
+                            </div>
+                          )
                         )}
                         <div
                           className="flex h-10 w-10 items-center justify-center rounded-full"
@@ -401,10 +433,21 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
                           </a>
                         )}
                         {d.telefono && (
-                          <span className="flex items-center gap-1">
-                            <Phone className="h-3 w-3 shrink-0" />
-                            {d.telefono}
-                          </span>
+                          phoneHref ? (
+                            <a
+                              href={phoneHref}
+                              className="flex items-center gap-1 hover:text-[#1A73E8] transition-colors"
+                              title={`Llamar a ${d.telefono}`}
+                            >
+                              <Phone className="h-3 w-3 shrink-0" />
+                              {d.telefono}
+                            </a>
+                          ) : (
+                            <span className="flex items-center gap-1">
+                              <Phone className="h-3 w-3 shrink-0" />
+                              {d.telefono}
+                            </span>
+                          )
                         )}
                       </div>
                     </div>

@@ -50,6 +50,21 @@ function initials(n: string) {
     .join("")
 }
 
+function buildPhoneHref(phone?: string | null) {
+  if (!phone) return null
+
+  const compact = phone.trim()
+  if (compact.length === 0) return null
+
+  const normalized = compact
+    .replace(/[^\d+]/g, "")
+    .replace(/(?!^)\+/g, "")
+
+  if (!/\d{6,}/.test(normalized)) return null
+
+  return `tel:${normalized}`
+}
+
 /* ── Component ── */
 export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
   const [active, setActive] = useState(0)
@@ -57,8 +72,6 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
   const [search, setSearch] = useState("")
   const touchStartX = useRef(0)
   const containerRef = useRef<HTMLDivElement>(null)
-
-  if (personal.length === 0) return null
 
   const normalizar = (s: string) =>
     s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
@@ -170,6 +183,8 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
   if (dotStart + maxDots > total) dotStart = Math.max(0, total - maxDots)
   const dots = Array.from({ length: maxDots }, (_, i) => dotStart + i)
 
+  if (personal.length === 0) return null
+
   return (
     <section
       id="equipo"
@@ -261,6 +276,7 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
                 const color =
                   AVATAR_COLORS[hashN(p.nombre) % AVATAR_COLORS.length]
                 const isActive = index === safeActive
+                const phoneHref = buildPhoneHref(p.telefono)
 
                 return (
                   <div
@@ -346,17 +362,33 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
                           </a>
                         )}
                         {p.telefono && (
-                          <div
-                            title={p.telefono}
-                            className="flex h-9 w-9 items-center justify-center rounded-full"
-                            style={{
-                              background: "var(--landing-neumo-soft-bg)",
-                              boxShadow:
-                                "3px 3px 6px var(--landing-neumo-shadow-dark), -3px -3px 6px var(--landing-neumo-shadow-light)",
-                            }}
-                          >
-                            <Phone className="h-3.5 w-3.5 text-[#1A73E8]" />
-                          </div>
+                          phoneHref ? (
+                            <a
+                              href={phoneHref}
+                              title={`Llamar a ${p.telefono}`}
+                              aria-label={`Llamar a ${p.nombre}`}
+                              className="flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 hover:scale-110"
+                              style={{
+                                background: "var(--landing-neumo-soft-bg)",
+                                boxShadow:
+                                  "3px 3px 6px var(--landing-neumo-shadow-dark), -3px -3px 6px var(--landing-neumo-shadow-light)",
+                              }}
+                            >
+                              <Phone className="h-3.5 w-3.5 text-[#1A73E8]" />
+                            </a>
+                          ) : (
+                            <div
+                              title={p.telefono}
+                              className="flex h-9 w-9 items-center justify-center rounded-full"
+                              style={{
+                                background: "var(--landing-neumo-soft-bg)",
+                                boxShadow:
+                                  "3px 3px 6px var(--landing-neumo-shadow-dark), -3px -3px 6px var(--landing-neumo-shadow-light)",
+                              }}
+                            >
+                              <Phone className="h-3.5 w-3.5 text-[#1A73E8]" />
+                            </div>
+                          )
                         )}
                         <div
                           className="flex h-9 w-9 items-center justify-center rounded-full"
@@ -402,10 +434,21 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
                           </a>
                         )}
                         {p.telefono && (
-                          <span className="flex items-center gap-1">
-                            <Phone className="h-3 w-3 shrink-0" />
-                            {p.telefono}
-                          </span>
+                          phoneHref ? (
+                            <a
+                              href={phoneHref}
+                              className="flex items-center gap-1 hover:text-[#1A73E8] transition-colors"
+                              title={`Llamar a ${p.telefono}`}
+                            >
+                              <Phone className="h-3 w-3 shrink-0" />
+                              {p.telefono}
+                            </a>
+                          ) : (
+                            <span className="flex items-center gap-1">
+                              <Phone className="h-3 w-3 shrink-0" />
+                              {p.telefono}
+                            </span>
+                          )
                         )}
                       </div>
                     </div>
