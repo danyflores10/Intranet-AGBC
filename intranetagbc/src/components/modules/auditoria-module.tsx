@@ -23,6 +23,7 @@ import {
   XCircleIcon,
 } from "lucide-react"
 import toast from "react-hot-toast"
+import * as XLSX from "xlsx"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -501,23 +502,13 @@ function buildPagination(current: number, total: number): Array<number | "ellips
   return [1, "ellipsis", current - 1, current, current + 1, "ellipsis", total]
 }
 
-function escapeCsvValue(value: string): string {
-  if (/[",\n;]/.test(value)) {
-    return `"${value.replace(/"/g, "\"\"")}"`
-  }
-  return value
-}
-
-function downloadBlob(content: string, filename: string, mimeType: string): void {
-  const blob = new Blob([content], { type: mimeType })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement("a")
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
 }
 
 export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
@@ -670,46 +661,75 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
     setPage(1)
   }
 
-  function exportCsv(rows: AuditRow[]): void {
+  function exportExcel(rows: AuditRow[]): void {
     if (rows.length === 0) {
       toast.error("No hay registros para exportar.")
       return
     }
 
-    const header = [
-      "Fecha",
-      "Usuario",
-      "Email",
-      "ID usuario",
-      "Accion",
-      "Modulo",
-      "IP",
-      "Ubicacion",
-      "Estado",
-      "Detalles",
+    const generadoEn = new Intl.DateTimeFormat("es-BO", { dateStyle: "full", timeStyle: "short" }).format(new Date())
+    const timestamp  = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")
+
+    const headerRow = [
+      "N°", "Fecha y Hora", "Nombre de Usuario", "Correo Electrónico",
+      "ID de Usuario", "Acción Realizada", "Módulo del Sistema",
+      "Dirección IP", "Ubicación", "Estado", "Detalles",
     ]
 
-    const lines = rows.map((row) =>
-      [
-        row.fechaLarga,
-        row.usuario.nombre,
-        row.usuario.email ?? "",
-        row.usuario.idCrudo,
-        row.accion,
-        row.modulo,
-        row.ip,
-        row.ubicacion,
-        row.estado,
-        row.tieneCambios ? "Ver cambios en el modal" : row.detallesTexto,
-      ]
-        .map((value) => escapeCsvValue(String(value)))
-        .join(","),
-    )
+    const dataRows = rows.map((row, idx) => [
+      idx + 1,
+      row.fechaLarga,
+      row.usuario.nombre,
+      row.usuario.email ?? "—",
+      row.usuario.idCrudo,
+      row.accion,
+      row.modulo,
+      row.ip,
+      row.ubicacion,
+      row.estado,
+      row.tieneCambios ? "[Ver cambios en el sistema]" : row.detallesTexto,
+    ])
 
-    const content = [header.join(","), ...lines].join("\n")
-    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")
-    downloadBlob(content, `auditoria-${timestamp}.csv`, "text/csv;charset=utf-8;")
-    toast.success("Exportación CSV completada.")
+    const wsData = [
+      ["Reporte de Auditoría — Agencia Boliviana de Correos"],
+      [`Generado: ${generadoEn}`],
+      [`Total de registros: ${rows.length}`],
+      [],
+      headerRow,
+      ...dataRows,
+    ]
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData)
+
+    ws["!cols"] = [
+      { wch: 5 },   // N°
+      { wch: 25 },  // Fecha y Hora
+      { wch: 24 },  // Nombre de Usuario
+      { wch: 32 },  // Correo Electrónico
+      { wch: 28 },  // ID de Usuario
+      { wch: 38 },  // Acción Realizada
+      { wch: 18 },  // Módulo del Sistema
+      { wch: 14 },  // Dirección IP
+      { wch: 24 },  // Ubicación
+      { wch: 13 },  // Estado
+      { wch: 55 },  // Detalles
+    ]
+
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, "Auditoría")
+
+    const wbOut = XLSX.write(wb, { bookType: "xlsx", type: "array" }) as ArrayBuffer
+    const blob  = new Blob([wbOut], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+    const url   = URL.createObjectURL(blob)
+    const link  = document.createElement("a")
+    link.href     = url
+    link.download = `reporte-auditoria-${timestamp}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+
+    toast.success(`Excel exportado — ${rows.length} registros.`)
   }
 
   function exportPdf(rows: AuditRow[]): void {
@@ -718,72 +738,138 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
       return
     }
 
-    const tableRows = rows
-      .map((row) => {
-        return `
-          <tr>
-            <td>${row.fechaLarga}</td>
-            <td>${row.usuario.nombre}<br/><small>${row.usuario.email ?? row.usuario.idCrudo}</small></td>
-            <td>${row.accion}</td>
-            <td>${row.modulo}</td>
-            <td>${row.ip}</td>
-            <td>${row.ubicacion}</td>
-            <td>${row.estado}</td>
-          </tr>
-        `
-      })
-      .join("")
+    const generadoEn = new Intl.DateTimeFormat("es-BO", { dateStyle: "full", timeStyle: "short" }).format(new Date())
+    const timestamp   = new Date().toISOString().slice(0, 10)
+    const exitosos    = rows.filter((r) => r.estado === "Exitoso").length
+    const fallidos    = rows.filter((r) => r.estado === "Fallido").length
+    const advertencias = rows.filter((r) => r.estado === "Advertencia").length
+    const modulos     = new Set(rows.map((r) => r.modulo)).size
 
-    const html = `
-      <!doctype html>
-      <html lang="es">
-        <head>
-          <meta charset="utf-8" />
-          <title>Reporte de Auditoría</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 24px; color: #0f172a; }
-            h1 { margin: 0 0 8px 0; font-size: 20px; }
-            p { margin: 0 0 16px 0; font-size: 12px; color: #475569; }
-            table { width: 100%; border-collapse: collapse; font-size: 12px; }
-            th, td { border: 1px solid #dbe2ea; padding: 8px; text-align: left; vertical-align: top; }
-            th { background: #f8fafc; }
-            small { color: #64748b; }
-          </style>
-        </head>
-        <body>
-          <h1>Reporte de Auditoría</h1>
-          <p>Generado: ${new Intl.DateTimeFormat("es-BO", { dateStyle: "full", timeStyle: "short" }).format(new Date())}</p>
-          <table>
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Usuario</th>
-                <th>Acción</th>
-                <th>Módulo</th>
-                <th>IP</th>
-                <th>Ubicación</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>${tableRows}</tbody>
-          </table>
-        </body>
-      </html>
-    `
+    const statusBg    = (s: string) => s === "Exitoso" ? "#dcfce7" : s === "Fallido" ? "#fee2e2" : "#fef9c3"
+    const statusClr   = (s: string) => s === "Exitoso" ? "#166534" : s === "Fallido" ? "#991b1b" : "#854d0e"
 
-    const newWindow = window.open("", "_blank", "noopener,noreferrer")
-    if (!newWindow) {
-      toast.error("No se pudo abrir la ventana para exportar PDF.")
-      return
+    const tableRows = rows.map((row, idx) => {
+      const bg = idx % 2 === 0 ? "#ffffff" : "#f8fafc"
+      return `
+        <tr style="background:${bg}">
+          <td style="text-align:center;color:#94a3b8;font-size:10px;width:26px">${idx + 1}</td>
+          <td style="width:108px">
+            <div style="font-weight:600;font-size:10.5px">${escapeHtml(row.fechaRelativa)}</div>
+            <div style="color:#64748b;font-size:9.5px">${escapeHtml(row.fechaLarga)}</div>
+          </td>
+          <td style="width:128px">
+            <div style="font-weight:600;font-size:10.5px">${escapeHtml(row.usuario.nombre)}</div>
+            <div style="color:#64748b;font-size:9.5px">${escapeHtml(row.usuario.email ?? row.usuario.idCrudo)}</div>
+          </td>
+          <td style="font-size:10.5px">${escapeHtml(row.accion)}</td>
+          <td style="width:88px">
+            <span style="background:#fff7ed;color:#c2410c;border-radius:999px;padding:2px 7px;font-size:9.5px;font-weight:700;border:1px solid #fdba74;white-space:nowrap">${escapeHtml(row.modulo)}</span>
+          </td>
+          <td style="width:102px;font-family:monospace;font-size:9.5px">
+            ${escapeHtml(row.ip)}<br/>
+            <span style="color:#94a3b8;font-family:sans-serif;font-size:9px">${escapeHtml(row.ubicacion)}</span>
+          </td>
+          <td style="width:76px;text-align:center">
+            <span style="background:${statusBg(row.estado)};color:${statusClr(row.estado)};border-radius:999px;padding:2px 8px;font-size:9.5px;font-weight:700">${escapeHtml(row.estado)}</span>
+          </td>
+          <td style="font-size:9.5px;color:#475569">${row.tieneCambios ? "<em>Ver cambios en sistema</em>" : escapeHtml(row.detallesTexto.slice(0, 110))}</td>
+        </tr>`
+    }).join("")
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Reporte-Auditoria-${timestamp}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    @page{size:A4 landscape;margin:12mm 10mm}
+    body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:#0f172a;background:#fff;font-size:11px}
+    .hd{background:linear-gradient(135deg,#1e293b,#0f172a);color:#fff;padding:18px 22px;border-radius:10px;margin-bottom:13px;display:flex;align-items:center;justify-content:space-between}
+    .logo{width:42px;height:42px;background:linear-gradient(135deg,#FFB300,#FF8800);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:900;color:#1a1000;margin-right:11px;flex-shrink:0}
+    .hl{display:flex;align-items:center}
+    .ht{font-size:16px;font-weight:800}
+    .hs{font-size:10px;color:#94a3b8;margin-top:2px}
+    .badge{background:rgba(255,179,0,.15);border:1px solid rgba(255,179,0,.4);color:#FFD166;font-size:9px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:.4px;text-transform:uppercase}
+    .hdate{font-size:9px;color:#94a3b8;margin-top:5px;text-align:right}
+    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:13px}
+    .sc{border-radius:8px;padding:10px 12px;border:1px solid #e2e8f0}
+    .sl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#94a3b8;margin-bottom:3px}
+    .sv{font-size:20px;font-weight:800;line-height:1}
+    .s1{background:#f8fafc;color:#1e293b}.s2{background:#f0fdf4;color:#166534}
+    .s3{background:#fef2f2;color:#991b1b}.s4{background:#fefce8;color:#854d0e}
+    .s5{background:#fff7ed;color:#9a3412}
+    .sechead{font-size:12px;font-weight:700;color:#1e293b;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #FFB300}
+    table{width:100%;border-collapse:collapse}
+    thead tr{background:linear-gradient(to right,#1e293b,#334155)}
+    th{padding:7px 7px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#cbd5e1}
+    td{padding:5px 7px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+    tbody tr:last-child td{border-bottom:none}
+    .ft{margin-top:13px;display:flex;justify-content:space-between;padding-top:7px;border-top:1px solid #e2e8f0}
+    .ft span{font-size:8.5px;color:#94a3b8}
+    @media print{
+      *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+      table{page-break-inside:auto}
+      tr{page-break-inside:avoid}
+    }
+  </style>
+</head>
+<body>
+  <div class="hd">
+    <div class="hl">
+      <div class="logo">A</div>
+      <div><div class="ht">Reporte de Auditor&#237;a del Sistema</div><div class="hs">Agencia Boliviana de Correos &mdash; INTRANET</div></div>
+    </div>
+    <div style="text-align:right"><div class="badge">Confidencial</div><div class="hdate">Generado el ${escapeHtml(generadoEn)}</div></div>
+  </div>
+  <div class="stats">
+    <div class="sc s1"><div class="sl">Total registros</div><div class="sv">${rows.length}</div></div>
+    <div class="sc s2"><div class="sl">Exitosos</div><div class="sv">${exitosos}</div></div>
+    <div class="sc s3"><div class="sl">Fallidos</div><div class="sv">${fallidos}</div></div>
+    <div class="sc s4"><div class="sl">Advertencias</div><div class="sv">${advertencias}</div></div>
+    <div class="sc s5"><div class="sl">M&#243;dulos activos</div><div class="sv">${modulos}</div></div>
+  </div>
+  <div class="sechead">Detalle de Registros &mdash; ${rows.length} entradas</div>
+  <table>
+    <thead><tr>
+      <th>#</th><th>Fecha</th><th>Usuario</th><th>Acci&#243;n</th>
+      <th>M&#243;dulo</th><th>IP / Ubicaci&#243;n</th><th style="text-align:center">Estado</th><th>Detalles</th>
+    </tr></thead>
+    <tbody>${tableRows}</tbody>
+  </table>
+  <div class="ft">
+    <span>Agencia Boliviana de Correos &bull; Sistema de Auditor&#237;a INTRANET &bull; Documento generado autom&#225;ticamente</span>
+    <span>Total: ${rows.length} registros &bull; ${escapeHtml(generadoEn)}</span>
+  </div>
+  <script>
+    window.addEventListener('load', function(){
+      document.title = 'Reporte-Auditoria-${timestamp}';
+      setTimeout(function(){ window.print(); }, 600);
+    });
+  <\/script>
+</body>
+</html>`
+
+    // Usar Blob URL para evitar el problema de ventana en blanco con document.write
+    const blob    = new Blob([html], { type: "text/html;charset=utf-8" })
+    const blobUrl = URL.createObjectURL(blob)
+
+    const win = window.open(blobUrl, "_blank", "noopener,noreferrer")
+    if (!win) {
+      // Fallback: descargar como .html si el navegador bloquea la ventana
+      const link = document.createElement("a")
+      link.href = blobUrl
+      link.download = `reporte-auditoria-${timestamp}.html`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      toast.success(`Archivo HTML descargado. &#193;brelo y usa Ctrl+P → "Guardar como PDF".`, { duration: 7000 })
+    } else {
+      toast.success(`PDF listo — ${rows.length} registros. Elige "Guardar como PDF" en el diálogo de impresión.`)
     }
 
-    newWindow.document.write(html)
-    newWindow.document.close()
-    newWindow.focus()
-    setTimeout(() => {
-      newWindow.print()
-    }, 250)
-    toast.success("Vista de impresión PDF lista.")
+    // Liberar memoria después de que el usuario haya descargado
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 120_000)
   }
 
   return (
@@ -885,14 +971,24 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
                   Exportar
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
-                <DropdownMenuItem onClick={() => exportCsv(filteredRows)}>
-                  <FileTextIcon className="mr-2 h-4 w-4" />
-                  Exportar CSV
+              <DropdownMenuContent align="end" className="w-52 p-1.5">
+                <DropdownMenuItem
+                  onClick={() => exportExcel(filteredRows)}
+                  className="cursor-pointer rounded-lg px-2 py-2 gap-2.5"
+                >
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-emerald-500/10">
+                    <FileTextIcon className="h-3.5 w-3.5 text-emerald-600" />
+                  </div>
+                  <span className="text-sm font-semibold">Exportar Excel</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => exportPdf(filteredRows)}>
-                  <DownloadIcon className="mr-2 h-4 w-4" />
-                  Exportar PDF
+                <DropdownMenuItem
+                  onClick={() => exportPdf(filteredRows)}
+                  className="cursor-pointer rounded-lg px-2 py-2 gap-2.5 mt-0.5"
+                >
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-red-500/10">
+                    <DownloadIcon className="h-3.5 w-3.5 text-red-600" />
+                  </div>
+                  <span className="text-sm font-semibold">Exportar PDF</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
