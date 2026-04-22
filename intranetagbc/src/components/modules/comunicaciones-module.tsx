@@ -21,6 +21,13 @@ import {
 } from "@/actions/comunicaciones"
 import { crearContextoAcceso, puedeAcceder, type UsuarioRbac } from "@/lib/rbac"
 import { PERMISOS } from "@/lib/auth/permisos"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 type Tab = "comunicados" | "noticias" | "accesos"
 
@@ -341,19 +348,23 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
         {tab === "comunicados" && (
           <DataTable data={comunicados.map(c => ({ ...c, fecha: c.createdAt.toLocaleDateString("es-BO") }))} searchKey="titulo" searchPlaceholder="Buscar comunicado..."
             columns={[
-              { key: "titulo", label: "Título", render: (row) => (
-                <button type="button" onClick={() => { setViewItem(row as unknown as ComunicadoRow); setViewOpen(true) }}
-                  className="font-medium text-left hover:text-[#FFB300] transition-colors hover:underline">
-                  {row.titulo}
-                </button>
-              )},
+              {
+                key: "titulo", label: "Título", render: (row) => (
+                  <button type="button" onClick={() => { setViewItem(row as unknown as ComunicadoRow); setViewOpen(true) }}
+                    className="font-medium text-left hover:text-[#FFB300] transition-colors hover:underline">
+                    {row.titulo}
+                  </button>
+                )
+              },
               { key: "contenido", label: "Contenido", render: (row) => <span className="text-sm text-muted-foreground line-clamp-1">{row.contenido}</span> },
-              { key: "archivoTipo", label: "Adjunto", render: (row) => {
-                if (!row.archivoUrl) return <span className="text-muted-foreground text-xs">—</span>
-                return row.archivoTipo === "imagen"
-                  ? <span className="inline-flex items-center gap-1 text-xs text-blue-600"><ImageIcon className="h-3.5 w-3.5" />Imagen</span>
-                  : <span className="inline-flex items-center gap-1 text-xs text-red-600"><FileTextIcon className="h-3.5 w-3.5" />PDF</span>
-              }},
+              {
+                key: "archivoTipo", label: "Adjunto", render: (row) => {
+                  if (!row.archivoUrl) return <span className="text-muted-foreground text-xs">—</span>
+                  return row.archivoTipo === "imagen"
+                    ? <span className="inline-flex items-center gap-1 text-xs text-blue-600"><ImageIcon className="h-3.5 w-3.5" />Imagen</span>
+                    : <span className="inline-flex items-center gap-1 text-xs text-red-600"><FileTextIcon className="h-3.5 w-3.5" />PDF</span>
+                }
+              },
               { key: "fecha", label: "Fecha" },
               { key: "destacado", label: "Destacado", render: (row) => <span>{row.destacado ? "⭐" : "—"}</span> },
               { key: "estado", label: "Estado", render: (row) => <StatusBadge status={row.estado as "publicado" | "borrador" | "pendiente"} /> },
@@ -376,22 +387,25 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
         {tab === "noticias" && (
           <DataTable data={noticias.map(b => ({ ...b, fecha: b.createdAt.toLocaleDateString("es-BO") }))} searchKey="titulo" searchPlaceholder="Buscar noticia..."
             columns={[
-              { key: "titulo", label: "Título", render: (row) => {
-                const noticia = row as unknown as NoticiaRow
-                const imgs: string[] = []
-                if (noticia.imagenes) { try { imgs.push(...JSON.parse(noticia.imagenes)) } catch { /* */ } }
-                else if (noticia.imagen) { imgs.push(noticia.imagen) }
-                return (
-                <div className="flex items-center gap-3">
-                  {imgs.length > 0 ? (
-                    <div className="flex h-9 w-14 shrink-0 items-center justify-center rounded-lg bg-muted/30 overflow-hidden border border-border/40 relative">
-                      <img src={imgs[0]} alt={row.titulo} className="h-full w-full object-cover" />
-                      {imgs.length > 1 && <span className="absolute bottom-0 right-0 text-[9px] font-bold bg-[#FFB300] text-[#1a1000] px-1 rounded-tl">+{imgs.length - 1}</span>}
+              {
+                key: "titulo", label: "Título", render: (row) => {
+                  const noticia = row as unknown as NoticiaRow
+                  const imgs: string[] = []
+                  if (noticia.imagenes) { try { imgs.push(...JSON.parse(noticia.imagenes)) } catch { /* */ } }
+                  else if (noticia.imagen) { imgs.push(noticia.imagen) }
+                  return (
+                    <div className="flex items-center gap-3">
+                      {imgs.length > 0 ? (
+                        <div className="flex h-9 w-14 shrink-0 items-center justify-center rounded-lg bg-muted/30 overflow-hidden border border-border/40 relative">
+                          <img src={imgs[0]} alt={row.titulo} className="h-full w-full object-cover" />
+                          {imgs.length > 1 && <span className="absolute bottom-0 right-0 text-[9px] font-bold bg-[#FFB300] text-[#1a1000] px-1 rounded-tl">+{imgs.length - 1}</span>}
+                        </div>
+                      ) : null}
+                      <span className="font-medium">{row.titulo}</span>
                     </div>
-                  ) : null}
-                  <span className="font-medium">{row.titulo}</span>
-                </div>
-              )}},
+                  )
+                }
+              },
               { key: "descripcion", label: "Descripción", render: (row) => <span className="text-sm text-muted-foreground">{row.descripcion || "—"}</span> },
               { key: "enlace", label: "Enlace", render: (row) => <span className="text-xs">{row.enlace || "—"}</span> },
               { key: "fecha", label: "Fecha" },
@@ -521,7 +535,7 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
       {/* ── Dialog crear/editar ── */}
       <Dialog open={dialogOpen} onOpenChange={(v) => { if (!v) { setDialogOpen(false); setEditItem(null); resetFileState() } }}>
         <DialogContent className="!w-[95vw] !max-w-[95vw] sm:!max-w-[860px] max-h-[92vh] overflow-y-auto overflow-x-hidden p-0 gap-0 rounded-2xl border-border/50">
-          <div className="flex h-1.5 w-full rounded-t-2xl overflow-hidden"><div className="flex-1 bg-[#C41E3A]"/><div className="flex-1 bg-[#FFB300]"/><div className="flex-1 bg-[#2E7D32]"/></div>
+          <div className="flex h-1.5 w-full rounded-t-2xl overflow-hidden"><div className="flex-1 bg-[#C41E3A]" /><div className="flex-1 bg-[#FFB300]" /><div className="flex-1 bg-[#2E7D32]" /></div>
           <DialogHeader className="px-6 pt-5 pb-0">
             <DialogTitle className="text-xl font-bold tracking-tight break-words">
               {tab === "comunicados" ? (editItem ? "Editar comunicado" : "Nuevo comunicado") : (editItem ? "Editar noticia" : "Nueva noticia")}
@@ -546,12 +560,32 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">Estado</Label>
-                  <select name="estado" defaultValue={editCom?.estado ?? "borrador"}
-                    className="flex h-11 w-full rounded-xl border border-input bg-transparent px-3 py-1 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                    <option value="borrador">Borrador</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="publicado">Publicado</option>
-                  </select>
+
+                  <Select
+                    defaultValue={editCom?.estado ?? "borrador"}
+                    onValueChange={(value) => {
+                      const input = document.getElementById("estado-hidden") as HTMLInputElement
+                      if (input) input.value = value
+                    }}
+                  >
+                    <SelectTrigger className="h-11 rounded-xl w-full">
+                      <SelectValue placeholder="Seleccionar estado" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem value="borrador">Borrador</SelectItem>
+                      <SelectItem value="pendiente">Pendiente</SelectItem>
+                      <SelectItem value="publicado">Publicado</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* 👇 ESTE ES CLAVE */}
+                  <input
+                    type="hidden"
+                    name="estado"
+                    id="estado-hidden"
+                    defaultValue={editCom?.estado ?? "borrador"}
+                  />
                 </div>
                 <div className="flex items-end pb-2">
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -679,7 +713,7 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
 
       <Dialog open={accesoDialogOpen} onOpenChange={(v) => { if (!v) { setAccesoDialogOpen(false); setEditAcceso(null); setAccesoImagen("") } }}>
         <DialogContent className="!w-[95vw] !max-w-[95vw] sm:!max-w-[760px] max-h-[92vh] overflow-y-auto overflow-x-hidden p-0 gap-0 rounded-2xl border-border/50">
-          <div className="flex h-1.5 w-full rounded-t-2xl overflow-hidden"><div className="flex-1 bg-[#C41E3A]"/><div className="flex-1 bg-[#FFB300]"/><div className="flex-1 bg-[#2E7D32]"/></div>
+          <div className="flex h-1.5 w-full rounded-t-2xl overflow-hidden"><div className="flex-1 bg-[#C41E3A]" /><div className="flex-1 bg-[#FFB300]" /><div className="flex-1 bg-[#2E7D32]" /></div>
           <DialogHeader className="px-6 pt-5 pb-0">
             <DialogTitle className="text-xl font-bold tracking-tight break-words">
               {editAcceso ? "Editar acceso directo" : "Nuevo acceso directo"}
