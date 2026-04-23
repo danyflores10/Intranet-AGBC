@@ -117,10 +117,6 @@ function TypewriterTitle() {
           }`}
         />
       </h2>
-      <p className="mx-auto max-w-md text-base leading-relaxed text-muted-foreground">
-        Accede a todos los módulos de Correos de Bolivia: documentos,
-        correspondencia, trámites, RRHH y más.
-      </p>
     </div>
   )
 }
@@ -214,22 +210,6 @@ export function LoginForm({
 
           <TypewriterTitle />
 
-          <div className="mt-12 grid grid-cols-2 gap-3 max-w-sm">
-            {[
-              { icon: Mail, label: "Correspondencia" },
-              { icon: Shield, label: "Auditoría" },
-              { icon: User, label: "RRHH" },
-              { icon: Lock, label: "Seguridad" },
-            ].map((mod) => (
-              <div
-                key={mod.label}
-                className="flex items-center gap-2.5 rounded-xl border border-border/50 bg-card/60 px-4 py-3 backdrop-blur-sm transition-all hover:bg-card hover:border-[#FFB300]/30 hover:shadow-md hover:shadow-[#FFB300]/5"
-              >
-                <mod.icon className="h-4 w-4 text-[#FFB300] shrink-0" />
-                <span className="text-xs font-medium text-muted-foreground">{mod.label}</span>
-              </div>
-            ))}
-          </div>
         </div>
 
         <div className="relative z-10 px-14 pb-8 xl:px-20">

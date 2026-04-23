@@ -6,7 +6,7 @@ drizzle/
 
 # testing
 coverage/
-
+public/image
 # next.js
 .next/
 out/

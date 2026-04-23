@@ -268,12 +268,18 @@ function tienePermiso(sesion: SesionConAcceso, permiso: string): boolean {
   })
 }
 
-async function autorizarAccion(permisoRequerido: string): Promise<SesionConAcceso> {
+async function requerirSesionAutenticada(): Promise<SesionConAcceso> {
   const sesion = await obtenerSesionConAccesoActual()
 
   if (!sesion) {
     throw new Error("No autenticado.")
   }
+
+  return sesion
+}
+
+async function autorizarAccion(permisoRequerido: string): Promise<SesionConAcceso> {
+  const sesion = await requerirSesionAutenticada()
 
   if (tieneRolSuperAdmin(sesion)) {
     return sesion
@@ -484,7 +490,7 @@ function obtenerMensajeErrorUnicidad(error: unknown): string | null {
 
 export async function obtenerUsuarios(): Promise<ResultadoAccion<UsuarioDTO[]>> {
   try {
-    await autorizarAccion(PERMISOS.USUARIOS.VER)
+    await requerirSesionAutenticada()
 
     const rows = await db
       .select({
@@ -523,7 +529,7 @@ export async function obtenerUsuarios(): Promise<ResultadoAccion<UsuarioDTO[]>> 
 
 export async function obtenerRolesDisponibles(): Promise<ResultadoAccion<RoleOptionDTO[]>> {
   try {
-    await autorizarAccion(PERMISOS.USUARIOS.VER)
+    await requerirSesionAutenticada()
 
     const data = await db
       .select({
@@ -543,7 +549,7 @@ export async function obtenerRolesDisponibles(): Promise<ResultadoAccion<RoleOpt
 
 export async function obtenerUsuarioPorId(userId: string): Promise<ResultadoAccion<UsuarioDTO>> {
   try {
-    await autorizarAccion(PERMISOS.USUARIOS.VER)
+    await requerirSesionAutenticada()
 
     const userIdLimpio = userId.trim()
 

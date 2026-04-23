@@ -174,12 +174,18 @@ function tienePermiso(session: SesionConAcceso, permiso: string): boolean {
   );
 }
 
-async function autorizarAccion(permisoRequerido: string): Promise<SesionConAcceso> {
+async function requerirSesionAutenticada(): Promise<SesionConAcceso> {
   const session = await obtenerSesionConAccesoActual();
 
   if (!session) {
     throw new Error("No autenticado.");
   }
+
+  return session;
+}
+
+async function autorizarAccion(permisoRequerido: string): Promise<SesionConAcceso> {
+  const session = await requerirSesionAutenticada();
 
   if (tieneRolSuperAdmin(session)) {
     return session;
@@ -295,7 +301,7 @@ async function replacePermissions(
 
 export async function obtenerRoles(): Promise<ResultadoAccion<RoleDTO[]>> {
   try {
-    await autorizarAccion(PERMISOS.ROLES.VER);
+    await requerirSesionAutenticada();
 
     const rolesEncontrados = await db
       .select({
@@ -324,7 +330,7 @@ export async function obtenerRoles(): Promise<ResultadoAccion<RoleDTO[]>> {
 
 export async function obtenerPermisosDisponibles(): Promise<ResultadoAccion<PermissionDTO[]>> {
   try {
-    await autorizarAccion(PERMISOS.ROLES.VER);
+    await requerirSesionAutenticada();
 
     const permisos = await db
       .select({
@@ -346,7 +352,7 @@ export async function obtenerRolPorId(
   roleId: string,
 ): Promise<ResultadoAccion<RoleDTO>> {
   try {
-    await autorizarAccion(PERMISOS.ROLES.VER);
+    await requerirSesionAutenticada();
 
     const roleIdLimpio = roleId.trim();
 

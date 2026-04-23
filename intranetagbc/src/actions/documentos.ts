@@ -44,12 +44,18 @@ function tienePermiso(sesion: SesionConAcceso, permiso: string): boolean {
   })
 }
 
-async function autorizarAccion(permisoRequerido: string): Promise<SesionConAcceso> {
+async function requerirSesionAutenticada(): Promise<SesionConAcceso> {
   const sesion = await obtenerSesionConAccesoActual()
 
   if (!sesion) {
     throw new Error("No autenticado.")
   }
+
+  return sesion
+}
+
+async function autorizarAccion(permisoRequerido: string): Promise<SesionConAcceso> {
+  const sesion = await requerirSesionAutenticada()
 
   if (sesion.roles.some((role) => normalizarTexto(role) === ROL_SUPER_ADMIN)) {
     return sesion
@@ -63,7 +69,7 @@ async function autorizarAccion(permisoRequerido: string): Promise<SesionConAcces
 }
 
 export async function obtenerDocumentos() {
-  await autorizarAccion(PERMISOS.DOCUMENTOS.VER)
+  await requerirSesionAutenticada()
 
   return db.select({
     id: documentos.id,
@@ -85,7 +91,7 @@ export async function obtenerDocumentos() {
 }
 
 export async function obtenerCategorias() {
-  await autorizarAccion(PERMISOS.DOCUMENTOS.VER)
+  await requerirSesionAutenticada()
 
   return db.select().from(documentoCategorias).orderBy(documentoCategorias.nombre)
 }
