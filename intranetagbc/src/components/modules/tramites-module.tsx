@@ -179,6 +179,15 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    const fd = new FormData(e.currentTarget)
+    const tipo = tipoSolicitud
+    const prioridad = prioridadSolicitud || "media"
+    const estado = estadoSolicitud
+    const destinatarioId = selectedDestinatario?.id
+    const descripcionRaw = (fd.get("descripcion") as string | null)?.trim()
+    const observacionesRaw = (fd.get("observaciones") as string | null)?.trim()
+    const descripcion = descripcionRaw ? descripcionRaw : undefined
+    const observaciones = observacionesRaw ? observacionesRaw : undefined
 
     startTransition(async () => {
       try {
@@ -191,8 +200,16 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
           uploadFd.append("archivo", archivo)
           const resp = await fetch("/api/upload/documento", { method: "POST", body: uploadFd })
           if (!resp.ok) {
-            const err = await resp.json()
-            toast.error(err.error || "Error al subir archivo")
+            let errorMsg = "Error al subir archivo"
+            try {
+              const err = await resp.json()
+              if (typeof err?.error === "string" && err.error.trim()) {
+                errorMsg = err.error
+              }
+            } catch {
+              // Ignorar errores de parseo de respuesta y usar mensaje por defecto
+            }
+            toast.error(errorMsg)
             return
           }
           const result = await resp.json()
@@ -201,29 +218,29 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
           archivoTipo = result.tipo
         }
 
-        if (!tipoSolicitud) {
+        if (!tipo) {
           toast.error("Seleccione un tipo de solicitud")
           return
         }
 
         if (editItem) {
           await actualizarSolicitud(editItem.id, {
-            tipo: tipoSolicitud,
-            prioridad: prioridadSolicitud,
-            estado: estadoSolicitud,
-            descripcion: ((e.currentTarget.elements.namedItem("descripcion") as HTMLTextAreaElement)?.value) || undefined,
-            observaciones: ((e.currentTarget.elements.namedItem("observaciones") as HTMLTextAreaElement | null)?.value) || undefined,
-            destinatarioId: selectedDestinatario?.id,
+            tipo,
+            prioridad,
+            estado,
+            descripcion,
+            observaciones,
+            destinatarioId,
             ...(archivoUrl ? { archivoUrl, archivoNombre, archivoTipo } : {}),
           }, currentUserId)
           toast.success("Solicitud actualizada")
         } else {
           await crearSolicitud({
             solicitanteId: currentUserId,
-            destinatarioId: selectedDestinatario?.id,
-            tipo: tipoSolicitud,
-            prioridad: prioridadSolicitud || "media",
-            descripcion: ((e.currentTarget.elements.namedItem("descripcion") as HTMLTextAreaElement)?.value) || undefined,
+            destinatarioId,
+            tipo,
+            prioridad,
+            descripcion,
             ...(archivoUrl ? { archivoUrl, archivoNombre, archivoTipo } : {}),
           })
           toast.success("Solicitud creada y enviada")
@@ -236,8 +253,22 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
         setTipoSolicitud("")
         setPrioridadSolicitud("media")
         setEstadoSolicitud("pendiente")
-      } catch {
-        toast.error("Error al guardar")
+      } catch (error) {
+        const message =
+          typeof error === "object" &&
+          error !== null &&
+          "message" in error &&
+          typeof (error as { message?: unknown }).message === "string"
+            ? (error as { message: string }).message
+            : "Error al guardar"
+
+        const normalizedMessage = message.toLowerCase()
+        if (normalizedMessage.includes("duplicate key") || normalizedMessage.includes("solicitudes_codigo")) {
+          toast.error("No se pudo crear la solicitud. Intenta nuevamente.")
+          return
+        }
+
+        toast.error(message)
       }
     })
   }

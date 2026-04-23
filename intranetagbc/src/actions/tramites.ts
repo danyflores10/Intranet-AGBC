@@ -3,10 +3,46 @@
 import { db } from "@/db"
 import { solicitudes } from "@/db/schema/tramites.schema"
 import { users } from "@/db/schema/users.schema"
-import { eq, desc, or } from "drizzle-orm"
+import { eq, desc, like, or } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { registrarAuditLog } from "@/actions/auditoria"
 import { crearNotificacionRealtime } from "@/lib/notificaciones-realtime"
+
+type SolicitudDb = typeof solicitudes.$inferSelect
+
+function obtenerSiguienteNumeroCodigo(codigo: string): number {
+  const partes = codigo.split("-")
+  if (partes.length !== 3) return 0
+  const numero = Number.parseInt(partes[2] ?? "", 10)
+  return Number.isFinite(numero) ? numero : 0
+}
+
+function esErrorCodigoDuplicado(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false
+
+  const candidate = error as { code?: string; message?: string }
+  if (candidate.code === "23505") return true
+
+  const message = (candidate.message ?? "").toLowerCase()
+  return message.includes("duplicate key") && message.includes("solicitudes_codigo")
+}
+
+async function generarCodigoSolicitud(): Promise<string> {
+  const year = new Date().getFullYear()
+  const prefijo = `SOL-${year}-`
+
+  const existentes = await db
+    .select({ codigo: solicitudes.codigo })
+    .from(solicitudes)
+    .where(like(solicitudes.codigo, `${prefijo}%`))
+
+  const mayor = existentes.reduce((maximo, row) => {
+    return Math.max(maximo, obtenerSiguienteNumeroCodigo(row.codigo))
+  }, 0)
+
+  const siguiente = String(mayor + 1).padStart(4, "0")
+  return `${prefijo}${siguiente}`
+}
 
 export async function obtenerSolicitudes() {
   return db
@@ -80,16 +116,37 @@ export async function crearSolicitud(data: {
   archivoNombre?: string
   archivoTipo?: string
 }) {
-  const year = new Date().getFullYear()
-  const count = await db.select({ id: solicitudes.id }).from(solicitudes)
-  const num = String(count.length + 1).padStart(4, "0")
-  const codigo = `SOL-${year}-${num}`
+  let nuevo: SolicitudDb | null = null
+  let codigo = ""
+  let ultimoError: unknown
 
-  const [nuevo] = await db.insert(solicitudes).values({
-    codigo,
-    ...data,
-    prioridad: data.prioridad || "media",
-  }).returning()
+  for (let intento = 0; intento < 5; intento++) {
+    codigo = await generarCodigoSolicitud()
+
+    try {
+      const [creada] = await db
+        .insert(solicitudes)
+        .values({
+          codigo,
+          ...data,
+          prioridad: data.prioridad || "media",
+        })
+        .returning()
+
+      nuevo = creada ?? null
+      if (nuevo) break
+    } catch (error) {
+      if (esErrorCodigoDuplicado(error)) {
+        ultimoError = error
+        continue
+      }
+      throw error
+    }
+  }
+
+  if (!nuevo) {
+    throw ultimoError ?? new Error("No se pudo generar un codigo unico para la solicitud.")
+  }
 
   // Notificar al destinatario
   if (data.destinatarioId) {
