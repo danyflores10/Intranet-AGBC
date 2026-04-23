@@ -291,7 +291,7 @@ export function LandingNavbar({ estaLogueado, esAdmin, usuario }: LandingNavbarP
                       <item.icon className="h-4 w-4" />
                     </div>
 
-                    <span className="hidden xl:inline">{item.label}</span>
+                    <span className="inline">{item.label}</span>
 
                     {isActive && (
                       <div className="ml-auto h-1.5 w-1.5 rounded-full bg-[#FF8800] dark:bg-[#FFD166]" />
