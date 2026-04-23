@@ -16,6 +16,13 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { crearSolicitud, actualizarSolicitud, eliminarSolicitud } from "@/actions/tramites"
 import { TIPOS_SOLICITUD, ESTADOS_SOLICITUD } from "@/lib/tramites-constants"
 
@@ -29,11 +36,21 @@ type Usuario = {
 }
 
 type Solicitud = {
-  id: string; codigo: string; tipo: string; descripcion: string | null
-  estado: string; prioridad: string; observaciones: string | null
-  respuesta: string | null; solicitanteId: string; destinatarioId: string | null
-  archivoUrl: string | null; archivoNombre: string | null; archivoTipo: string | null
-  createdAt: Date; updatedAt: Date
+  id: string
+  codigo: string
+  tipo: string
+  descripcion: string | null
+  estado: string
+  prioridad: string
+  observaciones: string | null
+  respuesta: string | null
+  solicitanteId: string
+  destinatarioId: string | null
+  archivoUrl: string | null
+  archivoNombre: string | null
+  archivoTipo: string | null
+  createdAt: Date
+  updatedAt: Date
 }
 
 interface Props {
@@ -94,6 +111,9 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
   const [showUserDropdown, setShowUserDropdown] = useState(false)
   const [selectedDestinatario, setSelectedDestinatario] = useState<Usuario | null>(null)
   const [filtro, setFiltro] = useState<"todas" | "enviadas" | "recibidas">("todas")
+  const [tipoSolicitud, setTipoSolicitud] = useState("")
+  const [prioridadSolicitud, setPrioridadSolicitud] = useState("media")
+  const [estadoSolicitud, setEstadoSolicitud] = useState("pendiente")
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const usuariosMap = new Map(usuarios.map(u => [u.id, u]))
@@ -111,7 +131,8 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
 
   const filteredUsuarios = usuarios.filter(u =>
     u.id !== currentUserId &&
-    (searchDestinatario === "" || nombreCompleto(u).toLowerCase().includes(searchDestinatario.toLowerCase()) ||
+    (searchDestinatario === "" ||
+      nombreCompleto(u).toLowerCase().includes(searchDestinatario.toLowerCase()) ||
       u.institutionalEmail.toLowerCase().includes(searchDestinatario.toLowerCase()))
   )
 
@@ -120,6 +141,9 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
     setArchivo(null)
     setSelectedDestinatario(null)
     setSearchDestinatario("")
+    setTipoSolicitud("")
+    setPrioridadSolicitud("media")
+    setEstadoSolicitud("pendiente")
     setDialogOpen(true)
   }
 
@@ -129,6 +153,9 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
     const dest = item.destinatarioId ? usuariosMap.get(item.destinatarioId) ?? null : null
     setSelectedDestinatario(dest)
     setSearchDestinatario(dest ? nombreCompleto(dest) : "")
+    setTipoSolicitud(item.tipo)
+    setPrioridadSolicitud(item.prioridad)
+    setEstadoSolicitud(item.estado)
     setDialogOpen(true)
   }
 
@@ -152,7 +179,6 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const fd = new FormData(e.currentTarget)
 
     startTransition(async () => {
       try {
@@ -175,13 +201,18 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
           archivoTipo = result.tipo
         }
 
+        if (!tipoSolicitud) {
+          toast.error("Seleccione un tipo de solicitud")
+          return
+        }
+
         if (editItem) {
           await actualizarSolicitud(editItem.id, {
-            tipo: fd.get("tipo") as string,
-            prioridad: fd.get("prioridad") as string,
-            estado: fd.get("estado") as string,
-            descripcion: (fd.get("descripcion") as string) || undefined,
-            observaciones: (fd.get("observaciones") as string) || undefined,
+            tipo: tipoSolicitud,
+            prioridad: prioridadSolicitud,
+            estado: estadoSolicitud,
+            descripcion: ((e.currentTarget.elements.namedItem("descripcion") as HTMLTextAreaElement)?.value) || undefined,
+            observaciones: ((e.currentTarget.elements.namedItem("observaciones") as HTMLTextAreaElement | null)?.value) || undefined,
             destinatarioId: selectedDestinatario?.id,
             ...(archivoUrl ? { archivoUrl, archivoNombre, archivoTipo } : {}),
           }, currentUserId)
@@ -190,17 +221,21 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
           await crearSolicitud({
             solicitanteId: currentUserId,
             destinatarioId: selectedDestinatario?.id,
-            tipo: fd.get("tipo") as string,
-            prioridad: (fd.get("prioridad") as string) || "media",
-            descripcion: (fd.get("descripcion") as string) || undefined,
+            tipo: tipoSolicitud,
+            prioridad: prioridadSolicitud || "media",
+            descripcion: ((e.currentTarget.elements.namedItem("descripcion") as HTMLTextAreaElement)?.value) || undefined,
             ...(archivoUrl ? { archivoUrl, archivoNombre, archivoTipo } : {}),
           })
           toast.success("Solicitud creada y enviada")
         }
+
         setDialogOpen(false)
         setEditItem(null)
         setArchivo(null)
         setSelectedDestinatario(null)
+        setTipoSolicitud("")
+        setPrioridadSolicitud("media")
+        setEstadoSolicitud("pendiente")
       } catch {
         toast.error("Error al guardar")
       }
@@ -231,7 +266,6 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
   return (
     <>
       <div className="flex flex-1 flex-col gap-6 p-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold tracking-tight">Solicitudes y Trámites</h2>
@@ -247,7 +281,6 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
           </Button>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
           <Card className="border-border/40">
             <CardContent className="p-4">
@@ -306,7 +339,6 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
           </Card>
         </div>
 
-        {/* Filtros */}
         <div className="flex gap-2">
           {(["todas", "enviadas", "recibidas"] as const).map(f => (
             <Button
@@ -321,7 +353,6 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
           ))}
         </div>
 
-        {/* Tabla */}
         <DataTable
           data={solicitudesFiltradas.map(s => ({
             ...s,
@@ -374,16 +405,19 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
           ]}
           actions={(row) => (
             <div className="flex items-center justify-end gap-1">
-              {/* Botón Responder/Revisar - destacado para solicitudes recibidas pendientes */}
               {row.destinatarioId === currentUserId && (row.estado === "pendiente" || row.estado === "en_revision") && (
-                <button type="button" title="Responder / Revisar"
+                <button
+                  type="button"
+                  title="Responder / Revisar"
                   className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-sm transition-all hover:shadow-md active:scale-95"
                   onClick={() => openRespond(row)}
                 >
                   <MessageSquareIcon className="h-4 w-4" />
                 </button>
               )}
-              <button type="button" title="Ver detalle"
+              <button
+                type="button"
+                title="Ver detalle"
                 className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/50 bg-card/80 text-muted-foreground transition-all hover:border-[#FFB300]/40 hover:bg-[#FFB300]/10 hover:text-[#FF8800]"
                 onClick={() => openDetail(row)}
               >
@@ -391,13 +425,18 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
               </button>
               {row.estado !== "aprobado" && row.estado !== "rechazado" && (
                 <>
-                  <button type="button" title="Editar"
+                  <button
+                    type="button"
+                    title="Editar"
                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/50 bg-card/80 text-muted-foreground transition-all hover:border-[#FFB300]/40 hover:bg-[#FFB300]/10 hover:text-[#FF8800]"
                     onClick={() => openEdit(row)}
                   >
                     <PencilIcon className="h-4 w-4" />
                   </button>
-                  <button type="button" title="Eliminar" disabled={isPending}
+                  <button
+                    type="button"
+                    title="Eliminar"
+                    disabled={isPending}
                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/50 bg-card/80 text-muted-foreground transition-all hover:border-red-300 hover:bg-red-50 hover:text-red-600 dark:hover:border-red-500/30 dark:hover:bg-red-500/10 dark:hover:text-red-400 disabled:pointer-events-none disabled:opacity-50"
                     onClick={() => startTransition(async () => { await eliminarSolicitud(row.id); toast.success("Solicitud eliminada") })}
                   >
@@ -410,9 +449,6 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
         />
       </div>
 
-      {/* ═══════════════════════════════════════════ */}
-      {/* Dialog: Crear/Editar solicitud             */}
-      {/* ═══════════════════════════════════════════ */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="p-0 gap-0 overflow-hidden rounded-2xl w-[95vw] sm:w-[92vw] md:w-[88vw] lg:w-[920px] !max-w-[920px] border-0 shadow-2xl">
           <div className="flex h-1.5 w-full">
@@ -429,35 +465,38 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                 {editItem ? "Editar solicitud" : "Nueva solicitud"}
               </DialogTitle>
             </DialogHeader>
+
             <form onSubmit={handleSubmit} className="mt-4 grid gap-4 md:grid-cols-2">
-              {/* Tipo */}
               <div className="space-y-1.5 md:col-span-1">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tipo de solicitud *</Label>
-                <select name="tipo" required
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm transition-colors focus:border-[#FFB300] focus:ring-1 focus:ring-[#FFB300]/30 outline-none"
-                  defaultValue={editItem?.tipo ?? ""}
-                >
-                  <option value="" disabled>Seleccione un tipo...</option>
-                  {TIPOS_SOLICITUD.map(t => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
+                <Select value={tipoSolicitud} onValueChange={setTipoSolicitud}>
+                  <SelectTrigger className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm">
+                    <SelectValue placeholder="Seleccione un tipo..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIPOS_SOLICITUD.map(t => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Prioridad */}
               <div className="space-y-1.5 md:col-span-1">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Prioridad</Label>
-                <select name="prioridad"
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm transition-colors focus:border-[#FFB300] focus:ring-1 focus:ring-[#FFB300]/30 outline-none"
-                  defaultValue={editItem?.prioridad ?? "media"}
-                >
-                  <option value="baja">Baja</option>
-                  <option value="media">Media</option>
-                  <option value="alta">Alta</option>
-                </select>
+                <Select value={prioridadSolicitud} onValueChange={setPrioridadSolicitud}>
+                  <SelectTrigger className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm">
+                    <SelectValue placeholder="Seleccione prioridad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="baja">Baja</SelectItem>
+                    <SelectItem value="media">Media</SelectItem>
+                    <SelectItem value="alta">Alta</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Destinatario */}
               <div className="space-y-1.5 md:col-span-2">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Dirigido a</Label>
                 <div className="relative">
@@ -477,7 +516,9 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                   {showUserDropdown && searchDestinatario.length > 0 && filteredUsuarios.length > 0 && (
                     <div className="absolute z-50 mt-1 w-full rounded-lg border bg-popover shadow-xl max-h-48 overflow-y-auto">
                       {filteredUsuarios.slice(0, 8).map(u => (
-                        <button key={u.id} type="button"
+                        <button
+                          key={u.id}
+                          type="button"
                           className="flex w-full items-center gap-3 px-3 py-2.5 text-sm hover:bg-accent transition-colors text-left"
                           onMouseDown={(e) => e.preventDefault()}
                           onClick={() => {
@@ -503,8 +544,11 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                         {selectedDestinatario.firstName[0]}{selectedDestinatario.lastNamePaternal[0]}
                       </div>
                       <span className="font-medium">{nombreCompleto(selectedDestinatario)}</span>
-                      <button type="button" className="ml-auto text-muted-foreground hover:text-red-500 transition-colors"
-                        onClick={() => { setSelectedDestinatario(null); setSearchDestinatario("") }}>
+                      <button
+                        type="button"
+                        className="ml-auto text-muted-foreground hover:text-red-500 transition-colors"
+                        onClick={() => { setSelectedDestinatario(null); setSearchDestinatario("") }}
+                      >
                         <XIcon className="h-4 w-4" />
                       </button>
                     </div>
@@ -512,39 +556,45 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                 </div>
               </div>
 
-              {/* Estado (solo edición) */}
               {editItem && (
                 <div className="space-y-1.5 md:col-span-1">
                   <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Estado</Label>
-                  <select name="estado"
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm transition-colors focus:border-[#FFB300] focus:ring-1 focus:ring-[#FFB300]/30 outline-none"
-                    defaultValue={editItem.estado}
-                  >
-                    {ESTADOS_SOLICITUD.map(e => (
-                      <option key={e.value} value={e.value}>{e.label}</option>
-                    ))}
-                  </select>
+                  <Select value={estadoSolicitud} onValueChange={setEstadoSolicitud}>
+                    <SelectTrigger className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm">
+                      <SelectValue placeholder="Seleccione estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ESTADOS_SOLICITUD.map(e => (
+                        <SelectItem key={e.value} value={e.value}>
+                          {e.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
 
-              {/* Descripción */}
               <div className="space-y-1.5 md:col-span-2">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Descripción / Motivo</Label>
-                <textarea name="descripcion" rows={4}
+                <textarea
+                  name="descripcion"
+                  rows={4}
                   className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm resize-none transition-colors focus:border-[#FFB300] focus:ring-1 focus:ring-[#FFB300]/30 outline-none"
                   placeholder="Describa el motivo de su solicitud..."
                   defaultValue={editItem?.descripcion ?? ""}
                 />
               </div>
 
-              {/* Archivo adjunto */}
               <div className="space-y-1.5 md:col-span-2">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Documento adjunto</Label>
                 <div
                   className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border/60 bg-muted/30 p-4 transition-colors hover:border-[#FFB300]/40 hover:bg-[#FFB300]/5 cursor-pointer"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <input ref={fileInputRef} type="file" className="hidden"
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.png,.webp,.txt,.csv"
                     onChange={(e) => setArchivo(e.target.files?.[0] ?? null)}
                   />
@@ -558,8 +608,13 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                   <div className="flex items-center gap-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 px-3 py-2 text-sm">
                     <FileIcon className="h-4 w-4 text-blue-500" />
                     <span className="truncate flex-1">{archivo.name}</span>
-                    <button type="button" onClick={() => { setArchivo(null); if (fileInputRef.current) fileInputRef.current.value = "" }}
-                      className="text-muted-foreground hover:text-red-500"><XIcon className="h-4 w-4" /></button>
+                    <button
+                      type="button"
+                      onClick={() => { setArchivo(null); if (fileInputRef.current) fileInputRef.current.value = "" }}
+                      className="text-muted-foreground hover:text-red-500"
+                    >
+                      <XIcon className="h-4 w-4" />
+                    </button>
                   </div>
                 )}
                 {!archivo && editItem?.archivoNombre && (
@@ -570,12 +625,13 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                 )}
               </div>
 
-              {/* Botones */}
               <div className="flex justify-end gap-2 pt-3 border-t md:col-span-2">
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="rounded-lg">
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={isPending}
+                <Button
+                  type="submit"
+                  disabled={isPending}
                   className="bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] gap-2 rounded-lg font-semibold shadow-md shadow-[#FFB300]/20"
                 >
                   <SendIcon className="h-4 w-4" />
@@ -587,9 +643,6 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
         </DialogContent>
       </Dialog>
 
-      {/* ═══════════════════════════════════════════ */}
-      {/* Dialog: Responder / Revisar solicitud      */}
-      {/* ═══════════════════════════════════════════ */}
       <Dialog open={respondOpen} onOpenChange={setRespondOpen}>
         <DialogContent className="p-0 gap-0 overflow-hidden rounded-2xl max-w-md border-0 shadow-2xl">
           <div className="flex h-1.5 w-full">
@@ -608,7 +661,6 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                 </DialogTitle>
               </DialogHeader>
 
-              {/* Info de la solicitud */}
               <div className="mt-4 rounded-lg bg-muted/50 border p-3 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-xs font-bold">{respondItem.codigo}</span>
@@ -623,7 +675,8 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                   <p className="text-sm text-muted-foreground">{respondItem.descripcion}</p>
                 )}
                 {respondItem.archivoUrl && (
-                  <button type="button"
+                  <button
+                    type="button"
                     className="flex items-center gap-2 text-sm text-[#FF8800] hover:underline"
                     onClick={() => openFileViewer(respondItem.archivoUrl!, respondItem.archivoNombre ?? "Archivo", respondItem.archivoTipo ?? "")}
                   >
@@ -634,7 +687,6 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
               </div>
 
               <form onSubmit={handleRespond} className="space-y-4 mt-4">
-                {/* Estado */}
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Decisión *</Label>
                   <div className="grid grid-cols-3 gap-2">
@@ -643,14 +695,16 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                       { value: "aprobado", label: "Aprobar", icon: CheckCircle2Icon },
                       { value: "rechazado", label: "Rechazar", icon: XCircleIcon },
                     ] as const).map(opt => (
-                      <button key={opt.value} type="button"
+                      <button
+                        key={opt.value}
+                        type="button"
                         className={`flex flex-col items-center gap-1 rounded-lg border-2 p-3 cursor-pointer transition-all hover:bg-accent ${
                           respondEstado === opt.value
                             ? opt.value === "en_revision"
                               ? "border-blue-400 bg-blue-50 text-blue-700 shadow-sm dark:border-blue-600 dark:bg-blue-950/40 dark:text-blue-300"
                               : opt.value === "aprobado"
-                              ? "border-green-400 bg-green-50 text-green-700 shadow-sm dark:border-green-600 dark:bg-green-950/40 dark:text-green-300"
-                              : "border-red-400 bg-red-50 text-red-700 shadow-sm dark:border-red-600 dark:bg-red-950/40 dark:text-red-300"
+                                ? "border-green-400 bg-green-50 text-green-700 shadow-sm dark:border-green-600 dark:bg-green-950/40 dark:text-green-300"
+                                : "border-red-400 bg-red-50 text-red-700 shadow-sm dark:border-red-600 dark:bg-red-950/40 dark:text-red-300"
                             : "border-border"
                         }`}
                         onClick={() => setRespondEstado(opt.value)}
@@ -663,20 +717,22 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                   </div>
                 </div>
 
-                {/* Respuesta */}
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Respuesta</Label>
-                  <textarea name="respuesta" rows={3}
+                  <textarea
+                    name="respuesta"
+                    rows={3}
                     className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm resize-none transition-colors focus:border-[#FFB300] focus:ring-1 focus:ring-[#FFB300]/30 outline-none"
                     placeholder="Escriba su respuesta..."
                     defaultValue={respondItem.respuesta ?? ""}
                   />
                 </div>
 
-                {/* Observaciones */}
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Observaciones</Label>
-                  <textarea name="observaciones" rows={2}
+                  <textarea
+                    name="observaciones"
+                    rows={2}
                     className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm resize-none transition-colors focus:border-[#FFB300] focus:ring-1 focus:ring-[#FFB300]/30 outline-none"
                     placeholder="Observaciones adicionales..."
                     defaultValue={respondItem.observaciones ?? ""}
@@ -685,7 +741,9 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
 
                 <div className="flex justify-end gap-2 pt-3 border-t">
                   <Button type="button" variant="outline" onClick={() => setRespondOpen(false)} className="rounded-lg">Cancelar</Button>
-                  <Button type="submit" disabled={isPending}
+                  <Button
+                    type="submit"
+                    disabled={isPending}
                     className="bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] gap-2 rounded-lg font-semibold shadow-md shadow-[#FFB300]/20"
                   >
                     <MessageSquareIcon className="h-4 w-4" />
@@ -698,9 +756,6 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
         </DialogContent>
       </Dialog>
 
-      {/* ═══════════════════════════════════════════ */}
-      {/* Dialog: Detalle de solicitud               */}
-      {/* ═══════════════════════════════════════════ */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className="p-0 gap-0 overflow-hidden rounded-2xl max-w-lg border-0 shadow-2xl">
           <div className="flex h-1.5 w-full">
@@ -710,7 +765,6 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
           </div>
           {detailItem && (
             <div className="max-h-[80vh] overflow-y-auto">
-              {/* Cabecera */}
               <div className="p-6 pb-4">
                 <DialogHeader>
                   <div className="flex items-center justify-between">
@@ -728,7 +782,6 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                 </DialogHeader>
               </div>
 
-              {/* Info grid */}
               <div className="px-6 pb-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-lg bg-muted/40 p-3">
@@ -773,7 +826,6 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                 </div>
               </div>
 
-              {/* Descripción */}
               {detailItem.descripcion && (
                 <div className="px-6 pb-4">
                   <div className="rounded-lg border p-3">
@@ -783,7 +835,6 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                 </div>
               )}
 
-              {/* Observaciones */}
               {detailItem.observaciones && (
                 <div className="px-6 pb-4">
                   <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 p-3">
@@ -793,7 +844,6 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                 </div>
               )}
 
-              {/* Respuesta */}
               {detailItem.respuesta && (
                 <div className="px-6 pb-4">
                   <div className="rounded-lg border border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20 p-3">
@@ -806,7 +856,6 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                 </div>
               )}
 
-              {/* Archivo adjunto */}
               {detailItem.archivoUrl && (
                 <div className="px-6 pb-6">
                   <div className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-accent/50">
@@ -817,14 +866,20 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                     </div>
                     <div className="flex gap-1">
                       {canPreview(detailItem.archivoTipo) && (
-                        <button type="button" title="Visualizar"
+                        <button
+                          type="button"
+                          title="Visualizar"
                           className="inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-all hover:bg-[#FFB300]/10 hover:border-[#FFB300]/40 hover:text-[#FF8800]"
                           onClick={() => openFileViewer(detailItem.archivoUrl!, detailItem.archivoNombre ?? "Archivo", detailItem.archivoTipo ?? "")}
                         >
                           <EyeIcon className="h-4 w-4" />
                         </button>
                       )}
-                      <a href={detailItem.archivoUrl} target="_blank" rel="noopener noreferrer" title="Descargar"
+                      <a
+                        href={detailItem.archivoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Descargar"
                         className="inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-all hover:bg-accent"
                       >
                         <DownloadIcon className="h-4 w-4" />
@@ -834,7 +889,6 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                 </div>
               )}
 
-              {/* Acción rápida: Responder si soy destinatario */}
               {detailItem.destinatarioId === currentUserId && (detailItem.estado === "pendiente" || detailItem.estado === "en_revision") && (
                 <div className="px-6 pb-6">
                   <Button
@@ -851,9 +905,6 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
         </DialogContent>
       </Dialog>
 
-      {/* ═══════════════════════════════════════════ */}
-      {/* Dialog: Visor de archivos                  */}
-      {/* ═══════════════════════════════════════════ */}
       <Dialog open={fileViewerOpen} onOpenChange={setFileViewerOpen}>
         <DialogContent className="p-0 gap-0 overflow-hidden rounded-2xl max-w-4xl w-[90vw] h-[85vh] border-0 shadow-2xl">
           <DialogHeader className="sr-only">
@@ -865,7 +916,6 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
             <div className="flex-1 bg-[#2E7D32]" />
           </div>
           <div className="flex flex-col h-full">
-            {/* Top bar */}
             <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
               <div className="flex items-center gap-2 min-w-0">
                 {getFileViewerIcon(fileViewerType)}
@@ -875,7 +925,10 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                 </div>
               </div>
               <div className="flex gap-2">
-                <a href={fileViewerUrl} target="_blank" rel="noopener noreferrer"
+                <a
+                  href={fileViewerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors hover:bg-accent"
                 >
                   <DownloadIcon className="h-4 w-4" />
@@ -883,7 +936,6 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                 </a>
               </div>
             </div>
-            {/* Contenido */}
             <div className="flex-1 overflow-hidden bg-muted/20">
               {fileViewerType === "pdf" ? (
                 <iframe src={fileViewerUrl} className="w-full h-full border-0" title={fileViewerName} />
@@ -895,7 +947,10 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
                 <div className="flex flex-col items-center justify-center h-full gap-4">
                   {getFileViewerIcon(fileViewerType)}
                   <p className="text-sm text-muted-foreground">Vista previa no disponible para este tipo de archivo</p>
-                  <a href={fileViewerUrl} target="_blank" rel="noopener noreferrer"
+                  <a
+                    href={fileViewerUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] px-4 py-2 text-sm font-semibold"
                   >
                     <DownloadIcon className="h-4 w-4" />
@@ -910,4 +965,3 @@ export function TramitesModule({ solicitudes, usuarios, currentUserId }: Props) 
     </>
   )
 }
-
