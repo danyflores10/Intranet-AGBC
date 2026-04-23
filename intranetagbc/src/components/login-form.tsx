@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2, Lock, Mail, User, Eye, EyeOff, ArrowRight, Shield, Sparkles } from "lucide-react"
+import { Loader2, Lock, Mail, Eye, EyeOff, ArrowRight, Shield, Sparkles, TimerIcon } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
@@ -121,19 +121,137 @@ function TypewriterTitle() {
   )
 }
 
+const LOCKOUT_MS = 5 * 60 * 1000
+const MAX_ATTEMPTS = 3
+const ATTEMPTS_KEY = "login:failed-attempts"
+const LOCK_UNTIL_KEY = "login:lock-until"
+
+function readNumberFromStorage(key: string): number {
+  if (typeof window === "undefined") return 0
+  const raw = window.localStorage.getItem(key)
+  if (!raw) return 0
+  const parsed = Number.parseInt(raw, 10)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+function getCurrentTime(): number {
+  return Date.now()
+}
+
+function formatRemaining(ms: number) {
+  const totalSec = Math.max(0, Math.ceil(ms / 1000))
+  const m = Math.floor(totalSec / 60)
+  const s = totalSec % 60
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
+}
+
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
+  const [shakeKey, setShakeKey] = useState(0)
+  const [shakeLevel, setShakeLevel] = useState<0 | 1 | 2>(0)
+  const [failedAttempts, setFailedAttempts] = useState(0)
+  const [lockUntil, setLockUntil] = useState<number | null>(null)
+  const [now, setNow] = useState(() => getCurrentTime())
 
   const signInForm = useForm<SignInInput>({
     resolver: zodResolver(signInSchema),
     defaultValues: { email: "", password: "" },
   })
 
+  // Rehidratar estado persistido (localStorage = sistema externo)
+  useEffect(() => {
+    const persistedLock = readNumberFromStorage(LOCK_UNTIL_KEY)
+    const persistedAttempts = readNumberFromStorage(ATTEMPTS_KEY)
+    if (persistedLock > getCurrentTime()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLockUntil(persistedLock)
+      setFailedAttempts(Math.max(persistedAttempts, MAX_ATTEMPTS))
+    } else {
+      if (persistedLock > 0) {
+        window.localStorage.removeItem(LOCK_UNTIL_KEY)
+        window.localStorage.removeItem(ATTEMPTS_KEY)
+      }
+      setFailedAttempts(persistedAttempts)
+    }
+  }, [])
+
+  // Tick para countdown + expiración del bloqueo
+  useEffect(() => {
+    if (!lockUntil) return
+    const interval = window.setInterval(() => {
+      const current = getCurrentTime()
+      setNow(current)
+      if (current >= lockUntil) {
+        window.clearInterval(interval)
+        setLockUntil(null)
+        setFailedAttempts(0)
+        setShakeLevel(0)
+        if (typeof window !== "undefined") {
+          window.localStorage.removeItem(LOCK_UNTIL_KEY)
+          window.localStorage.removeItem(ATTEMPTS_KEY)
+        }
+        toast.success("Puedes intentar iniciar sesión de nuevo")
+      }
+    }, 1000)
+    return () => window.clearInterval(interval)
+  }, [lockUntil])
+
+  // Reinicia el nivel de shake después de que la animación corra
+  useEffect(() => {
+    if (shakeLevel === 0) return
+    const duration = shakeLevel === 1 ? 650 : 950
+    const timeout = window.setTimeout(() => setShakeLevel(0), duration)
+    return () => window.clearTimeout(timeout)
+  }, [shakeLevel, shakeKey])
+
+  const isLocked = lockUntil !== null && now < lockUntil
+  const remainingMs = isLocked && lockUntil ? lockUntil - now : 0
+
+  function triggerShake(level: 1 | 2) {
+    setShakeLevel(level)
+    setShakeKey((k) => k + 1)
+  }
+
+  function registerFailedAttempt() {
+    const next = failedAttempts + 1
+    setFailedAttempts(next)
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(ATTEMPTS_KEY, String(next))
+    }
+
+    if (next >= MAX_ATTEMPTS) {
+      const currentTime = getCurrentTime()
+      const until = currentTime + LOCKOUT_MS
+      setLockUntil(until)
+      setNow(currentTime)
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(LOCK_UNTIL_KEY, String(until))
+      }
+      triggerShake(2)
+      toast.error("Demasiados intentos fallidos. Espera 5 minutos antes de volver a intentar.")
+    } else if (next === 2) {
+      triggerShake(2)
+    } else {
+      triggerShake(1)
+    }
+  }
+
+  function resetAttempts() {
+    setFailedAttempts(0)
+    setLockUntil(null)
+    setShakeLevel(0)
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(ATTEMPTS_KEY)
+      window.localStorage.removeItem(LOCK_UNTIL_KEY)
+    }
+  }
+
   async function onSubmitSignIn(values: SignInInput) {
+    if (isLocked) return
     try {
       const result = await authClient.signIn.email({
         email: values.email,
@@ -143,18 +261,27 @@ export function LoginForm({
       if (result.error) {
         const msg = translateAuthError(result.error.message ?? INVALID_CREDENTIALS_MESSAGE)
         toast.error(msg)
+        registerFailedAttempt()
         return
       }
+      resetAttempts()
       toast.success("Bienvenido al sistema")
       router.replace("/")
       router.refresh()
     } catch (error) {
       const msg = extractErrorMessage(error)
       toast.error(msg)
+      registerFailedAttempt()
     }
   }
 
   const isSignInPending = signInForm.formState.isSubmitting
+  const shakeClass =
+    shakeLevel === 2
+      ? "animate-login-shake-hard"
+      : shakeLevel === 1
+        ? "animate-login-shake"
+        : ""
 
   return (
     <div className={cn("flex min-h-svh", className)} {...props}>
@@ -263,7 +390,32 @@ export function LoginForm({
               />
             </div>
 
-            <div className="rounded-2xl border border-border/60 bg-card p-8 shadow-xl shadow-black/5 dark:shadow-black/20 animate-pulse-glow">
+            <div
+              key={shakeKey}
+              className={cn(
+                "rounded-2xl border bg-card p-8 shadow-xl shadow-black/5 dark:shadow-black/20 transition-colors",
+                isLocked
+                  ? "border-red-500/60 shadow-red-500/20"
+                  : "border-border/60 animate-pulse-glow",
+                shakeClass,
+              )}
+            >
+              {isLocked && (
+                <div className="mb-5 flex items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-500/15">
+                    <TimerIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-red-700 dark:text-red-300">
+                      Acceso bloqueado temporalmente
+                    </p>
+                    <p className="text-xs text-red-600/90 dark:text-red-300/80">
+                      Demasiados intentos fallidos. Podrás reintentar en{" "}
+                      <span className="font-mono font-bold">{formatRemaining(remainingMs)}</span>.
+                    </p>
+                  </div>
+                </div>
+              )}
               <form
                 noValidate
                 onSubmit={signInForm.handleSubmit(onSubmitSignIn)}
@@ -290,7 +442,8 @@ export function LoginForm({
                         type="email"
                         autoComplete="email"
                         placeholder="tu@correos.gob.bo"
-                        className="h-12 pl-11 rounded-xl border-border/60 bg-muted/30 text-sm transition-all focus:border-[#FFB300]/50 focus:ring-[#FFB300]/20 focus:bg-background"
+                        disabled={isLocked}
+                        className="h-12 pl-11 rounded-xl border-border/60 bg-muted/30 text-sm transition-all focus:border-[#FFB300]/50 focus:ring-[#FFB300]/20 focus:bg-background disabled:cursor-not-allowed disabled:opacity-60"
                         {...signInForm.register("email")}
                       />
                     </div>
@@ -315,7 +468,8 @@ export function LoginForm({
                         id="signin-password"
                         type={showPassword ? "text" : "password"}
                         autoComplete="current-password"
-                        className="h-12 pl-11 pr-11 rounded-xl border-border/60 bg-muted/30 text-sm transition-all focus:border-[#FFB300]/50 focus:ring-[#FFB300]/20 focus:bg-background"
+                        disabled={isLocked}
+                        className="h-12 pl-11 pr-11 rounded-xl border-border/60 bg-muted/30 text-sm transition-all focus:border-[#FFB300]/50 focus:ring-[#FFB300]/20 focus:bg-background disabled:cursor-not-allowed disabled:opacity-60"
                         {...signInForm.register("password")}
                       />
                       <button
@@ -333,10 +487,15 @@ export function LoginForm({
                   <Field>
                     <Button
                       type="submit"
-                      className="w-full h-12 text-base font-bold rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-lg shadow-[#FFB300]/25 hover:shadow-xl hover:shadow-[#FFB300]/30 hover:brightness-110 border-0 transition-all duration-300"
-                      disabled={isSignInPending}
+                      className="w-full h-12 text-base font-bold rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-lg shadow-[#FFB300]/25 hover:shadow-xl hover:shadow-[#FFB300]/30 hover:brightness-110 border-0 transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={isSignInPending || isLocked}
                     >
-                      {isSignInPending ? (
+                      {isLocked ? (
+                        <>
+                          <TimerIcon className="mr-2 h-4 w-4" />
+                          Bloqueado — {formatRemaining(remainingMs)}
+                        </>
+                      ) : isSignInPending ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Ingresando...
@@ -348,6 +507,11 @@ export function LoginForm({
                         </>
                       )}
                     </Button>
+                    {!isLocked && failedAttempts > 0 && failedAttempts < MAX_ATTEMPTS && (
+                      <p className="mt-2 text-center text-[11px] font-semibold text-red-600 dark:text-red-400">
+                        Intento {failedAttempts} de {MAX_ATTEMPTS}. Después del tercer fallo se bloqueará el acceso por 5 minutos.
+                      </p>
+                    )}
                   </Field>
 
                 </FieldGroup>

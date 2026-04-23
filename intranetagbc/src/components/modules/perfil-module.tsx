@@ -11,6 +11,12 @@ import {
   CalendarIcon,
   SparklesIcon,
   CheckCircle2Icon,
+  KeyRoundIcon,
+  LockIcon,
+  EyeIcon,
+  EyeOffIcon,
+  CheckIcon,
+  XIcon,
 } from "lucide-react"
 import toast from "react-hot-toast"
 
@@ -78,6 +84,55 @@ export function PerfilModule({ perfil }: Props) {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(perfil.image)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  // ── Estado de cambio de contraseña ──
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [showCurrent, setShowCurrent] = useState(false)
+  const [showNew, setShowNew] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [isChangingPwd, setIsChangingPwd] = useState(false)
+
+  const confirmTouched = confirmPassword.length > 0
+  const confirmMatches = confirmTouched && newPassword === confirmPassword
+  const newMeetsLength = newPassword.length >= 8
+  const newDiffFromCurrent =
+    newPassword.length > 0 && currentPassword.length > 0 && newPassword !== currentPassword
+  const canSubmitPwd =
+    currentPassword.length > 0 &&
+    newMeetsLength &&
+    confirmMatches &&
+    newDiffFromCurrent &&
+    !isChangingPwd
+
+  async function handleChangePassword(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (!canSubmitPwd) return
+    setIsChangingPwd(true)
+    try {
+      const res = await fetch("/api/perfil/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(data?.error || "Error al cambiar la contraseña")
+      }
+      toast.success("Contraseña actualizada correctamente")
+      setCurrentPassword("")
+      setNewPassword("")
+      setConfirmPassword("")
+      setShowCurrent(false)
+      setShowNew(false)
+      setShowConfirm(false)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al cambiar la contraseña")
+    } finally {
+      setIsChangingPwd(false)
+    }
+  }
 
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -209,8 +264,10 @@ export function PerfilModule({ perfil }: Props) {
         </Card>
 
         <div className="grid gap-6 lg:grid-cols-3">
+          {/* ── Columna izquierda: datos + seguridad ── */}
+          <div className="lg:col-span-2 space-y-6">
           {/* ── Datos personales ── */}
-          <Card className="border-border/40 lg:col-span-2 overflow-hidden">
+          <Card className="border-border/40 overflow-hidden">
             <CardHeader className="border-b border-border/30 bg-muted/20">
               <CardTitle className="flex items-center gap-2.5">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#FFB300]/20 to-[#FF8800]/10">
@@ -274,6 +331,134 @@ export function PerfilModule({ perfil }: Props) {
               </form>
             </CardContent>
           </Card>
+
+          {/* ── Seguridad: cambio de contraseña ── */}
+          <Card className="border-border/40 overflow-hidden">
+            <CardHeader className="border-b border-border/30 bg-muted/20">
+              <CardTitle className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#C41E3A]/20 to-[#FF8800]/10">
+                  <KeyRoundIcon className="h-4 w-4 text-[#C41E3A]" />
+                </div>
+                Seguridad
+              </CardTitle>
+              <p className="text-xs text-muted-foreground pl-11 -mt-1">
+                Cambia tu contraseña. Necesitas ingresar tu contraseña actual.
+              </p>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <form onSubmit={handleChangePassword} className="space-y-5">
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <LockIcon className="h-3 w-3" /> Contraseña actual
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      type={showCurrent ? "text" : "password"}
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      autoComplete="current-password"
+                      placeholder="••••••••"
+                      className="pr-10 font-medium"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrent((s) => !s)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      tabIndex={-1}
+                    >
+                      {showCurrent ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                      <KeyRoundIcon className="h-3 w-3" /> Nueva contraseña
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        type={showNew ? "text" : "password"}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        autoComplete="new-password"
+                        placeholder="Mínimo 8 caracteres"
+                        className="pr-10 font-medium"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNew((s) => !s)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        tabIndex={-1}
+                      >
+                        {showNew ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {newPassword.length > 0 && (
+                      <p className={`text-[11px] font-medium flex items-center gap-1 ${newMeetsLength ? "text-green-600" : "text-amber-600"}`}>
+                        {newMeetsLength ? <CheckIcon className="h-3 w-3" /> : <XIcon className="h-3 w-3" />}
+                        {newMeetsLength ? "Longitud válida" : "Al menos 8 caracteres"}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                      <CheckIcon className="h-3 w-3" /> Confirmar contraseña
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        type={showConfirm ? "text" : "password"}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        autoComplete="new-password"
+                        placeholder="Repite la nueva contraseña"
+                        className={`pr-10 font-medium ${
+                          confirmTouched
+                            ? confirmMatches
+                              ? "border-green-500/60 focus-visible:ring-green-500/20"
+                              : "border-red-500/60 focus-visible:ring-red-500/20"
+                            : ""
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirm((s) => !s)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        tabIndex={-1}
+                      >
+                        {showConfirm ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {confirmTouched && (
+                      <p className={`text-[11px] font-medium flex items-center gap-1 ${confirmMatches ? "text-green-600" : "text-red-600"}`}>
+                        {confirmMatches ? <CheckIcon className="h-3 w-3" /> : <XIcon className="h-3 w-3" />}
+                        {confirmMatches ? "Las contraseñas coinciden" : "Las contraseñas no coinciden"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {currentPassword.length > 0 && newPassword.length > 0 && !newDiffFromCurrent && (
+                  <p className="text-[11px] font-medium text-amber-600 flex items-center gap-1">
+                    <XIcon className="h-3 w-3" />
+                    La nueva contraseña debe ser diferente a la actual
+                  </p>
+                )}
+
+                <div className="flex justify-end pt-2">
+                  <Button
+                    type="submit"
+                    disabled={!canSubmitPwd}
+                    className="bg-gradient-to-r from-[#C41E3A] to-[#FF8800] text-white font-bold shadow-lg shadow-[#C41E3A]/20 hover:shadow-xl hover:shadow-[#C41E3A]/30 transition-all disabled:opacity-50"
+                  >
+                    <KeyRoundIcon className="mr-2 h-4 w-4" />
+                    {isChangingPwd ? "Cambiando..." : "Cambiar contraseña"}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+          </div>
 
           {/* ── Info lateral ── */}
           <div className="space-y-6">

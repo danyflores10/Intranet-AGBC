@@ -173,7 +173,7 @@ export function NavUser({ usuario }: { usuario: UsuarioRbac }) {
                 <BadgeCheckIcon />
                 Mi cuenta
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => router.push("/dashboard")}>
+              <DropdownMenuItem onSelect={() => router.push("/notificaciones")}>
                 <BellIcon />
                 Notificaciones
               </DropdownMenuItem>
