@@ -10,11 +10,8 @@ import {
   Briefcase,
   ChevronLeftIcon,
   ChevronRightIcon,
-  SearchIcon,
-  XIcon,
 } from "lucide-react"
 
-/* ── Types ── */
 interface DirectivoItem {
   id: string
   nombre: string
@@ -26,7 +23,6 @@ interface DirectivoItem {
   orden: number
 }
 
-/* ── Helpers ── */
 const AVATAR_COLORS = [
   "#1A73E8", "#E8453C", "#0B8043", "#F29900", "#8430CE",
   "#D93025", "#1E8E3E", "#185ABC", "#E37400", "#A142F4",
@@ -66,30 +62,13 @@ function buildPhoneHref(phone?: string | null) {
   return `tel:${normalized}`
 }
 
-/* ── Component ── */
 export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] }) {
   const [active, setActive] = useState(0)
   const [isAnimating, setIsAnimating] = useState(false)
-  const [search, setSearch] = useState("")
   const touchStartX = useRef(0)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const normalizar = (s: string) =>
-    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
-
-  const filtered = search.trim()
-    ? directivos.filter((d) => {
-        const q = normalizar(search)
-        return (
-          normalizar(d.nombre).includes(q) ||
-          normalizar(d.cargo).includes(q) ||
-          normalizar(d.unidad).includes(q) ||
-          (d.email && normalizar(d.email).includes(q))
-        )
-      })
-    : directivos
-
-  const total = filtered.length
+  const total = directivos.length
   const safeActive = total > 0 ? Math.min(active, total - 1) : 0
 
   const go = useCallback(
@@ -205,43 +184,7 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
           </p>
         </div>
 
-        {/* ── Search bar ── */}
-        <div className="mx-auto max-w-md mb-10">
-          <div
-            className="relative flex items-center rounded-full px-5 py-3"
-            style={{
-              background: "var(--landing-neumo-bg)",
-              boxShadow: "inset 3px 3px 6px var(--landing-neumo-shadow-dark), inset -3px -3px 6px var(--landing-neumo-shadow-light)",
-            }}
-          >
-            <SearchIcon className="h-4 w-4 text-gray-400 dark:text-gray-500 shrink-0" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setActive(0) }}
-              placeholder="Buscar por nombre, cargo o unidad..."
-              className="ml-3 w-full bg-transparent text-sm text-gray-700 placeholder:text-gray-400 dark:text-gray-100 dark:placeholder:text-gray-500 focus:outline-none"
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={() => { setSearch(""); setActive(0) }}
-                className="ml-2 flex h-6 w-6 items-center justify-center rounded-full text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-300/40 dark:hover:bg-gray-700/35 transition-colors"
-              >
-                <XIcon className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-          {search && (
-            <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-2">
-              {total} resultado{total !== 1 ? "s" : ""} encontrado{total !== 1 ? "s" : ""}
-            </p>
-          )}
-        </div>
-
-        {/* ── Carousel wrapper ── */}
         <div className="relative flex items-center justify-center">
-          {/* Left arrow */}
           <button
             type="button"
             onClick={() => go(-1)}
@@ -254,7 +197,6 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
             <ChevronLeftIcon className="h-5 w-5" />
           </button>
 
-          {/* 3D stage */}
           <div
             ref={containerRef}
             className="relative mx-auto w-full max-w-4xl"
@@ -270,7 +212,7 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
               className="relative h-full w-full"
               style={{ transformStyle: "preserve-3d" }}
             >
-              {filtered.map((d, index) => {
+              {directivos.map((d, index) => {
                 const cardStyle = getCardStyle(index)
                 const color =
                   AVATAR_COLORS[hashN(d.nombre) % AVATAR_COLORS.length]
@@ -306,7 +248,6 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
                         height: "440px",
                       }}
                     >
-                      {/* Avatar */}
                       <div
                         className="relative rounded-full p-1.5 mb-4 transition-transform duration-300"
                         style={{
@@ -334,17 +275,14 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
                         )}
                       </div>
 
-                      {/* Name */}
                       <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 text-center leading-tight mt-1">
                         {d.nombre}
                       </h3>
 
-                      {/* Cargo */}
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 text-center uppercase tracking-wide font-semibold">
                         {d.cargo}
                       </p>
 
-                      {/* Contact icons row */}
                       <div className="flex items-center justify-center gap-3 mt-4">
                         {d.email && (
                           <a
@@ -401,7 +339,6 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
                         </div>
                       </div>
 
-                      {/* Unit badge */}
                       <div
                         className="mt-4 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300"
                         style={{
@@ -414,18 +351,16 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
                         {d.unidad}
                       </div>
 
-                      {/* Divider */}
                       <div
                         className="w-full mt-4 mb-3 border-t"
                         style={{ borderColor: "var(--landing-neumo-divider)" }}
                       />
 
-                      {/* Contact info footer */}
                       <div className="flex items-center justify-center gap-4 text-[11px] text-gray-500 dark:text-gray-400 w-full flex-wrap">
                         {d.email && (
                           <a
                             href={`mailto:${d.email}`}
-                            className="flex items-center gap-1 hover:text-[#C41E3A] transition-colors truncate max-w-[130px]"
+                            className="flex items-center gap-1 hover:text-[#C41E3A] transition-colors truncate max-w-32.5"
                             title={d.email}
                           >
                             <Mail className="h-3 w-3 shrink-0" />
@@ -456,8 +391,6 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
               })}
             </div>
           </div>
-
-          {/* Right arrow */}
           <button
             type="button"
             onClick={() => go(1)}
@@ -471,14 +404,13 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
           </button>
         </div>
 
-        {/* ── Pagination dots ── */}
         <div className="flex items-center justify-center gap-2 mt-10">
           {dots.map((dotIdx) => (
             <button
               key={dotIdx}
               type="button"
               onClick={() => goTo(dotIdx)}
-              aria-label={`Ir a ${filtered[dotIdx]?.nombre ?? dotIdx + 1}`}
+              aria-label={`Ir a ${directivos[dotIdx]?.nombre ?? dotIdx + 1}`}
               className={`rounded-full transition-all duration-300 focus:outline-none ${
                 dotIdx === safeActive
                   ? "h-3.5 w-3.5 bg-[#C41E3A] shadow-md shadow-[#C41E3A]/40"
@@ -488,20 +420,12 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
           ))}
         </div>
 
-        {/* Active person name below dots */}
         {total > 0 && (
           <p className="text-center mt-4 text-sm font-semibold text-gray-600 dark:text-gray-300 transition-all duration-300">
-            {filtered[safeActive]?.nombre}
+            {directivos[safeActive]?.nombre}
             <span className="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500">
               {safeActive + 1} / {total}
             </span>
-          </p>
-        )}
-
-        {/* No results message */}
-        {total === 0 && search && (
-          <p className="text-center mt-4 text-sm text-gray-400 dark:text-gray-500">
-            No se encontraron resultados para &ldquo;{search}&rdquo;
           </p>
         )}
       </div>
