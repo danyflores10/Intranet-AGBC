@@ -25,12 +25,14 @@ import { BoliviaMap } from "@/components/bolivia-map"
 import { LandingAccesos } from "@/components/landing-accesos"
 import { LandingPersonal } from "@/components/landing-personal"
 import { LandingDirectorio } from "@/components/landing-directorio"
+import { LandingReconocimientos } from "@/components/landing-reconocimientos"
 import { obtenerComunicadosPublicados, obtenerAccesosDirectosActivos, obtenerBannersActivos } from "@/actions/comunicaciones"
 import { obtenerUsuarioRbacActual } from "@/lib/auth/session-access"
 import { obtenerSucursalesActivas } from "@/actions/sucursales"
 import { obtenerPersonal, obtenerDirectivos } from "@/actions/rrhh"
 import { obtenerConfigPorGrupo } from "@/actions/configuracion"
 import { obtenerDocumentos } from "@/actions/documentos"
+import { obtenerLandingReconocimientos } from "@/actions/reconocimientos"
 import { LoginForm } from "@/components/login-form"
 
 const defaultSucursales = [
@@ -105,6 +107,8 @@ export default async function HomePage() {
     obtenerConfigPorGrupo("secciones_landing"),
     obtenerDocumentos(),
   ])
+
+  const reconocimientosLanding = await obtenerLandingReconocimientos()
 
   // Mapear configuración de secciones (por defecto todas visibles)
   const seccionVisible = (clave: string) => {
@@ -252,6 +256,11 @@ export default async function HomePage() {
         archivoNombre: c.archivoNombre,
         archivoTipo: c.archivoTipo,
       }))} />}
+
+      {/* ── Reconocimientos Institucionales ── */}
+      {seccionVisible("seccion_reconocimientos") && (
+        <LandingReconocimientos data={reconocimientosLanding} />
+      )}
 
       {/* ── Directorio Institucional – Carrusel 3D (solo logueados) ── */}
       {estaLogueado && seccionVisible("seccion_directorio") && (() => {

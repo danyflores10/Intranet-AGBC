@@ -133,6 +133,19 @@ export const PERMISOS_SOPORTE = {
   ELIMINAR: "eliminar soporte",
 } as const
 
+export const PERMISOS_RECONOCIMIENTOS = {
+  VER: "ver reconocimientos",
+  CREAR: "crear reconocimientos",
+  EDITAR: "editar reconocimientos",
+  ELIMINAR: "eliminar reconocimientos",
+  APROBAR: "aprobar reconocimientos",
+  PUBLICAR: "publicar reconocimientos",
+  ARCHIVAR: "archivar reconocimientos",
+  DESTACAR: "destacar reconocimientos",
+  LANDING: "mostrar en landing reconocimientos",
+  REPORTES: "reportes reconocimientos",
+} as const
+
 export const PERMISOS = {
   ROLES: PERMISOS_ROLES,
   USUARIOS: PERMISOS_USUARIOS,
@@ -154,6 +167,7 @@ export const PERMISOS = {
   CONTENIDOS: PERMISOS_CONTENIDOS,
   CONTACTOS: PERMISOS_CONTACTOS,
   SOPORTE: PERMISOS_SOPORTE,
+  RECONOCIMIENTOS: PERMISOS_RECONOCIMIENTOS,
 } as const
 
 export type PermisoRol = (typeof PERMISOS_ROLES)[keyof typeof PERMISOS_ROLES]

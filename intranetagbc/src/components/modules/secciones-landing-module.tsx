@@ -13,6 +13,7 @@ import {
   Map,
   Sparkles,
   FileText,
+  Trophy,
 } from "lucide-react"
 import toast from "react-hot-toast"
 import { guardarMultipleConfiguracion } from "@/actions/configuracion"
@@ -28,6 +29,7 @@ const SECCIONES = [
   { clave: "seccion_equipo", label: "Personal / Nuestro Equipo", descripcion: "Empleados y personal institucional activo", icon: Users, defaultVisible: true },
   { clave: "seccion_mapa", label: "Mapa de Oficinas", descripcion: "Mapa interactivo de Bolivia con sucursales", icon: Map, defaultVisible: true },
   { clave: "seccion_documentos", label: "Documentos Institucionales", descripcion: "Documentos publicados disponibles para descarga y consulta", icon: FileText, defaultVisible: true },
+  { clave: "seccion_reconocimientos", label: "Reconocimientos Institucionales", descripcion: "Empleado del mes, equipos destacados y logros de sucursales", icon: Trophy, defaultVisible: true },
   { clave: "seccion_features", label: "Módulos / Funcionalidades", descripcion: "Sección de funcionalidades y módulos del sistema", icon: Sparkles, defaultVisible: true },
 ] as const
 

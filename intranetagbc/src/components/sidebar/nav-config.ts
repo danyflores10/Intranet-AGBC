@@ -11,6 +11,7 @@
   MapPin,
   Megaphone,
   Shield,
+  Trophy,
   UserPlus,
   Users,
   type LucideIcon,
@@ -139,6 +140,56 @@ export const sidebarData: {
           access: {
             permissions: [PERMISOS.RRHH.VER],
           },
+        },
+        {
+          title: "Reconocimientos",
+          url: "/reconocimientos",
+          icon: Trophy,
+          access: {
+            permissions: [PERMISOS.RECONOCIMIENTOS.VER],
+          },
+          items: [
+            {
+              title: "Dashboard",
+              url: "/reconocimientos",
+              icon: Trophy,
+              access: {
+                permissions: [PERMISOS.RECONOCIMIENTOS.VER],
+              },
+            },
+            {
+              title: "Empleado del Mes",
+              url: "/reconocimientos/empleado-mes",
+              icon: Trophy,
+              access: {
+                permissions: [PERMISOS.RECONOCIMIENTOS.VER],
+              },
+            },
+            {
+              title: "Equipos destacados",
+              url: "/reconocimientos/equipos",
+              icon: Users,
+              access: {
+                permissions: [PERMISOS.RECONOCIMIENTOS.VER],
+              },
+            },
+            {
+              title: "Logros de sucursales",
+              url: "/reconocimientos/sucursales",
+              icon: MapPin,
+              access: {
+                permissions: [PERMISOS.RECONOCIMIENTOS.VER],
+              },
+            },
+            {
+              title: "Aprobaciones",
+              url: "/reconocimientos/aprobaciones",
+              icon: Shield,
+              access: {
+                permissions: [PERMISOS.RECONOCIMIENTOS.APROBAR],
+              },
+            },
+          ],
         },
         {
           title: "Tramites",
