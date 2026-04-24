@@ -4,7 +4,9 @@ import { AppSidebar } from "@/components/sidebar/app-sidebar"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { obtenerUsuarioRbacActual } from "@/lib/auth/session-access"
 import { obtenerNotificacionesUsuario, contarNotificacionesNoLeidas } from "@/actions/notificaciones"
+import { obtenerEstadoOnboardingUsuarioActual } from "@/actions/onboarding"
 import { NotificacionesBell } from "@/components/notificaciones-bell"
+import { OnboardingLauncher } from "@/components/onboarding-launcher"
 
 type AdminLayoutProps = Readonly<{
   children: React.ReactNode
@@ -17,9 +19,10 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
     redirect("/")
   }
 
-  const [notificaciones, countNoLeidas] = await Promise.all([
+  const [notificaciones, countNoLeidas, estadoOnboarding] = await Promise.all([
     obtenerNotificacionesUsuario(usuario.id),
     contarNotificacionesNoLeidas(usuario.id),
+    obtenerEstadoOnboardingUsuarioActual(),
   ])
 
   return (
@@ -42,6 +45,7 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
           {children}
         </main>
       </SidebarInset>
+      <OnboardingLauncher debeVerlo={estadoOnboarding?.debeVerlo ?? false} />
     </SidebarProvider>
   )
 }

@@ -133,6 +133,11 @@ export const PERMISOS_SOPORTE = {
   ELIMINAR: "eliminar soporte",
 } as const
 
+export const PERMISOS_ONBOARDING = {
+  VER: "ver onboarding",
+  CONFIGURAR: "configurar onboarding",
+} as const
+
 export const PERMISOS_RECONOCIMIENTOS = {
   VER: "ver reconocimientos",
   CREAR: "crear reconocimientos",
@@ -168,6 +173,7 @@ export const PERMISOS = {
   CONTACTOS: PERMISOS_CONTACTOS,
   SOPORTE: PERMISOS_SOPORTE,
   RECONOCIMIENTOS: PERMISOS_RECONOCIMIENTOS,
+  ONBOARDING: PERMISOS_ONBOARDING,
 } as const
 
 export type PermisoRol = (typeof PERMISOS_ROLES)[keyof typeof PERMISOS_ROLES]

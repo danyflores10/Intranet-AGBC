@@ -19,3 +19,4 @@ export * from './notificaciones.schema';
 export * from './sucursales.schema';
 export * from './soporte.schema';
 export * from './reconocimientos.schema';
+export * from './onboarding.schema';

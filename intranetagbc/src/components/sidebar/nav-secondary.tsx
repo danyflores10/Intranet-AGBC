@@ -24,6 +24,7 @@ export function NavSecondary({
     url: string
     icon: LucideIcon
     access?: AccessRule
+    tourKey?: string
   }[]
   usuario: UsuarioRbac
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
@@ -42,7 +43,7 @@ export function NavSecondary({
       <SidebarGroupContent>
         <SidebarMenu>
           {filteredItems.map((item) => (
-            <SidebarMenuItem key={item.title}>
+            <SidebarMenuItem key={item.title} data-tour={item.tourKey}>
               <SidebarMenuButton asChild size="sm">
                 <Link href={item.url}>
                   <item.icon />

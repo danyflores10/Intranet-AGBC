@@ -155,7 +155,7 @@ export function NavUser({ usuario }: { usuario: UsuarioRbac }) {
 
   return (
     <SidebarMenu>
-      <SidebarMenuItem>
+      <SidebarMenuItem data-tour="perfil">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton

@@ -11,6 +11,7 @@
   MapPin,
   Megaphone,
   Shield,
+  Sparkles,
   Trophy,
   UserPlus,
   Users,
@@ -30,6 +31,7 @@ export type SubItem = {
   url: string
   icon?: LucideIcon
   access?: AccessRule
+  tourKey?: string
 }
 
 export type NavItem = {
@@ -38,6 +40,7 @@ export type NavItem = {
   icon: LucideIcon
   items?: SubItem[]
   access?: AccessRule
+  tourKey?: string
 }
 
 export type NavGroup = {
@@ -47,7 +50,7 @@ export type NavGroup = {
 
 export const sidebarData: {
   main: NavGroup[]
-  secondary: { title: string; url: string; icon: LucideIcon; access?: AccessRule }[]
+  secondary: { title: string; url: string; icon: LucideIcon; access?: AccessRule; tourKey?: string }[]
 } = {
   main: [
     {
@@ -57,11 +60,13 @@ export const sidebarData: {
           title: "Dashboard",
           url: "/dashboard",
           icon: Home,
+          tourKey: "dashboard",
         },
         {
           title: "Usuarios",
           url: "/usuarios",
           icon: Users,
+          tourKey: "usuarios",
           access: {
             permissions: [PERMISOS.USUARIOS.VER],
           },
@@ -70,6 +75,7 @@ export const sidebarData: {
           title: "Roles",
           url: "/roles",
           icon: UserPlus,
+          tourKey: "roles",
           access: {
             permissions: [PERMISOS.ROLES.VER],
           },
@@ -78,6 +84,7 @@ export const sidebarData: {
           title: "Contenidos",
           url: "/comunicaciones",
           icon: Megaphone,
+          tourKey: "contenidos",
           access: {
             permissions: [
               PERMISOS.COMUNICADOS.VER,
@@ -91,6 +98,7 @@ export const sidebarData: {
           title: "Documentos",
           url: "/documentos",
           icon: FileText,
+          tourKey: "documentos",
           items: [
             {
               title: "Todos los documentos",
@@ -114,6 +122,7 @@ export const sidebarData: {
           title: "Correspondencia",
           url: "/correspondencia",
           icon: FolderOpen,
+          tourKey: "correspondencia",
           items: [
             {
               title: "Bandeja",
@@ -137,6 +146,7 @@ export const sidebarData: {
           title: "RRHH",
           url: "/rrhh",
           icon: Briefcase,
+          tourKey: "rrhh",
           access: {
             permissions: [PERMISOS.RRHH.VER],
           },
@@ -145,6 +155,7 @@ export const sidebarData: {
           title: "Reconocimientos",
           url: "/reconocimientos",
           icon: Trophy,
+          tourKey: "reconocimientos",
           access: {
             permissions: [PERMISOS.RECONOCIMIENTOS.VER],
           },
@@ -195,6 +206,7 @@ export const sidebarData: {
           title: "Tramites",
           url: "/tramites",
           icon: Activity,
+          tourKey: "tramites",
           access: {
             permissions: [PERMISOS.TRAMITES.VER],
           },
@@ -203,6 +215,7 @@ export const sidebarData: {
           title: "Calendario",
           url: "/calendario",
           icon: CalendarDays,
+          tourKey: "calendario",
           access: {
             permissions: [PERMISOS.CALENDARIO.VER, PERMISOS.AGENDA.VER],
           },
@@ -215,6 +228,7 @@ export const sidebarData: {
       title: "Auditoria",
       url: "/auditoria",
       icon: Shield,
+      tourKey: "auditoria",
       access: {
         permissions: [PERMISOS.AUDITORIA.VER],
       },
@@ -223,6 +237,7 @@ export const sidebarData: {
       title: "Sucursales",
       url: "/sucursales",
       icon: MapPin,
+      tourKey: "sucursales",
       access: {
         permissions: [PERMISOS.SUCURSALES.VER],
         roles: ["administrador"],
@@ -232,14 +247,24 @@ export const sidebarData: {
       title: "Secciones Landing",
       url: "/secciones-landing",
       icon: Eye,
+      tourKey: "secciones-landing",
       access: {
         roles: ["administrador"],
+      },
+    },
+    {
+      title: "Onboarding",
+      url: "/configuracion/onboarding",
+      icon: Sparkles,
+      access: {
+        permissions: [PERMISOS.ONBOARDING.CONFIGURAR],
       },
     },
     {
       title: "Soporte",
       url: "/soporte",
       icon: LifeBuoy,
+      tourKey: "soporte",
     },
   ],
 }

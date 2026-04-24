@@ -103,7 +103,7 @@ export function NavMain({ groups, usuario }: { groups: NavGroup[]; usuario: Usua
 
                 if (!hasSub) {
                   return (
-                    <SidebarMenuItem key={item.title}>
+                    <SidebarMenuItem key={item.title} data-tour={item.tourKey}>
                       <SidebarMenuButton asChild tooltip={item.title} isActive={itemActive}>
                         <Link href={item.url}>
                           <item.icon className="h-4 w-4" />
@@ -121,7 +121,7 @@ export function NavMain({ groups, usuario }: { groups: NavGroup[]; usuario: Usua
                     defaultOpen={defaultOpen}
                     className="group/collapsible"
                   >
-                    <SidebarMenuItem>
+                    <SidebarMenuItem data-tour={item.tourKey}>
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton tooltip={item.title} isActive={defaultOpen}>
                           <item.icon className="h-4 w-4" />

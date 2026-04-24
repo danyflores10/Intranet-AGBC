@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { OnboardingTriggerButton } from "@/components/onboarding-trigger-button"
 
 interface Props {
   perfil: {
@@ -333,7 +334,7 @@ export function PerfilModule({ perfil }: Props) {
           </Card>
 
           {/* ── Seguridad: cambio de contraseña ── */}
-          <Card className="border-border/40 overflow-hidden">
+          <Card className="border-border/40 overflow-hidden" data-tour="perfil-seguridad">
             <CardHeader className="border-b border-border/30 bg-muted/20">
               <CardTitle className="flex items-center gap-2.5">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#C41E3A]/20 to-[#FF8800]/10">
@@ -462,6 +463,23 @@ export function PerfilModule({ perfil }: Props) {
 
           {/* ── Info lateral ── */}
           <div className="space-y-6">
+            {/* Tarjeta de ayuda / tour guiado */}
+            <Card className="border-border/40 overflow-hidden">
+              <CardHeader className="border-b border-border/30 bg-muted/20">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <SparklesIcon className="h-4 w-4 text-[#FFB300]" />
+                  Guía del sistema
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4 space-y-3">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  ¿Necesitas un recorrido por las secciones de la intranet?
+                  Reinicia el tour guiado cuando quieras.
+                </p>
+                <OnboardingTriggerButton />
+              </CardContent>
+            </Card>
+
             {/* Tarjeta de rol */}
             <Card className="border-border/40 overflow-hidden">
               <CardHeader className="border-b border-border/30 bg-muted/20">
