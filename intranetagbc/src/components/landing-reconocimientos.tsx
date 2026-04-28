@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import {
   TrophyIcon,
@@ -71,7 +71,7 @@ export function LandingReconocimientos({ data }: Props) {
         {/* Hero rotante estilo Noticias */}
         <HeroReconocimientosCarousel slides={slides} />
 
-        {/* Bloque 1 — Empleados del mes */}
+        {/* Bloque 1 — Empleados del mes (carrusel horizontal) */}
         {data.empleadosMes.length > 0 && (
           <BloqueSeccion
             icono={TrophyIcon}
@@ -80,15 +80,15 @@ export function LandingReconocimientos({ data }: Props) {
             titulo="Empleado del Mes"
             subtitulo="Reconocimiento individual a la excelencia y compromiso"
           >
-            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {data.empleadosMes.slice(0, 6).map((e) => (
+            <FilaHorizontal>
+              {data.empleadosMes.slice(0, 12).map((e) => (
                 <TarjetaEmpleadoMes key={e.id} empleado={e} />
               ))}
-            </div>
+            </FilaHorizontal>
           </BloqueSeccion>
         )}
 
-        {/* Bloque 2 — Equipos destacados */}
+        {/* Bloque 2 — Equipos destacados (carrusel horizontal) */}
         {data.equipos.length > 0 && (
           <BloqueSeccion
             icono={UsersIcon}
@@ -97,15 +97,15 @@ export function LandingReconocimientos({ data }: Props) {
             titulo="Equipos destacados"
             subtitulo="Reconocimiento al trabajo colaborativo y sus resultados"
           >
-            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {data.equipos.slice(0, 6).map((e) => (
+            <FilaHorizontal>
+              {data.equipos.slice(0, 12).map((e) => (
                 <TarjetaEquipo key={e.id} equipo={e} />
               ))}
-            </div>
+            </FilaHorizontal>
           </BloqueSeccion>
         )}
 
-        {/* Bloque 3 — Logros de sucursales */}
+        {/* Bloque 3 — Logros de sucursales (carrusel horizontal) */}
         {data.logros.length > 0 && (
           <BloqueSeccion
             icono={MapPinIcon}
@@ -114,11 +114,11 @@ export function LandingReconocimientos({ data }: Props) {
             titulo="Logros de sucursales"
             subtitulo="Resultados y metas alcanzadas en nuestras oficinas a nivel nacional"
           >
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {data.logros.slice(0, 8).map((l) => (
+            <FilaHorizontal>
+              {data.logros.slice(0, 12).map((l) => (
                 <TarjetaLogro key={l.id} logro={l} />
               ))}
-            </div>
+            </FilaHorizontal>
           </BloqueSeccion>
         )}
       </div>
@@ -174,34 +174,51 @@ function HeroReconocimientosCarousel({ slides }: { slides: HeroSlide[] }) {
         {/* Banda tricolor superior */}
         <div className="h-1.5 bg-gradient-to-r from-[#C41E3A] via-[#FFB300] to-[#2E7D32]" />
 
-        {/* Imagen principal con cross-fade entre slides */}
-        <div className="relative aspect-[21/9] w-full overflow-hidden bg-gradient-to-br from-[#FFB300]/10 via-[#FF8800]/5 to-[#C41E3A]/10">
+        {/* Imagen principal con cross-fade entre slides — fondo difuminado + foto completa */}
+        <div className="relative aspect-[16/9] md:aspect-[21/9] w-full overflow-hidden bg-black">
           {slides.map((s, idx) => {
             const img = obtenerImagen(s)
             const titulo = obtenerTitulo(s)
-            return img ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+            if (!img) return null
+            const visible = idx === current
+            return (
+              <div
                 key={s.id}
-                src={img}
-                alt={titulo}
-                className={`absolute inset-0 h-full w-full object-cover transition-all duration-1000 ease-in-out ${
-                  idx === current ? "opacity-100 scale-100" : "opacity-0 scale-110"
+                className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+                  visible ? "opacity-100 scale-100" : "opacity-0 scale-105"
                 }`}
-              />
-            ) : null
+              >
+                {/* Fondo borroso de la misma imagen para llenar el espacio sin recortar */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={img}
+                  alt=""
+                  aria-hidden
+                  className="absolute inset-0 h-full w-full object-cover scale-110 blur-2xl opacity-60"
+                />
+                {/* Foto completa centrada, sin recortes y manteniendo nitidez */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={img}
+                  alt={titulo}
+                  loading={visible ? "eager" : "lazy"}
+                  decoding="async"
+                  className="relative z-[1] h-full w-full object-contain object-center [image-rendering:auto] [image-rendering:high-quality]"
+                />
+              </div>
+            )
           })}
 
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
+          {/* Overlay sólo en la parte inferior para el texto, sin tapar la foto */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-2/3 bg-gradient-to-t from-black/90 via-black/55 to-transparent" />
 
           {/* Contenido del slide */}
-          <div className="absolute inset-x-0 bottom-0 p-6 md:p-10">
+          <div className="absolute inset-x-0 bottom-0 z-[3] p-6 md:p-10">
             <SlideContenido slide={slide} />
           </div>
 
           {/* Sello tipo "empleado del mes" si corresponde */}
-          <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+          <div className="absolute top-4 right-4 z-[3] sm:top-6 sm:right-6">
             <SelloTipo slide={slide} />
           </div>
 
@@ -211,7 +228,7 @@ function HeroReconocimientosCarousel({ slides }: { slides: HeroSlide[] }) {
               <button
                 type="button"
                 onClick={prev}
-                className="absolute left-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/30 text-white transition-all hover:bg-black/50 backdrop-blur-sm"
+                className="absolute left-4 top-1/2 z-[3] -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white transition-all hover:bg-black/60 backdrop-blur-sm"
                 aria-label="Anterior"
               >
                 <ChevronLeftIcon className="h-5 w-5" />
@@ -219,7 +236,7 @@ function HeroReconocimientosCarousel({ slides }: { slides: HeroSlide[] }) {
               <button
                 type="button"
                 onClick={next}
-                className="absolute right-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/30 text-white transition-all hover:bg-black/50 backdrop-blur-sm"
+                className="absolute right-4 top-1/2 z-[3] -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white transition-all hover:bg-black/60 backdrop-blur-sm"
                 aria-label="Siguiente"
               >
                 <ChevronRightIcon className="h-5 w-5" />
@@ -402,6 +419,73 @@ function SlideContenido({ slide }: { slide: HeroSlide }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Carrusel horizontal con flechas y scroll-snap (todas las tarjetas en fila)
+// ─────────────────────────────────────────────────────────────────────────────
+function FilaHorizontal({ children }: { children: React.ReactNode }) {
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const [canPrev, setCanPrev] = useState(false)
+  const [canNext, setCanNext] = useState(false)
+
+  const updateButtons = useCallback(() => {
+    const el = scrollerRef.current
+    if (!el) return
+    setCanPrev(el.scrollLeft > 8)
+    setCanNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 8)
+  }, [])
+
+  useEffect(() => {
+    updateButtons()
+    const el = scrollerRef.current
+    if (!el) return
+    el.addEventListener("scroll", updateButtons, { passive: true })
+    window.addEventListener("resize", updateButtons)
+    return () => {
+      el.removeEventListener("scroll", updateButtons)
+      window.removeEventListener("resize", updateButtons)
+    }
+  }, [updateButtons])
+
+  function scrollBy(direction: 1 | -1) {
+    const el = scrollerRef.current
+    if (!el) return
+    const amount = Math.max(320, Math.round(el.clientWidth * 0.85))
+    el.scrollBy({ left: amount * direction, behavior: "smooth" })
+  }
+
+  return (
+    <div className="relative -mx-4 sm:-mx-6">
+      <div
+        ref={scrollerRef}
+        className="flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-4 sm:px-6 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {children}
+      </div>
+
+      {canPrev && (
+        <button
+          type="button"
+          onClick={() => scrollBy(-1)}
+          aria-label="Anterior"
+          className="hidden md:flex absolute left-1 top-1/2 -translate-y-1/2 h-11 w-11 items-center justify-center rounded-full bg-card/90 border border-border/60 text-foreground shadow-lg backdrop-blur-sm transition-all hover:bg-card hover:scale-105 active:scale-95"
+        >
+          <ChevronLeftIcon className="h-5 w-5" />
+        </button>
+      )}
+      {canNext && (
+        <button
+          type="button"
+          onClick={() => scrollBy(1)}
+          aria-label="Siguiente"
+          className="hidden md:flex absolute right-1 top-1/2 -translate-y-1/2 h-11 w-11 items-center justify-center rounded-full bg-card/90 border border-border/60 text-foreground shadow-lg backdrop-blur-sm transition-all hover:bg-card hover:scale-105 active:scale-95"
+        >
+          <ChevronRightIcon className="h-5 w-5" />
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Wrapper reusable para cada bloque debajo del hero
 // ─────────────────────────────────────────────────────────────────────────────
 function BloqueSeccion({
@@ -444,7 +528,7 @@ function TarjetaEmpleadoMes({ empleado: e }: { empleado: LandingEmpleadoMes }) {
   return (
     <Link
       href={`/reconocimientos/${e.id}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
+      className="group flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl snap-start shrink-0 w-[280px] sm:w-[320px] lg:w-[360px]"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         {e.imagen ? (
@@ -485,7 +569,7 @@ function TarjetaEquipo({ equipo: e }: { equipo: LandingEquipo }) {
   return (
     <Link
       href={`/reconocimientos/${e.id}`}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
+      className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl snap-start shrink-0 w-[300px] sm:w-[340px] lg:w-[380px]"
     >
       {e.destacado && (
         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#FFB300] to-[#FF8800] z-10" />
@@ -542,7 +626,7 @@ function TarjetaLogro({ logro: l }: { logro: LandingLogro }) {
   return (
     <Link
       href={`/reconocimientos/${l.id}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+      className="group flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl snap-start shrink-0 w-[260px] sm:w-[300px] lg:w-[320px]"
     >
       <div className={`h-1.5 bg-gradient-to-r ${gradient}`} />
       <div className="relative aspect-[16/10] overflow-hidden bg-muted">
