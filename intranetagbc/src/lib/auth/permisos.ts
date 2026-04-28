@@ -70,6 +70,10 @@ export const PERMISOS_CORRESPONDENCIA = {
   CREAR: "crear correspondencia",
   EDITAR: "editar correspondencia",
   ELIMINAR: "eliminar correspondencia",
+  DERIVAR: "derivar correspondencia",
+  ARCHIVAR: "archivar correspondencia",
+  REPORTAR: "reportes correspondencia",
+  CONFIGURAR: "configurar correspondencia",
 } as const
 
 export const PERMISOS_REPORTES = {
