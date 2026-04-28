@@ -712,12 +712,33 @@ export async function obtenerDetalleReconocimiento(id: string): Promise<Reconoci
   if (!base) return null
 
   if (base.tipo === "empleado_mes") {
-    const [empleado] = await db
+    let [empleado] = await db
       .select()
       .from(reconocimientoEmpleadoMes)
       .where(eq(reconocimientoEmpleadoMes.reconocimientoId, id))
       .limit(1)
-    if (!empleado) return null
+    // Auto-recuperación: si falta la fila tipo-específica, la creamos con
+    // valores por defecto a partir de la base para no devolver null.
+    if (!empleado) {
+      const ahora = new Date()
+      await db
+        .insert(reconocimientoEmpleadoMes)
+        .values({
+          reconocimientoId: id,
+          nombreCompleto: base.titulo || "Sin asignar",
+          cargo: "Sin definir",
+          area: "Sin definir",
+          mes: ahora.getMonth() + 1,
+          gestion: ahora.getFullYear(),
+        })
+        .onConflictDoNothing()
+      ;[empleado] = await db
+        .select()
+        .from(reconocimientoEmpleadoMes)
+        .where(eq(reconocimientoEmpleadoMes.reconocimientoId, id))
+        .limit(1)
+      if (!empleado) return null
+    }
     let sucursalNombre: string | null = null
     if (empleado.sucursalId) {
       const [s] = await db
@@ -731,12 +752,29 @@ export async function obtenerDetalleReconocimiento(id: string): Promise<Reconoci
   }
 
   if (base.tipo === "equipo_destacado") {
-    const [equipo] = await db
+    let [equipo] = await db
       .select()
       .from(reconocimientoEquipo)
       .where(eq(reconocimientoEquipo.reconocimientoId, id))
       .limit(1)
-    if (!equipo) return null
+    if (!equipo) {
+      await db
+        .insert(reconocimientoEquipo)
+        .values({
+          reconocimientoId: id,
+          nombreEquipo: base.titulo || "Equipo",
+          area: "Sin definir",
+          responsableNombre: "Sin definir",
+          resultadosAlcanzados: base.descripcionCompleta || base.descripcionCorta || "—",
+        })
+        .onConflictDoNothing()
+      ;[equipo] = await db
+        .select()
+        .from(reconocimientoEquipo)
+        .where(eq(reconocimientoEquipo.reconocimientoId, id))
+        .limit(1)
+      if (!equipo) return null
+    }
     const integrantes = await db
       .select()
       .from(reconocimientoEquipoIntegrantes)
@@ -745,12 +783,38 @@ export async function obtenerDetalleReconocimiento(id: string): Promise<Reconoci
     return { base, tipo: "equipo_destacado", equipo, integrantes }
   }
 
-  const [logro] = await db
+  let [logro] = await db
     .select()
     .from(reconocimientoLogroSucursal)
     .where(eq(reconocimientoLogroSucursal.reconocimientoId, id))
     .limit(1)
-  if (!logro) return null
+  if (!logro) {
+    // Necesitamos una sucursal real (FK NOT NULL). Tomamos la primera activa.
+    const [primeraSucursal] = await db
+      .select()
+      .from(sucursales)
+      .where(eq(sucursales.activo, true))
+      .limit(1)
+    if (primeraSucursal) {
+      await db
+        .insert(reconocimientoLogroSucursal)
+        .values({
+          reconocimientoId: id,
+          sucursalId: primeraSucursal.id,
+          ciudad: primeraSucursal.capital || "Sin definir",
+          departamento: primeraSucursal.departamento || "Sin definir",
+          responsableNombre: "Sin definir",
+          tipoLogro: "operativo",
+        })
+        .onConflictDoNothing()
+      ;[logro] = await db
+        .select()
+        .from(reconocimientoLogroSucursal)
+        .where(eq(reconocimientoLogroSucursal.reconocimientoId, id))
+        .limit(1)
+    }
+    if (!logro) return null
+  }
   let sucursalNombre: string | null = null
   const [s] = await db
     .select({ nombre: sucursales.nombre })

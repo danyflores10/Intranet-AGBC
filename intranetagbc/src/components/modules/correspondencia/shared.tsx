@@ -118,9 +118,16 @@ export function nombreCompleto(u?: {
   firstName?: string | null
   lastNamePaternal?: string | null
   lastNameMaternal?: string | null
+  name?: string | null
+  email?: string
+  institutionalEmail?: string
 }): string {
   if (!u) return "—"
-  return `${u.firstName ?? ""} ${u.lastNamePaternal ?? ""}${u.lastNameMaternal ? ` ${u.lastNameMaternal}` : ""}`.trim()
+  // Priorizar el nombre completo construido, si no, usar name o email
+  const constructed = `${u.firstName ?? ""} ${u.lastNamePaternal ?? ""}${u.lastNameMaternal ? ` ${u.lastNameMaternal}` : ""}`.trim()
+  if (constructed.length > 0) return constructed
+  if (u.name) return u.name
+  return u.email || u.institutionalEmail || "Sin nombre"
 }
 
 export const ICONO_TIPO: Record<string, LucideIcon> = {

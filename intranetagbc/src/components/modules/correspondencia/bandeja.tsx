@@ -14,6 +14,7 @@ import {
   InboxIcon,
   MailIcon,
   MailOpenIcon,
+  PencilIcon,
   PlusIcon,
   RefreshCwIcon,
   SendIcon,
@@ -68,11 +69,12 @@ interface Props {
   }
   conteos: Record<FiltroBandeja, number>
   puedeCrear: boolean
+  puedeEditar: boolean
   puedeEliminar: boolean
   puedeDerivar: boolean
 }
 
-export function CorrespondenciaBandeja({ bandeja, conteos, puedeCrear, puedeEliminar, puedeDerivar }: Props) {
+export function CorrespondenciaBandeja({ bandeja, conteos, puedeCrear, puedeEditar, puedeEliminar, puedeDerivar }: Props) {
   const router = useRouter()
   const [filtro, setFiltro] = useState<FiltroBandeja>("todas")
   const [isPending, startTransition] = useTransition()
@@ -216,6 +218,15 @@ export function CorrespondenciaBandeja({ bandeja, conteos, puedeCrear, puedeElim
             >
               <EyeIcon className="h-4 w-4" />
             </button>
+            {puedeEditar && row.estado !== "archivado" && row.estado !== "finalizado" && (
+              <Link
+                href={`/correspondencia/editar?id=${row.id}`}
+                title="Editar"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:border-blue-500/30 dark:hover:bg-blue-500/10 dark:hover:text-blue-400 active:scale-95"
+              >
+                <PencilIcon className="h-4 w-4" />
+              </Link>
+            )}
             {!row.leido && (
               <button
                 type="button"

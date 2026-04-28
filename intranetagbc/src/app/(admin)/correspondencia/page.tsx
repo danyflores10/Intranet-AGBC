@@ -32,6 +32,9 @@ export default async function CorrespondenciaPage() {
   const puedeCrear = puedeAccederUsuario(usuario, {
     permissions: [PERMISOS.CORRESPONDENCIA.CREAR],
   })
+  const puedeEditar = puedeAccederUsuario(usuario, {
+    permissions: [PERMISOS.CORRESPONDENCIA.EDITAR],
+  })
   const puedeEliminar = puedeAccederUsuario(usuario, {
     permissions: [PERMISOS.CORRESPONDENCIA.ELIMINAR],
   })
@@ -44,6 +47,7 @@ export default async function CorrespondenciaPage() {
       bandeja={bandeja as unknown as Parameters<typeof CorrespondenciaBandeja>[0]["bandeja"]}
       conteos={conteos}
       puedeCrear={puedeCrear}
+      puedeEditar={puedeEditar}
       puedeEliminar={puedeEliminar}
       puedeDerivar={puedeDerivar}
     />
