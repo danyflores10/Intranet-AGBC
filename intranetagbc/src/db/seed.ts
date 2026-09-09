@@ -182,111 +182,14 @@ async function seedUsuariosClave() {
 }
 
 /* ══════════════════════════════════════════════════════════════
- * 3. SEED DE ACCESOS RÁPIDOS A SISTEMAS (12 SISTEMAS)
+ * 3. SEED DE ACCESOS RÁPIDOS A SISTEMAS (18 SISTEMAS)
  * ══════════════════════════════════════════════════════════════ */
 async function seedAccesosDirectos() {
-  console.log("-> 3. Sembrando 12 accesos rápidos a sistemas...")
+  console.log("-> 3. Sembrando 18 accesos rápidos a sistemas categorizados...")
 
-  const accesos = [
-    {
-      clave: "default_sigec",
-      titulo: "SIGEC - Correspondencia",
-      descripcion: "Sistema oficial de gestión, seguimiento y archivo de correspondencia institucional.",
-      url: "https://sigec.correos.gob.bo/login?url=",
-      activo: true,
-      imagen: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-      clave: "default_tracking",
-      titulo: "TrackingBO - Rastreo Postal",
-      descripcion: "Consulta y trazabilidad en tiempo real de encomiendas y paquetes postales.",
-      url: "https://trackingbo.correos.gob.bo",
-      activo: true,
-      imagen: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-      clave: "default_portal",
-      titulo: "Portal Web Correos Bolivia",
-      descripcion: "Sitio web institucional con servicios, sucursales y tarifas oficiales.",
-      url: "https://correos.gob.bo/",
-      activo: true,
-      imagen: "https://images.unsplash.com/photo-1578575437130-527eed3abbec?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-      clave: "default_filatelia",
-      titulo: "Filatelia Bolivia",
-      descripcion: "Catálogo virtual de sellos postales, historia epistolar y colecciones de sellos.",
-      url: "https://correos.gob.bo/filatelia",
-      activo: true,
-      imagen: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-      clave: "default_sigep",
-      titulo: "SIGEP - Gestión Pública",
-      descripcion: "Sistema Integrado de Gestión Pública del Ministerio de Economía y Finanzas.",
-      url: "https://sigep.gob.bo",
-      activo: true,
-      imagen: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-      clave: "default_aduana",
-      titulo: "Aduana Nacional de Bolivia",
-      descripcion: "Trámites aduaneros, desaduanización e importación de paquetería postal.",
-      url: "https://www.aduana.gob.bo",
-      activo: true,
-      imagen: "https://images.unsplash.com/photo-1578575437130-527eed3abbec?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-      clave: "default_sin",
-      titulo: "Servicio de Impuestos (SIAT)",
-      descripcion: "Facturación electrónica y trámites tributarios institucionales del Estado.",
-      url: "https://siat.impuestos.gob.bo",
-      activo: true,
-      imagen: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-      clave: "default_gestora",
-      titulo: "Gestora Pública de la Seguridad Social",
-      descripcion: "Aportes previsionales, pensiones y registro del fondo solidario de empleados.",
-      url: "https://www.gestora.bo",
-      activo: true,
-      imagen: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-      clave: "default_gaceta",
-      titulo: "Gaceta Oficial del Estado",
-      descripcion: "Publicación oficial de leyes, decretos supremos y resoluciones de Bolivia.",
-      url: "http://gacetaoficialdebolivia.gob.bo",
-      activo: true,
-      imagen: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-      clave: "default_contraloria",
-      titulo: "Contraloría General del Estado",
-      descripcion: "Declaración jurada de bienes y rentas y control fiscal gubernamental.",
-      url: "https://www.contraloria.gob.bo",
-      activo: true,
-      imagen: "https://images.unsplash.com/photo-1450133064473-71024230f91b?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-      clave: "default_senasir",
-      titulo: "SENASIR - Sistema de Reparto",
-      descripcion: "Servicio Nacional del Sistema de Reparto de la seguridad social.",
-      url: "https://www.senasir.gob.bo",
-      activo: true,
-      imagen: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-      clave: "default_mopp",
-      titulo: "Ministerio de Obras Públicas",
-      descripcion: "Órgano matriz para proyectos de infraestructura, comunicaciones y vivienda.",
-      url: "https://www.oopp.gob.bo",
-      activo: true,
-      imagen: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800&auto=format&fit=crop",
-    },
-  ]
+  const { ACCESOS_DIRECTOS_DEFAULT } = await import("../actions/comunicaciones")
 
-  for (const item of accesos) {
+  for (const item of ACCESOS_DIRECTOS_DEFAULT) {
     const valorJson = JSON.stringify({
       titulo: item.titulo,
       descripcion: item.descripcion,

@@ -26,24 +26,60 @@ interface AccesoDirecto {
   descripcion: string | null
   url: string
   imagen: string | null
+  categoria?: string | null
 }
+
+const CATEGORIAS_DEFAULT = [
+  "Todos",
+  "Links Internos",
+  "Links Públicos",
+  "Links Operativos",
+  "Consultas y Soporte",
+]
 
 export function LandingAccesos({ accesos }: { accesos: AccesoDirecto[] }) {
   const [busqueda, setBusqueda] = useState("")
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("Todos")
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedAcceso, setSelectedAcceso] = useState<AccesoDirecto | null>(null)
   const pageSize = 12
 
+  // Extraer categorías dinámicas si hubiera adicionales
+  const categoriasDisponibles = useMemo(() => {
+    const cats = new Set<string>(CATEGORIAS_DEFAULT)
+    accesos.forEach((a) => {
+      if (a.categoria && a.categoria.trim()) {
+        cats.add(a.categoria.trim())
+      }
+    })
+    return Array.from(cats)
+  }, [accesos])
+
   const accesosFiltrados = useMemo(() => {
+    let list = accesos
+
+    // Filtro por categoría
+    if (categoriaSeleccionada !== "Todos") {
+      list = list.filter((a) => {
+        const cat = (a.categoria || "Links Operativos").trim().toLowerCase()
+        return cat === categoriaSeleccionada.toLowerCase()
+      })
+    }
+
+    // Filtro por búsqueda
     const q = busqueda.toLowerCase().trim()
-    if (!q) return accesos
-    return accesos.filter(
-      (a) =>
-        a.titulo.toLowerCase().includes(q) ||
-        (a.descripcion && a.descripcion.toLowerCase().includes(q)) ||
-        a.url.toLowerCase().includes(q)
-    )
-  }, [accesos, busqueda])
+    if (q) {
+      list = list.filter(
+        (a) =>
+          a.titulo.toLowerCase().includes(q) ||
+          (a.descripcion && a.descripcion.toLowerCase().includes(q)) ||
+          a.url.toLowerCase().includes(q) ||
+          (a.categoria && a.categoria.toLowerCase().includes(q))
+      )
+    }
+
+    return list
+  }, [accesos, categoriaSeleccionada, busqueda])
 
   const totalPages = Math.max(1, Math.ceil(accesosFiltrados.length / pageSize))
   const paginatedList = accesosFiltrados.slice(
@@ -66,12 +102,55 @@ export function LandingAccesos({ accesos }: { accesos: AccesoDirecto[] }) {
             Acceso Rápido a Sistemas
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground font-medium">
-            Plataformas, portales y herramientas institucionales disponibles para el personal
+            Plataformas, portales y herramientas institucionales disponibles para el personal de Correos de Bolivia
           </p>
         </div>
 
+        {/* Categorías (Pills / Tabs) */}
+        <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+          {categoriasDisponibles.map((cat) => {
+            const count =
+              cat === "Todos"
+                ? accesos.length
+                : accesos.filter(
+                    (a) =>
+                      (a.categoria || "Links Operativos").trim().toLowerCase() ===
+                      cat.toLowerCase()
+                  ).length
+
+            const isSelected = categoriaSeleccionada.toLowerCase() === cat.toLowerCase()
+
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => {
+                  setCategoriaSeleccionada(cat)
+                  setCurrentPage(1)
+                }}
+                className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-black transition-all cursor-pointer shadow-xs ${
+                  isSelected
+                    ? "bg-[#0E5296] text-white shadow-md shadow-[#0E5296]/25 scale-105"
+                    : "bg-card text-muted-foreground hover:bg-muted/80 hover:text-foreground border border-border/60"
+                }`}
+              >
+                <span>{cat}</span>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-black ${
+                    isSelected
+                      ? "bg-[#FFCC00] text-[#002F6C]"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
         {/* Barra de Filtros y Búsqueda */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
           <div className="relative w-full sm:w-80">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
@@ -87,14 +166,14 @@ export function LandingAccesos({ accesos }: { accesos: AccesoDirecto[] }) {
           </div>
 
           <span className="text-xs font-bold text-[#0E5296] dark:text-[#FFCC00] bg-[#0E5296]/10 px-3.5 py-1.5 rounded-full border border-[#0E5296]/20 shadow-xs">
-            {accesosFiltrados.length} Sistemas disponibles
+            {accesosFiltrados.length} Sistemas disponibles en {categoriaSeleccionada}
           </span>
         </div>
 
         {/* Grid 3 Filas x 4 Columnas (12 Sistemas por página) */}
         {paginatedList.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground font-medium bg-card rounded-3xl border border-border/60">
-            No se encontraron sistemas que coincidan con la búsqueda.
+            No se encontraron sistemas en esta categoría que coincidan con la búsqueda.
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -115,7 +194,7 @@ export function LandingAccesos({ accesos }: { accesos: AccesoDirecto[] }) {
                       />
                       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                       <div className="absolute bottom-2.5 left-2.5 rounded-lg bg-[#002F6C]/90 backdrop-blur-xs px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-[#FFCC00] border border-[#FFCC00]/30 shadow-xs">
-                        Sistema
+                        {acceso.categoria || "Sistema"}
                       </div>
                     </div>
                   ) : (
@@ -124,7 +203,7 @@ export function LandingAccesos({ accesos }: { accesos: AccesoDirecto[] }) {
                         <Lock className="h-6 w-6" />
                       </div>
                       <div className="absolute bottom-2.5 left-2.5 rounded-lg bg-[#002F6C]/90 backdrop-blur-xs px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-[#FFCC00] border border-[#FFCC00]/30 shadow-xs">
-                        Sistema
+                        {acceso.categoria || "Sistema"}
                       </div>
                     </div>
                   )}
@@ -140,19 +219,30 @@ export function LandingAccesos({ accesos }: { accesos: AccesoDirecto[] }) {
                   </div>
                 </div>
 
-                {/* Footer con Ojito */}
+                {/* Footer con Ojito y Enlace Rápido */}
                 <div className="p-4 pt-2 flex items-center justify-between border-t border-border/40">
                   <span className="text-[10px] font-bold text-muted-foreground/80 uppercase tracking-wider">
-                    Información
+                    {acceso.categoria || "Sistema"}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedAcceso(acceso)}
-                    className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-[#0E5296] dark:text-[#FFCC00] hover:bg-[#0E5296] hover:text-white dark:hover:bg-[#FFCC00] dark:hover:text-[#002F6C] transition-all cursor-pointer shadow-xs border border-blue-200 dark:border-blue-900"
-                    title="Ver detalles del sistema"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedAcceso(acceso)}
+                      className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-[#0E5296] dark:text-[#FFCC00] hover:bg-[#0E5296] hover:text-white dark:hover:bg-[#FFCC00] dark:hover:text-[#002F6C] transition-all cursor-pointer shadow-xs border border-blue-200 dark:border-blue-900"
+                      title="Ver detalles del sistema"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    <a
+                      href={acceso.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-[#0E5296] hover:text-white transition-all cursor-pointer shadow-xs border border-border/60"
+                      title="Abrir enlace en nueva pestaña"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  </div>
                 </div>
               </div>
             ))}
@@ -221,7 +311,7 @@ export function LandingAccesos({ accesos }: { accesos: AccesoDirecto[] }) {
                 <div className="flex items-center gap-2 mb-1">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FFCC00]/15 text-[#002F6C] dark:text-[#FFCC00] border border-[#FFCC00]/30 px-3 py-0.5 text-xs font-black uppercase">
                     <Sparkles className="h-3.5 w-3.5 text-[#0E5296] dark:text-[#FFCC00]" />
-                    Sistema Institucional
+                    {selectedAcceso.categoria || "Sistema Institucional"}
                   </span>
                 </div>
                 <DialogTitle className="text-xl font-black text-[#002F6C] dark:text-foreground leading-snug">
