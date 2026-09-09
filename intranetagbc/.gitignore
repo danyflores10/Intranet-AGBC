@@ -6,8 +6,8 @@ drizzle/
 
 # testing
 coverage/
-public/image
-public/documentos
+# public/documentos (archivos temporales subidos)
+
 # next.js
 .next/
 out/

@@ -264,9 +264,27 @@ export async function obtenerComunicadosPublicados() {
 }
 
 export async function obtenerBannersActivos() {
-  return db.select().from(banners)
+  let items = await db.select().from(banners)
     .where(eq(banners.activo, true))
     .orderBy(banners.orden)
+
+  if (items.length === 0) {
+    const { sincronizarNoticiasAuto } = await import("@/lib/services/news-sync-service")
+    await sincronizarNoticiasAuto()
+    items = await db.select().from(banners)
+      .where(eq(banners.activo, true))
+      .orderBy(banners.orden)
+  }
+
+  return items
+}
+
+export async function sincronizarNoticiasManual() {
+  const { sincronizarNoticiasAuto } = await import("@/lib/services/news-sync-service")
+  const result = await sincronizarNoticiasAuto()
+  revalidatePath("/")
+  revalidatePath("/comunicaciones")
+  return result
 }
 
 // ── Accesos directos (modelo key/value en configuracion) ──

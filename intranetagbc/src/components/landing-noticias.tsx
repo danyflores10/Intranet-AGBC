@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo, useCallback, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import {
   CalendarDaysIcon,
   NewspaperIcon,
@@ -11,6 +12,9 @@ import {
   ChevronRightIcon,
   XIcon,
   SparklesIcon,
+  RefreshCwIcon,
+  PlayIcon,
+  CheckCircle2Icon,
 } from "lucide-react"
 import {
   Dialog,
@@ -20,6 +24,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import toast from "react-hot-toast"
 
 interface NoticiaLanding {
   id: string
@@ -246,11 +251,31 @@ function HeroCarousel({ noticias, onOpenDetail }: { noticias: NoticiaLanding[]; 
 
 /* ── Componente Principal de Noticias ── */
 export function LandingNoticias({ noticias }: { noticias: NoticiaLanding[] }) {
+  const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
   const [categoriaActiva, setCategoriaActiva] = useState<"todas" | "institucional" | "facebook">("todas")
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedNoticia, setSelectedNoticia] = useState<NoticiaLanding | null>(null)
+  const [sincronizando, setSincronizando] = useState(false)
   const pageSize = 12 // 3 filas de 4 noticias
+
+  const ejecutarSincronizacion = async () => {
+    setSincronizando(true)
+    try {
+      const res = await fetch("/api/noticias/sync", { method: "POST" })
+      const data = await res.json()
+      if (data.success) {
+        toast.success("Noticias sincronizadas correctamente")
+        router.refresh()
+      } else {
+        toast.error("No se pudo completar la sincronización")
+      }
+    } catch {
+      toast.error("Error al sincronizar noticias")
+    } finally {
+      setSincronizando(false)
+    }
+  }
 
   // Identificador de categoría por noticia
   const getCategoriaTipo = (n: NoticiaLanding): "facebook" | "institucional" => {
@@ -337,9 +362,21 @@ export function LandingNoticias({ noticias }: { noticias: NoticiaLanding[] }) {
               />
             </div>
 
-            <span className="text-xs font-bold text-[#0E5296] bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-200 shadow-2xs">
-              {filteredNoticias.length} Noticias encontradas
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-[#0E5296] bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-200 shadow-2xs">
+                {filteredNoticias.length} Noticias
+              </span>
+              <button
+                type="button"
+                onClick={ejecutarSincronizacion}
+                disabled={sincronizando}
+                className="inline-flex items-center gap-1.5 rounded-full bg-white hover:bg-slate-50 text-[#002F6C] px-3.5 py-1.5 text-xs font-bold border border-slate-200 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+                title="Sincronizar noticias cada 24 horas"
+              >
+                <RefreshCwIcon className={`h-3.5 w-3.5 text-[#0E5296] ${sincronizando ? "animate-spin" : ""}`} />
+                <span>{sincronizando ? "Sincronizando..." : "Sincronizar (24h)"}</span>
+              </button>
+            </div>
           </div>
 
           {/* ── Píldoras de Categorías (Todas / Institucionales / Redes Sociales Facebook) ── */}
@@ -418,9 +455,8 @@ export function LandingNoticias({ noticias }: { noticias: NoticiaLanding[] }) {
                     <h3 className="text-sm font-black text-[#002F6C]">
                       Agencia Boliviana de Correos - Correos de Bolivia
                     </h3>
-                    <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700 border border-emerald-200">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      En Vivo
+                    <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-black text-[#1877F2] border border-blue-200">
+                      Página Oficial
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -679,36 +715,51 @@ export function LandingNoticias({ noticias }: { noticias: NoticiaLanding[] }) {
                 </DialogHeader>
 
                 {/* Reproductor de Video / Reel si es Reel de Facebook */}
-                {esReelModal && selectedNoticia.enlace ? (
-                  <div className="space-y-2">
-                    <div className="relative w-full rounded-2xl overflow-hidden border-2 border-[#1877F2]/30 shadow-lg bg-black aspect-[9/16] sm:aspect-video max-h-[380px] flex items-center justify-center">
-                      <iframe
-                        src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(selectedNoticia.enlace)}&show_text=false&t=0`}
-                        width="100%"
-                        height="100%"
-                        style={{ border: "none", overflow: "hidden" }}
-                        scrolling="no"
-                        frameBorder="0"
-                        allowFullScreen={true}
-                        allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                        className="w-full h-full"
-                        title="Facebook Reel Video Player"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-slate-500 bg-blue-50/60 px-3.5 py-2 rounded-xl border border-blue-100">
-                      <span className="flex items-center gap-1.5 font-bold text-[#1877F2]">
-                        <span>▶</span>
-                        <span>Video / Reel Oficial de Facebook</span>
-                      </span>
+                {esReelModal ? (
+                  <div className="space-y-3">
+                    <div className="relative w-full rounded-2xl overflow-hidden border-2 border-[#1877F2]/40 shadow-xl bg-slate-950 aspect-[16/10] max-h-[380px] flex items-center justify-center group">
+                      {/* Imagen de fondo / miniatura oficial del reel */}
+                      {getImagenes(selectedNoticia).length > 0 && (
+                        <img
+                          src={getImagenes(selectedNoticia)[0]}
+                          alt={selectedNoticia.titulo}
+                          className="absolute inset-0 h-full w-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-500"
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/30" />
+
+                      {/* Botón central Play interactivo */}
                       <a
-                        href={selectedNoticia.enlace}
+                        href={selectedNoticia.enlace || "https://www.facebook.com/profile.php?id=61592782342439"}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[#1877F2] hover:underline font-bold flex items-center gap-1"
+                        className="relative z-10 flex flex-col items-center gap-2 text-white hover:scale-105 transition-all p-4 rounded-2xl bg-black/40 backdrop-blur-md border border-white/20 shadow-2xl"
                       >
-                        <span>Abrir Reel en Facebook</span>
-                        <ExternalLinkIcon className="h-3 w-3" />
+                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#1877F2] text-white shadow-lg shadow-[#1877F2]/50 animate-pulse">
+                          <PlayIcon className="h-7 w-7 fill-current ml-1" />
+                        </div>
+                        <span className="text-xs font-black tracking-wide uppercase">
+                          Reproducir Reel Oficial
+                        </span>
                       </a>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs bg-blue-50/80 p-3 rounded-xl border border-blue-200">
+                      <span className="flex items-center gap-1.5 font-bold text-[#1877F2]">
+                        <CheckCircle2Icon className="h-4 w-4 text-[#1877F2]" />
+                        <span>Publicación multimedia verificada de Correos de Bolivia</span>
+                      </span>
+                      {selectedNoticia.enlace && (
+                        <a
+                          href={selectedNoticia.enlace}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs font-black text-white bg-[#1877F2] hover:bg-[#0c63d4] px-3 py-1.5 rounded-lg shadow-xs transition-colors"
+                        >
+                          <span>Ver en Facebook</span>
+                          <ExternalLinkIcon className="h-3 w-3" />
+                        </a>
+                      )}
                     </div>
                   </div>
                 ) : getImagenes(selectedNoticia).length > 0 ? (
