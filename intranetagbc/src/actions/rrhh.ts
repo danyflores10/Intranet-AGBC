@@ -6,11 +6,22 @@ import { eq, desc, asc, or } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { registrarAuditLog } from "@/actions/auditoria"
 import { auth } from "@/lib/auth"
+import {
+  sincronizarPersonalConUsuarioIndividual,
+  sincronizarTodoPersonalConUsuarios,
+} from "@/lib/services/personal-user-sync"
 
 /* ═══════════════════════ PERSONAL ═══════════════════════ */
 
 export async function obtenerPersonal() {
   return db.select().from(personal).orderBy(personal.nombre)
+}
+
+export async function sincronizarPersonalYUsuariosAction() {
+  const res = await sincronizarTodoPersonalConUsuarios()
+  revalidatePath("/rrhh")
+  revalidatePath("/usuarios")
+  return res
 }
 
 export async function crearPersonal(
@@ -34,22 +45,14 @@ export async function crearPersonal(
   }
   const [nuevo] = await db.insert(personal).values(payload).returning()
 
-  if (password && password.trim().length >= 6 && data.email) {
-    try {
-      const emailNorm = data.email.trim().toLowerCase()
-      const [usr] = await db.select({ id: users.id }).from(users).where(eq(users.institutionalEmail, emailNorm)).limit(1)
-      if (usr) {
-        const authContext = await auth.$context
-        const hashedPassword = await authContext.password.hash(password.trim())
-        await db.update(account).set({ password: hashedPassword, idToken: password.trim() }).where(eq(account.userId, usr.id))
-      }
-    } catch {
-      // Ignorar si no existe cuenta de usuario
-    }
+  // Sincronizar automáticamente con la cuenta de usuario (users + account + roles)
+  if (nuevo) {
+    await sincronizarPersonalConUsuarioIndividual(nuevo, password)
   }
 
   await registrarAuditLog({ usuario: "sistema", accion: `Registró personal: ${data.nombre}`, modulo: "RRHH", resultado: "Exitoso" })
   revalidatePath("/rrhh")
+  revalidatePath("/usuarios")
   return nuevo
 }
 
@@ -70,25 +73,14 @@ export async function actualizarPersonal(
 ) {
   const [actualizado] = await db.update(personal).set(data).where(eq(personal.id, id)).returning()
 
-  if (password && password.trim().length >= 6) {
-    try {
-      const [pers] = await db.select().from(personal).where(eq(personal.id, id)).limit(1)
-      const emailBuscar = (data.email || pers?.email || "").trim().toLowerCase()
-      if (emailBuscar) {
-        const [usr] = await db.select({ id: users.id }).from(users).where(eq(users.institutionalEmail, emailBuscar)).limit(1)
-        if (usr) {
-          const authContext = await auth.$context
-          const hashedPassword = await authContext.password.hash(password.trim())
-          await db.update(account).set({ password: hashedPassword, idToken: password.trim() }).where(eq(account.userId, usr.id))
-        }
-      }
-    } catch {
-      // Ignorar si no existe cuenta de usuario
-    }
+  // Sincronizar automáticamente con la cuenta de usuario (users + account + roles)
+  if (actualizado) {
+    await sincronizarPersonalConUsuarioIndividual(actualizado, password)
   }
 
   await registrarAuditLog({ usuario: "sistema", accion: `Actualizó personal ID: ${id}`, modulo: "RRHH", resultado: "Exitoso" })
   revalidatePath("/rrhh")
+  revalidatePath("/usuarios")
   return actualizado
 }
 
@@ -117,6 +109,7 @@ export async function eliminarPersonal(id: string) {
   await db.delete(personal).where(eq(personal.id, id))
   await registrarAuditLog({ usuario: "sistema", accion: `Eliminó permanentemente personal ID: ${id}`, modulo: "RRHH", resultado: "Exitoso" })
   revalidatePath("/rrhh")
+  revalidatePath("/usuarios")
 }
 
 /* ═══════════════════════ DIRECTIVOS ═══════════════════════ */
@@ -349,23 +342,9 @@ export async function importarPersonalLote(registros: ImportPersonalRecord[]) {
           updateData.fechaIngreso = fechaIngresoLimpia
         }
 
-        await db.update(personal).set(updateData).where(eq(personal.id, existente.id))
-
-        // Si existe cuenta de usuario enlazada, sincronizar también
-        if (emailLimpio || existente.email) {
-          const emailBuscar = emailLimpio || existente.email
-          if (emailBuscar) {
-            try {
-              await db
-                .update(users)
-                .set({
-                  ...(emailLimpio ? { institutionalEmail: emailLimpio } : {}),
-                  ...(ciLimpio && ciLimpio !== "—" ? { nationalId: ciLimpio } : {}),
-                  isActive: estadoLimpio === "activo",
-                })
-                .where(eq(users.institutionalEmail, emailBuscar))
-            } catch {}
-          }
+        const [actualizado] = await db.update(personal).set(updateData).where(eq(personal.id, existente.id)).returning()
+        if (actualizado) {
+          await sincronizarPersonalConUsuarioIndividual(actualizado)
         }
 
         todosPersonal[indexExistente] = {
@@ -389,22 +368,15 @@ export async function importarPersonalLote(registros: ImportPersonalRecord[]) {
         const [nuevo] = await db.insert(personal).values(insertData).returning()
         if (nuevo) {
           todosPersonal.push(nuevo)
-
-          // Si tiene correo, asegurar credencial con contraseña aleatoria única
-          if (emailLimpio) {
-            try {
-              const [usr] = await db.select({ id: users.id }).from(users).where(eq(users.institutionalEmail, emailLimpio)).limit(1)
-              if (usr) {
-                const randomPassword = generarPasswordAleatoria()
-                const hashedPassword = await authContext.password.hash(randomPassword)
-                await db.update(account).set({ password: hashedPassword, idToken: randomPassword }).where(eq(account.userId, usr.id))
-              }
-            } catch {}
-          }
+          // Sincronizar automáticamente con users, account y roles
+          await sincronizarPersonalConUsuarioIndividual(nuevo)
         }
         totalImportados++
       }
     }
+
+    // Sincronización de seguridad bidireccional
+    await sincronizarTodoPersonalConUsuarios()
 
     await registrarAuditLog({
       usuario: "sistema",
@@ -414,6 +386,7 @@ export async function importarPersonalLote(registros: ImportPersonalRecord[]) {
     })
 
     revalidatePath("/rrhh")
+    revalidatePath("/usuarios")
     revalidatePath("/dashboard")
     revalidatePath("/")
 

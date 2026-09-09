@@ -9,6 +9,7 @@ import { auth } from "@/lib/auth"
 import { PERMISOS } from "@/lib/auth/permisos"
 import { obtenerSesionConAccesoActual, type SesionConAcceso } from "@/lib/auth/session-access"
 import { registrarAuditLog } from "@/actions/auditoria"
+import { sincronizarTodoPersonalConUsuarios } from "@/lib/services/personal-user-sync"
 
 type ResultadoAccion<TData> = {
   success: boolean
@@ -722,6 +723,12 @@ export async function crearUsuario(data: CreateUserInput): Promise<ResultadoAcci
       detalles: `Email: ${institutionalEmail}, CI: ${nationalId}`,
     })
 
+    // Sincronizar automáticamente con la tabla personal
+    await sincronizarTodoPersonalConUsuarios()
+
+    revalidatePath("/usuarios")
+    revalidatePath("/rrhh")
+
     return respuestaExitosa("Usuario creado correctamente.", createdUser)
   } catch (error) {
     const uniqueErrorMessage = obtenerMensajeErrorUnicidad(error)
@@ -988,6 +995,12 @@ export async function editarUsuario(
       resultado: "Exitoso",
       detalles: `ID: ${userIdLimpio}`,
     })
+
+    // Sincronizar automáticamente con la tabla personal
+    await sincronizarTodoPersonalConUsuarios()
+
+    revalidatePath("/usuarios")
+    revalidatePath("/rrhh")
 
     return respuestaExitosa("Usuario actualizado correctamente.", usuarioActualizado)
   } catch (error) {
@@ -1298,6 +1311,9 @@ export async function importarUsuariosLote(
       modulo: "Usuarios",
       resultado: "Exitoso",
     })
+
+    // Sincronizar automáticamente con la tabla personal
+    await sincronizarTodoPersonalConUsuarios()
 
     revalidatePath("/usuarios")
     revalidatePath("/rrhh")

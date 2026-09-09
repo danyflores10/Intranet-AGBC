@@ -268,7 +268,7 @@ export async function obtenerBannersActivos() {
     .where(eq(banners.activo, true))
     .orderBy(banners.orden)
 
-  if (items.length === 0) {
+  if (items.length < 24) {
     const { sincronizarNoticiasAuto } = await import("@/lib/services/news-sync-service")
     await sincronizarNoticiasAuto()
     items = await db.select().from(banners)

@@ -259,7 +259,7 @@ export const NOTICIAS_FACEBOOK_BASE = [
   }
 ];
 
-export async function sincronizarNoticiasAuto(): Promise<SyncResult> {
+export async function sincronizarNoticiasAuto(force: boolean = false): Promise<SyncResult> {
   const ahora = new Date();
 
   try {
@@ -269,8 +269,8 @@ export async function sincronizarNoticiasAuto(): Promise<SyncResult> {
       .from(configuracion)
       .where(eq(configuracion.clave, "ultima_sincronizacion_noticias"));
 
-    let debeSincronizar = true;
-    if (configRow?.valor) {
+    let debeSincronizar = force;
+    if (!force && configRow?.valor) {
       try {
         const lastSync = new Date(configRow.valor);
         const diffHoras = (ahora.getTime() - lastSync.getTime()) / (1000 * 60 * 60);
