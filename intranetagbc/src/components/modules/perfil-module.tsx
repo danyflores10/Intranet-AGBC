@@ -17,32 +17,34 @@ import {
   EyeOffIcon,
   CheckIcon,
   XIcon,
+  ArrowLeftIcon,
 } from "lucide-react"
+import Link from "next/link"
 import toast from "react-hot-toast"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { OnboardingTriggerButton } from "@/components/onboarding-trigger-button"
 
 interface Props {
   perfil: {
     id: string
     firstName: string
     lastNamePaternal: string
-    lastNameMaternal: string
+    lastNameMaternal: string | null
     email: string
     institutionalEmail: string
     nationalId: string
-    dateOfBirth: string
-    image: string | null
+    dateOfBirth: string | Date
+    avatarUrl: string | null
     roles: string[]
+    createdAt: string | Date
   }
 }
 
-function getInitials(first: string, last: string) {
-  return ((first[0] ?? "") + (last[0] ?? "")).toUpperCase() || "US"
+function getInitials(first: string, paternal: string): string {
+  return `${first[0] ?? ""}${paternal[0] ?? ""}`.toUpperCase()
 }
 
 /* ── Paleta estilo Google Meet ── */
@@ -52,11 +54,7 @@ const AVATAR_COLORS = [
   { bg: "#0B8043", text: "#FFFFFF" },
   { bg: "#F29900", text: "#FFFFFF" },
   { bg: "#8430CE", text: "#FFFFFF" },
-  { bg: "#D93025", text: "#FFFFFF" },
-  { bg: "#1E8E3E", text: "#FFFFFF" },
   { bg: "#185ABC", text: "#FFFFFF" },
-  { bg: "#E37400", text: "#FFFFFF" },
-  { bg: "#A142F4", text: "#FFFFFF" },
   { bg: "#00897B", text: "#FFFFFF" },
   { bg: "#C2185B", text: "#FFFFFF" },
 ]
@@ -74,15 +72,15 @@ function getAvatarColor(name: string) {
   return AVATAR_COLORS[hashName(name) % AVATAR_COLORS.length]
 }
 
-function formatDate(d: string) {
-  try {
-    return new Date(d + "T12:00:00").toLocaleDateString("es-BO", { day: "2-digit", month: "long", year: "numeric" })
-  } catch { return d }
+function formatDate(d: string | Date): string {
+  const date = new Date(d)
+  if (isNaN(date.getTime())) return "—"
+  return date.toLocaleDateString("es-BO", { year: "numeric", month: "long", day: "numeric" })
 }
 
 export function PerfilModule({ perfil }: Props) {
   const [isPending, startTransition] = useTransition()
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(perfil.image)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(perfil.avatarUrl)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -110,65 +108,53 @@ export function PerfilModule({ perfil }: Props) {
   async function handleChangePassword(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!canSubmitPwd) return
+
     setIsChangingPwd(true)
     try {
-      const res = await fetch("/api/perfil/change-password", {
+      const res = await fetch("/api/perfil/password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+        body: JSON.stringify({ currentPassword, newPassword }),
       })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        throw new Error(data?.error || "Error al cambiar la contraseña")
-      }
-      toast.success("Contraseña actualizada correctamente")
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Error al cambiar contraseña")
+
+      toast.success("Contraseña actualizada con éxito")
       setCurrentPassword("")
       setNewPassword("")
       setConfirmPassword("")
       setShowCurrent(false)
       setShowNew(false)
       setShowConfirm(false)
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error al cambiar la contraseña")
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Error al cambiar contraseña")
     } finally {
       setIsChangingPwd(false)
     }
   }
 
-  function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("La imagen no puede superar 5MB")
-      return
-    }
-    if (!file.type.startsWith("image/")) {
-      toast.error("Solo se permiten archivos de imagen")
-      return
-    }
-    const previewUrl = URL.createObjectURL(file)
-    setAvatarPreview(previewUrl)
+
     setUploadingAvatar(true)
-    startTransition(async () => {
-      try {
-        const fd = new FormData()
-        fd.append("avatar", file)
-        const res = await fetch("/api/upload/avatar", { method: "POST", body: fd })
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}))
-          throw new Error(data.error || "Error al subir")
-        }
-        const data = await res.json()
-        setAvatarPreview(data.url)
-        toast.success("Foto de perfil actualizada")
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Error al actualizar la foto")
-        setAvatarPreview(perfil.image)
-      } finally {
-        setUploadingAvatar(false)
-        URL.revokeObjectURL(previewUrl)
-      }
-    })
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("userId", perfil.id)
+
+      const res = await fetch("/api/perfil/avatar", { method: "POST", body: formData })
+      if (!res.ok) throw new Error("Error al subir avatar")
+
+      const data = await res.json()
+      setAvatarPreview(data.url)
+      toast.success("Foto de perfil actualizada")
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Error al actualizar avatar")
+    } finally {
+      setUploadingAvatar(false)
+    }
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -176,7 +162,7 @@ export function PerfilModule({ perfil }: Props) {
     const fd = new FormData(e.currentTarget)
     startTransition(async () => {
       try {
-        const res = await fetch("/api/auth/update-user", {
+        const res = await fetch("/api/perfil", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -191,43 +177,45 @@ export function PerfilModule({ perfil }: Props) {
 
   const fullName = `${perfil.firstName} ${perfil.lastNamePaternal} ${perfil.lastNameMaternal}`.trim()
   const initials = getInitials(perfil.firstName, perfil.lastNamePaternal)
-  const avatarColor = getAvatarColor(fullName)
 
   return (
     <>
       <div className="flex flex-1 flex-col gap-6 p-6">
+        {/* ── Barra superior con botón volver al dashboard ── */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-[#002F6C]">Mi Perfil</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Gestiona tu información personal, correo institucional y seguridad
+            </p>
+          </div>
+          <Link
+            href="/dashboard"
+            className="group inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-[#0E5296]/30 px-4 py-2 text-xs font-bold text-[#002F6C] shadow-xs hover:shadow-md transition-all cursor-pointer"
+          >
+            <ArrowLeftIcon className="h-3.5 w-3.5 text-[#0E5296] transition-transform group-hover:-translate-x-0.5" />
+            <span>Volver al Dashboard</span>
+          </Link>
+        </div>
+
         {/* ── Header hero con avatar ── */}
         <Card className="border-border/40 overflow-hidden relative">
-          {/* Banner con gradiente animado */}
           <div className="relative h-36 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-[#FFB300] via-[#FF8800] to-[#F5061D]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#002F6C] via-[#0E5296] to-[#003B73]" />
             <div className="absolute inset-0 bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2260%22%20height%3D%2260%22%3E%3Cpath%20d%3D%22M0%2030h60M30%200v60%22%20stroke%3D%22rgba(255%2C255%2C255%2C0.08)%22%20stroke-width%3D%221%22%2F%3E%3C%2Fsvg%3E')] opacity-50" />
-            <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-            <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
-            {/* Efecto de partículas */}
-            <div className="absolute top-4 right-10 h-2 w-2 rounded-full bg-white/30 animate-pulse" />
-            <div className="absolute top-8 right-24 h-1.5 w-1.5 rounded-full bg-white/20 animate-pulse" style={{ animationDelay: "1s" }} />
-            <div className="absolute bottom-6 right-40 h-1 w-1 rounded-full bg-white/40 animate-pulse" style={{ animationDelay: "2s" }} />
-            {/* Badge verificado */}
-            <div className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold text-white">
-              <CheckCircle2Icon className="h-3.5 w-3.5" />
-              Cuenta verificada
-            </div>
+            <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-[#FFB800]/20 blur-2xl" />
+            <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-[#0077EE]/20 blur-2xl" />
           </div>
 
           <CardContent className="relative px-6 pb-6">
             <div className="flex flex-col sm:flex-row sm:items-end gap-5 -mt-16">
-              {/* Avatar */}
               <div className="relative group">
-                <div className={`h-28 w-28 rounded-2xl border-4 border-background bg-muted flex items-center justify-center overflow-hidden shadow-xl ring-4 ring-background transition-transform group-hover:scale-105 ${uploadingAvatar ? "animate-pulse" : ""}`}>
+                <div className={`h-28 w-28 rounded-2xl border-4 border-white bg-[#FFCC00] flex items-center justify-center overflow-hidden shadow-xl ring-4 ring-slate-100 transition-transform group-hover:scale-105 ${uploadingAvatar ? "animate-pulse" : ""}`}>
                   {avatarPreview ? (
                     <img src={avatarPreview} alt={fullName} className="h-full w-full object-cover" />
                   ) : (
-                    <div
-                      className="flex h-full w-full items-center justify-center"
-                      style={{ backgroundColor: avatarColor.bg }}
-                    >
-                      <span className="text-3xl font-black" style={{ color: avatarColor.text }}>{initials}</span>
+                    <div className="flex h-full w-full items-center justify-center bg-[#FFCC00]">
+                      <span className="text-3xl font-black text-[#002F6C]">{initials}</span>
                     </div>
                   )}
                 </div>
@@ -235,26 +223,25 @@ export function PerfilModule({ perfil }: Props) {
                   type="button"
                   onClick={() => fileRef.current?.click()}
                   disabled={uploadingAvatar}
-                  className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-lg shadow-[#FFB300]/30 transition-all hover:scale-110 hover:shadow-xl active:scale-95 disabled:opacity-50"
+                  className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-xl bg-[#0E5296] hover:bg-[#002F6C] text-[#FFCC00] border-2 border-white shadow-lg transition-all hover:scale-110 active:scale-95 disabled:opacity-50 cursor-pointer"
                 >
                   <CameraIcon className="h-4 w-4" />
                 </button>
-                <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/bmp,image/svg+xml" className="hidden" onChange={handleAvatarChange} />
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
               </div>
 
-              {/* Info */}
               <div className="sm:mb-2 flex-1">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-2xl font-black tracking-tight">{fullName}</h2>
+                  <h2 className="text-2xl font-black tracking-tight text-black">{fullName}</h2>
                 </div>
-                <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                  <MailIcon className="h-3.5 w-3.5" />
+                <p className="text-sm text-black font-bold flex items-center gap-1.5 mt-0.5">
+                  <MailIcon className="h-3.5 w-3.5 text-[#0E5296]" />
                   {perfil.institutionalEmail}
                 </p>
                 <div className="mt-2.5 flex flex-wrap gap-2">
                   {perfil.roles.length > 0 ? perfil.roles.map(r => (
-                    <span key={r} className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#FFB300]/15 to-[#FF8800]/10 px-3 py-1 text-xs font-bold text-[#FFB300] ring-1 ring-[#FFB300]/20">
-                      <ShieldCheckIcon className="h-3 w-3" />
+                    <span key={r} className="inline-flex items-center gap-1.5 rounded-lg bg-[#0E5296]/10 px-3 py-1 text-xs font-bold text-[#0E5296] ring-1 ring-[#0E5296]/20">
+                      <ShieldCheckIcon className="h-3 w-3 text-[#FFCC00]" />
                       {r}
                     </span>
                   )) : <span className="text-xs text-muted-foreground">Sin rol asignado</span>}
@@ -265,14 +252,13 @@ export function PerfilModule({ perfil }: Props) {
         </Card>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* ── Columna izquierda: datos + seguridad ── */}
           <div className="lg:col-span-2 space-y-6">
           {/* ── Datos personales ── */}
           <Card className="border-border/40 overflow-hidden">
             <CardHeader className="border-b border-border/30 bg-muted/20">
-              <CardTitle className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#FFB300]/20 to-[#FF8800]/10">
-                  <UserIcon className="h-4 w-4 text-[#FFB300]" />
+              <CardTitle className="flex items-center gap-2.5 text-[#002F6C]">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0E5296]/10 text-[#0E5296]">
+                  <UserIcon className="h-4 w-4" />
                 </div>
                 Datos personales
               </CardTitle>
@@ -290,7 +276,7 @@ export function PerfilModule({ perfil }: Props) {
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Apellido Materno</Label>
-                    <Input name="lastNameMaternal" defaultValue={perfil.lastNameMaternal} className="font-medium" />
+                    <Input name="lastNameMaternal" defaultValue={perfil.lastNameMaternal ?? ""} className="font-medium" />
                   </div>
                 </div>
 
@@ -321,12 +307,12 @@ export function PerfilModule({ perfil }: Props) {
                     <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                       <CalendarIcon className="h-3 w-3" /> Fecha de nacimiento
                     </Label>
-                    <Input value={perfil.dateOfBirth} disabled className="opacity-50 bg-muted/30" />
+                    <Input value={perfil.dateOfBirth ? (typeof perfil.dateOfBirth === "string" ? perfil.dateOfBirth : perfil.dateOfBirth.toISOString().split("T")[0]) : ""} disabled className="opacity-50 bg-muted/30" />
                   </div>
                 </div>
                 <div className="flex justify-end pt-2">
-                  <Button type="submit" disabled={isPending} className="bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] font-bold shadow-lg shadow-[#FFB300]/20 hover:shadow-xl hover:shadow-[#FFB300]/30 transition-all">
-                    <SaveIcon className="mr-2 h-4 w-4" />{isPending ? "Guardando..." : "Guardar cambios"}
+                  <Button type="submit" disabled={isPending} className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold shadow-lg shadow-[#0E5296]/20 transition-all cursor-pointer">
+                    <SaveIcon className="mr-2 h-4 w-4 text-[#FFB800]" />{isPending ? "Guardando..." : "Guardar cambios"}
                   </Button>
                 </div>
               </form>
@@ -463,88 +449,71 @@ export function PerfilModule({ perfil }: Props) {
 
           {/* ── Info lateral ── */}
           <div className="space-y-6">
-            {/* Tarjeta de ayuda / tour guiado */}
-            <Card className="border-border/40 overflow-hidden">
-              <CardHeader className="border-b border-border/30 bg-muted/20">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <SparklesIcon className="h-4 w-4 text-[#FFB300]" />
-                  Guía del sistema
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4 space-y-3">
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  ¿Necesitas un recorrido por las secciones de la intranet?
-                  Reinicia el tour guiado cuando quieras.
-                </p>
-                <OnboardingTriggerButton />
-              </CardContent>
-            </Card>
-
             {/* Tarjeta de rol */}
-            <Card className="border-border/40 overflow-hidden">
-              <CardHeader className="border-b border-border/30 bg-muted/20">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <ShieldCheckIcon className="h-4 w-4 text-[#FFB300]" />
+            <Card className="border border-slate-200 bg-white shadow-sm overflow-hidden">
+              <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+                <CardTitle className="text-sm font-bold flex items-center gap-2 text-[#002F6C]">
+                  <ShieldCheckIcon className="h-4 w-4 text-[#0E5296]" />
                   Nivel de acceso
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-4 space-y-4">
                 {perfil.roles.length > 0 ? perfil.roles.map(r => (
-                  <div key={r} className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-[#FFB300]/10 to-transparent p-3 ring-1 ring-[#FFB300]/15">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-md">
+                  <div key={r} className="flex items-center gap-3 rounded-xl bg-[#0E5296]/5 p-3 ring-1 ring-[#0E5296]/20">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0E5296] text-[#FFCC00] shadow-sm">
                       <ShieldCheckIcon className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold capitalize">{r}</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {r.toLowerCase() === "administrador" ? "Acceso total al sistema" : "Acceso a comunicados"}
+                      <p className="text-sm font-bold text-[#002F6C] capitalize">{r}</p>
+                      <p className="text-[11px] text-slate-500 font-medium">
+                        {r.toLowerCase() === "administrador" ? "Acceso total al sistema" : "Acceso institucional"}
                       </p>
                     </div>
                   </div>
-                )) : <p className="text-sm text-muted-foreground">Sin roles asignados</p>}
+                )) : <p className="text-sm text-slate-500">Sin roles asignados</p>}
               </CardContent>
             </Card>
 
             {/* Tarjeta info rápida */}
-            <Card className="border-border/40 overflow-hidden">
-              <CardHeader className="border-b border-border/30 bg-muted/20">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <SparklesIcon className="h-4 w-4 text-[#FFB300]" />
+            <Card className="border border-slate-200 bg-white shadow-sm overflow-hidden">
+              <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+                <CardTitle className="text-sm font-bold flex items-center gap-2 text-[#002F6C]">
+                  <SparklesIcon className="h-4 w-4 text-[#0E5296]" />
                   Información rápida
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-4 space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
-                    <MailIcon className="h-4 w-4 text-blue-500" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0E5296]/10 text-[#0E5296]">
+                    <MailIcon className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Email</p>
-                    <p className="text-xs font-medium truncate">{perfil.email}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Email</p>
+                    <p className="text-xs font-semibold text-[#002F6C] truncate">{perfil.email}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10">
-                    <FingerprintIcon className="h-4 w-4 text-green-500" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0E5296]/10 text-[#0E5296]">
+                    <FingerprintIcon className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">CI</p>
-                    <p className="text-xs font-mono font-medium">{perfil.nationalId}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">CI</p>
+                    <p className="text-xs font-mono font-semibold text-[#002F6C]">{perfil.nationalId}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/10">
-                    <CalendarIcon className="h-4 w-4 text-purple-500" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0E5296]/10 text-[#0E5296]">
+                    <CalendarIcon className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Nacimiento</p>
-                    <p className="text-xs font-medium">{formatDate(perfil.dateOfBirth)}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Nacimiento</p>
+                    <p className="text-xs font-semibold text-[#002F6C]">{formatDate(perfil.dateOfBirth)}</p>
                   </div>
                 </div>
-                <div className="h-px bg-border/40" />
+                <div className="h-px bg-slate-200" />
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">ID de usuario</p>
-                  <p className="mt-1 text-[10px] font-mono text-muted-foreground/70 break-all select-all">{perfil.id}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">ID de usuario</p>
+                  <p className="mt-1 text-[10px] font-mono text-slate-500 break-all select-all">{perfil.id}</p>
                 </div>
               </CardContent>
             </Card>

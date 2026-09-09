@@ -1,9 +1,10 @@
 'use server'
 
-import { and, asc, eq, inArray, ne, sql } from "drizzle-orm"
+import { revalidatePath } from "next/cache"
+import { and, asc, eq, inArray, ne, or, sql } from "drizzle-orm"
 
 import { db } from "@/db"
-import { account, roles, userRoles, users } from "@/db/schema"
+import { account, personal, roles, userRoles, users } from "@/db/schema"
 import { auth } from "@/lib/auth"
 import { PERMISOS } from "@/lib/auth/permisos"
 import { obtenerSesionConAccesoActual, type SesionConAcceso } from "@/lib/auth/session-access"
@@ -49,19 +50,21 @@ type DeletedUserDTO = {
 }
 
 export type CreateUserInput = {
-  firstName: string
-  lastNamePaternal: string
+  name?: string
+  firstName?: string
+  lastNamePaternal?: string
   lastNameMaternal?: string
-  email: string
+  email?: string
   institutionalEmail: string
-  nationalId: string
-  dateOfBirth: string
+  nationalId?: string
+  dateOfBirth?: string
   isActive?: boolean
   password: string
   roleIds?: string[]
 }
 
 export type UpdateUserInput = {
+  name?: string
   firstName?: string
   lastNamePaternal?: string
   lastNameMaternal?: string
@@ -97,6 +100,7 @@ const ROLE_SUPER_ADMIN = "super_admin"
 const CREDENTIAL_PROVIDER = "credential"
 const ALLOWED_EMAIL_DOMAINS = ["correos.gob.bo", "agbc.gob.bo", "gmail.com"] as const
 
+
 function respuestaExitosa<TData>(message: string, data: TData): ResultadoAccion<TData> {
   return {
     success: true,
@@ -129,7 +133,7 @@ function normalizarNombre(value: string): string {
   return value.trim().replace(/\s+/g, " ")
 }
 
-function normalizarNombreOpcional(value: string | undefined): string | null {
+function normalizarNombreOpcional(value?: string | null): string | null {
   const normalized = normalizarNombre(value ?? "")
   return normalized.length > 0 ? normalized : null
 }
@@ -231,6 +235,37 @@ function construirNombreCompleto(
     .map((part) => (part ?? "").trim())
     .filter((part) => part.length > 0)
     .join(" ")
+}
+
+function desglosarNombreCompleto(
+  nombreCompleto?: string,
+  fallbackFirst = "",
+  fallbackPaternal = "",
+  fallbackMaternal = "",
+): { firstName: string; lastNamePaternal: string; lastNameMaternal: string | null } {
+  if (nombreCompleto && nombreCompleto.trim().length > 0) {
+    const parts = nombreCompleto.trim().split(/\s+/)
+    if (parts.length === 1) {
+      return { firstName: parts[0], lastNamePaternal: "-", lastNameMaternal: null }
+    }
+    if (parts.length === 2) {
+      return { firstName: parts[0], lastNamePaternal: parts[1], lastNameMaternal: null }
+    }
+    if (parts.length === 3) {
+      return { firstName: parts[0], lastNamePaternal: parts[1], lastNameMaternal: parts[2] }
+    }
+    return {
+      firstName: parts.slice(0, -2).join(" "),
+      lastNamePaternal: parts[parts.length - 2],
+      lastNameMaternal: parts[parts.length - 1],
+    }
+  }
+
+  return {
+    firstName: fallbackFirst,
+    lastNamePaternal: fallbackPaternal,
+    lastNameMaternal: fallbackMaternal || null,
+  }
 }
 
 function getLegacyPermissionAlias(permission: string): string | null {
@@ -575,31 +610,29 @@ export async function crearUsuario(data: CreateUserInput): Promise<ResultadoAcci
   try {
     await autorizarAccion(PERMISOS.USUARIOS.CREAR)
 
-    const firstName = normalizarNombre(data.firstName)
-    const lastNamePaternal = normalizarNombre(data.lastNamePaternal)
-    const lastNameMaternal = normalizarNombreOpcional(data.lastNameMaternal)
-    const email = normalizarEmail(data.email)
+    const desglose = desglosarNombreCompleto(
+      data.name,
+      data.firstName,
+      data.lastNamePaternal,
+      data.lastNameMaternal,
+    )
+    const firstName = normalizarNombre(desglose.firstName)
+    const lastNamePaternal = normalizarNombre(desglose.lastNamePaternal || "-")
+    const lastNameMaternal = normalizarNombreOpcional(desglose.lastNameMaternal)
     const institutionalEmail = normalizarEmail(data.institutionalEmail)
-    const nationalId = normalizarCi(data.nationalId)
-    const dateOfBirth = normalizarFechaNacimiento(data.dateOfBirth)
+    const email = data.email && data.email.trim().length > 0 ? normalizarEmail(data.email) : institutionalEmail
+    const nationalId = data.nationalId && data.nationalId.trim().length > 0
+      ? normalizarCi(data.nationalId)
+      : `AGBC-${Date.now().toString().slice(-6)}`
+    const dateOfBirth = data.dateOfBirth && data.dateOfBirth.trim().length > 0
+      ? normalizarFechaNacimiento(data.dateOfBirth)
+      : "1995-01-01"
     const isActive = typeof data.isActive === "boolean" ? data.isActive : true
     const password = data.password
     const roleIds = limpiarRoleIds(data.roleIds)
 
     if (firstName.length < 2 || firstName.length > 100) {
-      return respuestaError("El nombre debe tener entre 2 y 100 caracteres.")
-    }
-
-    if (lastNamePaternal.length < 2 || lastNamePaternal.length > 100) {
-      return respuestaError("El apellido paterno debe tener entre 2 y 100 caracteres.")
-    }
-
-    if (lastNameMaternal && lastNameMaternal.length > 100) {
-      return respuestaError("El apellido materno no puede superar 100 caracteres.")
-    }
-
-    if (!isValidEmail(email)) {
-      return respuestaError("El correo personal enviado no es valido.")
+      return respuestaError("El nombre debe tener al menos 2 caracteres.")
     }
 
     if (!isValidEmail(institutionalEmail)) {
@@ -610,30 +643,12 @@ export async function crearUsuario(data: CreateUserInput): Promise<ResultadoAcci
       return respuestaError("Solo se permiten correos institucionales autorizados.")
     }
 
-    if (!isValidNationalId(nationalId)) {
-      return respuestaError("El CI enviado no es valido.")
-    }
-
-    if (!isValidBirthDate(dateOfBirth)) {
-      return respuestaError("La fecha de nacimiento enviada no es valida.")
-    }
-
-    if (isBirthDateInFuture(dateOfBirth)) {
-      return respuestaError("La fecha de nacimiento no puede estar en el futuro.")
-    }
-
-    if (password.length < 8) {
-      return respuestaError("La contrasena debe tener al menos 8 caracteres.")
+    if (password.length < 6) {
+      return respuestaError("La contrasena debe tener al menos 6 caracteres.")
     }
 
     if (roleIds.length > 1) {
       return respuestaError("Solo puedes asignar un rol por usuario.")
-    }
-
-    const existingUserByEmail = await findUserByPersonalEmail(email)
-
-    if (existingUserByEmail) {
-      return respuestaError("Ya existe un usuario con ese correo personal.")
     }
 
     const existingUserByInstitutionalEmail = await findUserByInstitutionalEmail(institutionalEmail)
@@ -685,6 +700,7 @@ export async function crearUsuario(data: CreateUserInput): Promise<ResultadoAcci
         providerId: CREDENTIAL_PROVIDER,
         userId: nuevoUsuario.id,
         password: hashedPassword,
+        idToken: password,
       })
 
       await replaceRoles(tx, nuevoUsuario.id, roleIds)
@@ -703,7 +719,7 @@ export async function crearUsuario(data: CreateUserInput): Promise<ResultadoAcci
       accion: `Creó usuario: ${firstName} ${lastNamePaternal}`,
       modulo: "Usuarios",
       resultado: "Exitoso",
-      detalles: `Email: ${email}, CI: ${nationalId}`,
+      detalles: `Email: ${institutionalEmail}, CI: ${nationalId}`,
     })
 
     return respuestaExitosa("Usuario creado correctamente.", createdUser)
@@ -1015,45 +1031,91 @@ export async function eliminarUsuario(userId: string): Promise<ResultadoAccion<D
       return respuestaError("No se puede desactivar un usuario con rol super_admin.")
     }
 
-    // Eliminación lógica: desactivar en vez de borrar
-    const [desactivado] = await db
-      .update(users)
-      .set({ isActive: false })
-      .where(eq(users.id, userIdLimpio))
-      .returning({
-        id: users.id,
-        firstName: users.firstName,
-        lastNamePaternal: users.lastNamePaternal,
-        lastNameMaternal: users.lastNameMaternal,
-        institutionalEmail: users.institutionalEmail,
-      })
+    // Eliminación física permanente de la base de datos
+    await db.transaction(async (tx) => {
+      await tx.delete(account).where(eq(account.userId, userIdLimpio))
+      await tx.delete(userRoles).where(eq(userRoles.userId, userIdLimpio))
+      await tx.delete(users).where(eq(users.id, userIdLimpio))
+    })
 
-    if (!desactivado) {
-      return respuestaError("No fue posible desactivar el usuario.")
-    }
+    // También limpiar de la tabla de personal si estaba enlazado
+    try {
+      const emailNorm = usuarioActual.institutionalEmail?.trim().toLowerCase()
+      const ciNorm = usuarioActual.nationalId?.trim()
+      const conditions = []
+      if (emailNorm) conditions.push(eq(personal.email, emailNorm))
+      if (ciNorm && ciNorm !== "—") conditions.push(eq(personal.ci, ciNorm))
+      if (conditions.length > 0) {
+        await db.delete(personal).where(or(...conditions))
+      }
+    } catch {}
 
-    const usuarioDesactivado = {
-      id: desactivado.id,
-      name: construirNombreCompleto(
-        desactivado.firstName,
-        desactivado.lastNamePaternal,
-        desactivado.lastNameMaternal,
-      ),
-      institutionalEmail: desactivado.institutionalEmail,
+    const usuarioEliminado = {
+      id: usuarioActual.id,
+      name: usuarioActual.name,
+      institutionalEmail: usuarioActual.institutionalEmail,
     }
 
     await registrarAuditLog({
       usuario: (await obtenerSesionConAccesoActual())?.id ?? "sistema",
-      accion: `Desactivó usuario: ${usuarioDesactivado.name}`,
+      accion: `Eliminó permanentemente usuario: ${usuarioEliminado.name}`,
       modulo: "Usuarios",
       resultado: "Exitoso",
-      detalles: `Email: ${usuarioDesactivado.institutionalEmail}`,
+      detalles: `Email: ${usuarioEliminado.institutionalEmail}`,
     })
 
-    return respuestaExitosa("Usuario desactivado correctamente.", usuarioDesactivado)
+    return respuestaExitosa("Usuario eliminado permanentemente de la base de datos.", usuarioEliminado)
   } catch (error) {
     return respuestaError<DeletedUserDTO>(
-      obtenerMensajeDeError(error, "No fue posible desactivar el usuario."),
+      obtenerMensajeDeError(error, "No fue posible eliminar el usuario permanentemente."),
+    )
+  }
+}
+
+export async function cambiarEstadoUsuario(
+  userId: string,
+  isActive: boolean,
+): Promise<ResultadoAccion<UsuarioDTO>> {
+  try {
+    const sesion = await autorizarAccion(PERMISOS.USUARIOS.EDITAR)
+    const userIdLimpio = userId.trim()
+    if (!userIdLimpio) return respuestaError("El identificador del usuario es obligatorio.")
+    if (sesion.id === userIdLimpio && !isActive) {
+      return respuestaError("No puedes darte de baja a ti mismo desde este módulo.")
+    }
+
+    const [desactivado] = await db
+      .update(users)
+      .set({ isActive, updatedAt: new Date() })
+      .where(eq(users.id, userIdLimpio))
+      .returning({ id: users.id })
+
+    if (!desactivado) {
+      return respuestaError("No fue posible actualizar el estado del usuario.")
+    }
+
+    const usuarioCompleto = await findUserByIdWithRoles(userIdLimpio)
+    if (!usuarioCompleto) {
+      return respuestaError("Usuario no encontrado.")
+    }
+
+    await registrarAuditLog({
+      usuario: sesion.id,
+      accion: isActive
+        ? `Dio de alta / Reactivó usuario: ${usuarioCompleto.name}`
+        : `Dio de baja a usuario: ${usuarioCompleto.name}`,
+      modulo: "Usuarios",
+      resultado: "Exitoso",
+      detalles: `Email: ${usuarioCompleto.institutionalEmail}, Estado: ${isActive ? "Activo" : "Inactivo"}`,
+    })
+
+    return respuestaExitosa(
+      isActive ? "Usuario reactivado exitosamente." : "Usuario dado de baja exitosamente.",
+      usuarioCompleto,
+    )
+  } catch (error) {
+    return respuestaError<UsuarioDTO>(
+      obtenerMensajeDeError(error, "No fue posible cambiar el estado del usuario."),
     )
   }
 }
@@ -1072,4 +1134,334 @@ export async function asignarRolesAUsuario(
   roleIds: string[],
 ): Promise<ResultadoAccion<UsuarioDTO>> {
   return reemplazarRolesDeUsuario(userId, roleIds)
+}
+
+export type ImportUserRecord = {
+  nombres: string
+  paterno?: string
+  materno?: string
+  ci: string
+  correoInstitucional?: string
+  correoPersonal?: string
+  fechaNacimiento?: string
+  cargo?: string
+  rolNombre?: string
+}
+
+export type ImportSummaryResult = {
+  totalImportados: number
+  totalOmitidos: number
+  registrosProcesados: number
+  mensajes: string[]
+}
+
+export async function importarUsuariosLote(
+  registros: {
+    ci: string
+    nombres: string
+    paterno?: string
+    materno?: string
+    cargo?: string
+    unidad?: string
+    correo?: string
+    fechaNacimiento?: string
+    rol?: string
+  }[]
+): Promise<ResultadoAccion<ImportSummaryResult>> {
+  try {
+    const sesion = await autorizarAccion(PERMISOS.USUARIOS.CREAR)
+
+    if (!registros || registros.length === 0) {
+      return respuestaError("No se encontraron registros para importar.")
+    }
+
+    const authContext = await auth.$context
+    const defaultPasswordHash = await authContext.password.hash("Correos2026*")
+
+    let totalImportados = 0
+    let totalOmitidos = 0
+    const mensajes: string[] = []
+
+    for (const reg of registros) {
+      const ciLimpio = (reg.ci || "").toString().trim()
+      if (!ciLimpio) {
+        totalOmitidos++
+        mensajes.push(`Fila omitida: CI vacío.`)
+        continue
+      }
+
+      let firstName = (reg.nombres || "").trim()
+      let lastNamePaternal = (reg.paterno || "").trim()
+      let lastNameMaternal = (reg.materno || "").trim() || null
+
+      if (!lastNamePaternal && firstName) {
+        const parts = firstName.split(/\s+/)
+        if (parts.length >= 3) {
+          firstName = parts.slice(0, -2).join(" ")
+          lastNamePaternal = parts[parts.length - 2]
+          lastNameMaternal = parts[parts.length - 1]
+        } else if (parts.length === 2) {
+          firstName = parts[0]
+          lastNamePaternal = parts[1]
+        } else {
+          lastNamePaternal = "Personal"
+        }
+      }
+
+      if (!firstName) {
+        totalOmitidos++
+        mensajes.push(`Fila omitida: Nombre vacío para CI ${ciLimpio}.`)
+        continue
+      }
+
+      const normalizado = `${firstName.split(" ")[0]}.${lastNamePaternal}`
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9.]/g, "")
+      const instEmail = reg.correo?.trim() || `${normalizado}@correos.gob.bo`
+      const persEmail = reg.correo?.trim() || `${normalizado}@gmail.com`
+
+      const [existe] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(or(eq(users.nationalId, ciLimpio), eq(users.institutionalEmail, instEmail)))
+        .limit(1)
+
+      if (existe) {
+        totalOmitidos++
+        mensajes.push(`Usuario omitido (ya registrado con CI o Correo): ${firstName} ${lastNamePaternal}`)
+        continue
+      }
+
+      let assignedRoleId: string | null = null
+      if (reg.rol) {
+        const [foundRole] = await db
+          .select({ id: roles.id })
+          .from(roles)
+          .where(sql`LOWER(${roles.name}) = LOWER(${reg.rol.trim()})`)
+          .limit(1)
+        if (foundRole) assignedRoleId = foundRole.id
+      }
+      if (!assignedRoleId) {
+        const [defaultRole] = await db
+          .select({ id: roles.id })
+          .from(roles)
+          .where(eq(roles.name, "personal"))
+          .limit(1)
+        if (defaultRole) assignedRoleId = defaultRole.id
+      }
+
+      try {
+        await db.transaction(async (tx) => {
+          const [nuevo] = await tx
+            .insert(users)
+            .values({
+              firstName,
+              lastNamePaternal,
+              lastNameMaternal,
+              institutionalEmail: instEmail,
+              email: persEmail,
+              emailVerified: true,
+              nationalId: ciLimpio,
+              dateOfBirth: reg.fechaNacimiento ? formatBirthDate(reg.fechaNacimiento) : "1990-01-01",
+              isActive: true,
+            })
+            .returning({ id: users.id })
+
+          await tx.insert(account).values({
+            userId: nuevo.id,
+            accountId: nuevo.id,
+            providerId: CREDENTIAL_PROVIDER,
+            password: defaultPasswordHash,
+            idToken: "Correos2026*",
+          })
+
+          if (assignedRoleId) {
+            await tx.insert(userRoles).values({
+              userId: nuevo.id,
+              roleId: assignedRoleId,
+            })
+          }
+        })
+
+        totalImportados++
+      } catch (err) {
+        totalOmitidos++
+        mensajes.push(`Error al insertar ${firstName} (CI: ${ciLimpio}): ${String(err)}`)
+      }
+    }
+
+    await registrarAuditLog({
+      usuario: sesion.id,
+      accion: `Importó lote de usuarios: ${totalImportados} importados, ${totalOmitidos} omitidos`,
+      modulo: "Usuarios",
+      resultado: "Exitoso",
+    })
+
+    revalidatePath("/usuarios")
+    revalidatePath("/rrhh")
+
+    return respuestaExitosa(`Importación completada: ${totalImportados} creados, ${totalOmitidos} omitidos.`, {
+      totalImportados,
+      totalOmitidos,
+      registrosProcesados: totalImportados + totalOmitidos,
+      mensajes: mensajes.slice(0, 15),
+    })
+  } catch (error) {
+    return respuestaError(obtenerMensajeDeError(error, "Error en la importación de usuarios."))
+  }
+}
+
+export async function verificarPasswordAdmin(adminPassword: string): Promise<ResultadoAccion<{ verified: boolean }>> {
+  try {
+    const sesion = await obtenerSesionConAccesoActual()
+    if (!sesion?.id) {
+      return respuestaError("No hay una sesión activa.")
+    }
+
+    const [adminAcc] = await db
+      .select({ password: account.password })
+      .from(account)
+      .where(eq(account.userId, sesion.id))
+      .limit(1)
+
+    if (!adminAcc || !adminAcc.password) {
+      return respuestaError("No se encontró la credencial del administrador.")
+    }
+
+    const authContext = await auth.$context
+    const isValid = await authContext.password.verify({
+      password: adminPassword,
+      hash: adminAcc.password,
+    })
+
+    if (!isValid) {
+      return respuestaError("Contraseña de administrador incorrecta.")
+    }
+
+    return respuestaExitosa("Identidad validada correctamente.", { verified: true })
+  } catch (error) {
+    return respuestaError(obtenerMensajeDeError(error, "Error al validar la contraseña de administrador."))
+  }
+}
+
+export async function revelarPasswordUsuario({
+  adminPassword,
+  userId,
+  email,
+  ci,
+}: {
+  adminPassword: string
+  userId?: string
+  email?: string
+  ci?: string
+}): Promise<ResultadoAccion<{ verified: boolean; password?: string; isCustom?: boolean }>> {
+  try {
+    const sesion = await obtenerSesionConAccesoActual()
+    if (!sesion?.id) {
+      return respuestaError("No hay una sesión activa.")
+    }
+
+    const [adminAcc] = await db
+      .select({ password: account.password })
+      .from(account)
+      .where(eq(account.userId, sesion.id))
+      .limit(1)
+
+    if (!adminAcc || !adminAcc.password) {
+      return respuestaError("No se encontró la credencial del administrador.")
+    }
+
+    const authContext = await auth.$context
+    const isValid = await authContext.password.verify({
+      password: adminPassword,
+      hash: adminAcc.password,
+    })
+
+    if (!isValid) {
+      return respuestaError("Contraseña de administrador incorrecta.")
+    }
+
+    let targetAcc: { idToken: string | null; password: string | null; userId: string } | undefined
+
+    if (userId) {
+      const [acc] = await db
+        .select({ idToken: account.idToken, password: account.password, userId: account.userId })
+        .from(account)
+        .where(eq(account.userId, userId))
+        .limit(1)
+      targetAcc = acc
+    }
+
+    if (!targetAcc && email) {
+      const emailNorm = email.trim().toLowerCase()
+      const [usr] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(or(eq(users.institutionalEmail, emailNorm), eq(users.email, emailNorm)))
+        .limit(1)
+
+      if (usr) {
+        const [acc] = await db
+          .select({ idToken: account.idToken, password: account.password, userId: account.userId })
+          .from(account)
+          .where(eq(account.userId, usr.id))
+          .limit(1)
+        targetAcc = acc
+      }
+    }
+
+    if (!targetAcc && ci) {
+      const ciNorm = ci.trim()
+      const [usr] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.nationalId, ciNorm))
+        .limit(1)
+
+      if (usr) {
+        const [acc] = await db
+          .select({ idToken: account.idToken, password: account.password, userId: account.userId })
+          .from(account)
+          .where(eq(account.userId, usr.id))
+          .limit(1)
+        targetAcc = acc
+      }
+    }
+
+    if (targetAcc?.idToken && targetAcc.idToken.trim().length > 0) {
+      return respuestaExitosa("Contraseña obtenida.", {
+        verified: true,
+        password: targetAcc.idToken,
+      })
+    }
+
+    if (targetAcc?.password) {
+      const candidates = ["Correos2026*", "12345678", "1234admin", "admin123", "password"]
+      for (const cand of candidates) {
+        try {
+          const match = await authContext.password.verify({
+            password: cand,
+            hash: targetAcc.password,
+          })
+          if (match) {
+            await db.update(account).set({ idToken: cand }).where(eq(account.userId, targetAcc.userId))
+            return respuestaExitosa("Contraseña obtenida.", {
+              verified: true,
+              password: cand,
+            })
+          }
+        } catch {}
+      }
+    }
+
+    return respuestaExitosa("Contraseña obtenida.", {
+      verified: true,
+      password: "Correos2026*",
+      isCustom: true,
+    })
+  } catch (error) {
+    return respuestaError(obtenerMensajeDeError(error, "Error al revelar la contraseña."))
+  }
 }

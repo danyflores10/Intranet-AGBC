@@ -45,19 +45,17 @@ interface Props {
 }
 
 const TIPO_CONFIG: Record<string, { icon: typeof BellIcon; color: string; bg: string; label: string }> = {
-  calendario: { icon: CalendarIcon, color: "#FF8800", bg: "bg-amber-50 dark:bg-amber-500/10", label: "Calendario" },
-  info: { icon: InfoIcon, color: "#1976D2", bg: "bg-blue-50 dark:bg-blue-500/10", label: "Información" },
-  alerta: { icon: AlertTriangleIcon, color: "#C41E3A", bg: "bg-red-50 dark:bg-red-500/10", label: "Alerta" },
-  correspondencia: { icon: MailIcon, color: "#2E7D32", bg: "bg-green-50 dark:bg-green-500/10", label: "Correspondencia" },
-  soporte: { icon: SparklesIcon, color: "#8430CE", bg: "bg-purple-50 dark:bg-purple-500/10", label: "Soporte" },
+  info: { icon: InfoIcon, color: "#0E5296", bg: "bg-blue-50 dark:bg-blue-500/10", label: "Información" },
+  alerta: { icon: AlertTriangleIcon, color: "#002F6C", bg: "bg-amber-50 dark:bg-amber-500/10", label: "Alerta" },
+  correspondencia: { icon: MailIcon, color: "#0E5296", bg: "bg-sky-50 dark:bg-sky-500/10", label: "Correspondencia" },
 }
 
 function getTipoNotif(tipo: string) {
   return (
     TIPO_CONFIG[tipo] ?? {
       icon: BellIcon,
-      color: "#FFB300",
-      bg: "bg-amber-50 dark:bg-amber-500/10",
+      color: "#0E5296",
+      bg: "bg-[#0E5296]/10",
       label: tipo,
     }
   )
@@ -192,33 +190,33 @@ export function NotificacionesModule({ usuarioId, notificacionesIniciales, noLei
   const totalLeidas = notificaciones.filter((n) => n.leida).length
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6">
+    <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-blue-50/25 to-amber-50/20 min-h-screen">
       {/* ── Hero ── */}
-      <Card className="border-border/40 overflow-hidden relative">
+      <Card className="border-2 border-[#002F6C]/15 overflow-hidden relative rounded-3xl bg-gradient-to-br from-white via-blue-50/20 to-amber-50/20 shadow-sm">
         <div className="relative h-28 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#FFB300] via-[#FF8800] to-[#F5061D]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0E5296] via-[#002F6C] to-[#FFCC00]" />
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2260%22%20height%3D%2260%22%3E%3Cpath%20d%3D%22M0%2030h60M30%200v60%22%20stroke%3D%22rgba(255%2C255%2C255%2C0.08)%22%20stroke-width%3D%221%22%2F%3E%3C%2Fsvg%3E')] opacity-50" />
-          <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+          <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/15 blur-2xl" />
         </div>
         <CardContent className="relative -mt-14 pb-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex items-end gap-4">
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-background bg-gradient-to-br from-[#FFB300] to-[#FF8800] shadow-xl ring-4 ring-background">
-                <BellIcon className="h-9 w-9 text-[#1a1000]" />
+              <div className="flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-white bg-[#FFCC00] text-[#002F6C] shadow-lg ring-4 ring-slate-100">
+                <BellIcon className="h-9 w-9" />
               </div>
               <div className="pb-1">
-                <h1 className="text-2xl font-black tracking-tight">Notificaciones</h1>
-                <p className="text-sm text-muted-foreground">
-                  Todas tus notificaciones en un solo lugar
+                <h1 className="text-2xl font-black tracking-tight text-[#002F6C]">Centro de Notificaciones</h1>
+                <p className="text-xs text-slate-600 font-medium mt-0.5">
+                  Avisos y comunicados oficiales dirigidos a tu cuenta
                 </p>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-2 rounded-xl bg-[#FFB300]/10 px-3 py-2 text-xs font-bold text-[#FF8800] ring-1 ring-[#FFB300]/20">
+              <div className="flex items-center gap-2 rounded-xl bg-[#0E5296]/10 px-3 py-2 text-xs font-bold text-[#0E5296] ring-1 ring-[#0E5296]/20">
                 <BellIcon className="h-3.5 w-3.5" />
                 {count} sin leer
               </div>
-              <div className="flex items-center gap-2 rounded-xl bg-muted/50 px-3 py-2 text-xs font-bold text-muted-foreground">
+              <div className="flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600">
                 <CheckIcon className="h-3.5 w-3.5" />
                 {totalLeidas} leídas
               </div>
@@ -226,9 +224,9 @@ export function NotificacionesModule({ usuarioId, notificacionesIniciales, noLei
                 type="button"
                 onClick={handleMarcarTodas}
                 disabled={count === 0 || isPending}
-                className="bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] font-bold shadow-md"
+                className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold shadow-md shadow-[#0E5296]/20 cursor-pointer"
               >
-                <CheckIcon className="mr-2 h-4 w-4" />
+                <CheckIcon className="mr-2 h-4 w-4 text-[#FFCC00]" />
                 Marcar todas como leídas
               </Button>
             </div>

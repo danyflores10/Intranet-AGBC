@@ -24,9 +24,8 @@ interface DirectivoItem {
 }
 
 const AVATAR_COLORS = [
-  "#1A73E8", "#E8453C", "#0B8043", "#F29900", "#8430CE",
-  "#D93025", "#1E8E3E", "#185ABC", "#E37400", "#A142F4",
-  "#00897B", "#C2185B",
+  "#0E5296", "#FFB800", "#0077EE", "#003B73", "#1A73E8",
+  "#F59E0B", "#185ABC", "#00897B", "#2563EB", "#D97706",
 ]
 
 function hashN(n: string) {
@@ -172,14 +171,14 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
       <div className="mx-auto max-w-7xl px-6 py-20 md:py-28">
         {/* ── Header ── */}
         <div className="mx-auto max-w-2xl text-center mb-14">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#C41E3A]/20 bg-[#C41E3A]/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#C41E3A]">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#FFB800]/30 bg-[#FFB800]/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-[#0E5296] dark:text-[#FFB800]">
             <Shield className="h-3.5 w-3.5" />
             Autoridades
           </div>
-          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl text-gray-800 dark:text-gray-100">
+          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl text-foreground">
             Directorio Institucional
           </h2>
-          <p className="mt-4 text-gray-500 text-lg dark:text-gray-300">
+          <p className="mt-4 text-muted-foreground text-lg">
             Jefes y directores que lideran nuestra institución
           </p>
         </div>
@@ -189,12 +188,12 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
             type="button"
             onClick={() => go(-1)}
             aria-label="Anterior"
-            className="absolute left-2 sm:left-4 md:left-8 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-white dark:bg-[#101010] text-gray-700 dark:text-gray-100 shadow-lg transition-all duration-200 hover:scale-110 hover:shadow-xl active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C41E3A]"
+            className="absolute left-2 sm:left-4 md:left-8 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-white dark:bg-[#101010] text-gray-700 dark:text-gray-100 shadow-lg transition-all duration-200 hover:scale-110 hover:shadow-xl active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB800]"
             style={{
               boxShadow: "4px 4px 12px var(--landing-neumo-shadow-dark), -4px -4px 12px var(--landing-neumo-shadow-light)",
             }}
           >
-            <ChevronLeftIcon className="h-5 w-5" />
+            <ChevronLeftIcon className="h-5 w-5 text-[#0E5296] dark:text-[#FFB800]" />
           </button>
 
           <div
@@ -237,13 +236,13 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
                   >
                     {/* Neumorphic card */}
                     <div
-                      className={`flex flex-col items-center rounded-3xl pt-8 pb-6 px-5 transition-shadow duration-500 ${
-                        isActive ? "ring-2 ring-[#C41E3A]/20" : ""
+                      className={`flex flex-col items-center rounded-3xl pt-8 pb-6 px-5 transition-all duration-500 ${
+                        isActive ? "ring-2 ring-[#FFB800]/50" : ""
                       }`}
                       style={{
                         background: "var(--landing-neumo-bg)",
                         boxShadow: isActive
-                          ? "12px 12px 24px var(--landing-neumo-shadow-deep), -12px -12px 24px var(--landing-neumo-shadow-high), 0 0 30px rgba(196,30,58,0.06)"
+                          ? "12px 12px 24px var(--landing-neumo-shadow-deep), -12px -12px 24px var(--landing-neumo-shadow-high), 0 0 30px rgba(14,82,150,0.12)"
                           : "8px 8px 16px var(--landing-neumo-shadow-dark), -8px -8px 16px var(--landing-neumo-shadow-light)",
                         height: "440px",
                       }}
@@ -257,7 +256,7 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
                         }}
                       >
                         {d.foto ? (
-                          <div className="relative h-28 w-28 overflow-hidden rounded-full">
+                          <div className="relative h-28 w-28 overflow-hidden rounded-full border-2 border-[#FFB800]/40">
                             <Image
                               src={d.foto}
                               alt={d.nombre}
@@ -267,7 +266,7 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
                           </div>
                         ) : (
                           <div
-                            className="flex h-28 w-28 items-center justify-center rounded-full text-3xl font-bold text-white"
+                            className="flex h-28 w-28 items-center justify-center rounded-full text-3xl font-bold text-white shadow-inner"
                             style={{ backgroundColor: color }}
                           >
                             {initials(d.nombre)}
@@ -279,7 +278,7 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
                         {d.nombre}
                       </h3>
 
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 text-center uppercase tracking-wide font-semibold">
+                      <p className="text-xs text-[#0E5296] dark:text-[#FFB800] mt-1 text-center uppercase tracking-wide font-bold">
                         {d.cargo}
                       </p>
 
@@ -295,7 +294,7 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
                                 "3px 3px 6px var(--landing-neumo-shadow-dark), -3px -3px 6px var(--landing-neumo-shadow-light)",
                             }}
                           >
-                            <Mail className="h-4 w-4 text-[#C41E3A]" />
+                            <Mail className="h-4 w-4 text-[#0E5296] dark:text-[#FFB800]" />
                           </a>
                         )}
                         {d.telefono && (
@@ -311,7 +310,7 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
                                   "3px 3px 6px var(--landing-neumo-shadow-dark), -3px -3px 6px var(--landing-neumo-shadow-light)",
                               }}
                             >
-                              <Phone className="h-4 w-4 text-[#1A73E8]" />
+                              <Phone className="h-4 w-4 text-[#0077EE]" />
                             </a>
                           ) : (
                             <div
@@ -323,7 +322,7 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
                                   "3px 3px 6px var(--landing-neumo-shadow-dark), -3px -3px 6px var(--landing-neumo-shadow-light)",
                               }}
                             >
-                              <Phone className="h-4 w-4 text-[#1A73E8]" />
+                              <Phone className="h-4 w-4 text-[#0077EE]" />
                             </div>
                           )
                         )}
@@ -335,7 +334,7 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
                               "3px 3px 6px var(--landing-neumo-shadow-dark), -3px -3px 6px var(--landing-neumo-shadow-light)",
                           }}
                         >
-                          <Building2 className="h-4 w-4 text-[#F29900]" />
+                          <Building2 className="h-4 w-4 text-[#FFB800]" />
                         </div>
                       </div>
 
@@ -347,7 +346,7 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
                             "inset 2px 2px 5px var(--landing-neumo-shadow-dark), inset -2px -2px 5px var(--landing-neumo-shadow-light)",
                         }}
                       >
-                        <Briefcase className="h-3 w-3 text-[#C41E3A]" />
+                        <Briefcase className="h-3 w-3 text-[#0E5296] dark:text-[#FFB800]" />
                         {d.unidad}
                       </div>
 
@@ -360,7 +359,7 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
                         {d.email && (
                           <a
                             href={`mailto:${d.email}`}
-                            className="flex items-center gap-1 hover:text-[#C41E3A] transition-colors truncate max-w-32.5"
+                            className="flex items-center gap-1 hover:text-[#0E5296] dark:hover:text-[#FFB800] transition-colors truncate max-w-32.5"
                             title={d.email}
                           >
                             <Mail className="h-3 w-3 shrink-0" />
@@ -371,7 +370,7 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
                           phoneHref ? (
                             <a
                               href={phoneHref}
-                              className="flex items-center gap-1 hover:text-[#1A73E8] transition-colors"
+                              className="flex items-center gap-1 hover:text-[#0077EE] transition-colors"
                               title={`Llamar a ${d.telefono}`}
                             >
                               <Phone className="h-3 w-3 shrink-0" />
@@ -395,12 +394,12 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
             type="button"
             onClick={() => go(1)}
             aria-label="Siguiente"
-            className="absolute right-2 sm:right-4 md:right-8 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-white dark:bg-[#101010] text-gray-700 dark:text-gray-100 shadow-lg transition-all duration-200 hover:scale-110 hover:shadow-xl active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C41E3A]"
+            className="absolute right-2 sm:right-4 md:right-8 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-white dark:bg-[#101010] text-gray-700 dark:text-gray-100 shadow-lg transition-all duration-200 hover:scale-110 hover:shadow-xl active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB800]"
             style={{
               boxShadow: "4px 4px 12px var(--landing-neumo-shadow-dark), -4px -4px 12px var(--landing-neumo-shadow-light)",
             }}
           >
-            <ChevronRightIcon className="h-5 w-5" />
+            <ChevronRightIcon className="h-5 w-5 text-[#0E5296] dark:text-[#FFB800]" />
           </button>
         </div>
 
@@ -411,10 +410,10 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
               type="button"
               onClick={() => goTo(dotIdx)}
               aria-label={`Ir a ${directivos[dotIdx]?.nombre ?? dotIdx + 1}`}
-              className={`rounded-full transition-all duration-300 focus:outline-none ${
+              className={`rounded-full transition-all duration-300 focus:outline-none cursor-pointer ${
                 dotIdx === safeActive
-                  ? "h-3.5 w-3.5 bg-[#C41E3A] shadow-md shadow-[#C41E3A]/40"
-                  : "h-2.5 w-2.5 bg-gray-400/50 hover:bg-gray-400 dark:bg-gray-600/60 dark:hover:bg-gray-500"
+                  ? "h-3.5 w-7 bg-[#0E5296] shadow-md shadow-[#0E5296]/30"
+                  : "h-2.5 w-2.5 bg-slate-300 hover:bg-[#FFB800]"
               }`}
             />
           ))}

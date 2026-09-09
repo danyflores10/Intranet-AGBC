@@ -67,12 +67,19 @@ export function RolesModule({
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6">
+    <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-blue-50/25 to-amber-50/20 min-h-screen">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">Gestion de roles</h2>
-          <p className="text-sm text-muted-foreground">
-            Crea roles, define permisos y administra el acceso al sistema.
+          <div className="flex items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0E5296] text-[#FFCC00] shadow-sm">
+              <ShieldCheckIcon className="h-5 w-5" />
+            </div>
+            <h1 className="text-2xl font-black tracking-tight text-[#002F6C]">
+              Gestión de Roles y Permisos
+            </h1>
+          </div>
+          <p className="text-xs text-slate-600 font-medium mt-1">
+            Crea roles institucionales, define permisos RBAC y administra el control de acceso al sistema.
           </p>
         </div>
       </div>
@@ -86,31 +93,35 @@ export function RolesModule({
       ) : null}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card className="border-border/40">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-[#FFB300]/10 p-2">
-                <ShieldCheckIcon className="h-5 w-5 text-[#FFB300]" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{resumen.totalRoles}</div>
-                <div className="text-xs text-muted-foreground">Roles registrados</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/40">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold">{resumen.totalPermisosDisponibles}</div>
-            <div className="text-xs text-muted-foreground">Permisos disponibles</div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/40">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold">{resumen.rolesSinPermisos}</div>
-            <div className="text-xs text-muted-foreground">Roles sin permisos</div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-amber-200/90 bg-gradient-to-br from-amber-50 via-yellow-50/60 to-white p-4.5 shadow-xs hover:shadow-md transition-all">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FFCC00]/25 text-[#002F6C]">
+            <ShieldCheckIcon className="h-6 w-6" />
+          </div>
+          <div>
+            <div className="text-2xl font-black text-[#002F6C]">{resumen.totalRoles}</div>
+            <div className="text-xs text-slate-600 font-bold">Roles Registrados</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-sky-200/90 bg-gradient-to-br from-sky-50 via-blue-50/60 to-white p-4.5 shadow-xs hover:shadow-md transition-all">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0E5296]/15 text-[#0E5296]">
+            <ShieldCheckIcon className="h-6 w-6" />
+          </div>
+          <div>
+            <div className="text-2xl font-black text-[#002F6C]">{resumen.totalPermisosDisponibles}</div>
+            <div className="text-xs text-slate-600 font-bold">Permisos Disponibles</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-blue-200/90 bg-gradient-to-br from-blue-50 via-sky-50/50 to-white p-4.5 shadow-xs hover:shadow-md transition-all">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0E5296] text-[#FFCC00]">
+            <ShieldCheckIcon className="h-6 w-6" />
+          </div>
+          <div>
+            <div className="text-2xl font-black text-[#002F6C]">{resumen.rolesSinPermisos}</div>
+            <div className="text-xs text-slate-600 font-bold">Roles sin Permisos</div>
+          </div>
+        </div>
       </div>
 
       <RolesTable

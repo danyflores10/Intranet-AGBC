@@ -92,27 +92,24 @@ export function OnboardingConfigModule({ config, roles, stats }: Props) {
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       {/* Header */}
-      <Card className="border-border/40 overflow-hidden relative">
-        <div className="relative h-24 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#FFB300] via-[#FF8800] to-[#C41E3A]" />
-          <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-        </div>
+      <Card className="border border-slate-200 overflow-hidden relative shadow-sm">
+        <div className="relative h-24 overflow-hidden bg-[#0E5296]" />
         <CardContent className="relative -mt-12 pb-5">
           <div className="flex items-end justify-between gap-4">
             <div className="flex items-end gap-3">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-4 border-background bg-gradient-to-br from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-xl ring-4 ring-background">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-4 border-white bg-[#FFB800] text-[#002F6C] shadow-lg ring-4 ring-slate-100">
                 <SparklesIcon className="h-8 w-8" />
               </div>
               <div className="pb-1">
-                <h1 className="text-xl font-black tracking-tight">Onboarding guiado</h1>
-                <p className="text-xs text-muted-foreground">
+                <h1 className="text-xl font-black tracking-tight text-[#002F6C]">Onboarding guiado</h1>
+                <p className="text-xs text-slate-500 font-medium">
                   Configura cómo se presenta el tour a los usuarios al entrar a la intranet.
                 </p>
               </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={probarAhora} disabled={isPending}>
-                <PlayIcon className="mr-1.5 h-4 w-4" />
+              <Button variant="outline" size="sm" onClick={probarAhora} disabled={isPending} className="border-slate-300 text-[#002F6C] font-bold hover:bg-slate-50 cursor-pointer">
+                <PlayIcon className="mr-1.5 h-4 w-4 text-[#0E5296]" />
                 Probar tour
               </Button>
             </div>
@@ -129,24 +126,24 @@ export function OnboardingConfigModule({ config, roles, stats }: Props) {
           tone={activo ? "green" : "zinc"}
         />
         <StatCard icon={CheckCircle2Icon} label="Completados" value={String(stats.completados)} tone="green" />
-        <StatCard icon={ClockIcon} label="Pendientes" value={String(stats.pendientes)} tone="amber" />
+        <StatCard icon={ClockIcon} label="Pendientes" value={String(stats.pendientes)} tone="blue" />
         <StatCard icon={XCircleIcon} label="Omitidos" value={String(stats.omitidos)} tone="zinc" />
       </div>
 
       {/* Config */}
-      <Card className="border-border/40">
-        <CardHeader className="border-b border-border/30 bg-muted/20">
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <ShieldIcon className="h-4 w-4 text-[#FFB300]" />
+      <Card className="border border-slate-200 bg-white">
+        <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+          <CardTitle className="flex items-center gap-2 text-sm font-bold text-[#002F6C]">
+            <ShieldIcon className="h-4 w-4 text-[#0E5296]" />
             Configuración global
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6 p-6">
           {/* Switch activo */}
-          <div className="flex items-start justify-between gap-4 rounded-xl border border-border/50 p-4">
+          <div className="flex items-start justify-between gap-4 rounded-xl border border-slate-200 p-4">
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold">Activar onboarding</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-sm font-bold text-[#002F6C]">Activar onboarding</p>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
                 Si está desactivado, ningún usuario verá el tour al entrar.
               </p>
             </div>
@@ -154,8 +151,8 @@ export function OnboardingConfigModule({ config, roles, stats }: Props) {
               type="button"
               onClick={() => setActivo((v) => !v)}
               aria-pressed={activo}
-              className={`relative flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 ${
-                activo ? "bg-gradient-to-r from-[#FFB300] to-[#FF8800]" : "bg-muted-foreground/20"
+              className={`relative flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 cursor-pointer ${
+                activo ? "bg-[#0E5296]" : "bg-slate-300"
               }`}
             >
               <div
@@ -168,7 +165,7 @@ export function OnboardingConfigModule({ config, roles, stats }: Props) {
 
           {/* Audiencia */}
           <div className="space-y-3">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <Label className="text-xs font-bold uppercase tracking-wider text-slate-600">
               Mostrar a
             </Label>
             <div className="grid gap-2 sm:grid-cols-3">
@@ -197,13 +194,13 @@ export function OnboardingConfigModule({ config, roles, stats }: Props) {
 
             {mostrarA === "rol" && (
               <div className="space-y-2">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-600">
                   Rol objetivo
                 </Label>
                 <select
                   value={rolObjetivo}
                   onChange={(e) => setRolObjetivo(e.target.value)}
-                  className="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FFB300]/30"
+                  className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-medium text-[#002F6C] focus:outline-none focus:ring-2 focus:ring-[#FFB800]/40"
                 >
                   <option value="">— Seleccionar rol —</option>
                   {roles.map((r) => (
@@ -221,17 +218,17 @@ export function OnboardingConfigModule({ config, roles, stats }: Props) {
               variant="outline"
               onClick={reiniciarGlobal}
               disabled={isPending}
-              className="border-amber-500/40 text-amber-700 dark:text-amber-300"
+              className="border-slate-300 text-slate-700 hover:bg-slate-50 font-bold cursor-pointer"
             >
-              <RotateCcwIcon className="mr-2 h-4 w-4" />
+              <RotateCcwIcon className="mr-2 h-4 w-4 text-[#0E5296]" />
               Reiniciar para todos
             </Button>
             <Button
               onClick={guardar}
               disabled={isPending}
-              className="bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] font-bold shadow-md"
+              className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold shadow-md shadow-[#0E5296]/20 cursor-pointer"
             >
-              <SaveIcon className="mr-2 h-4 w-4" />
+              <SaveIcon className="mr-2 h-4 w-4 text-[#FFB800]" />
               {isPending ? "Guardando..." : "Guardar cambios"}
             </Button>
           </div>
@@ -250,22 +247,22 @@ function StatCard({
   icon: typeof CheckCircle2Icon
   label: string
   value: string
-  tone: "green" | "amber" | "zinc"
+  tone: "green" | "blue" | "zinc"
 }) {
   const tones = {
     green: { bg: "bg-emerald-500/10", text: "text-emerald-600" },
-    amber: { bg: "bg-amber-500/10", text: "text-amber-600" },
-    zinc: { bg: "bg-zinc-500/10", text: "text-zinc-600 dark:text-zinc-300" },
+    blue: { bg: "bg-[#0E5296]/10", text: "text-[#0E5296]" },
+    zinc: { bg: "bg-slate-100", text: "text-slate-600" },
   }[tone]
   return (
-    <Card className="border-border/40">
+    <Card className="border border-slate-200 bg-white shadow-sm">
       <CardContent className="flex items-center gap-3 p-4">
         <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${tones.bg}`}>
           <Icon className={`h-5 w-5 ${tones.text}`} />
         </div>
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
-          <p className="text-lg font-black leading-tight">{value}</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{label}</p>
+          <p className="text-lg font-black leading-tight text-[#002F6C]">{value}</p>
         </div>
       </CardContent>
     </Card>
@@ -289,21 +286,21 @@ function AudienceCard({
     <button
       type="button"
       onClick={onClick}
-      className={`flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition-all ${
+      className={`flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition-all cursor-pointer ${
         activo
-          ? "border-[#FFB300] bg-gradient-to-br from-[#FFB300]/10 to-transparent ring-1 ring-[#FFB300]/30 shadow-sm"
-          : "border-border/50 hover:border-border"
+          ? "border-2 border-[#0E5296] bg-[#0E5296]/5 shadow-sm"
+          : "border-slate-200 hover:border-slate-300"
       }`}
     >
       <div
         className={`flex h-9 w-9 items-center justify-center rounded-lg ${
-          activo ? "bg-gradient-to-br from-[#FFB300] to-[#FF8800] text-[#1a1000]" : "bg-muted text-muted-foreground"
+          activo ? "bg-[#0E5296] text-[#FFB800]" : "bg-slate-100 text-slate-500"
         }`}
       >
         <Icon className="h-4 w-4" />
       </div>
-      <p className="text-sm font-bold">{titulo}</p>
-      <p className="text-[11px] text-muted-foreground leading-snug">{descripcion}</p>
+      <p className={`text-sm font-bold ${activo ? "text-[#002F6C]" : "text-slate-700"}`}>{titulo}</p>
+      <p className="text-[11px] text-slate-500 font-medium leading-snug">{descripcion}</p>
     </button>
   )
 }

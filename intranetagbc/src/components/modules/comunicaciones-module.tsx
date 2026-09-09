@@ -1,9 +1,26 @@
 "use client"
 
-import { useState, useTransition, useRef } from "react"
+import { useState, useTransition, useRef, useMemo } from "react"
 import {
-  PlusIcon, PencilIcon, Trash2Icon, MegaphoneIcon, ImageIcon,
-  UploadIcon, FileTextIcon, EyeIcon, CalendarIcon, DownloadIcon, Link2Icon, ExternalLinkIcon,
+  PlusIcon,
+  PencilIcon,
+  Trash2Icon,
+  MegaphoneIcon,
+  ImageIcon,
+  UploadIcon,
+  FileTextIcon,
+  EyeIcon,
+  CalendarIcon,
+  DownloadIcon,
+  Link2Icon,
+  ExternalLinkIcon,
+  LayoutGridIcon,
+  TableIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  SparklesIcon,
+  CheckCircle2Icon,
+  SearchIcon,
 } from "lucide-react"
 import toast from "react-hot-toast"
 
@@ -79,6 +96,8 @@ function formatDate(dateStr: string | Date) {
 
 export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, usuario }: Props) {
   const [tab, setTab] = useState<Tab>("comunicados")
+  const [searchQuery, setSearchQuery] = useState("")
+
   const [dialogOpen, setDialogOpen] = useState(false)
   const [viewOpen, setViewOpen] = useState(false)
   const [viewItem, setViewItem] = useState<ComunicadoRow | null>(null)
@@ -101,7 +120,10 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
   const [noticiaImagenes, setNoticiaImagenes] = useState<string[]>([])
   const [noticiaUploading, setNoticiaUploading] = useState(false)
 
-  const ctx = crearContextoAcceso(usuario)
+  const editCom = editItem && "contenido" in editItem ? (editItem as ComunicadoRow) : null
+  const editNot = editItem && !("contenido" in editItem) ? (editItem as NoticiaRow) : null
+
+  const ctx = useMemo(() => crearContextoAcceso(usuario), [usuario])
   const puedeCrearCom = puedeAcceder({ permissions: [PERMISOS.COMUNICADOS.CREAR] }, ctx)
   const puedeEditarCom = puedeAcceder({ permissions: [PERMISOS.COMUNICADOS.EDITAR] }, ctx)
   const puedeEliminarCom = puedeAcceder({ permissions: [PERMISOS.COMUNICADOS.ELIMINAR] }, ctx)
@@ -133,11 +155,21 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
     setDialogOpen(true)
   }
 
-  function openEdit(item: ComunicadoRow) {
+  function openEdit(item: ComunicadoRow | NoticiaRow) {
     setEditItem(item)
-    setArchivoUrl(item.archivoUrl)
-    setArchivoNombre(item.archivoNombre)
-    setArchivoTipo(item.archivoTipo)
+    if ("contenido" in item) {
+      setArchivoUrl(item.archivoUrl)
+      setArchivoNombre(item.archivoNombre)
+      setArchivoTipo(item.archivoTipo)
+    } else {
+      const imgs: string[] = []
+      if (item.imagenes) {
+        try { imgs.push(...JSON.parse(item.imagenes)) } catch { /* ignore */ }
+      } else if (item.imagen) {
+        imgs.push(item.imagen)
+      }
+      setNoticiaImagenes(imgs)
+    }
     setDialogOpen(true)
   }
 
@@ -180,7 +212,7 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
           archivoTipo: archivoTipo ?? undefined,
         }
         if (editItem) {
-          await actualizarComunicado(editItem.id, payload)
+          await actualizarComunicado((editItem as ComunicadoRow).id, payload)
           toast.success("Comunicado actualizado")
         } else {
           await crearComunicado(payload)
@@ -199,7 +231,7 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
         const imagenesJson = noticiaImagenes.length > 0 ? JSON.stringify(noticiaImagenes) : undefined
         const primeraImagen = noticiaImagenes[0] || undefined
         if (editItem) {
-          await actualizarBanner(editItem.id, {
+          await actualizarBanner((editItem as NoticiaRow).id, {
             titulo: fd.get("titulo") as string,
             descripcion: (fd.get("descripcion") as string) || undefined,
             enlace: (fd.get("enlace") as string) || undefined,
@@ -295,415 +327,422 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
     } finally { setAccesoUploading(false) }
   }
 
-  const editCom = editItem as ComunicadoRow | null
+  // Filtrado
+  const filteredComunicados = useMemo(() => {
+    return comunicados.filter(c => c.titulo.toLowerCase().includes(searchQuery.toLowerCase()) || c.contenido.toLowerCase().includes(searchQuery.toLowerCase()))
+  }, [comunicados, searchQuery])
+
+  const filteredNoticias = useMemo(() => {
+    return noticias.filter(n => n.titulo.toLowerCase().includes(searchQuery.toLowerCase()) || (n.descripcion && n.descripcion.toLowerCase().includes(searchQuery.toLowerCase())))
+  }, [noticias, searchQuery])
+
+  const filteredAccesos = useMemo(() => {
+    return accesosDirectos.filter(a => a.titulo.toLowerCase().includes(searchQuery.toLowerCase()) || a.url.toLowerCase().includes(searchQuery.toLowerCase()))
+  }, [accesosDirectos, searchQuery])
+
+  const currentList = tab === "comunicados" ? filteredComunicados : tab === "noticias" ? filteredNoticias : filteredAccesos
+
+  const handleTabChange = (t: Tab) => {
+    setTab(t)
+    setSearchQuery("")
+  }
 
   return (
-    <>
-      <div className="flex flex-1 flex-col gap-6 p-6">
-        {/* Tabs */}
-        <div className="flex items-center gap-2 border-b border-border/40 pb-0">
-          {([
-            { key: "comunicados" as Tab, label: "Comunicados", icon: MegaphoneIcon },
-            { key: "noticias" as Tab, label: "Noticias", icon: ImageIcon },
-            { key: "accesos" as Tab, label: "Accesos directos", icon: Link2Icon },
-          ]).map((t) => (
-            <button key={t.key} onClick={() => setTab(t.key)}
-              className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${tab === t.key ? "border-[#FFB300] text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-              <t.icon className="h-4 w-4" />{t.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center justify-between">
+    <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-blue-50/25 to-amber-50/20 min-h-screen">
+      {/* ── Encabezado Institucional ── */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-3xl border-2 border-[#002F6C]/15 bg-gradient-to-r from-white via-blue-50/30 to-amber-50/30 p-6 shadow-xs">
+        <div className="flex items-center gap-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0E5296] text-[#FFCC00] shadow-md ring-2 ring-[#0E5296]/20">
+            <MegaphoneIcon className="h-7 w-7" />
+          </div>
           <div>
-            <h2 className="text-xl font-bold tracking-tight">
-              {tab === "comunicados"
-                ? "Gestión de comunicados"
-                : tab === "noticias"
-                  ? "Gestión de noticias"
-                  : "Gestión de accesos directos"}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {tab === "comunicados"
-                ? "Comunicados que aparecen en la landing page"
-                : tab === "noticias"
-                  ? "Noticias visibles en la página principal"
-                  : "Enlaces a sistemas y sitios institucionales (menú Aplicaciones)"}
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-black tracking-tight text-[#002F6C]">
+                Gestión de Contenidos y Comunicaciones
+              </h1>
+              <span className="rounded-full bg-[#0E5296] text-[#FFCC00] px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                AGBC
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Publica comunicados oficiales, noticias institucionales y enlaces a sistemas externos
             </p>
           </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
           {puedeCrear && (
-            <Button className="bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] border-0 font-semibold shadow-md shadow-[#FFB300]/20" onClick={openCreate}>
-              <PlusIcon className="mr-2 h-4 w-4" />
-              Nuevo {tab === "comunicados" ? "comunicado" : tab === "noticias" ? "noticia" : "acceso"}
+            <Button
+              onClick={openCreate}
+              className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold rounded-2xl shadow-md shadow-[#0E5296]/20 cursor-pointer text-xs"
+            >
+              <PlusIcon className="mr-1.5 h-4 w-4 text-[#FFCC00]" />
+              Nuevo {tab === "comunicados" ? "Comunicado" : tab === "noticias" ? "Noticia" : "Acceso"}
             </Button>
           )}
         </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Card className="border-border/40"><CardContent className="p-4"><div className="text-2xl font-bold">{tab === "comunicados" ? comunicados.length : tab === "noticias" ? noticias.length : accesosDirectos.length}</div><div className="text-xs text-muted-foreground">Total</div></CardContent></Card>
-          <Card className="border-border/40"><CardContent className="p-4"><div className="text-2xl font-bold text-green-600">{tab === "comunicados" ? comunicados.filter(c => c.estado === "publicado").length : tab === "noticias" ? noticias.filter(b => b.activo).length : accesosDirectos.filter(a => a.activo).length}</div><div className="text-xs text-muted-foreground">{tab === "comunicados" ? "Publicados" : "Activos"}</div></CardContent></Card>
-          <Card className="border-border/40"><CardContent className="p-4"><div className="text-2xl font-bold text-amber-500">{tab === "comunicados" ? comunicados.filter(c => c.estado !== "publicado").length : tab === "noticias" ? noticias.filter(b => !b.activo).length : accesosDirectos.filter(a => !a.activo).length}</div><div className="text-xs text-muted-foreground">{tab === "comunicados" ? "Borrador/Pendiente" : "Inactivos"}</div></CardContent></Card>
-        </div>
-
-        {tab === "comunicados" && (
-          <DataTable data={comunicados.map(c => ({ ...c, fecha: c.createdAt.toLocaleDateString("es-BO") }))} searchKey="titulo" searchPlaceholder="Buscar comunicado..."
-            columns={[
-              {
-                key: "titulo", label: "Título", render: (row) => (
-                  <button type="button" onClick={() => { setViewItem(row as unknown as ComunicadoRow); setViewOpen(true) }}
-                    className="font-medium text-left hover:text-[#FFB300] transition-colors hover:underline">
-                    {row.titulo}
-                  </button>
-                )
-              },
-              { key: "contenido", label: "Contenido", render: (row) => <span className="text-sm text-muted-foreground line-clamp-1">{row.contenido}</span> },
-              {
-                key: "archivoTipo", label: "Adjunto", render: (row) => {
-                  if (!row.archivoUrl) return <span className="text-muted-foreground text-xs">—</span>
-                  return row.archivoTipo === "imagen"
-                    ? <span className="inline-flex items-center gap-1 text-xs text-blue-600"><ImageIcon className="h-3.5 w-3.5" />Imagen</span>
-                    : <span className="inline-flex items-center gap-1 text-xs text-red-600"><FileTextIcon className="h-3.5 w-3.5" />PDF</span>
-                }
-              },
-              { key: "fecha", label: "Fecha" },
-              { key: "destacado", label: "Destacado", render: (row) => <span>{row.destacado ? "⭐" : "—"}</span> },
-              { key: "estado", label: "Estado", render: (row) => <StatusBadge status={row.estado as "publicado" | "borrador" | "pendiente"} /> },
-            ]}
-            actions={(row) => (
-              <div className="flex items-center justify-end gap-2">
-                <button type="button" title="Ver" className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 hover:shadow-md dark:hover:border-blue-500/30 dark:hover:bg-blue-500/10 dark:hover:text-blue-400 active:scale-95" onClick={() => { setViewItem(row as unknown as ComunicadoRow); setViewOpen(true) }}><EyeIcon className="h-4 w-4" /></button>
-                {puedeEditarCom && (
-                  <button type="button" title="Editar" className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-[#FFB300]/40 hover:bg-[#FFB300]/10 hover:text-[#FF8800] hover:shadow-md active:scale-95" onClick={() => openEdit(row as unknown as ComunicadoRow)}><PencilIcon className="h-4 w-4" /></button>
-                )}
-                {puedeEliminarCom && (
-                  <button type="button" title="Eliminar" disabled={isPending} className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-red-300 hover:bg-red-50 hover:text-red-600 hover:shadow-md dark:hover:border-red-500/30 dark:hover:bg-red-500/10 dark:hover:text-red-400 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
-                    onClick={() => startTransition(async () => { await eliminarComunicado(row.id); toast.success("Eliminado") })}><Trash2Icon className="h-4 w-4" /></button>
-                )}
-              </div>
-            )}
-          />
-        )}
-
-        {tab === "noticias" && (
-          <DataTable data={noticias.map(b => ({ ...b, fecha: b.createdAt.toLocaleDateString("es-BO") }))} searchKey="titulo" searchPlaceholder="Buscar noticia..."
-            columns={[
-              {
-                key: "titulo", label: "Título", render: (row) => {
-                  const noticia = row as unknown as NoticiaRow
-                  const imgs: string[] = []
-                  if (noticia.imagenes) { try { imgs.push(...JSON.parse(noticia.imagenes)) } catch { /* */ } }
-                  else if (noticia.imagen) { imgs.push(noticia.imagen) }
-                  return (
-                    <div className="flex items-center gap-3">
-                      {imgs.length > 0 ? (
-                        <div className="flex h-9 w-14 shrink-0 items-center justify-center rounded-lg bg-muted/30 overflow-hidden border border-border/40 relative">
-                          <img src={imgs[0]} alt={row.titulo} className="h-full w-full object-cover" />
-                          {imgs.length > 1 && <span className="absolute bottom-0 right-0 text-[9px] font-bold bg-[#FFB300] text-[#1a1000] px-1 rounded-tl">+{imgs.length - 1}</span>}
-                        </div>
-                      ) : null}
-                      <span className="font-medium">{row.titulo}</span>
-                    </div>
-                  )
-                }
-              },
-              { key: "descripcion", label: "Descripción", render: (row) => <span className="text-sm text-muted-foreground">{row.descripcion || "—"}</span> },
-              { key: "enlace", label: "Enlace", render: (row) => <span className="text-xs">{row.enlace || "—"}</span> },
-              { key: "fecha", label: "Fecha" },
-              { key: "activo", label: "Estado", render: (row) => <StatusBadge status={row.activo ? "activo" : "inactivo"} /> },
-            ]}
-            actions={(row) => (
-              <div className="flex items-center justify-end gap-2">
-                {puedeEditarNot && (
-                  <button type="button" title="Editar" className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-[#FFB300]/40 hover:bg-[#FFB300]/10 hover:text-[#FF8800] hover:shadow-md active:scale-95" onClick={() => {
-                    const noticia = row as unknown as NoticiaRow
-                    setEditItem(noticia)
-                    // Cargar imágenes existentes
-                    const imgs: string[] = []
-                    if (noticia.imagenes) {
-                      try { imgs.push(...JSON.parse(noticia.imagenes)) } catch { /* ignore */ }
-                    } else if (noticia.imagen) {
-                      imgs.push(noticia.imagen)
-                    }
-                    setNoticiaImagenes(imgs)
-                    setDialogOpen(true)
-                  }}><PencilIcon className="h-4 w-4" /></button>
-                )}
-                {puedeEliminarNot && (
-                  <button type="button" title="Eliminar" disabled={isPending} className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-red-300 hover:bg-red-50 hover:text-red-600 hover:shadow-md dark:hover:border-red-500/30 dark:hover:bg-red-500/10 dark:hover:text-red-400 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
-                    onClick={() => startTransition(async () => { await eliminarBanner(row.id); toast.success("Eliminado") })}><Trash2Icon className="h-4 w-4" /></button>
-                )}
-              </div>
-            )}
-          />
-        )}
-
-        {tab === "accesos" && (
-          <DataTable
-            data={accesosDirectos.map((a) => ({
-              ...a,
-              fecha: a.updatedAt.toLocaleDateString("es-BO"),
-            }))}
-            searchKey="titulo"
-            searchPlaceholder="Buscar acceso directo..."
-            columns={[
-              {
-                key: "titulo",
-                label: "Aplicación",
-                render: (row) => (
-                  <div className="flex items-center gap-3">
-                    {(row as unknown as AccesoDirectoRow).imagen ? (
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted/30 overflow-hidden border border-border/40">
-                        <img src={(row as unknown as AccesoDirectoRow).imagen} alt={row.titulo} className="h-full w-full object-contain" />
-                      </div>
-                    ) : (
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FFB300]/10">
-                        <Link2Icon className="h-4 w-4 text-[#FF8800]" />
-                      </div>
-                    )}
-                    <span className="font-medium">{row.titulo}</span>
-                  </div>
-                ),
-              },
-              {
-                key: "url",
-                label: "Enlace",
-                render: (row) => (
-                  <a
-                    href={row.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex max-w-[380px] items-center gap-1 text-xs text-blue-600 hover:underline"
-                  >
-                    <span className="truncate">{row.url}</span>
-                    <ExternalLinkIcon className="h-3.5 w-3.5 shrink-0" />
-                  </a>
-                ),
-              },
-              {
-                key: "descripcion",
-                label: "Descripción",
-                render: (row) => (
-                  <span className="line-clamp-1 text-sm text-muted-foreground">
-                    {row.descripcion || "—"}
-                  </span>
-                ),
-              },
-              { key: "fecha", label: "Actualizado" },
-              {
-                key: "activo",
-                label: "Estado",
-                render: (row) => <StatusBadge status={row.activo ? "activo" : "inactivo"} />,
-              },
-            ]}
-            actions={(row) => (
-              <div className="flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  title="Abrir enlace"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 hover:shadow-md dark:hover:border-blue-500/30 dark:hover:bg-blue-500/10 dark:hover:text-blue-400 active:scale-95"
-                  onClick={() => window.open(row.url, "_blank", "noopener,noreferrer")}
-                >
-                  <ExternalLinkIcon className="h-4 w-4" />
-                </button>
-                {puedeEditarAcc && (
-                  <button
-                    type="button"
-                    title="Editar"
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-[#FFB300]/40 hover:bg-[#FFB300]/10 hover:text-[#FF8800] hover:shadow-md active:scale-95"
-                    onClick={() => { setEditAcceso(row as unknown as AccesoDirectoRow); setAccesoImagen((row as unknown as AccesoDirectoRow).imagen || ""); setAccesoDialogOpen(true) }}
-                  >
-                    <PencilIcon className="h-4 w-4" />
-                  </button>
-                )}
-                {puedeEliminarAcc && (
-                  <button
-                    type="button"
-                    title="Eliminar"
-                    disabled={isPending}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-red-300 hover:bg-red-50 hover:text-red-600 hover:shadow-md dark:hover:border-red-500/30 dark:hover:bg-red-500/10 dark:hover:text-red-400 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
-                    onClick={() => startTransition(async () => { await eliminarAccesoDirecto(row.clave); toast.success("Eliminado") })}
-                  >
-                    <Trash2Icon className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            )}
-          />
-        )}
       </div>
 
-      {/* ── Dialog crear/editar ── */}
-      <Dialog open={dialogOpen} onOpenChange={(v) => { if (!v) { setDialogOpen(false); setEditItem(null); resetFileState() } }}>
-        <DialogContent className="!w-[95vw] !max-w-[95vw] sm:!max-w-[860px] max-h-[92vh] overflow-y-auto overflow-x-hidden p-0 gap-0 rounded-2xl border-border/50">
-          <div className="flex h-1.5 w-full rounded-t-2xl overflow-hidden"><div className="flex-1 bg-[#C41E3A]" /><div className="flex-1 bg-[#FFB300]" /><div className="flex-1 bg-[#2E7D32]" /></div>
-          <DialogHeader className="px-6 pt-5 pb-0">
-            <DialogTitle className="text-xl font-bold tracking-tight break-words">
-              {tab === "comunicados" ? (editItem ? "Editar comunicado" : "Nuevo comunicado") : (editItem ? "Editar noticia" : "Nueva noticia")}
+      {/* ── Tabs de Navegación ── */}
+      <div className="flex items-center gap-2 rounded-2xl bg-slate-100/80 p-1.5 border border-[#002F6C]/10 w-fit">
+        {([
+          { key: "comunicados" as Tab, label: "Comunicados Oficiales", icon: MegaphoneIcon, count: comunicados.length },
+          { key: "noticias" as Tab, label: "Noticias y Banners", icon: ImageIcon, count: noticias.length },
+          { key: "accesos" as Tab, label: "Accesos Directos", icon: Link2Icon, count: accesosDirectos.length },
+        ]).map((t) => (
+          <button
+            key={t.key}
+            onClick={() => handleTabChange(t.key)}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black transition-all cursor-pointer ${
+              tab === t.key
+                ? "bg-[#0E5296] text-[#FFCC00] shadow-md shadow-[#0E5296]/20"
+                : "text-slate-600 hover:text-[#002F6C] hover:bg-white/60"
+            }`}
+          >
+            <t.icon className="h-4 w-4" />
+            <span>{t.label}</span>
+            <span className={`ml-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+              tab === t.key ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
+            }`}>
+              {t.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* ── Tarjetas Métricas en Pastel Amarillo y Azul ── */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-sky-200/90 bg-gradient-to-br from-sky-50 via-blue-50/60 to-white p-4 shadow-xs">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0E5296] text-[#FFCC00]">
+            <MegaphoneIcon className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-2xl font-black text-[#002F6C]">
+              {tab === "comunicados" ? comunicados.length : tab === "noticias" ? noticias.length : accesosDirectos.length}
+            </div>
+            <div className="text-xs text-slate-600 font-bold">Total Registrados</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-amber-200/90 bg-gradient-to-br from-amber-50 via-yellow-50/60 to-white p-4 shadow-xs">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FFCC00] text-[#002F6C]">
+            <CheckCircle2Icon className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-2xl font-black text-[#002F6C]">
+              {tab === "comunicados"
+                ? comunicados.filter(c => c.estado === "publicado").length
+                : tab === "noticias"
+                ? noticias.filter(b => b.activo).length
+                : accesosDirectos.filter(a => a.activo).length}
+            </div>
+            <div className="text-xs text-slate-600 font-bold">Publicados / Activos</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-blue-200/90 bg-gradient-to-br from-blue-50 via-sky-50/50 to-white p-4 shadow-xs">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-200 text-[#002F6C]">
+            <SparklesIcon className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-2xl font-black text-[#002F6C]">
+              {tab === "comunicados"
+                ? comunicados.filter(c => c.destacado).length
+                : tab === "noticias"
+                ? noticias.filter(b => !b.activo).length
+                : accesosDirectos.filter(a => !a.activo).length}
+            </div>
+            <div className="text-xs text-slate-600 font-bold">
+              {tab === "comunicados" ? "Destacados ⭐" : "En Borrador / Inactivos"}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Buscador ── */}
+      <div className="rounded-2xl border-2 border-[#002F6C]/15 bg-gradient-to-r from-white via-blue-50/20 to-amber-50/20 p-4 shadow-xs">
+        <div className="flex items-center justify-between gap-3">
+          <div className="relative w-full md:w-80">
+            <Input
+              type="text"
+              placeholder={`Buscar en ${tab}...`}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-white/90 border-[#002F6C]/20 text-xs font-medium focus:border-[#0E5296]"
+            />
+          </div>
+          <span className="text-xs font-bold text-[#0E5296] bg-white/80 border border-[#0E5296]/20 px-3 py-1.5 rounded-xl shadow-2xs">
+            {currentList.length} encontrados
+          </span>
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════════ */}
+      {/* VISTA EN TABLA ESTRUCTURADA Y RESPONSIVA AGBC                  */}
+      {/* ══════════════════════════════════════════════════════════════ */}
+      <div className="rounded-3xl border-2 border-[#002F6C]/15 bg-white p-4 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[700px]">
+            <thead>
+              <tr className="border-b-2 border-slate-100 bg-gradient-to-r from-sky-50/70 via-blue-50/50 to-amber-50/50 text-[11px] font-black uppercase text-[#002F6C] tracking-wider">
+                <th className="py-3 px-4">Elemento</th>
+                <th className="py-3 px-4">Detalles / Contenido</th>
+                <th className="py-3 px-4">Estado</th>
+                <th className="py-3 px-4">Fecha</th>
+                <th className="py-3 px-4 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-xs">
+              {currentList.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-12 text-center text-slate-400 font-medium">
+                    No hay registros en {tab === "comunicados" ? "Comunicados" : tab === "noticias" ? "Noticias y Banners" : "Accesos Directos"}.
+                  </td>
+                </tr>
+              ) : (
+                currentList.map((item: any) => (
+                  <tr key={item.id || item.clave} className="hover:bg-blue-50/30 transition-colors">
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFCC00] text-[#002F6C] font-black shadow-xs">
+                          {tab === "comunicados" ? (
+                            <MegaphoneIcon className="h-5 w-5" />
+                          ) : tab === "noticias" ? (
+                            <ImageIcon className="h-5 w-5" />
+                          ) : (
+                            <Link2Icon className="h-5 w-5" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-bold text-[#002F6C]">{item.titulo}</p>
+                          {item.destacado && (
+                            <span className="text-[10px] text-amber-600 font-bold">⭐ Destacado</span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 max-w-[280px]">
+                      <p className="text-slate-600 truncate">
+                        {tab === "comunicados" ? item.contenido : tab === "noticias" ? (item.descripcion || "—") : item.url}
+                      </p>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                        (item.estado === "publicado" || item.activo) ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
+                      }`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${(item.estado === "publicado" || item.activo) ? "bg-emerald-500" : "bg-slate-400"}`} />
+                        {(item.estado === "publicado" || item.activo) ? "Activo" : "Borrador"}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-slate-500">
+                      {tab === "accesos" ? "—" : formatDate(item.createdAt)}
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {tab === "comunicados" && (
+                          <button
+                            onClick={() => {
+                              setViewItem(item)
+                              setViewOpen(true)
+                            }}
+                            className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-50 text-[#002F6C] hover:bg-[#0E5296] hover:text-white transition-colors cursor-pointer"
+                            title="Ver"
+                          >
+                            <EyeIcon className="h-4 w-4" />
+                          </button>
+                        )}
+                        {tab === "accesos" && item.url && (
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-50 text-[#002F6C] hover:bg-[#0E5296] hover:text-white transition-colors cursor-pointer"
+                            title="Abrir enlace"
+                          >
+                            <ExternalLinkIcon className="h-4 w-4" />
+                          </a>
+                        )}
+                        {puedeCrear && (
+                          <button
+                            onClick={() => {
+                              if (tab === "accesos") {
+                                setEditAcceso(item)
+                                setAccesoImagen(item.imagen || "")
+                                setAccesoDialogOpen(true)
+                              } else {
+                                openEdit(item)
+                              }
+                            }}
+                            className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-[#002F6C] hover:bg-[#0E5296] hover:text-white transition-colors cursor-pointer"
+                            title="Editar"
+                          >
+                            <PencilIcon className="h-4 w-4" />
+                          </button>
+                        )}
+                        {puedeCrear && (
+                          <button
+                            onClick={() => {
+                              startTransition(async () => {
+                                if (tab === "comunicados") await eliminarComunicado(item.id)
+                                else if (tab === "noticias") await eliminarBanner(item.id)
+                                else await eliminarAccesoDirecto(item.clave)
+                                toast.success("Eliminado correctamente")
+                              })
+                            }}
+                            className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
+                            title="Eliminar"
+                          >
+                            <Trash2Icon className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ── Modal Crear/Editar Comunicado o Noticia ── */}
+      <Dialog open={dialogOpen} onOpenChange={(v) => !v && setDialogOpen(false)}>
+        <DialogContent className="max-w-xl rounded-3xl border-2 border-[#002F6C]/15 bg-white p-6 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-black text-[#002F6C]">
+              {editItem ? `Editar ${tab === "comunicados" ? "Comunicado" : "Noticia"}` : `Nuevo ${tab === "comunicados" ? "Comunicado" : "Noticia"}`}
             </DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              {tab === "comunicados" ? "Completa los datos para el comunicado institucional" : "Configura la noticia para la página principal"}
-            </p>
           </DialogHeader>
 
           {tab === "comunicados" ? (
-            <form onSubmit={handleComSubmit} className="px-6 pb-6 pt-4 space-y-5">
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">Título del comunicado *</Label>
-                <Input name="titulo" required defaultValue={editCom?.titulo} placeholder="Ej: Rendición Pública de Cuentas Final 2025" className="h-11 rounded-xl" />
+            <form onSubmit={handleComSubmit} className="space-y-4 pt-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-[#002F6C]">Título del Comunicado *</Label>
+                <Input name="titulo" required defaultValue={editCom?.titulo} placeholder="Ej: Rendición Pública de Cuentas" className="rounded-xl text-xs" />
               </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">Contenido *</Label>
-                <textarea name="contenido" required defaultValue={editCom?.contenido}
-                  placeholder="Escribe el contenido del comunicado..."
-                  className="flex w-full rounded-xl border border-input bg-transparent px-3 py-3 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring min-h-[140px] resize-y" />
-              </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Estado</Label>
 
-                  <Select
-                    defaultValue={editCom?.estado ?? "borrador"}
-                    onValueChange={(value) => {
-                      const input = document.getElementById("estado-hidden") as HTMLInputElement
-                      if (input) input.value = value
-                    }}
-                  >
-                    <SelectTrigger className="h-11 rounded-xl w-full">
-                      <SelectValue placeholder="Seleccionar estado" />
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-[#002F6C]">Contenido *</Label>
+                <textarea
+                  name="contenido"
+                  required
+                  defaultValue={editCom?.contenido}
+                  placeholder="Escribe el texto del comunicado..."
+                  className="w-full rounded-xl border border-slate-200 p-3 text-xs focus:outline-none focus:ring-1 focus:ring-[#0E5296] min-h-[120px]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-[#002F6C]">Estado</Label>
+                  <Select defaultValue={editCom?.estado ?? "publicado"} onValueChange={(v) => {
+                    const el = document.getElementById("estado-com-hidden") as HTMLInputElement
+                    if (el) el.value = v
+                  }}>
+                    <SelectTrigger className="rounded-xl text-xs">
+                      <SelectValue placeholder="Estado" />
                     </SelectTrigger>
-
                     <SelectContent>
+                      <SelectItem value="publicado">Publicado</SelectItem>
                       <SelectItem value="borrador">Borrador</SelectItem>
                       <SelectItem value="pendiente">Pendiente</SelectItem>
-                      <SelectItem value="publicado">Publicado</SelectItem>
                     </SelectContent>
                   </Select>
-
-                  {/* 👇 ESTE ES CLAVE */}
-                  <input
-                    type="hidden"
-                    name="estado"
-                    id="estado-hidden"
-                    defaultValue={editCom?.estado ?? "borrador"}
-                  />
+                  <input type="hidden" name="estado" id="estado-com-hidden" defaultValue={editCom?.estado ?? "publicado"} />
                 </div>
-                <div className="flex items-end pb-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" name="destacado" defaultChecked={editCom?.destacado} className="h-4 w-4 rounded border-input" />
-                    <span className="text-sm font-medium">⭐ Destacado</span>
-                  </label>
+
+                <div className="flex items-center gap-2 pt-6">
+                  <input type="checkbox" id="destacado" name="destacado" defaultChecked={editCom?.destacado} className="h-4 w-4 rounded" />
+                  <label htmlFor="destacado" className="text-xs font-bold text-[#002F6C] cursor-pointer">⭐ Destacar en Inicio</label>
                 </div>
               </div>
 
-              {/* Zona archivo */}
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">Imagen o PDF adjunto</Label>
-                <p className="text-xs text-muted-foreground">Sube una imagen (JPG, PNG, WebP, GIF) o un archivo PDF. Máximo 5 MB.</p>
+              {/* Subida de Archivo */}
+              <div className="space-y-1.5 pt-2">
+                <Label className="text-xs font-bold text-[#002F6C]">Imagen o PDF Adjunto</Label>
+                <input ref={fileRef} type="file" accept="image/*,application/pdf" onChange={handleFileUpload} className="hidden" />
                 {!archivoUrl ? (
-                  <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
-                    className="flex w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border/60 bg-muted/20 p-8 transition-colors hover:border-[#FFB300]/50 hover:bg-muted/40 disabled:opacity-50">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FFB300]/10">
-                      <UploadIcon className={`h-6 w-6 text-[#FFB300] ${uploading ? "animate-bounce" : ""}`} />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-medium">{uploading ? "Subiendo archivo..." : "Haz clic para seleccionar un archivo"}</p>
-                      <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WebP, GIF o PDF</p>
-                    </div>
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    disabled={uploading}
+                    className="flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#0E5296]/30 bg-blue-50/20 p-6 hover:bg-blue-50/50 transition-colors cursor-pointer"
+                  >
+                    <UploadIcon className="h-6 w-6 text-[#0E5296] mb-1" />
+                    <span className="text-xs font-bold text-[#002F6C]">{uploading ? "Subiendo..." : "Subir Imagen o PDF"}</span>
                   </button>
                 ) : (
-                  <div className="rounded-xl border border-border/50 bg-muted/20 overflow-hidden">
-                    {archivoTipo === "imagen" && (
-                      <div className="relative bg-muted/30 flex items-center justify-center p-4">
-                        <img src={archivoUrl} alt={archivoNombre ?? "Preview"} className="max-h-[250px] rounded-lg object-contain shadow-md" />
-                      </div>
-                    )}
-                    {archivoTipo === "pdf" && (
-                      <div className="flex items-center justify-center gap-3 bg-muted/30 p-8">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-red-500/10">
-                          <FileTextIcon className="h-7 w-7 text-red-500" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold break-all">{archivoNombre}</p>
-                          <p className="text-xs text-muted-foreground">Documento PDF</p>
-                        </div>
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between border-t border-border/40 px-4 py-3">
-                      <div className="flex items-center gap-2 min-w-0">
-                        {archivoTipo === "imagen" ? <ImageIcon className="h-4 w-4 text-[#FFB300] shrink-0" /> : <FileTextIcon className="h-4 w-4 text-red-500 shrink-0" />}
-                        <span className="text-sm truncate">{archivoNombre}</span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Button type="button" variant="ghost" size="sm" className="h-8 text-xs" onClick={() => fileRef.current?.click()}>Reemplazar</Button>
-                        <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive" onClick={resetFileState}><Trash2Icon className="h-4 w-4" /></Button>
-                      </div>
-                    </div>
+                  <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <span className="text-xs font-medium truncate max-w-[280px]">{archivoNombre || "Archivo adjunto"}</span>
+                    <button type="button" onClick={() => setArchivoUrl(null)} className="text-red-500 hover:text-red-700">
+                      <Trash2Icon className="h-4 w-4" />
+                    </button>
                   </div>
                 )}
-                <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf" onChange={handleFileUpload} className="hidden" />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-2 border-t border-border/40">
-                <Button type="button" variant="outline" onClick={() => { setDialogOpen(false); resetFileState() }} className="rounded-xl">Cancelar</Button>
-                <Button type="submit" disabled={isPending || uploading}
-                  className="rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] border-0 font-semibold shadow-md shadow-[#FFB300]/20">
-                  {isPending ? "Guardando..." : editItem ? "Guardar cambios" : "Publicar comunicado"}
+              <div className="flex justify-end gap-2 pt-4">
+                <Button type="button" variant="ghost" onClick={() => setDialogOpen(false)} className="rounded-xl text-xs">Cancelar</Button>
+                <Button type="submit" disabled={isPending || uploading} className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold rounded-xl text-xs">
+                  {isPending ? "Guardando..." : "Guardar Comunicado"}
                 </Button>
               </div>
             </form>
           ) : (
-            <form onSubmit={handleBannerSubmit} className="px-6 pb-6 pt-4 space-y-5">
-              <div className="space-y-2"><Label className="text-sm font-semibold">Título *</Label><Input name="titulo" required defaultValue={(editItem as NoticiaRow | null)?.titulo} placeholder="Ej: Nueva convocatoria institucional" className="h-11 rounded-xl" /></div>
-              <div className="space-y-2"><Label className="text-sm font-semibold">Descripción</Label><textarea name="descripcion" defaultValue={(editItem as NoticiaRow | null)?.descripcion ?? ""} placeholder="Describe brevemente la noticia..." className="flex w-full rounded-xl border border-input bg-transparent px-3 py-3 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring min-h-[100px] resize-y" /></div>
-              <div className="space-y-2"><Label className="text-sm font-semibold">Enlace (opcional)</Label><Input name="enlace" defaultValue={(editItem as NoticiaRow | null)?.enlace ?? ""} placeholder="https://..." className="h-11 rounded-xl" /></div>
-
-              {/* Imagen de la noticia */}
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">Imágenes de la noticia</Label>
-                <p className="text-xs text-muted-foreground">Sube una o varias imágenes (JPG, PNG, WebP, GIF). Máximo 5 MB cada una. Las imágenes rotarán automáticamente en la landing.</p>
-
-                {/* Galería de imágenes cargadas */}
-                {noticiaImagenes.length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {noticiaImagenes.map((img, idx) => (
-                      <div key={idx} className="group relative rounded-xl border border-border/50 bg-muted/20 overflow-hidden aspect-video">
-                        <img src={img} alt={`Imagen ${idx + 1}`} className="h-full w-full object-cover" />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                          <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0 text-white hover:text-red-400 hover:bg-transparent"
-                            onClick={() => setNoticiaImagenes((prev) => prev.filter((_, i) => i !== idx))}>
-                            <Trash2Icon className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        {idx === 0 && (
-                          <span className="absolute top-1.5 left-1.5 text-[10px] font-bold bg-[#FFB300] text-[#1a1000] px-1.5 py-0.5 rounded">Principal</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Botón agregar imagen */}
-                <button type="button" onClick={() => noticiaFileRef.current?.click()} disabled={noticiaUploading}
-                  className="flex w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border/60 bg-muted/20 p-5 transition-colors hover:border-[#FFB300]/50 hover:bg-muted/40 disabled:opacity-50">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFB300]/10">
-                    <UploadIcon className={`h-5 w-5 text-[#FFB300] ${noticiaUploading ? "animate-bounce" : ""}`} />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-medium">{noticiaUploading ? "Subiendo..." : noticiaImagenes.length > 0 ? "Agregar más imágenes" : "Seleccionar imágenes"}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">JPG, PNG, WebP o GIF</p>
-                  </div>
-                </button>
-                <input ref={noticiaFileRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple onChange={handleNoticiaImageUpload} className="hidden" />
+            <form onSubmit={handleBannerSubmit} className="space-y-4 pt-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-[#002F6C]">Título de la Noticia *</Label>
+                <Input name="titulo" required defaultValue={editNot?.titulo} placeholder="Ej: Nueva sucursal en El Alto" className="rounded-xl text-xs" />
               </div>
 
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" name="activo" defaultChecked={editItem ? (editItem as NoticiaRow).activo : true} className="h-4 w-4 rounded" />
-                <span className="text-sm font-medium">Activo</span>
-              </label>
-              <div className="flex justify-end gap-3 pt-2 border-t border-border/40">
-                <Button type="button" variant="outline" onClick={() => { setDialogOpen(false); setNoticiaImagenes([]) }} className="rounded-xl">Cancelar</Button>
-                <Button type="submit" disabled={isPending || noticiaUploading} className="rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] border-0 font-semibold shadow-md shadow-[#FFB300]/20">
-                  {isPending ? "Guardando..." : "Guardar"}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-[#002F6C]">Descripción</Label>
+                <textarea
+                  name="descripcion"
+                  defaultValue={editNot?.descripcion || ""}
+                  placeholder="Detalle de la noticia..."
+                  className="w-full rounded-xl border border-slate-200 p-3 text-xs focus:outline-none focus:ring-1 focus:ring-[#0E5296] min-h-[90px]"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-[#002F6C]">Enlace externo (Opcional)</Label>
+                <Input name="enlace" defaultValue={editNot?.enlace || ""} placeholder="https://correos.gob.bo/noticia" className="rounded-xl text-xs" />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="activo" name="activo" defaultChecked={editNot?.activo ?? true} className="h-4 w-4 rounded" />
+                <label htmlFor="activo" className="text-xs font-bold text-[#002F6C] cursor-pointer">Noticia Activa y Visible</label>
+              </div>
+
+              {/* Subida de Imagen */}
+              <div className="space-y-1.5 pt-2">
+                <Label className="text-xs font-bold text-[#002F6C]">Imagen del Banner</Label>
+                <input ref={noticiaFileRef} type="file" accept="image/*" onChange={handleNoticiaImageUpload} className="hidden" />
+                {noticiaImagenes.length === 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => noticiaFileRef.current?.click()}
+                    disabled={noticiaUploading}
+                    className="flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#0E5296]/30 bg-blue-50/20 p-6 hover:bg-blue-50/50 transition-colors cursor-pointer"
+                  >
+                    <ImageIcon className="h-6 w-6 text-[#0E5296] mb-1" />
+                    <span className="text-xs font-bold text-[#002F6C]">{noticiaUploading ? "Subiendo..." : "Subir Imagen del Banner"}</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <img src={noticiaImagenes[0]} alt="Banner" className="h-10 w-16 object-cover rounded-lg" />
+                    <button type="button" onClick={() => setNoticiaImagenes([])} className="text-red-500 hover:text-red-700">
+                      <Trash2Icon className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button type="button" variant="ghost" onClick={() => setDialogOpen(false)} className="rounded-xl text-xs">Cancelar</Button>
+                <Button type="submit" disabled={isPending || noticiaUploading} className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold rounded-xl text-xs">
+                  {isPending ? "Guardando..." : "Guardar Noticia"}
                 </Button>
               </div>
             </form>
@@ -711,104 +750,64 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
         </DialogContent>
       </Dialog>
 
-      <Dialog open={accesoDialogOpen} onOpenChange={(v) => { if (!v) { setAccesoDialogOpen(false); setEditAcceso(null); setAccesoImagen("") } }}>
-        <DialogContent className="!w-[95vw] !max-w-[95vw] sm:!max-w-[760px] max-h-[92vh] overflow-y-auto overflow-x-hidden p-0 gap-0 rounded-2xl border-border/50">
-          <div className="flex h-1.5 w-full rounded-t-2xl overflow-hidden"><div className="flex-1 bg-[#C41E3A]" /><div className="flex-1 bg-[#FFB300]" /><div className="flex-1 bg-[#2E7D32]" /></div>
-          <DialogHeader className="px-6 pt-5 pb-0">
-            <DialogTitle className="text-xl font-bold tracking-tight break-words">
-              {editAcceso ? "Editar acceso directo" : "Nuevo acceso directo"}
+      {/* ── Modal Crear/Editar Acceso Directo ── */}
+      <Dialog open={accesoDialogOpen} onOpenChange={(v) => !v && setAccesoDialogOpen(false)}>
+        <DialogContent className="max-w-md rounded-3xl border-2 border-[#002F6C]/15 bg-white p-6 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-black text-[#002F6C]">
+              {editAcceso ? "Editar Acceso Directo" : "Nuevo Acceso Directo"}
             </DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              Configura enlaces a sistemas y sitios institucionales que se mostrarán en el menú Aplicaciones.
-            </p>
           </DialogHeader>
 
-          <form onSubmit={handleAccesoSubmit} className="space-y-5 px-6 pb-6 pt-4">
-            {/* Imagen de la app */}
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold">Imagen / Logo de la aplicación</Label>
-              <p className="text-xs text-muted-foreground">Sube el logo o ícono de la aplicación (JPG, PNG, WebP, GIF). Máximo 2 MB.</p>
+          <form onSubmit={handleAccesoSubmit} className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-[#002F6C]">Nombre de la Aplicación *</Label>
+              <Input name="titulo" required defaultValue={editAcceso?.titulo} placeholder="Ej: Portal RRHH" className="rounded-xl text-xs" />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-[#002F6C]">Descripción Corta</Label>
+              <Input name="descripcion" defaultValue={editAcceso?.descripcion} placeholder="Ej: Sistema de control de personal" className="rounded-xl text-xs" />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-[#002F6C]">Enlace URL *</Label>
+              <Input name="url" required defaultValue={editAcceso?.url} placeholder="https://rrhh.correos.gob.bo" className="rounded-xl text-xs" />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="acceso-activo" name="activo" defaultChecked={editAcceso?.activo ?? true} className="h-4 w-4 rounded" />
+              <label htmlFor="acceso-activo" className="text-xs font-bold text-[#002F6C] cursor-pointer">Aplicación Activa</label>
+            </div>
+
+            {/* Subida de Icono */}
+            <div className="space-y-1.5 pt-2">
+              <Label className="text-xs font-bold text-[#002F6C]">Icono / Logotipo de la Aplicación</Label>
+              <input ref={accesoFileRef} type="file" accept="image/*" onChange={handleAccesoImageUpload} className="hidden" />
               {!accesoImagen ? (
-                <button type="button" onClick={() => accesoFileRef.current?.click()} disabled={accesoUploading}
-                  className="flex w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border/60 bg-muted/20 p-6 transition-colors hover:border-[#FFB300]/50 hover:bg-muted/40 disabled:opacity-50">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FFB300]/10">
-                    <UploadIcon className={`h-6 w-6 text-[#FFB300] ${accesoUploading ? "animate-bounce" : ""}`} />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-medium">{accesoUploading ? "Subiendo imagen..." : "Haz clic para seleccionar una imagen"}</p>
-                    <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WebP o GIF</p>
-                  </div>
+                <button
+                  type="button"
+                  onClick={() => accesoFileRef.current?.click()}
+                  disabled={accesoUploading}
+                  className="flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#0E5296]/30 bg-blue-50/20 p-6 hover:bg-blue-50/50 transition-colors cursor-pointer"
+                >
+                  <Link2Icon className="h-6 w-6 text-[#0E5296] mb-1" />
+                  <span className="text-xs font-bold text-[#002F6C]">{accesoUploading ? "Subiendo icono..." : "Subir Logotipo del Sistema"}</span>
                 </button>
               ) : (
-                <div className="rounded-xl border border-border/50 bg-muted/20 overflow-hidden">
-                  <div className="relative bg-muted/30 flex items-center justify-center p-4">
-                    <img src={accesoImagen} alt="Logo de la app" className="max-h-[160px] rounded-lg object-contain shadow-md" />
-                  </div>
-                  <div className="flex items-center justify-between border-t border-border/40 px-4 py-3">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <ImageIcon className="h-4 w-4 text-[#FFB300] shrink-0" />
-                      <span className="text-sm truncate">Imagen cargada</span>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Button type="button" variant="ghost" size="sm" className="h-8 text-xs" onClick={() => accesoFileRef.current?.click()}>Reemplazar</Button>
-                      <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive" onClick={() => setAccesoImagen("")}><Trash2Icon className="h-4 w-4" /></Button>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <img src={accesoImagen} alt="App logo" className="h-10 w-10 object-contain rounded-lg bg-white p-1 shadow-xs" />
+                  <button type="button" onClick={() => setAccesoImagen("")} className="text-red-500 hover:text-red-700">
+                    <Trash2Icon className="h-4 w-4" />
+                  </button>
                 </div>
               )}
-              <input ref={accesoFileRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" onChange={handleAccesoImageUpload} className="hidden" />
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold">Nombre de la aplicación *</Label>
-              <Input
-                name="titulo"
-                required
-                defaultValue={editAcceso?.titulo}
-                placeholder="Ej: Sistema de Gestión SIGEC"
-                className="h-11 rounded-xl"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold">Enlace (URL) *</Label>
-              <Input
-                name="url"
-                type="url"
-                required
-                defaultValue={editAcceso?.url}
-                placeholder="https://sigec.correos.gob.bo/login?url="
-                className="h-11 rounded-xl"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold">Descripción</Label>
-              <Input
-                name="descripcion"
-                defaultValue={editAcceso?.descripcion}
-                placeholder="Descripción corta para el acceso"
-                className="h-11 rounded-xl"
-              />
-            </div>
-            <label className="flex cursor-pointer items-center gap-2">
-              <input
-                type="checkbox"
-                name="activo"
-                defaultChecked={editAcceso ? editAcceso.activo : true}
-                className="h-4 w-4 rounded border-input"
-              />
-              <span className="text-sm font-medium">Activo</span>
-            </label>
-
-            <div className="flex justify-end gap-3 border-t border-border/40 pt-2">
-              <Button type="button" variant="outline" className="rounded-xl" onClick={() => setAccesoDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                disabled={isPending || accesoUploading}
-                className="rounded-xl border-0 bg-gradient-to-r from-[#FFB300] to-[#FF8800] font-semibold text-[#1a1000] shadow-md shadow-[#FFB300]/20"
-              >
-                {isPending ? "Guardando..." : editAcceso ? "Guardar cambios" : "Crear acceso"}
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="ghost" onClick={() => setAccesoDialogOpen(false)} className="rounded-xl text-xs">Cancelar</Button>
+              <Button type="submit" disabled={isPending || accesoUploading} className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold rounded-xl text-xs">
+                {isPending ? "Guardando..." : "Guardar Acceso Directo"}
               </Button>
             </div>
           </form>
@@ -821,11 +820,7 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
           <DialogTitle className="sr-only">{viewItem?.titulo ?? "Vista previa de comunicado"}</DialogTitle>
           {viewItem && (
             <>
-              <div className="flex h-2 w-full rounded-t-2xl overflow-hidden">
-                <div className="flex-1 bg-[#C41E3A]" />
-                <div className="flex-1 bg-[#FFB300]" />
-                <div className="flex-1 bg-[#2E7D32]" />
-              </div>
+              <div className="h-1.5 w-full bg-gradient-to-r from-[#FFB800] via-[#0077EE] to-[#0E5296]" />
 
               <div className="flex items-center justify-between px-8 pt-6 pb-2">
                 <div className="flex items-center gap-3">
@@ -833,16 +828,16 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
                   <img src="/image/LogoAmarillo.png" alt="AGBC" className="h-10 object-contain hidden dark:block" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
                 </div>
                 <div className="text-right">
-                  <p className="text-xs font-bold uppercase tracking-widest text-[#FFB300]">Correos de Bolivia</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-[#FFB800]">Correos de Bolivia</p>
                   <p className="text-[10px] text-muted-foreground">Agencia Boliviana de Correos</p>
                 </div>
               </div>
 
               <div className="px-8 pb-8 pt-2">
                 <div className="text-center mb-6">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#FFB300] mb-2">Comunicado</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#FFB800] mb-2">Comunicado</p>
                   <h2 className="text-2xl font-extrabold tracking-tight leading-tight">{viewItem.titulo}</h2>
-                  <div className="mx-auto mt-3 h-1 w-16 rounded-full bg-gradient-to-r from-[#FFB300] to-[#FF8800]" />
+                  <div className="mx-auto mt-3 h-1 w-16 rounded-full bg-gradient-to-r from-[#FFB800] to-[#FFB800]" />
                 </div>
 
                 <div className="flex items-center justify-center gap-3 mb-6 flex-wrap">
@@ -895,6 +890,6 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   )
 }

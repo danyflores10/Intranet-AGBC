@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState } from "react"
 import { UserPlusIcon } from "lucide-react"
@@ -40,10 +40,11 @@ export function UserCreateDialog({ roles, onCreated }: UserCreateDialogProps) {
 
     try {
       const createPayload: UserCreatePayload = {
+        name: payload.name,
         firstName: payload.firstName,
         lastNamePaternal: payload.lastNamePaternal,
         lastNameMaternal: payload.lastNameMaternal,
-        email: payload.email,
+        email: payload.email || payload.institutionalEmail,
         institutionalEmail: payload.institutionalEmail,
         nationalId: payload.nationalId,
         dateOfBirth: payload.dateOfBirth,
@@ -70,18 +71,18 @@ export function UserCreateDialog({ roles, onCreated }: UserCreateDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="border-0 bg-gradient-to-r from-[#FFB300] to-[#FF8800] font-semibold text-[#1a1000] shadow-md shadow-[#FFB300]/20">
-          <UserPlusIcon className="mr-2 h-4 w-4" />
+        <Button className="border-0 bg-[#0E5296] hover:bg-[#002F6C] font-bold text-white shadow-md shadow-[#0E5296]/20 cursor-pointer">
+          <UserPlusIcon className="mr-2 h-4 w-4 text-[#FFB800]" />
           Nuevo usuario
         </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto p-0 gap-0 rounded-2xl">
-        <div className="flex h-1.5 w-full"><div className="flex-1 bg-[#C41E3A]"/><div className="flex-1 bg-[#FFB300]"/><div className="flex-1 bg-[#2E7D32]"/></div>
+        <div className="h-1.5 w-full bg-[#0E5296]" />
         <div className="p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
-            <UserPlusIcon className="h-5 w-5 text-[#FFB300]" />
+            <UserPlusIcon className="h-5 w-5 text-[#FFB800]" />
             Crear usuario
           </DialogTitle>
           <DialogDescription>

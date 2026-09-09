@@ -30,14 +30,14 @@ interface Props {
 }
 
 const TIPO_CONFIG: Record<string, { icon: typeof BellIcon; color: string; bg: string }> = {
-  calendario: { icon: CalendarIcon, color: "#FF8800", bg: "bg-amber-50 dark:bg-amber-500/10" },
-  info: { icon: InfoIcon, color: "#1976D2", bg: "bg-blue-50 dark:bg-blue-500/10" },
+  calendario: { icon: CalendarIcon, color: "#0E5296", bg: "bg-[#0E5296]/10" },
+  info: { icon: InfoIcon, color: "#0E5296", bg: "bg-blue-50 dark:bg-blue-500/10" },
   alerta: { icon: AlertTriangleIcon, color: "#C41E3A", bg: "bg-red-50 dark:bg-red-500/10" },
   correspondencia: { icon: MailIcon, color: "#2E7D32", bg: "bg-green-50 dark:bg-green-500/10" },
 }
 
 function getTipoNotif(tipo: string) {
-  return TIPO_CONFIG[tipo] ?? { icon: BellIcon, color: "#FFB300", bg: "bg-amber-50 dark:bg-amber-500/10" }
+  return TIPO_CONFIG[tipo] ?? { icon: BellIcon, color: "#0E5296", bg: "bg-[#0E5296]/10" }
 }
 
 export function NotificacionesBell({ usuarioId, notificacionesIniciales, countInicial }: Props) {
@@ -238,7 +238,7 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
           <div className="flex border-l border-gray-200 dark:border-zinc-700">
             <button
               onClick={() => toast.dismiss(t.id)}
-              className="flex w-full items-center justify-center rounded-none rounded-r-xl p-4 text-sm font-medium text-[#FF8800] transition-colors hover:text-[#FFB300] hover:bg-gray-50 dark:hover:bg-zinc-800 focus:outline-none"
+              className="flex w-full items-center justify-center rounded-none rounded-r-xl p-4 text-sm font-bold text-[#0E5296] transition-colors hover:text-[#002F6C] hover:bg-slate-50 focus:outline-none cursor-pointer"
             >
               Cerrar
             </button>
@@ -410,20 +410,20 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
   const leidas = notificaciones.filter((n) => n.leida)
 
   return (
-    <div className="relative" ref={panelRef}>
+    <div ref={panelRef} className="relative">
       {/* Botón campana */}
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`relative inline-flex h-10 w-10 items-center justify-center rounded-xl border shadow-sm transition-all duration-200 ${
+        className={`relative inline-flex h-10 w-10 items-center justify-center rounded-xl border shadow-sm transition-all duration-200 cursor-pointer ${
           open
-            ? "border-[#FFB300]/40 bg-[#FFB300]/10 text-[#FF8800]"
+            ? "border-[#FFB800]/60 bg-[#FFB800]/15 text-[#0E5296] dark:text-[#FFB800]"
             : "border-border/50 bg-card/80 text-muted-foreground hover:bg-muted hover:text-foreground"
         }`}
       >
         <BellIcon className={`h-[18px] w-[18px] transition-transform ${count > 0 ? "animate-[bell-ring_0.5s_ease-in-out]" : ""}`} />
         {count > 0 && (
-          <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-gradient-to-br from-[#C41E3A] to-[#940533] px-1 text-[10px] font-bold text-white shadow-lg shadow-[#C41E3A]/30 ring-2 ring-background">
+          <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#0E5296] px-1 text-[10px] font-black text-[#FFB800] shadow-md ring-2 ring-white">
             {count > 99 ? "99+" : count}
           </span>
         )}
@@ -433,10 +433,10 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
       {open && (
         <div className="absolute right-0 top-full mt-2.5 z-50 w-[400px] max-h-[560px] overflow-hidden rounded-2xl border border-border/60 bg-card shadow-2xl shadow-black/15 animate-in fade-in slide-in-from-top-2 duration-200">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-border/40 bg-gradient-to-r from-[#FFB300]/5 to-transparent px-5 py-3.5">
+          <div className="flex items-center justify-between border-b border-border/40 bg-gradient-to-r from-[#FFB800]/10 to-transparent px-5 py-3.5">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FFB300]/10">
-                <BellIcon className="h-4 w-4 text-[#FFB300]" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FFB800]/15">
+                <BellIcon className="h-4 w-4 text-[#FFB800]" />
               </div>
               <div>
                 <h3 className="text-sm font-bold">Notificaciones</h3>
@@ -451,7 +451,7 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
                   type="button"
                   onClick={handleMarcarTodas}
                   disabled={isPending}
-                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#FF8800] transition-all hover:bg-[#FFB300]/10 disabled:opacity-50"
+                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold text-[#0E5296] dark:text-[#FFB800] transition-all hover:bg-[#FFB800]/15 disabled:opacity-50 cursor-pointer"
                 >
                   <CheckIcon className="h-3.5 w-3.5" />
                   Leer todo
@@ -460,7 +460,7 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-muted hover:text-foreground cursor-pointer"
               >
                 <XIcon className="h-4 w-4" />
               </button>
@@ -485,7 +485,7 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
                 {noLeidas.length > 0 && (
                   <div>
                     <div className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm px-5 py-2 border-b border-border/20">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF8800]">Nuevas</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#0E5296] dark:text-[#FFB800]">Nuevas</p>
                     </div>
                     {noLeidas.map((n) => {
                       const tipoCfg = getTipoNotif(n.tipo)
@@ -493,7 +493,7 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
                       return (
                         <div
                           key={n.id}
-                          className="group flex items-start gap-3 border-b border-border/15 px-5 py-3.5 transition-all duration-200 bg-[#FFB300]/[0.03] hover:bg-[#FFB300]/[0.06]"
+                          className="group flex items-start gap-3 border-b border-border/15 px-5 py-3.5 transition-all duration-200 bg-[#FFB800]/[0.04] hover:bg-[#FFB800]/[0.08]"
                         >
                           <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${tipoCfg.bg} transition-transform duration-200 group-hover:scale-110`}>
                             <Icon className="h-4 w-4" style={{ color: tipoCfg.color }} />
@@ -507,7 +507,7 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
                                 <p className="text-[13px] font-bold leading-snug">{n.titulo}</p>
                                 <p className="text-[12px] text-muted-foreground mt-1 leading-relaxed line-clamp-3">{n.mensaje}</p>
                               </div>
-                              <div className="h-2 w-2 shrink-0 mt-1.5 rounded-full bg-[#FFB300] ring-2 ring-[#FFB300]/20" />
+                              <div className="h-2 w-2 shrink-0 mt-1.5 rounded-full bg-[#FFB800] ring-2 ring-[#FFB800]/30" />
                             </div>
                             <div className="flex items-center justify-between mt-2">
                               <p className="text-[10px] text-muted-foreground/50 font-medium">{formatTiempo(n.createdAt)}</p>
@@ -518,7 +518,7 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
                                     e.stopPropagation()
                                     handleMarcarLeida(n.id)
                                   }}
-                                  className="inline-flex h-7 items-center gap-1 rounded-lg px-2 text-[11px] font-medium text-[#FF8800] hover:bg-[#FFB300]/10"
+                                  className="inline-flex h-7 items-center gap-1 rounded-lg px-2 text-[11px] font-bold text-[#0E5296] dark:text-[#FFB800] hover:bg-[#FFB800]/15 cursor-pointer"
                                   title="Marcar como leída"
                                 >
                                   <CheckIcon className="h-3 w-3" />
@@ -530,7 +530,7 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
                                     e.stopPropagation()
                                     handleEliminar(n.id)
                                   }}
-                                  className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10"
+                                  className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 cursor-pointer"
                                   title="Eliminar"
                                 >
                                   <Trash2Icon className="h-3 w-3" />

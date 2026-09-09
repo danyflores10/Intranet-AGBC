@@ -23,10 +23,11 @@ export type User = {
 }
 
 export type UserCreatePayload = {
-  firstName: string
-  lastNamePaternal: string
+  name?: string
+  firstName?: string
+  lastNamePaternal?: string
   lastNameMaternal?: string
-  email: string
+  email?: string
   institutionalEmail: string
   nationalId: string
   dateOfBirth: string
@@ -36,10 +37,11 @@ export type UserCreatePayload = {
 }
 
 export type UserUpdatePayload = {
-  firstName: string
-  lastNamePaternal: string
+  name?: string
+  firstName?: string
+  lastNamePaternal?: string
   lastNameMaternal?: string
-  email: string
+  email?: string
   institutionalEmail: string
   nationalId: string
   dateOfBirth: string

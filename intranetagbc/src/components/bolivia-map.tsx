@@ -230,11 +230,11 @@ export function BoliviaMap({ sucursalesDb }: BoliviaMapProps) {
       <div className="mx-auto max-w-7xl px-6 py-24 md:py-32">
         {/* Header */}
         <div className="mx-auto max-w-2xl text-center mb-16">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#FFB300]/20 bg-[#FFB300]/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#FF8800]">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#FFB800]/30 bg-[#FFB800]/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-[#0E5296] dark:text-[#FFB800]">
             <MapPinIcon className="h-3.5 w-3.5" />
             Cobertura Nacional
           </div>
-          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl">
+          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl text-foreground">
             Nuestras Oficinas
           </h2>
           <p className="mt-4 text-muted-foreground text-lg">
@@ -312,12 +312,8 @@ export function BoliviaMap({ sucursalesDb }: BoliviaMapProps) {
           {/* Panel lateral */}
           <div className="space-y-3">
             {selectedDept ? (
-              <div className="rounded-2xl border border-[#FFB300]/30 bg-white dark:bg-zinc-900 shadow-xl shadow-[#FFB300]/5 overflow-hidden">
-                <div className="flex h-1 w-full">
-                  <div className="flex-1 bg-[#C41E3A]" />
-                  <div className="flex-1 bg-[#FFB300]" />
-                  <div className="flex-1 bg-[#2E7D32]" />
-                </div>
+              <div className="rounded-2xl border border-[#FFB800]/40 bg-white dark:bg-zinc-900 shadow-xl shadow-[#0E5296]/10 overflow-hidden">
+                <div className="h-1.5 w-full bg-gradient-to-r from-[#FFB800] via-[#0077EE] to-[#0E5296]" />
                 <div className="p-5 border-b border-border/30">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
@@ -334,7 +330,7 @@ export function BoliviaMap({ sucursalesDb }: BoliviaMapProps) {
                     </div>
                     <button
                       onClick={() => setSelected(null)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/50 hover:bg-muted transition-colors"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/50 hover:bg-muted transition-colors cursor-pointer"
                     >
                       <XIcon className="h-4 w-4" />
                     </button>
@@ -351,21 +347,21 @@ export function BoliviaMap({ sucursalesDb }: BoliviaMapProps) {
                   )}
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">
-                      <MapPinIcon className="h-4 w-4 shrink-0 mt-0.5 text-[#FF8800]" />
+                      <MapPinIcon className="h-4 w-4 shrink-0 mt-0.5 text-[#0E5296] dark:text-[#FFB800]" />
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">Dirección</p>
                         <p className="text-sm font-medium">{selectedDept.office.address}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <PhoneIcon className="h-4 w-4 shrink-0 mt-0.5 text-[#FF8800]" />
+                      <PhoneIcon className="h-4 w-4 shrink-0 mt-0.5 text-[#0077EE]" />
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">Teléfono</p>
                         <p className="text-sm font-medium">{selectedDept.office.phone}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <ClockIcon className="h-4 w-4 shrink-0 mt-0.5 text-[#FF8800]" />
+                      <ClockIcon className="h-4 w-4 shrink-0 mt-0.5 text-[#FFB800]" />
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">Horario</p>
                         <p className="text-sm font-medium">{selectedDept.office.hours}</p>
@@ -376,9 +372,9 @@ export function BoliviaMap({ sucursalesDb }: BoliviaMapProps) {
                     href={selectedDept.office.maps}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] hover:from-[#FF8800] hover:to-[#FFB300] text-white font-semibold py-3 px-4 transition-all duration-300 shadow-md hover:shadow-lg"
+                    className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold py-3 px-4 transition-all duration-200 shadow-md hover:shadow-lg cursor-pointer"
                   >
-                    <ExternalLinkIcon className="h-4 w-4" />
+                    <ExternalLinkIcon className="h-4 w-4 text-[#FFB800]" />
                     Ver en Google Maps
                   </a>
                 </div>
@@ -396,14 +392,14 @@ export function BoliviaMap({ sucursalesDb }: BoliviaMapProps) {
                       onClick={() => setSelected(dept.id)}
                       onMouseEnter={() => setHovered(dept.id)}
                       onMouseLeave={() => setHovered(null)}
-                      className="flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-[#FFB300]/5 transition-all duration-200 group"
+                      className="flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-[#FFB800]/10 transition-all duration-200 group cursor-pointer"
                     >
                       <div
                         className="h-3 w-3 rounded-full shrink-0 group-hover:scale-125 transition-transform"
                         style={{ background: dept.color, boxShadow: `0 0 0 2px white, 0 0 0 4px ${dept.color}40` }}
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold">{dept.name}</p>
+                        <p className="text-sm font-semibold group-hover:text-[#0E5296] dark:group-hover:text-[#FFB800] transition-colors">{dept.name}</p>
                         <p className="text-xs text-muted-foreground">{dept.capital}</p>
                       </div>
                       <ChevronRightIcon className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />

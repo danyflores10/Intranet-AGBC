@@ -1,7 +1,14 @@
 "use client"
 
 import { useMemo, useTransition } from "react"
-import { RotateCcwIcon, Trash2Icon } from "lucide-react"
+import {
+  RotateCcwIcon,
+  Trash2Icon,
+  ArchiveIcon,
+  FileTextIcon,
+  CheckCircle2Icon,
+  SparklesIcon,
+} from "lucide-react"
 import toast from "react-hot-toast"
 
 import { DataTable } from "@/components/dashboard/data-table"
@@ -65,7 +72,7 @@ export function ArchivoModule({ papeleraDocumentos }: Props) {
     startTransition(async () => {
       try {
         await eliminarRegistroPapelera(papeleraId)
-        toast.success("Eliminado de la papelera")
+        toast.success("Eliminado definitivamente")
       } catch {
         toast.error("No se pudo eliminar de la papelera")
       }
@@ -73,96 +80,136 @@ export function ArchivoModule({ papeleraDocumentos }: Props) {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6">
-      <div>
-        <h2 className="text-xl font-bold tracking-tight">Papelera</h2>
-        <p className="text-sm text-muted-foreground">
-          Documentos eliminados desde el módulo de documentos. Puedes restaurarlos.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card className="border-border/40">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold">{totalPapelera}</div>
-            <div className="text-xs text-muted-foreground">Total en papelera</div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/40">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">{papeleraConArchivo}</div>
-            <div className="text-xs text-muted-foreground">Con archivo adjunto</div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/40">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-amber-500">{papeleraSinArchivo}</div>
-            <div className="text-xs text-muted-foreground">Sin archivo adjunto</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <DataTable
-        data={papeleraData}
-        searchKey="titulo"
-        searchPlaceholder="Buscar en papelera..."
-        columns={[
-          {
-            key: "titulo",
-            label: "Documento",
-            render: (row) => (
-              <div className="min-w-0">
-                <p className="font-medium truncate">{row.titulo}</p>
-                <p className="text-[10px] text-muted-foreground truncate">
-                  {row.nombreArchivo ?? "Sin archivo"}
-                </p>
-              </div>
-            ),
-          },
-          {
-            key: "categoria",
-            label: "Categoría",
-            render: (row) => row.categoria || "Sin categoría",
-          },
-          { key: "autor", label: "Autor" },
-          { key: "fechaOriginal", label: "Fecha documento" },
-          { key: "fechaEliminado", label: "Eliminado" },
-          {
-            key: "estadoOriginal",
-            label: "Estado original",
-            render: (row) =>
-              ESTADOS_DOCUMENTO_VALIDOS.has(row.estadoOriginal) ? (
-                <StatusBadge
-                  status={row.estadoOriginal as "publicado" | "pendiente" | "borrador"}
-                />
-              ) : (
-                <span className="text-xs text-muted-foreground">{row.estadoOriginal}</span>
-              ),
-          },
-        ]}
-        actions={(row) => (
-          <div className="flex items-center justify-end gap-2">
-            <button
-              type="button"
-              title="Restaurar"
-              disabled={isPending}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-green-300 hover:bg-green-50 hover:text-green-600 hover:shadow-md dark:hover:border-green-500/30 dark:hover:bg-green-500/10 dark:hover:text-green-400 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
-              onClick={() => handleRestoreFromPapelera(row.papeleraId, row.titulo)}
-            >
-              <RotateCcwIcon className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              title="Eliminar definitivo"
-              disabled={isPending}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-red-300 hover:bg-red-50 hover:text-red-600 hover:shadow-md dark:hover:border-red-500/30 dark:hover:bg-red-500/10 dark:hover:text-red-400 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
-              onClick={() => handleDeleteFromPapelera(row.papeleraId)}
-            >
-              <Trash2Icon className="h-4 w-4" />
-            </button>
+    <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-blue-50/25 to-amber-50/20 min-h-screen">
+      {/* ── Encabezado Institucional ── */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-3xl border-2 border-[#002F6C]/15 bg-gradient-to-r from-white via-blue-50/30 to-amber-50/30 p-6 shadow-xs">
+        <div className="flex items-center gap-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0E5296] text-[#FFCC00] shadow-md ring-2 ring-[#0E5296]/20">
+            <ArchiveIcon className="h-7 w-7" />
           </div>
-        )}
-      />
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-black tracking-tight text-[#002F6C]">
+                Papelera de Documentos
+              </h1>
+              <span className="rounded-full bg-[#0E5296] text-[#FFCC00] px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                AGBC
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Documentos eliminados del repositorio. Puedes restaurarlos a su estado original o purgarlos definitivamente.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Tarjetas Métricas Pastel Amarillo y Azul ── */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-sky-200/90 bg-gradient-to-br from-sky-50 via-blue-50/60 to-white p-4 shadow-xs">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0E5296] text-[#FFCC00]">
+            <ArchiveIcon className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-2xl font-black text-[#002F6C]">{totalPapelera}</div>
+            <div className="text-xs text-slate-600 font-bold">Total en Papelera</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-amber-200/90 bg-gradient-to-br from-amber-50 via-yellow-50/60 to-white p-4 shadow-xs">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FFCC00] text-[#002F6C]">
+            <CheckCircle2Icon className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-2xl font-black text-[#002F6C]">{papeleraConArchivo}</div>
+            <div className="text-xs text-slate-600 font-bold">Con Archivo Adjunto</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-blue-200/90 bg-gradient-to-br from-blue-50 via-sky-50/50 to-white p-4 shadow-xs">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-200 text-[#002F6C]">
+            <SparklesIcon className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-2xl font-black text-[#002F6C]">{papeleraSinArchivo}</div>
+            <div className="text-xs text-slate-600 font-bold">Sin Archivo Adjunto</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Tabla Estructurada ── */}
+      <div className="rounded-3xl border-2 border-[#002F6C]/15 bg-white p-4 shadow-sm overflow-hidden">
+        <DataTable
+          data={papeleraData}
+          searchKey="titulo"
+          searchPlaceholder="Buscar en papelera..."
+          columns={[
+            {
+              key: "titulo",
+              label: "Documento",
+              render: (row) => (
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFCC00] text-[#002F6C] font-black shadow-xs">
+                    <FileTextIcon className="h-5 w-5 text-red-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-[#002F6C] truncate">{row.titulo}</p>
+                    <p className="text-[10px] text-slate-400 truncate">
+                      {row.nombreArchivo ?? "Sin archivo adjunto"}
+                    </p>
+                  </div>
+                </div>
+              ),
+            },
+            {
+              key: "categoria",
+              label: "Categoría",
+              render: (row) => (
+                <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-700">
+                  {row.categoria || "Sin categoría"}
+                </span>
+              ),
+            },
+            { key: "autor", label: "Autor" },
+            { key: "fechaOriginal", label: "Fecha Creación" },
+            { key: "fechaEliminado", label: "Fecha Eliminación" },
+            {
+              key: "estadoOriginal",
+              label: "Estado Previo",
+              render: (row) =>
+                ESTADOS_DOCUMENTO_VALIDOS.has(row.estadoOriginal) ? (
+                  <StatusBadge
+                    status={row.estadoOriginal as "publicado" | "pendiente" | "borrador"}
+                  />
+                ) : (
+                  <span className="text-xs text-slate-500 font-bold">{row.estadoOriginal}</span>
+                ),
+            },
+          ]}
+          actions={(row) => (
+            <div className="flex items-center justify-end gap-1.5">
+              <button
+                type="button"
+                title="Restaurar documento"
+                disabled={isPending}
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+                onClick={() => handleRestoreFromPapelera(row.papeleraId, row.titulo)}
+              >
+                <RotateCcwIcon className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                title="Eliminar definitivamente"
+                disabled={isPending}
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+                onClick={() => handleDeleteFromPapelera(row.papeleraId)}
+              >
+                <Trash2Icon className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+        />
+      </div>
     </div>
   )
 }
+

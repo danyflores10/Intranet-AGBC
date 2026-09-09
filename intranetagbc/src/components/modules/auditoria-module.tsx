@@ -873,78 +873,75 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6">
+    <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-blue-50/25 to-amber-50/20 min-h-screen">
       <div>
-        <h2 className="text-xl font-bold tracking-tight">Centro de Auditoría</h2>
-        <p className="text-sm text-muted-foreground">
-          Registro detallado de todas las acciones realizadas en el sistema.
+        <div className="flex items-center gap-2">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0E5296] text-[#FFCC00] shadow-sm">
+            <ShieldCheckIcon className="h-5 w-5" />
+          </div>
+          <h1 className="text-2xl font-black tracking-tight text-[#002F6C]">
+            Centro de Auditoría y Logs
+          </h1>
+        </div>
+        <p className="text-xs text-slate-600 font-medium mt-1">
+          Historial y registro detallado de trazabilidad y seguridad en el sistema AGBC.
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <Card className="border-border/40">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#FFB300]/20 to-[#FF8800]/10">
-              <LayersIcon className="h-6 w-6 text-[#FFB300]" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold">{filteredStats.total}</div>
-              <div className="text-xs text-muted-foreground">Total registros</div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-sky-200/90 bg-gradient-to-br from-sky-50 via-blue-50/60 to-white p-4 shadow-xs hover:shadow-md transition-all">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0E5296]/15 text-[#0E5296]">
+            <LayersIcon className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-2xl font-black text-[#002F6C]">{filteredStats.total}</div>
+            <div className="text-xs text-slate-600 font-bold">Total Registros</div>
+          </div>
+        </div>
 
-        <Card className="border-border/40">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10">
-              <CheckCircle2Icon className="h-6 w-6 text-emerald-600" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{filteredStats.exitosos}</div>
-              <div className="text-xs text-muted-foreground">Exitosos</div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-amber-200/90 bg-gradient-to-br from-amber-50 via-yellow-50/60 to-white p-4 shadow-xs hover:shadow-md transition-all">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FFCC00]/25 text-[#002F6C]">
+            <CheckCircle2Icon className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-2xl font-black text-emerald-700">{filteredStats.exitosos}</div>
+            <div className="text-xs text-slate-600 font-bold">Exitosos</div>
+          </div>
+        </div>
 
-        <Card className="border-border/40">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-500/10">
-              <XCircleIcon className="h-6 w-6 text-red-600" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-red-700 dark:text-red-400">{filteredStats.fallidos}</div>
-              <div className="text-xs text-muted-foreground">Fallidos</div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-blue-200/90 bg-gradient-to-br from-blue-50 via-sky-50/50 to-white p-4 shadow-xs hover:shadow-md transition-all">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0E5296] text-[#FFCC00]">
+            <XCircleIcon className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-2xl font-black text-red-600">{filteredStats.fallidos}</div>
+            <div className="text-xs text-slate-600 font-bold">Fallidos</div>
+          </div>
+        </div>
 
-        <Card className="border-border/40">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10">
-              <AlertTriangleIcon className="h-6 w-6 text-amber-600" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-amber-700 dark:text-amber-400">{filteredStats.advertencias}</div>
-              <div className="text-xs text-muted-foreground">Advertencias</div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-amber-200/90 bg-gradient-to-br from-yellow-50 via-amber-50/60 to-white p-4 shadow-xs hover:shadow-md transition-all">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FFCC00]/25 text-[#002F6C]">
+            <AlertTriangleIcon className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-2xl font-black text-amber-700">{filteredStats.advertencias}</div>
+            <div className="text-xs text-slate-600 font-bold">Advertencias</div>
+          </div>
+        </div>
 
-        <Card className="border-border/40">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FFB300]/10">
-              <ShieldCheckIcon className="h-6 w-6 text-[#FFB300]" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold">{filteredStats.modulos}</div>
-              <div className="text-xs text-muted-foreground">Módulos activos</div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-sky-200/90 bg-gradient-to-br from-blue-50 via-sky-50/40 to-white p-4 shadow-xs hover:shadow-md transition-all">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0E5296]/15 text-[#0E5296]">
+            <ShieldCheckIcon className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-2xl font-black text-[#002F6C]">{filteredStats.modulos}</div>
+            <div className="text-xs text-slate-600 font-bold">Módulos Activos</div>
+          </div>
+        </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-border/70 px-4 py-4 sm:px-5">
+      <div className="overflow-hidden rounded-3xl border-2 border-[#002F6C]/15 bg-gradient-to-br from-white via-blue-50/20 to-amber-50/20 p-5 shadow-sm">
+        <div className="flex flex-col gap-3 pb-4 border-b border-[#002F6C]/10 mb-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="relative w-full lg:max-w-md">
               <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

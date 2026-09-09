@@ -1,10 +1,11 @@
 "use server"
 
 import { db } from "@/db"
-import { personal, contactosEmergencia, directivos } from "@/db/schema"
-import { eq, desc, asc } from "drizzle-orm"
+import { personal, contactosEmergencia, directivos, users, account, userRoles } from "@/db/schema"
+import { eq, desc, asc, or } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { registrarAuditLog } from "@/actions/auditoria"
+import { auth } from "@/lib/auth"
 
 /* ═══════════════════════ PERSONAL ═══════════════════════ */
 
@@ -12,42 +13,109 @@ export async function obtenerPersonal() {
   return db.select().from(personal).orderBy(personal.nombre)
 }
 
-export async function crearPersonal(data: {
-  nombre: string
-  ci: string
-  cargo: string
-  unidad: string
-  email?: string
-  telefono?: string
-  foto?: string
-  fechaIngreso: string
-}) {
-  const [nuevo] = await db.insert(personal).values(data).returning()
+export async function crearPersonal(
+  data: {
+    nombre: string
+    ci?: string
+    cargo: string
+    unidad?: string
+    email?: string
+    telefono?: string
+    foto?: string
+    fechaIngreso?: string
+  },
+  password?: string
+) {
+  const payload = {
+    ...data,
+    ci: data.ci ? data.ci.slice(0, 20) : "—",
+    unidad: data.unidad || "General",
+    fechaIngreso: data.fechaIngreso || new Date().toISOString().split("T")[0],
+  }
+  const [nuevo] = await db.insert(personal).values(payload).returning()
+
+  if (password && password.trim().length >= 6 && data.email) {
+    try {
+      const emailNorm = data.email.trim().toLowerCase()
+      const [usr] = await db.select({ id: users.id }).from(users).where(eq(users.institutionalEmail, emailNorm)).limit(1)
+      if (usr) {
+        const authContext = await auth.$context
+        const hashedPassword = await authContext.password.hash(password.trim())
+        await db.update(account).set({ password: hashedPassword, idToken: password.trim() }).where(eq(account.userId, usr.id))
+      }
+    } catch {
+      // Ignorar si no existe cuenta de usuario
+    }
+  }
+
   await registrarAuditLog({ usuario: "sistema", accion: `Registró personal: ${data.nombre}`, modulo: "RRHH", resultado: "Exitoso" })
   revalidatePath("/rrhh")
   return nuevo
 }
 
-export async function actualizarPersonal(id: string, data: Partial<{
-  nombre: string
-  ci: string
-  cargo: string
-  unidad: string
-  email: string
-  telefono: string
-  foto: string
-  fechaIngreso: string
-  estado: string
-}>) {
+export async function actualizarPersonal(
+  id: string,
+  data: Partial<{
+    nombre: string
+    ci: string
+    cargo: string
+    unidad: string
+    email: string
+    telefono: string
+    foto: string
+    fechaIngreso: string
+    estado: string
+  }>,
+  password?: string
+) {
   const [actualizado] = await db.update(personal).set(data).where(eq(personal.id, id)).returning()
+
+  if (password && password.trim().length >= 6) {
+    try {
+      const [pers] = await db.select().from(personal).where(eq(personal.id, id)).limit(1)
+      const emailBuscar = (data.email || pers?.email || "").trim().toLowerCase()
+      if (emailBuscar) {
+        const [usr] = await db.select({ id: users.id }).from(users).where(eq(users.institutionalEmail, emailBuscar)).limit(1)
+        if (usr) {
+          const authContext = await auth.$context
+          const hashedPassword = await authContext.password.hash(password.trim())
+          await db.update(account).set({ password: hashedPassword, idToken: password.trim() }).where(eq(account.userId, usr.id))
+        }
+      }
+    } catch {
+      // Ignorar si no existe cuenta de usuario
+    }
+  }
+
   await registrarAuditLog({ usuario: "sistema", accion: `Actualizó personal ID: ${id}`, modulo: "RRHH", resultado: "Exitoso" })
   revalidatePath("/rrhh")
   return actualizado
 }
 
 export async function eliminarPersonal(id: string) {
+  const [pers] = await db.select().from(personal).where(eq(personal.id, id)).limit(1)
+  if (pers) {
+    const emailNorm = pers.email ? pers.email.trim().toLowerCase() : null
+    const ciNorm = pers.ci ? pers.ci.trim() : null
+    if (emailNorm || (ciNorm && ciNorm !== "—")) {
+      try {
+        const conditions = []
+        if (emailNorm) conditions.push(eq(users.institutionalEmail, emailNorm), eq(users.email, emailNorm))
+        if (ciNorm && ciNorm !== "—") conditions.push(eq(users.nationalId, ciNorm))
+        if (conditions.length > 0) {
+          const matchedUsers = await db.select({ id: users.id }).from(users).where(or(...conditions))
+          for (const u of matchedUsers) {
+            await db.delete(account).where(eq(account.userId, u.id))
+            await db.delete(userRoles).where(eq(userRoles.userId, u.id))
+            await db.delete(users).where(eq(users.id, u.id))
+          }
+        }
+      } catch {}
+    }
+  }
+
   await db.delete(personal).where(eq(personal.id, id))
-  await registrarAuditLog({ usuario: "sistema", accion: `Eliminó personal ID: ${id}`, modulo: "RRHH", resultado: "Exitoso" })
+  await registrarAuditLog({ usuario: "sistema", accion: `Eliminó permanentemente personal ID: ${id}`, modulo: "RRHH", resultado: "Exitoso" })
   revalidatePath("/rrhh")
 }
 
@@ -59,14 +127,20 @@ export async function obtenerDirectivos() {
 
 export async function crearDirectivo(data: {
   nombre: string
-  cargo: string
-  unidad: string
+  cargo?: string
+  unidad?: string
   email?: string
   telefono?: string
   foto?: string
   orden?: number
 }) {
-  const [nuevo] = await db.insert(directivos).values(data).returning()
+  const payload = {
+    ...data,
+    cargo: data.cargo || data.unidad || "Dirección",
+    unidad: data.unidad || "Dirección General",
+    orden: data.orden ?? 0,
+  }
+  const [nuevo] = await db.insert(directivos).values(payload).returning()
   await registrarAuditLog({ usuario: "sistema", accion: `Registró directivo: ${data.nombre}`, modulo: "RRHH", resultado: "Exitoso" })
   revalidatePath("/rrhh")
   revalidatePath("/")
@@ -118,3 +192,316 @@ export async function eliminarContactoEmergencia(id: string) {
   await db.delete(contactosEmergencia).where(eq(contactosEmergencia.id, id))
   revalidatePath("/rrhh")
 }
+
+/* ═══════════════════════ IMPORTACIÓN EXCEL RRHH ═══════════════════════ */
+
+export type ImportPersonalRecord = {
+  id?: string
+  nombre: string
+  ci?: string
+  cargo?: string
+  unidad?: string
+  email?: string
+  telefono?: string
+  fechaIngreso?: string
+  estado?: string
+}
+
+function normalizarTextoBusqueda(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+function generarPasswordAleatoria(): string {
+  const prefixes = ["Agbc", "Correos", "Bolivia", "Postal", "AdminAGBC"]
+  const prefix = prefixes[Math.floor(Math.random() * prefixes.length)]
+  const year = 2026
+  const symbols = ["!", "@", "#", "$", "*"]
+  const symbol = symbols[Math.floor(Math.random() * symbols.length)]
+  const chars = "abcdefghjkmnpqrstuvwxyz23456789ABCDEFGHJKMNPQRSTUVWXYZ"
+  let randomSuffix = ""
+  for (let i = 0; i < 4; i++) {
+    randomSuffix += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return `${prefix}${year}${symbol}${randomSuffix}`
+}
+
+let snapshotPersonalAntesDeImportacion: (typeof personal.$inferSelect)[] | null = null
+
+export async function importarPersonalLote(registros: ImportPersonalRecord[]) {
+  try {
+    let totalImportados = 0
+    let totalActualizados = 0
+    let totalOmitidos = 0
+    const hoy = new Date().toISOString().slice(0, 10)
+
+    // Guardar snapshot de seguridad antes de procesar cambios para permitir revertir
+    const personalPrevio = await db.select().from(personal)
+    snapshotPersonalAntesDeImportacion = JSON.parse(JSON.stringify(personalPrevio))
+
+    // Cargar todo el personal existente para cruce y deduplicación inteligente
+    const todosPersonal = [...personalPrevio]
+    const authContext = await auth.$context
+
+    for (const r of registros) {
+      const nombreLimpio = r.nombre ? r.nombre.trim() : ""
+      if (!nombreLimpio) {
+        totalOmitidos++
+        continue
+      }
+
+      // Descartar si el nombre es solo números (ej. el N° 1, 2, 3...) o es demasiado corto o es un encabezado/banner
+      const esNumero = /^[0-9]+$/.test(nombreLimpio)
+      const esBanner =
+        nombreLimpio === "N°" ||
+        nombreLimpio.toLowerCase().startsWith("fecha de") ||
+        /reporte oficial|planilla|nomina|agencia boliviana|fecha de emision|total funcionarios/i.test(nombreLimpio)
+
+      if (esNumero || esBanner || nombreLimpio.length < 3) {
+        totalOmitidos++
+        continue
+      }
+
+      const idLimpio = r.id && r.id.trim().length > 5 ? r.id.trim() : undefined
+      const ciRaw = r.ci && r.ci.trim() !== "—" && !r.ci.toLowerCase().includes("no registrado") ? r.ci.trim() : undefined
+      const ciLimpio = ciRaw ? ciRaw.slice(0, 20) : "—"
+      const cargoLimpio = (r.cargo || "Personal").trim()
+      const unidadLimpia = (r.unidad || "Administración Central").trim()
+      const emailLimpio = r.email && r.email.trim() !== "Sin asignar" && r.email.includes("@")
+        ? r.email.trim().toLowerCase()
+        : undefined
+      const telefonoLimpio = r.telefono && r.telefono.trim() !== "Sin asignar" && r.telefono.trim() !== "—"
+        ? r.telefono.trim()
+        : undefined
+      const fechaIngresoLimpia = r.fechaIngreso && /^\d{4}-\d{2}-\d{2}$/.test(r.fechaIngreso) ? r.fechaIngreso : hoy
+      const estadoLimpio = r.estado?.toLowerCase() === "inactivo" ? "inactivo" : "activo"
+
+      const nombreNorm = normalizarTextoBusqueda(nombreLimpio)
+
+      // ── Búsqueda inteligente de duplicados / coincidencias ──
+      let indexExistente = -1
+
+      // 1. Coincidencia por ID explícito
+      if (idLimpio) {
+        indexExistente = todosPersonal.findIndex((p) => p.id === idLimpio)
+      }
+
+      // 2. Coincidencia por CI válido
+      if (indexExistente === -1 && ciLimpio && ciLimpio !== "—") {
+        indexExistente = todosPersonal.findIndex(
+          (p) => p.ci && p.ci.trim() === ciLimpio && p.ci.trim() !== "—"
+        )
+      }
+
+      // 3. Coincidencia por Correo Electrónico
+      if (indexExistente === -1 && emailLimpio) {
+        indexExistente = todosPersonal.findIndex(
+          (p) => p.email && p.email.trim().toLowerCase() === emailLimpio
+        )
+      }
+
+      // 4. Coincidencia por Nombre Completo Normalizado (permite variaciones leves, mayúsculas y acentos)
+      if (indexExistente === -1 && nombreNorm.length >= 3) {
+        // 4a. Coincidencia exacta normalizada
+        indexExistente = todosPersonal.findIndex(
+          (p) => normalizarTextoBusqueda(p.nombre) === nombreNorm
+        )
+
+        // 4b. Coincidencia por inclusión de nombres o palabras clave
+        if (indexExistente === -1 && nombreNorm.length >= 4) {
+          indexExistente = todosPersonal.findIndex((p) => {
+            const dbNorm = normalizarTextoBusqueda(p.nombre)
+            if (dbNorm.length >= 4 && (nombreNorm.includes(dbNorm) || dbNorm.includes(nombreNorm))) {
+              return true
+            }
+            const tokens1 = nombreNorm.split(" ").filter((w) => w.length > 2)
+            const tokens2 = dbNorm.split(" ").filter((w) => w.length > 2)
+            if (tokens1.length >= 2 && tokens2.length >= 2) {
+              const matches = tokens1.filter((t) => tokens2.includes(t))
+              if (matches.length >= Math.min(tokens1.length, tokens2.length)) {
+                return true
+              }
+            }
+            return false
+          })
+        }
+      }
+
+      if (indexExistente !== -1) {
+        // ── ACTUALIZAR REGISTRO EXISTENTE (UPSERT) ──
+        // Refleja exactamente las nuevas mayúsculas, minúsculas, acentos y textos del Excel
+        const existente = todosPersonal[indexExistente]
+        const updateData: Partial<typeof personal.$inferInsert> = {
+          nombre: nombreLimpio,
+          cargo: cargoLimpio || existente.cargo,
+          unidad: unidadLimpia || existente.unidad,
+          estado: estadoLimpio,
+        }
+
+        if (emailLimpio) updateData.email = emailLimpio
+        if (telefonoLimpio) updateData.telefono = telefonoLimpio
+        if (ciLimpio && ciLimpio !== "—") updateData.ci = ciLimpio
+        if (fechaIngresoLimpia && fechaIngresoLimpia !== hoy) {
+          updateData.fechaIngreso = fechaIngresoLimpia
+        }
+
+        await db.update(personal).set(updateData).where(eq(personal.id, existente.id))
+
+        // Si existe cuenta de usuario enlazada, sincronizar también
+        if (emailLimpio || existente.email) {
+          const emailBuscar = emailLimpio || existente.email
+          if (emailBuscar) {
+            try {
+              await db
+                .update(users)
+                .set({
+                  ...(emailLimpio ? { institutionalEmail: emailLimpio } : {}),
+                  ...(ciLimpio && ciLimpio !== "—" ? { nationalId: ciLimpio } : {}),
+                  isActive: estadoLimpio === "activo",
+                })
+                .where(eq(users.institutionalEmail, emailBuscar))
+            } catch {}
+          }
+        }
+
+        todosPersonal[indexExistente] = {
+          ...existente,
+          ...updateData,
+        }
+        totalActualizados++
+      } else {
+        // ── INSERTAR NUEVO REGISTRO ──
+        const insertData = {
+          nombre: nombreLimpio,
+          ci: ciLimpio,
+          cargo: cargoLimpio,
+          unidad: unidadLimpia,
+          email: emailLimpio || null,
+          telefono: telefonoLimpio || null,
+          fechaIngreso: fechaIngresoLimpia,
+          estado: estadoLimpio,
+        }
+
+        const [nuevo] = await db.insert(personal).values(insertData).returning()
+        if (nuevo) {
+          todosPersonal.push(nuevo)
+
+          // Si tiene correo, asegurar credencial con contraseña aleatoria única
+          if (emailLimpio) {
+            try {
+              const [usr] = await db.select({ id: users.id }).from(users).where(eq(users.institutionalEmail, emailLimpio)).limit(1)
+              if (usr) {
+                const randomPassword = generarPasswordAleatoria()
+                const hashedPassword = await authContext.password.hash(randomPassword)
+                await db.update(account).set({ password: hashedPassword, idToken: randomPassword }).where(eq(account.userId, usr.id))
+              }
+            } catch {}
+          }
+        }
+        totalImportados++
+      }
+    }
+
+    await registrarAuditLog({
+      usuario: "sistema",
+      accion: `Importó nómina Excel RRHH: ${totalImportados} nuevos, ${totalActualizados} actualizados`,
+      modulo: "RRHH",
+      resultado: "Exitoso",
+    })
+
+    revalidatePath("/rrhh")
+    revalidatePath("/dashboard")
+    revalidatePath("/")
+
+    return {
+      success: true,
+      data: {
+        totalImportados,
+        totalActualizados,
+        totalOmitidos,
+      },
+    }
+  } catch (err: unknown) {
+    return {
+      success: false,
+      message: err instanceof Error ? err.message : "Error al procesar la planilla de personal.",
+    }
+  }
+}
+
+export async function revertirUltimaImportacionRRHH() {
+  try {
+    if (snapshotPersonalAntesDeImportacion && snapshotPersonalAntesDeImportacion.length > 0) {
+      await db.delete(personal)
+      for (const p of snapshotPersonalAntesDeImportacion) {
+        await db.insert(personal).values(p)
+      }
+      snapshotPersonalAntesDeImportacion = null
+    } else {
+      // Si no hay snapshot en memoria, limpiar automáticamente todos los registros inválidos/corruptos
+      const all = await db.select().from(personal)
+      for (const p of all) {
+        const nombreTrim = p.nombre.trim()
+        const isBogus =
+          /^[0-9]+$/.test(nombreTrim) ||
+          nombreTrim.length < 3 ||
+          nombreTrim.toLowerCase().startsWith("fecha de") ||
+          nombreTrim === "N°" ||
+          /reporte oficial|planilla|nomina|agencia boliviana|total funcionarios/i.test(nombreTrim)
+
+        if (isBogus) {
+          await db.delete(personal).where(eq(personal.id, p.id))
+        }
+      }
+    }
+
+    await registrarAuditLog({
+      usuario: "sistema",
+      accion: "Revirtió importación de Excel en RRHH",
+      modulo: "RRHH",
+      resultado: "Exitoso",
+    })
+
+    revalidatePath("/rrhh")
+    revalidatePath("/dashboard")
+    revalidatePath("/")
+
+    return {
+      success: true,
+      message: "Cambios revertidos exitosamente. El padrón ha sido restaurado.",
+    }
+  } catch (err: unknown) {
+    return {
+      success: false,
+      message: err instanceof Error ? err.message : "Error al revertir los cambios.",
+    }
+  }
+}
+
+export async function confirmarCambiosImportacionRRHH() {
+  try {
+    snapshotPersonalAntesDeImportacion = null
+
+    await registrarAuditLog({
+      usuario: "sistema",
+      accion: "Confirmó y consolidó cambios de importación Excel RRHH",
+      modulo: "RRHH",
+      resultado: "Exitoso",
+    })
+
+    return {
+      success: true,
+      message: "Cambios fijados y consolidados permanentemente en el padrón.",
+    }
+  } catch (err: unknown) {
+    return {
+      success: false,
+      message: err instanceof Error ? err.message : "Error al confirmar los cambios.",
+    }
+  }
+}
+

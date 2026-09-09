@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState } from "react"
 import toast from "react-hot-toast"
@@ -44,10 +44,11 @@ export function UserEditDialog({
 
     try {
       const updatePayload: UserUpdatePayload = {
+        name: payload.name,
         firstName: payload.firstName,
         lastNamePaternal: payload.lastNamePaternal,
         lastNameMaternal: payload.lastNameMaternal,
-        email: payload.email,
+        email: payload.email || payload.institutionalEmail,
         institutionalEmail: payload.institutionalEmail,
         nationalId: payload.nationalId,
         dateOfBirth: payload.dateOfBirth,
@@ -83,7 +84,7 @@ export function UserEditDialog({
       }}
     >
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto p-0 gap-0 rounded-2xl">
-        <div className="flex h-1.5 w-full"><div className="flex-1 bg-[#C41E3A]"/><div className="flex-1 bg-[#FFB300]"/><div className="flex-1 bg-[#2E7D32]"/></div>
+        <div className="h-1.5 w-full bg-gradient-to-r from-[#FFB800] via-[#0077EE] to-[#0E5296]" />
         <div className="p-6">
         <DialogHeader>
           <DialogTitle className="text-lg">Editar usuario</DialogTitle>
@@ -96,10 +97,10 @@ export function UserEditDialog({
           key={currentUser.id}
           mode="edit"
           roles={roles}
+          defaultName={currentUser.name}
           defaultFirstName={currentUser.firstName}
           defaultLastNamePaternal={currentUser.lastNamePaternal}
           defaultLastNameMaternal={currentUser.lastNameMaternal ?? ""}
-          defaultEmail={currentUser.email}
           defaultInstitutionalEmail={currentUser.institutionalEmail}
           defaultNationalId={currentUser.nationalId}
           defaultDateOfBirth={currentUser.dateOfBirth}

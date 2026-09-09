@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useRef, useState, useTransition } from "react"
+import { useMemo, useRef, useState, useEffect, useTransition } from "react"
 import {
   PlusIcon,
   PencilIcon,
@@ -10,11 +10,17 @@ import {
   ClockIcon,
   UploadIcon,
   XIcon,
-  BuildingIcon,
+  Building2Icon,
   ExternalLinkIcon,
   SearchIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  RotateCwIcon,
+  LayoutGridIcon,
+  GridIcon,
 } from "lucide-react"
 import toast from "react-hot-toast"
+import Image from "next/image"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -71,6 +77,8 @@ const DEPARTAMENTOS_BOLIVIA = [
   { depto: "Tarija", capital: "Tarija", svgId: "BOT", pinX: "37", pinY: "72.5", color: "#607D8B" },
 ]
 
+const MAX_SUCURSALES_POR_CARRUSEL = 6
+
 export function SucursalesModule({ sucursales: sucursalesInit, usuario }: Props) {
   const [items, setItems] = useState(sucursalesInit)
   const [busqueda, setBusqueda] = useState("")
@@ -83,6 +91,7 @@ export function SucursalesModule({ sucursales: sucursalesInit, usuario }: Props)
   const [fotoPreview, setFotoPreview] = useState<string | null>(null)
   const [fotoUrl, setFotoUrl] = useState<string | null>(null)
   const [uploadingFoto, setUploadingFoto] = useState(false)
+
   const accessContext = useMemo(() => crearContextoAcceso(usuario), [usuario])
   const canCreateSucursal = useMemo(
     () => puedeAcceder({ permissions: [PERMISOS.SUCURSALES.CREAR] }, accessContext),
@@ -104,100 +113,101 @@ export function SucursalesModule({ sucursales: sucursalesInit, usuario }: Props)
     nombre: "",
     direccion: "",
     telefono: "",
-    horario: "",
+    horario: "Lunes a Viernes 08:00 - 16:00",
     googleMaps: "",
-    color: "#FFB300",
+    color: "#0E5296",
     svgId: "",
     pinX: "",
     pinY: "",
+    activo: true,
   })
 
-  const filtrados = items.filter(
-    (s) =>
-      s.departamento.toLowerCase().includes(busqueda.toLowerCase()) ||
-      s.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      s.capital.toLowerCase().includes(busqueda.toLowerCase()),
-  )
+  // Filtrado
+  const filtrados = useMemo(() => {
+    return items.filter((s) => {
+      const q = busqueda.toLowerCase()
+      return (
+        s.nombre.toLowerCase().includes(q) ||
+        s.departamento.toLowerCase().includes(q) ||
+        s.direccion.toLowerCase().includes(q) ||
+        s.capital.toLowerCase().includes(q)
+      )
+    })
+  }, [items, busqueda])
 
   function openCreate() {
-    if (!canCreateSucursal) {
-      return
-    }
-
     setEditando(null)
-    setForm({
-      departamento: "",
-      capital: "",
-      nombre: "",
-      direccion: "",
-      telefono: "",
-      horario: "Lun - Vie: 8:00 - 16:00",
-      googleMaps: "",
-      color: "#FFB300",
-      svgId: "",
-      pinX: "",
-      pinY: "",
-    })
     setFotoPreview(null)
     setFotoUrl(null)
-    setDialogOpen(true)
-  }
-
-  function openEdit(row: SucursalRow) {
-    if (!canEditSucursal) {
-      return
-    }
-
-    setEditando(row)
+    const first = DEPARTAMENTOS_BOLIVIA[0]
     setForm({
-      departamento: row.departamento,
-      capital: row.capital,
-      nombre: row.nombre,
-      direccion: row.direccion,
-      telefono: row.telefono ?? "",
-      horario: row.horario ?? "",
-      googleMaps: row.googleMaps ?? "",
-      color: row.color ?? "#FFB300",
-      svgId: row.svgId ?? "",
-      pinX: row.pinX ?? "",
-      pinY: row.pinY ?? "",
+      departamento: first.depto,
+      capital: first.capital,
+      nombre: `Oficina Regional ${first.depto}`,
+      direccion: "",
+      telefono: "",
+      horario: "Lunes a Viernes 08:00 - 16:00",
+      googleMaps: "",
+      color: first.color,
+      svgId: first.svgId,
+      pinX: first.pinX,
+      pinY: first.pinY,
+      activo: true,
     })
-    setFotoPreview(row.foto)
-    setFotoUrl(row.foto)
     setDialogOpen(true)
   }
 
-  function handleDeptoChange(depto: string) {
-    const info = DEPARTAMENTOS_BOLIVIA.find((d) => d.depto === depto)
-    if (info) {
-      setForm((f) => ({
-        ...f,
-        departamento: info.depto,
-        capital: info.capital,
-        svgId: info.svgId,
-        pinX: info.pinX,
-        pinY: info.pinY,
-        color: info.color,
-        nombre: `Oficina Postal ${info.capital}`,
+  function openEdit(s: SucursalRow) {
+    setEditando(s)
+    setFotoPreview(s.foto)
+    setFotoUrl(s.foto)
+    setForm({
+      departamento: s.departamento,
+      capital: s.capital,
+      nombre: s.nombre,
+      direccion: s.direccion,
+      telefono: s.telefono || "",
+      horario: s.horario || "Lunes a Viernes 08:00 - 16:00",
+      googleMaps: s.googleMaps || "",
+      color: s.color || "#0E5296",
+      svgId: s.svgId || "",
+      pinX: s.pinX || "",
+      pinY: s.pinY || "",
+      activo: s.activo,
+    })
+    setDialogOpen(true)
+  }
+
+  function handleDeptoChange(deptoName: string) {
+    const match = DEPARTAMENTOS_BOLIVIA.find((d) => d.depto === deptoName)
+    if (match) {
+      setForm((prev) => ({
+        ...prev,
+        departamento: match.depto,
+        capital: match.capital,
+        nombre: editando ? prev.nombre : `Oficina Regional ${match.depto}`,
+        color: match.color,
+        svgId: match.svgId,
+        pinX: match.pinX,
+        pinY: match.pinY,
       }))
-    } else {
-      setForm((f) => ({ ...f, departamento: depto }))
     }
   }
 
   async function handleFotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+
     setUploadingFoto(true)
     try {
-      const fd = new FormData()
-      fd.append("archivo", file)
-      const res = await fetch("/api/upload/sucursal", { method: "POST", body: fd })
+      const formData = new FormData()
+      formData.append("file", file)
+      const res = await fetch("/api/upload", { method: "POST", body: formData })
+      if (!res.ok) throw new Error("Error al subir imagen")
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
       setFotoUrl(data.url)
       setFotoPreview(data.url)
-      toast.success("Foto subida")
+      toast.success("Foto subida correctamente")
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Error al subir foto")
     } finally {
@@ -209,16 +219,6 @@ export function SucursalesModule({ sucursales: sucursalesInit, usuario }: Props)
   function handleSubmit() {
     if (!form.departamento || !form.nombre || !form.direccion) {
       toast.error("Complete los campos obligatorios")
-      return
-    }
-
-    if (editando && !canEditSucursal) {
-      toast.error("No tienes permiso para editar sucursales")
-      return
-    }
-
-    if (!editando && !canCreateSucursal) {
-      toast.error("No tienes permiso para crear sucursales")
       return
     }
 
@@ -248,27 +248,18 @@ export function SucursalesModule({ sucursales: sucursalesInit, usuario }: Props)
         }
         setDialogOpen(false)
       } catch {
-        toast.error("Error al guardar")
+        toast.error("Error al guardar sucursal")
       }
     })
   }
 
   function confirmDelete(id: string) {
-    if (!canDeleteSucursal) {
-      return
-    }
-
     setEliminandoId(id)
     setDeleteDialogOpen(true)
   }
 
   function handleDelete() {
     if (!eliminandoId) return
-    if (!canDeleteSucursal) {
-      toast.error("No tienes permiso para eliminar sucursales")
-      return
-    }
-
     startTransition(async () => {
       try {
         await eliminarSucursal(eliminandoId)
@@ -283,283 +274,332 @@ export function SucursalesModule({ sucursales: sucursalesInit, usuario }: Props)
 
   return (
     <>
-      <div className="flex flex-1 flex-col gap-6 p-6">
-        <div className="flex items-center justify-between">
+      <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-blue-50/25 to-amber-50/20 min-h-screen">
+        {/* ── Cabecera Principal ── */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-xl font-bold tracking-tight">Administración de Sucursales</h2>
-            <p className="text-sm text-muted-foreground">Gestiona las oficinas regionales mostradas en el mapa</p>
+            <div className="flex items-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0E5296] text-[#FFCC00] shadow-sm">
+                <Building2Icon className="h-5 w-5" />
+              </div>
+              <h1 className="text-2xl font-black tracking-tight text-[#002F6C]">
+                Administración de Sucursales
+              </h1>
+            </div>
+            <p className="text-xs text-slate-600 font-medium mt-1">
+              Gestiona las oficinas regionales de la Agencia Boliviana de Correos en todo el país.
+            </p>
           </div>
-          {canCreateSucursal ? (
-            <Button
-              onClick={openCreate}
-              className="bg-gradient-to-r from-[#C41E3A] to-[#a01830] text-white font-semibold shadow-md shadow-[#C41E3A]/20 hover:shadow-lg"
-            >
-              <PlusIcon className="mr-2 h-4 w-4" />
-              Nueva sucursal
-            </Button>
-          ) : null}
+
+          <div className="flex items-center gap-2.5">
+            {canCreateSucursal ? (
+              <Button
+                onClick={openCreate}
+                className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold shadow-md shadow-[#0E5296]/20 cursor-pointer rounded-xl"
+              >
+                <PlusIcon className="mr-1.5 h-4 w-4 text-[#FFCC00]" />
+                Nueva Sucursal
+              </Button>
+            ) : null}
+          </div>
         </div>
 
-        {/* Búsqueda */}
-        <div className="relative max-w-md">
-          <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Buscar sucursal..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            className="pl-9"
-          />
+        {/* ── Buscador ── */}
+        <div className="rounded-2xl border-2 border-[#002F6C]/15 bg-gradient-to-r from-white via-blue-50/20 to-amber-50/20 p-4 shadow-xs">
+          <div className="relative max-w-md">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              placeholder="Buscar por departamento, nombre, dirección..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="pl-9 bg-white/90 border-[#002F6C]/20 text-xs font-medium focus:border-[#0E5296]"
+            />
+          </div>
         </div>
 
-        {/* Grid de tarjetas */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtrados.map((s) => (
-            <Card key={s.id} className="group overflow-hidden border-border/40 transition-all hover:shadow-lg hover:border-[#FFB300]/30">
-              {/* Foto o placeholder */}
-              {s.foto ? (
-                <div className="relative aspect-video w-full overflow-hidden bg-muted/30 p-1">
-                  <img src={s.foto} alt={s.nombre} className="h-full w-full rounded-md object-contain bg-muted/20" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                  <div className="absolute bottom-2 left-2 rounded-md bg-black/50 px-2 py-0.5 text-[10px] font-semibold text-white uppercase tracking-wide">
-                    {s.departamento}
-                  </div>
-                </div>
-              ) : (
-                <div className="relative flex aspect-video w-full items-center justify-center bg-gradient-to-br from-[#FFB300]/15 to-[#FF8800]/10">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg text-white" style={{ background: s.color ?? "#FFB300" }}>
-                    <BuildingIcon className="h-6 w-6" />
-                  </div>
-                  <div className="absolute bottom-2 left-2 rounded-md bg-black/40 px-2 py-0.5 text-[10px] font-semibold text-white uppercase tracking-wide">
-                    {s.departamento}
-                  </div>
-                </div>
-              )}
-              <CardContent className="p-4 space-y-2">
-                <h3 className="font-bold text-sm truncate">{s.nombre}</h3>
-                <div className="space-y-1.5 text-xs text-muted-foreground">
-                  <div className="flex items-start gap-2">
-                    <MapPinIcon className="h-3.5 w-3.5 shrink-0 mt-0.5 text-[#FF8800]" />
-                    <span className="line-clamp-2">{s.direccion}</span>
-                  </div>
-                  {s.telefono && (
-                    <div className="flex items-center gap-2">
-                      <PhoneIcon className="h-3.5 w-3.5 shrink-0 text-[#FF8800]" />
-                      <span>{s.telefono}</span>
+        {/* ── VISTA EXCLUSIVA: CUADRÍCULA INSTITUCIONAL DE SUCURSALES ── */}
+        {filtrados.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center rounded-3xl border-2 border-[#002F6C]/15 bg-white/80 p-8 shadow-xs">
+            <Building2Icon className="h-14 w-14 text-slate-300 mb-3" />
+            <p className="text-base font-bold text-slate-700">No se encontraron sucursales</p>
+            <p className="text-xs text-slate-400 mt-1">Prueba cambiando los términos de búsqueda.</p>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {filtrados.map((s) => (
+              <Card
+                key={s.id}
+                className="overflow-hidden border-2 border-[#002F6C]/15 hover:border-[#0E5296]/50 hover:shadow-lg transition-all rounded-3xl bg-white/90 group flex flex-col justify-between"
+              >
+                <div
+                  className="h-2 w-full"
+                  style={{ backgroundColor: s.color || "#0E5296" }}
+                />
+                <CardContent className="p-5 flex-1 flex flex-col justify-between">
+                  <div>
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div>
+                        <span className="inline-block rounded-full bg-[#0E5296] text-[#FFCC00] px-3 py-1 text-[9px] font-black uppercase tracking-wider shadow-2xs">
+                          {s.departamento}
+                        </span>
+                        <h3 className="font-black text-sm text-[#002F6C] mt-2 group-hover:text-[#0E5296] transition-colors line-clamp-1">
+                          {s.nombre}
+                        </h3>
+                        <p className="text-[11px] text-slate-500 font-medium line-clamp-1">
+                          {s.capital}
+                        </p>
+                      </div>
+
+                      {s.foto ? (
+                        <div className="relative h-14 w-14 shrink-0 rounded-2xl overflow-hidden border-2 border-amber-300 shadow-sm">
+                          <img
+                            src={s.foto}
+                            alt={s.nombre}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#FFCC00] text-[#002F6C] font-black text-lg shadow-sm border border-amber-300">
+                          <Building2Icon className="h-7 w-7 text-[#002F6C]" />
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {s.horario && (
-                    <div className="flex items-center gap-2">
-                      <ClockIcon className="h-3.5 w-3.5 shrink-0 text-[#FF8800]" />
-                      <span>{s.horario}</span>
+
+                    {/* Datos */}
+                    <div className="space-y-2 text-xs text-slate-600 my-3">
+                      <div className="flex items-start gap-2">
+                        <MapPinIcon className="h-4 w-4 text-[#0E5296] shrink-0 mt-0.5" />
+                        <span className="text-[11px] text-slate-600 line-clamp-2 leading-relaxed">
+                          {s.direccion}
+                        </span>
+                      </div>
+
+                      {s.telefono && (
+                        <div className="flex items-center gap-2">
+                          <PhoneIcon className="h-4 w-4 text-emerald-600 shrink-0" />
+                          <span className="text-[11px] font-semibold text-slate-700">
+                            {s.telefono}
+                          </span>
+                        </div>
+                      )}
+
+                      {s.horario && (
+                        <div className="flex items-center gap-2">
+                          <ClockIcon className="h-4 w-4 text-amber-600 shrink-0" />
+                          <span className="text-[10px] text-slate-500 font-medium">
+                            {s.horario}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t border-border/30">
-                  <span className={`text-[10px] font-bold uppercase tracking-wider ${s.activo ? "text-green-600" : "text-red-500"}`}>
-                    {s.activo ? "Activo" : "Inactivo"}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    {s.googleMaps && (
-                      <a href={s.googleMaps} target="_blank" rel="noopener noreferrer" className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" title="Ver en Google Maps">
+                  </div>
+
+                  {/* Acciones y Mapa */}
+                  <div className="flex items-center justify-between border-t border-slate-100 pt-3 mt-2">
+                    {s.googleMaps ? (
+                      <a
+                        href={s.googleMaps}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0E5296] hover:text-[#002F6C] hover:underline"
+                      >
                         <ExternalLinkIcon className="h-3.5 w-3.5" />
+                        Ver en Maps
                       </a>
+                    ) : (
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        Oficina AGBC
+                      </span>
                     )}
-                    {canEditSucursal ? (
-                      <button onClick={() => openEdit(s)} className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-[#FFB300]/10 hover:text-[#FF8800] transition-colors" title="Editar">
-                        <PencilIcon className="h-3.5 w-3.5" />
-                      </button>
-                    ) : null}
-                    {canDeleteSucursal ? (
-                      <button onClick={() => confirmDelete(s.id)} className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 transition-colors" title="Eliminar">
-                        <Trash2Icon className="h-3.5 w-3.5" />
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
 
-        {filtrados.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <MapPinIcon className="h-12 w-12 text-muted-foreground/30 mb-3" />
-            <p className="text-sm text-muted-foreground">No se encontraron sucursales</p>
+                    <div className="flex items-center gap-1">
+                      {canEditSucursal && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEdit(s)}
+                          className="h-8 w-8 text-[#002F6C] hover:bg-blue-50 rounded-xl cursor-pointer"
+                          title="Editar sucursal"
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canDeleteSucursal && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => confirmDelete(s.id)}
+                          className="h-8 w-8 text-red-600 hover:bg-red-50 rounded-xl cursor-pointer"
+                          title="Eliminar sucursal"
+                        >
+                          <Trash2Icon className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         )}
       </div>
 
-      {canCreateSucursal || canEditSucursal ? (
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="!w-[94vw] !max-w-[94vw] sm:!max-w-[860px] lg:!max-w-[980px] max-h-[92vh] overflow-y-auto overflow-x-hidden p-0">
-            <div className="flex h-1.5 w-full rounded-t-lg overflow-hidden">
-              <div className="flex-1 bg-[#C41E3A]" />
-              <div className="flex-1 bg-[#FFB300]" />
-              <div className="flex-1 bg-[#2E7D32]" />
-            </div>
-            <div className="p-6 space-y-5">
-              <DialogHeader>
-                <DialogTitle className="text-lg font-bold">
-                  {editando ? "Editar sucursal" : "Nueva sucursal"}
-                </DialogTitle>
-                <DialogDescription>
-                  {editando ? "Modifique la información de la oficina regional" : "Complete los datos de la nueva oficina regional"}
-                </DialogDescription>
-              </DialogHeader>
+      {/* ── Dialog Crear / Editar Sucursal ── */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-lg bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-black text-[#002F6C]">
+              {editando ? "Editar Sucursal" : "Nueva Sucursal"}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              {editando
+                ? "Modifica los datos de la sucursal regional seleccionada."
+                : "Registra una nueva oficina regional de Correos de Bolivia."}
+            </DialogDescription>
+          </DialogHeader>
 
-            <div className="space-y-1.5">
-              <Label>Departamento *</Label>
+          <div className="grid gap-4 py-2">
+            <div>
+              <Label className="text-xs font-bold text-slate-700">Departamento *</Label>
               <select
                 value={form.departamento}
                 onChange={(e) => handleDeptoChange(e.target.value)}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-bold text-[#002F6C] outline-hidden"
               >
-                <option value="">Seleccione un departamento</option>
                 {DEPARTAMENTOS_BOLIVIA.map((d) => (
-                  <option key={d.svgId} value={d.depto}>
-                    {d.depto} — {d.capital}
+                  <option key={d.depto} value={d.depto}>
+                    {d.depto} ({d.capital})
                   </option>
                 ))}
               </select>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label>Nombre de la oficina *</Label>
-                <Input value={form.nombre} onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))} placeholder="Oficina Postal La Paz" />
+            <div>
+              <Label className="text-xs font-bold text-slate-700">Nombre de la sucursal *</Label>
+              <Input
+                value={form.nombre}
+                onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+                placeholder="Ej. Oficina Central La Paz"
+                className="mt-1 bg-slate-50 text-xs font-medium"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs font-bold text-slate-700">Dirección completa *</Label>
+              <Textarea
+                value={form.direccion}
+                onChange={(e) => setForm({ ...form, direccion: e.target.value })}
+                placeholder="Ej. Av. Mariscal Santa Cruz esq. Oruro"
+                rows={2}
+                className="mt-1 bg-slate-50 text-xs font-medium"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-bold text-slate-700">Teléfono / Celular</Label>
+                <Input
+                  value={form.telefono}
+                  onChange={(e) => setForm({ ...form, telefono: e.target.value })}
+                  placeholder="(+591) 2 123456"
+                  className="mt-1 bg-slate-50 text-xs font-medium"
+                />
               </div>
-              <div className="space-y-1.5">
-                <Label>Capital</Label>
-                <Input value={form.capital} onChange={(e) => setForm((f) => ({ ...f, capital: e.target.value }))} placeholder="La Paz" />
+              <div>
+                <Label className="text-xs font-bold text-slate-700">Horario de atención</Label>
+                <Input
+                  value={form.horario}
+                  onChange={(e) => setForm({ ...form, horario: e.target.value })}
+                  placeholder="08:00 - 16:00"
+                  className="mt-1 bg-slate-50 text-xs font-medium"
+                />
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label>Dirección *</Label>
-              <Textarea value={form.direccion} onChange={(e) => setForm((f) => ({ ...f, direccion: e.target.value }))} placeholder="Av. Mariscal Santa Cruz esq. Oruro" rows={2} />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label>Teléfono</Label>
-                <Input value={form.telefono} onChange={(e) => setForm((f) => ({ ...f, telefono: e.target.value }))} placeholder="(2) 231-5040" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Horario</Label>
-                <Input value={form.horario} onChange={(e) => setForm((f) => ({ ...f, horario: e.target.value }))} placeholder="Lun - Vie: 8:00 - 16:00" />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Enlace Google Maps</Label>
-              <Input value={form.googleMaps} onChange={(e) => setForm((f) => ({ ...f, googleMaps: e.target.value }))} placeholder="https://maps.google.com/?q=..." />
+            <div>
+              <Label className="text-xs font-bold text-slate-700">Enlace de Google Maps</Label>
+              <Input
+                value={form.googleMaps}
+                onChange={(e) => setForm({ ...form, googleMaps: e.target.value })}
+                placeholder="https://maps.google.com/..."
+                className="mt-1 bg-slate-50 text-xs font-medium"
+              />
             </div>
 
             {/* Foto de la sucursal */}
-            <div className="space-y-2">
-              <Label>Foto de la sucursal</Label>
-              {fotoPreview ? (
-                <div className="relative rounded-xl overflow-hidden border border-border/40 bg-muted/20">
-                  <div className="flex h-64 w-full items-center justify-center p-2 sm:h-72">
-                    <img src={fotoPreview} alt="Foto sucursal" className="h-full w-full object-contain" />
+            <div>
+              <Label className="text-xs font-bold text-slate-700">Fotografía de la fachada</Label>
+              <div className="mt-1 flex items-center gap-3">
+                {fotoPreview ? (
+                  <div className="relative h-16 w-24 overflow-hidden rounded-xl border border-slate-200">
+                    <Image src={fotoPreview} alt="Preview" fill className="object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFotoPreview(null)
+                        setFotoUrl(null)
+                      }}
+                      className="absolute top-1 right-1 rounded-full bg-red-600 p-0.5 text-white"
+                    >
+                      <XIcon className="h-3 w-3" />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFotoPreview(null)
-                      setFotoUrl(null)
-                    }}
-                    className="absolute top-2 right-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
-                  >
-                    <XIcon className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <button
+                ) : null}
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => fileRef.current?.click()}
                   disabled={uploadingFoto}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border/50 bg-muted/30 py-8 text-sm text-muted-foreground transition-colors hover:border-[#FFB300]/40 hover:bg-[#FFB300]/5"
+                  className="text-xs font-bold text-[#002F6C]"
                 >
-                  {uploadingFoto ? (
-                    <span className="animate-pulse">Subiendo...</span>
-                  ) : (
-                    <>
-                      <UploadIcon className="h-5 w-5" />
-                      Subir foto de la sucursal (max 5MB)
-                    </>
-                  )}
-                </button>
-              )}
-              <input ref={fileRef} type="file" accept="image/*" onChange={handleFotoUpload} className="hidden" />
-            </div>
-
-            <details className="text-xs">
-              <summary className="cursor-pointer text-muted-foreground hover:text-foreground transition-colors font-medium">
-                Parámetros del mapa (avanzado)
-              </summary>
-              <div className="mt-3 grid gap-3 sm:grid-cols-4">
-                <div className="space-y-1">
-                  <Label className="text-xs">SVG ID</Label>
-                  <Input value={form.svgId} onChange={(e) => setForm((f) => ({ ...f, svgId: e.target.value }))} placeholder="BOL" className="text-xs" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Pin X (%)</Label>
-                  <Input value={form.pinX} onChange={(e) => setForm((f) => ({ ...f, pinX: e.target.value }))} placeholder="16.7" className="text-xs" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Pin Y (%)</Label>
-                  <Input value={form.pinY} onChange={(e) => setForm((f) => ({ ...f, pinY: e.target.value }))} placeholder="32" className="text-xs" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Color</Label>
-                  <Input type="color" value={form.color} onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))} className="h-9 p-1" />
-                </div>
+                  <UploadIcon className="mr-1.5 h-3.5 w-3.5 text-[#0E5296]" />
+                  {uploadingFoto ? "Subiendo..." : "Seleccionar imagen"}
+                </Button>
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFotoUpload} />
               </div>
-            </details>
+            </div>
+          </div>
 
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={isPending}
-                  className="bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] font-semibold shadow-md shadow-[#FFB300]/20"
-                >
-                  {isPending ? "Guardando..." : editando ? "Actualizar" : "Crear sucursal"}
-                </Button>
-              </DialogFooter>
-            </div>
-          </DialogContent>
-        </Dialog>
-      ) : null}
+          <DialogFooter className="mt-2">
+            <Button variant="outline" onClick={() => setDialogOpen(false)} className="text-xs font-bold">
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={isPending || uploadingFoto}
+              className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold text-xs"
+            >
+              {isPending ? "Guardando..." : editando ? "Guardar cambios" : "Crear sucursal"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {canDeleteSucursal ? (
-        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <DialogContent className="max-w-sm p-0">
-            <div className="flex h-1.5 w-full rounded-t-lg overflow-hidden">
-              <div className="flex-1 bg-[#C41E3A]" />
-              <div className="flex-1 bg-[#FFB300]" />
-              <div className="flex-1 bg-[#2E7D32]" />
-            </div>
-            <div className="p-6 space-y-4">
-              <DialogHeader>
-                <DialogTitle>¿Eliminar sucursal?</DialogTitle>
-                <DialogDescription>Esta acción no se puede deshacer.</DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button variant="destructive" onClick={handleDelete} disabled={isPending}>
-                  {isPending ? "Eliminando..." : "Eliminar"}
-                </Button>
-              </DialogFooter>
-            </div>
-          </DialogContent>
-        </Dialog>
-      ) : null}
+      {/* ── Dialog Eliminar Sucursal ── */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-black text-red-600">Eliminar Sucursal</DialogTitle>
+            <DialogDescription className="text-xs text-slate-600">
+              ¿Estás seguro de que deseas eliminar esta sucursal regional? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-2">
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} className="text-xs font-bold">
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleDelete}
+              disabled={isPending}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs"
+            >
+              {isPending ? "Eliminando..." : "Sí, eliminar sucursal"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

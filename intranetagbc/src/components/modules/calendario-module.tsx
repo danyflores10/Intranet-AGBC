@@ -231,37 +231,37 @@ export function CalendarioModule({ eventos, usuario }: Props) {
         <div className="flex flex-col gap-5 lg:flex-row">
           {/* ── Calendario principal ── */}
           <Card className="flex-1 border-border/40 overflow-hidden">
-            <div className="bg-gradient-to-r from-[#FFB300]/10 via-[#FF8800]/5 to-transparent border-b border-border/40 px-4 sm:px-6 py-4">
+            <div className="bg-gradient-to-r from-[#FFB800]/15 via-[#0E5296]/10 to-transparent border-b border-border/40 px-4 sm:px-6 py-4">
               <div className="flex items-center justify-between">
                 <button
                   type="button"
                   onClick={mesAnterior}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border/50 bg-card shadow-sm transition-all hover:bg-muted hover:shadow-md hover:border-[#FFB300]/30 active:scale-95"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border/50 bg-card shadow-sm transition-all hover:bg-muted hover:shadow-md hover:border-[#FFB800]/30 active:scale-95 cursor-pointer"
                 >
-                  <ChevronLeftIcon className="h-4 w-4" />
+                  <ChevronLeftIcon className="h-4 w-4 text-[#0E5296]" />
                 </button>
                 <div className="text-center">
-                  <h2 className="text-xl font-extrabold tracking-tight">{MESES[mes]}</h2>
+                  <h2 className="text-xl font-extrabold tracking-tight text-[#002F6C]">{MESES[mes]}</h2>
                   <p className="text-xs text-muted-foreground font-medium">{anio}</p>
                 </div>
                 <button
                   type="button"
                   onClick={mesSiguiente}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border/50 bg-card shadow-sm transition-all hover:bg-muted hover:shadow-md hover:border-[#FFB300]/30 active:scale-95"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border/50 bg-card shadow-sm transition-all hover:bg-muted hover:shadow-md hover:border-[#FFB800]/30 active:scale-95 cursor-pointer"
                 >
-                  <ChevronRightIcon className="h-4 w-4" />
+                  <ChevronRightIcon className="h-4 w-4 text-[#0E5296]" />
                 </button>
               </div>
             </div>
 
-            <CardContent className="p-3 sm:p-5">
+            <CardContent className="p-4 sm:p-6">
               {/* Días de la semana */}
-              <div className="grid grid-cols-7 gap-1 mb-2">
+              <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2 text-center">
                 {DIAS.map((d, i) => (
                   <div
                     key={d}
-                    className={`text-center text-[11px] font-bold uppercase tracking-wider py-2.5 rounded-lg ${
-                      i === 0 || i === 6 ? "text-[#C41E3A]/60" : "text-muted-foreground"
+                    className={`py-2 text-xs font-bold uppercase tracking-wider ${
+                      i >= 5 ? "text-red-500/70" : "text-muted-foreground"
                     }`}
                   >
                     {d}
@@ -270,28 +270,30 @@ export function CalendarioModule({ eventos, usuario }: Props) {
               </div>
 
               {/* Grid de días */}
-              <div className="grid grid-cols-7 gap-1">
-                {celdas.map((dia, i) => {
-                  if (dia === null) return <div key={`empty-${i}`} className="aspect-square" />
-                  const eventos_dia = eventosDelDia(dia)
-                  const fechaStr = `${anio}-${String(mes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`
-                  const esHoy = fechaStr === hoyStr
-                  const tieneEventos = eventos_dia.length > 0
+              <div className="grid grid-cols-7 gap-1 sm:gap-2">
+                {celdas.map((dia, idx) => {
+                  if (dia === null) {
+                    return <div key={`empty-${idx}`} className="min-h-[64px] sm:min-h-[80px]" />
+                  }
+
+                  const esHoy = dia === hoy.getDate() && mes === hoy.getMonth() && anio === hoy.getFullYear()
                   const estaSeleccionado = selectedDay === dia
-                  const diaSemana = (primerDiaSemana + dia - 1) % 7
-                  const esFinDeSemana = diaSemana === 0 || diaSemana === 6
+                  const fechaStr = `${anio}-${String(mes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`
+                  const eventos_dia = eventosDelDia(dia)
+                  const esFinDeSemana = (idx % 7) >= 5
+                  const tieneEventos = eventos_dia.length > 0
 
                   return (
                     <button
-                      key={dia}
+                      key={`day-${dia}`}
                       type="button"
                       onClick={() => setSelectedDay(dia === selectedDay ? null : dia)}
                       className={`
-                        relative flex flex-col items-center justify-start rounded-xl p-1.5 min-h-[64px] sm:min-h-[80px] transition-all duration-200 text-sm border
+                        relative flex flex-col items-center justify-start rounded-xl p-1.5 min-h-[64px] sm:min-h-[80px] transition-all duration-200 text-sm border cursor-pointer
                         ${esHoy
-                          ? "bg-gradient-to-br from-[#FFB300]/15 to-[#FF8800]/10 border-[#FFB300]/50 shadow-sm shadow-[#FFB300]/10"
+                          ? "bg-[#FFB800]/20 border-[#FFB800] shadow-sm shadow-[#FFB800]/20 font-bold"
                           : estaSeleccionado
-                            ? "bg-[#FFB300]/8 border-[#FFB300]/30"
+                            ? "bg-[#0E5296]/15 border-[#0E5296]"
                             : tieneEventos
                               ? "border-border/30 bg-muted/20 hover:bg-muted/40"
                               : "border-transparent hover:bg-muted/30 hover:border-border/20"
@@ -303,10 +305,12 @@ export function CalendarioModule({ eventos, usuario }: Props) {
                         className={`
                           inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold transition-all
                           ${esHoy
-                            ? "bg-gradient-to-br from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-md shadow-[#FFB300]/25 font-bold"
-                            : esFinDeSemana
-                              ? "text-[#C41E3A]/50"
-                              : ""
+                            ? "bg-[#FFB800] text-[#002F6C] shadow-md font-black"
+                            : estaSeleccionado
+                              ? "bg-[#0E5296] text-white font-bold"
+                              : esFinDeSemana
+                                ? "text-red-500/70"
+                                : "text-foreground"
                           }
                         `}
                       >
@@ -357,9 +361,9 @@ export function CalendarioModule({ eventos, usuario }: Props) {
               <Button
                 size="lg"
                 onClick={() => openCreate()}
-                className="w-full rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] border-0 font-bold shadow-lg shadow-[#FFB300]/20 h-12 text-sm gap-2 hover:shadow-xl hover:shadow-[#FFB300]/30 transition-all"
+                className="w-full rounded-xl bg-[#0E5296] hover:bg-[#002F6C] text-white border-0 font-bold shadow-lg shadow-[#0E5296]/20 h-12 text-sm gap-2 transition-all cursor-pointer"
               >
-                <PlusIcon className="h-5 w-5" />
+                <PlusIcon className="h-5 w-5 text-[#FFB800]" />
                 Nuevo evento
               </Button>
             ) : null}
@@ -367,9 +371,9 @@ export function CalendarioModule({ eventos, usuario }: Props) {
             {/* Eventos del día seleccionado */}
             {selectedDay !== null && (
               <Card className="border-border/40 overflow-hidden">
-                <div className="bg-gradient-to-r from-[#FFB300]/10 to-transparent border-b border-border/30 px-4 py-3">
-                  <h3 className="text-sm font-bold flex items-center gap-2">
-                    <CalendarIcon className="h-4 w-4 text-[#FFB300]" />
+                <div className="bg-[#FFB800]/15 border-b border-border/30 px-4 py-3">
+                  <h3 className="text-sm font-bold flex items-center gap-2 text-[#002F6C]">
+                    <CalendarIcon className="h-4 w-4 text-[#FFB800]" />
                     {selectedDay} de {MESES[mes]}
                   </h3>
                 </div>
@@ -439,12 +443,12 @@ export function CalendarioModule({ eventos, usuario }: Props) {
 
             {/* Próximos eventos */}
             <Card className="border-border/40 overflow-hidden">
-              <div className="bg-gradient-to-r from-[#FF8800]/8 to-transparent border-b border-border/30 px-4 py-3">
-                <h3 className="text-sm font-bold flex items-center gap-2">
-                  <ClockIcon className="h-4 w-4 text-[#FF8800]" />
+              <div className="bg-[#0E5296]/5 border-b border-border/30 px-4 py-3">
+                <h3 className="text-sm font-bold flex items-center gap-2 text-[#002F6C]">
+                  <ClockIcon className="h-4 w-4 text-[#0E5296]" />
                   Próximos eventos
                   {proximosEventos.length > 0 && (
-                    <span className="ml-auto rounded-full bg-[#FFB300]/10 px-2 py-0.5 text-[10px] font-bold text-[#FF8800]">
+                    <span className="ml-auto rounded-full bg-[#0E5296]/10 px-2 py-0.5 text-[10px] font-bold text-[#0E5296]">
                       {proximosEventos.length}
                     </span>
                   )}
@@ -586,7 +590,7 @@ export function CalendarioModule({ eventos, usuario }: Props) {
 
             <div className="flex justify-end gap-3 border-t border-border/40 pt-4">
               <Button type="button" variant="outline" className="rounded-xl" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-              <Button type="submit" disabled={isPending} className="rounded-xl border-0 bg-gradient-to-r from-[#FFB300] to-[#FF8800] font-semibold text-[#1a1000] shadow-md shadow-[#FFB300]/20">
+              <Button type="submit" disabled={isPending} className="rounded-xl border-0 bg-[#0E5296] hover:bg-[#002F6C] font-bold text-white shadow-md shadow-[#0E5296]/20 cursor-pointer">
                 {isPending ? "Guardando..." : editEvento ? "Guardar cambios" : "Crear evento"}
               </Button>
             </div>

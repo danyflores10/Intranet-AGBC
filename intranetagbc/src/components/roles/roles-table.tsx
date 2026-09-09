@@ -155,6 +155,21 @@ function buildPagination(current: number, total: number): Array<number | "ellips
   return [1, "ellipsis", current - 1, current, current + 1, "ellipsis", total]
 }
 
+const ALLOWED_MODULE_KEYS = new Set([
+  "usuarios",
+  "roles",
+  "auditoria",
+  "sucursales",
+  "documentos",
+  "archivo",
+  "rrhh",
+  "comunicados",
+  "banners",
+  "accesos",
+  "contenidos",
+  "configuracion",
+])
+
 function parseRoleToRow(role: Role): TableRow {
   const moduleSet = new Set<string>()
   const actionCounts: Record<ActionKey, number> = {
@@ -166,6 +181,9 @@ function parseRoleToRow(role: Role): TableRow {
 
   for (const permission of role.permissions) {
     const { action, module } = parsePermissionName(permission.name)
+    if (!ALLOWED_MODULE_KEYS.has(module)) {
+      continue
+    }
 
     if (ACTION_ORDER.includes(action as ActionKey)) {
       actionCounts[action as ActionKey] += 1

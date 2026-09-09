@@ -21,7 +21,8 @@ export default async function PerfilPage() {
     institutionalEmail: perfil.institutionalEmail,
     nationalId: perfil.nationalId,
     dateOfBirth: perfil.dateOfBirth,
-    image: perfil.image,
+    avatarUrl: perfil.image,
     roles: usuario.roles,
+    createdAt: perfil.createdAt,
   }} />
 }

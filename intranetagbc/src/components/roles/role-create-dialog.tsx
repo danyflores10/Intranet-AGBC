@@ -62,15 +62,15 @@ export function RoleCreateDialog({
         <Button
           className={
             triggerClassName ??
-            "bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] border-0 font-semibold shadow-md shadow-[#FFB300]/20"
+            "bg-[#0E5296] hover:bg-[#002F6C] text-white border-0 font-bold shadow-md shadow-[#0E5296]/20 cursor-pointer"
           }
         >
-          <PlusIcon className="mr-2 h-4 w-4" />
+          <PlusIcon className="mr-2 h-4 w-4 text-[#FFB800]" />
           {triggerLabel ?? "Nuevo rol"}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-5xl max-h-[90vh] p-0 gap-0 overflow-hidden rounded-2xl">
-        <div className="flex h-1.5 w-full"><div className="flex-1 bg-[#C41E3A]"/><div className="flex-1 bg-[#FFB300]"/><div className="flex-1 bg-[#2E7D32]"/></div>
+        <div className="h-1.5 w-full bg-[#0E5296]" />
         <div className="p-6">
         <DialogHeader>
           <DialogTitle>Crear rol</DialogTitle>

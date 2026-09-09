@@ -4,15 +4,18 @@ import { useMemo } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
 import {
-  CalendarIcon,
   CheckCheckIcon,
   EraserIcon,
   FileArchiveIcon,
   FilesIcon,
-  FolderIcon,
   FolderKeyIcon,
   MegaphoneIcon,
   ShieldCheckIcon,
+  UsersIcon,
+  BuildingIcon,
+  BriefcaseIcon,
+  SlidersHorizontalIcon,
+  LayoutGridIcon,
   type LucideIcon,
 } from "lucide-react"
 
@@ -44,39 +47,49 @@ const ACTION_BADGE_STYLES: Record<ActionKey, string> = {
   eliminar: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/35 dark:bg-rose-500/10 dark:text-rose-300",
 }
 
+export const ALLOWED_MODULE_KEYS = new Set([
+  "usuarios",
+  "roles",
+  "auditoria",
+  "sucursales",
+  "documentos",
+  "archivo",
+  "rrhh",
+  "comunicados",
+  "banners",
+  "accesos",
+  "contenidos",
+  "configuracion",
+])
+
 const MODULE_LABELS: Record<string, string> = {
-  accesos: "Accesos Directos",
-  agenda: "Agenda",
-  archivo: "Archivo",
-  auditoria: "Auditoria",
-  banners: "Noticias",
-  calendario: "Calendario",
-  comunicados: "Comunicados",
-  configuracion: "Configuracion",
-  contenidos: "Contenidos",
-  correspondencia: "Correspondencia",
-  directorio: "Directorio",
-  documentos: "Documentos",
-  enlaces: "Enlaces",
-  logistica: "Logistica",
-  reportes: "Reportes",
-  roles: "Roles",
-  rrhh: "RRHH",
-  soporte: "Soporte",
-  sucursales: "Sucursales",
-  tramites: "Tramites",
   usuarios: "Usuarios",
+  roles: "Roles y Permisos",
+  auditoria: "Auditoría y Logs",
+  sucursales: "Sucursales",
+  documentos: "Documentos",
+  archivo: "Archivo / Papelera",
+  rrhh: "Recursos Humanos (RRHH)",
+  comunicados: "Comunicados Oficiales",
+  banners: "Noticias Institucionales",
+  accesos: "Accesos Directos",
+  contenidos: "Gestión de Contenidos",
+  configuracion: "Configuración General",
 }
 
 const MODULE_ICONS: Record<string, LucideIcon> = {
-  accesos: FolderKeyIcon,
-  agenda: CalendarIcon,
-  archivo: FileArchiveIcon,
+  usuarios: UsersIcon,
+  roles: ShieldCheckIcon,
   auditoria: ShieldCheckIcon,
-  banners: MegaphoneIcon,
-  calendario: CalendarIcon,
-  comunicados: MegaphoneIcon,
+  sucursales: BuildingIcon,
   documentos: FilesIcon,
+  archivo: FileArchiveIcon,
+  rrhh: BriefcaseIcon,
+  comunicados: MegaphoneIcon,
+  banners: MegaphoneIcon,
+  accesos: FolderKeyIcon,
+  contenidos: LayoutGridIcon,
+  configuracion: SlidersHorizontalIcon,
 }
 
 type ModuleGroup = {
@@ -93,43 +106,43 @@ type PermissionMockGroup = {
 
 export const mockData: PermissionMockGroup[] = [
   {
-    moduleKey: "accesos",
-    moduleLabel: "Accesos Directos",
+    moduleKey: "usuarios",
+    moduleLabel: "Usuarios",
     permissions: [
-      { id: "mock-accesos-ver", action: "ver", name: "ver accesos" },
-      { id: "mock-accesos-crear", action: "crear", name: "crear accesos" },
-      { id: "mock-accesos-editar", action: "editar", name: "editar accesos" },
-      { id: "mock-accesos-eliminar", action: "eliminar", name: "eliminar accesos" },
+      { id: "mock-usuarios-ver", action: "ver", name: "ver usuarios" },
+      { id: "mock-usuarios-crear", action: "crear", name: "crear usuarios" },
+      { id: "mock-usuarios-editar", action: "editar", name: "editar usuarios" },
+      { id: "mock-usuarios-eliminar", action: "eliminar", name: "eliminar usuarios" },
     ],
   },
   {
-    moduleKey: "agenda",
-    moduleLabel: "Agenda",
+    moduleKey: "roles",
+    moduleLabel: "Roles y Permisos",
     permissions: [
-      { id: "mock-agenda-ver", action: "ver", name: "ver agenda" },
-      { id: "mock-agenda-crear", action: "crear", name: "crear agenda" },
-      { id: "mock-agenda-editar", action: "editar", name: "editar agenda" },
-      { id: "mock-agenda-eliminar", action: "eliminar", name: "eliminar agenda" },
+      { id: "mock-roles-ver", action: "ver", name: "ver roles" },
+      { id: "mock-roles-crear", action: "crear", name: "crear roles" },
+      { id: "mock-roles-editar", action: "editar", name: "editar roles" },
+      { id: "mock-roles-eliminar", action: "eliminar", name: "eliminar roles" },
     ],
   },
   {
-    moduleKey: "archivo",
-    moduleLabel: "Archivo",
+    moduleKey: "rrhh",
+    moduleLabel: "Recursos Humanos (RRHH)",
     permissions: [
-      { id: "mock-archivo-ver", action: "ver", name: "ver archivo" },
-      { id: "mock-archivo-crear", action: "crear", name: "crear archivo" },
-      { id: "mock-archivo-editar", action: "editar", name: "editar archivo" },
-      { id: "mock-archivo-eliminar", action: "eliminar", name: "eliminar archivo" },
+      { id: "mock-rrhh-ver", action: "ver", name: "ver rrhh" },
+      { id: "mock-rrhh-crear", action: "crear", name: "crear rrhh" },
+      { id: "mock-rrhh-editar", action: "editar", name: "editar rrhh" },
+      { id: "mock-rrhh-eliminar", action: "eliminar", name: "eliminar rrhh" },
     ],
   },
   {
-    moduleKey: "banners",
-    moduleLabel: "Noticias",
+    moduleKey: "documentos",
+    moduleLabel: "Documentos",
     permissions: [
-      { id: "mock-noticias-ver", action: "ver", name: "ver banners" },
-      { id: "mock-noticias-crear", action: "crear", name: "crear banners" },
-      { id: "mock-noticias-editar", action: "editar", name: "editar banners" },
-      { id: "mock-noticias-eliminar", action: "eliminar", name: "eliminar banners" },
+      { id: "mock-documentos-ver", action: "ver", name: "ver documentos" },
+      { id: "mock-documentos-crear", action: "crear", name: "crear documentos" },
+      { id: "mock-documentos-editar", action: "editar", name: "editar documentos" },
+      { id: "mock-documentos-eliminar", action: "eliminar", name: "eliminar documentos" },
     ],
   },
 ]
@@ -205,6 +218,9 @@ function groupPermissionsByModule(permissions: Permission[]): ModuleGroup[] {
 
   for (const permission of permissions) {
     const { module } = parsePermissionName(permission.name)
+    if (!ALLOWED_MODULE_KEYS.has(module)) {
+      continue
+    }
 
     if (!modules.has(module)) {
       modules.set(module, [])
@@ -336,7 +352,7 @@ export function RoleUpsertForm({
             placeholder="Ej: jefe_rrhh"
             {...form.register("name")}
             autoFocus
-            className="h-11 rounded-xl border-border bg-background px-3.5 text-sm shadow-sm transition-all focus-visible:border-[#FFB300] focus-visible:ring-4 focus-visible:ring-[#FFB300]/25"
+            className="h-11 rounded-xl border-border bg-background px-3.5 text-sm shadow-sm transition-all focus-visible:border-[#FFB800] focus-visible:ring-4 focus-visible:ring-[#FFB800]/25"
           />
           {form.formState.errors.name ? (
             <p className="text-xs font-medium text-red-600">
@@ -390,7 +406,7 @@ export function RoleUpsertForm({
           ) : (
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               {groupedPermissions.map((group) => {
-                const Icon = MODULE_ICONS[group.moduleKey] ?? FolderIcon
+                const Icon = MODULE_ICONS[group.moduleKey] ?? FolderKeyIcon
                 const modulePermissionIds = group.permissions.map((permission) => permission.id)
                 const selectedInModule = modulePermissionIds.filter((id) =>
                   selectedPermissionIds.has(id),
@@ -454,7 +470,7 @@ export function RoleUpsertForm({
                             className={cn(
                               "flex cursor-pointer items-center gap-2.5 rounded-lg border px-2.5 py-2 transition-colors",
                               checked
-                                ? "border-[#FFB300]/40 bg-[#FFB300]/10"
+                                ? "border-[#FFB800]/60 bg-[#FFB800]/10"
                                 : "border-border bg-background hover:border-border/80 hover:bg-muted/60",
                             )}
                           >
@@ -465,7 +481,7 @@ export function RoleUpsertForm({
                                 togglePermission(permission.id, value === true)
                               }
                               disabled={pending}
-                              className="border-border data-checked:border-[#FFB300] data-checked:bg-[#FFB300] data-checked:text-[#1a1000]"
+                              className="border-border data-checked:border-[#FFB800] data-checked:bg-[#FFB800] data-checked:text-[#0E2A47]"
                             />
                             <div className="min-w-0 space-y-1">
                               <span
@@ -497,7 +513,7 @@ export function RoleUpsertForm({
           <Button
             type="submit"
             disabled={pending}
-            className="h-10 rounded-xl bg-linear-to-r from-[#FFB300] to-[#FF8800] border-0 px-5 font-semibold text-[#1a1000] shadow-md shadow-[#FFB300]/20"
+            className="h-10 rounded-xl bg-[#0E5296] hover:bg-[#002F6C] border-0 px-5 font-bold text-white shadow-md shadow-[#0E5296]/20 cursor-pointer"
           >
             {pending ? "Guardando..." : submitLabel}
           </Button>

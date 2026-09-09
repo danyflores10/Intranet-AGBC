@@ -64,6 +64,7 @@ function filterGroup(
 
 export function NavMain({ groups, usuario }: { groups: NavGroup[]; usuario: UsuarioRbac }) {
   const pathname = usePathname()
+  const [openItems, setOpenItems] = React.useState<Record<string, boolean>>({})
 
   const accessOpts = React.useMemo(
     () => crearContextoAcceso(usuario),
@@ -79,11 +80,24 @@ export function NavMain({ groups, usuario }: { groups: NavGroup[]; usuario: Usua
     [groups, accessOpts],
   )
 
+  // Abrir automáticamente el grupo colapsable si la ruta activa coincide con alguno de sus sub-ítems
+  React.useEffect(() => {
+    filteredGroups.forEach((group) => {
+      group.items.forEach((item) => {
+        const matchesSub = item.items?.some((sub) => matchRoute(pathname, sub.url))
+        const matchesMain = matchRoute(pathname, item.url)
+        if (matchesSub || matchesMain) {
+          setOpenItems((prev) => ({ ...prev, [item.title]: true }))
+        }
+      })
+    })
+  }, [pathname, filteredGroups])
+
   return (
     <>
       {filteredGroups.map((group) => (
         <SidebarGroup key={group.label}>
-          <SidebarGroupLabel className="text-accent-foreground">
+          <SidebarGroupLabel className="text-white/70 font-black text-[11px] uppercase tracking-wider">
             {group.label}
           </SidebarGroupLabel>
 
@@ -99,7 +113,7 @@ export function NavMain({ groups, usuario }: { groups: NavGroup[]; usuario: Usua
                     )
                   : null
                 const anySubActive = Boolean(activeSubUrl)
-                const defaultOpen = itemActive || anySubActive
+                const isGroupOpen = openItems[item.title] ?? (itemActive || anySubActive)
 
                 if (!hasSub) {
                   return (
@@ -118,12 +132,15 @@ export function NavMain({ groups, usuario }: { groups: NavGroup[]; usuario: Usua
                   <Collapsible
                     key={item.title}
                     asChild
-                    defaultOpen={defaultOpen}
+                    open={isGroupOpen}
+                    onOpenChange={(isOpen) =>
+                      setOpenItems((prev) => ({ ...prev, [item.title]: isOpen }))
+                    }
                     className="group/collapsible"
                   >
                     <SidebarMenuItem data-tour={item.tourKey}>
                       <CollapsibleTrigger asChild>
-                        <SidebarMenuButton tooltip={item.title} isActive={defaultOpen}>
+                        <SidebarMenuButton tooltip={item.title} isActive={anySubActive}>
                           <item.icon className="h-4 w-4" />
                           <span>{item.title}</span>
                           <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />

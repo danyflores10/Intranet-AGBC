@@ -1,4 +1,4 @@
-﻿import {
+import {
   Activity,
   Archive,
   BarChart3,
@@ -60,7 +60,7 @@ export const sidebarData: {
 } = {
   main: [
     {
-      label: "Administracion",
+      label: "Administración",
       items: [
         {
           title: "Dashboard",
@@ -69,22 +69,53 @@ export const sidebarData: {
           tourKey: "dashboard",
         },
         {
-          title: "Usuarios",
+          title: "Gestión Institucional",
           url: "/usuarios",
-          icon: Users,
-          tourKey: "usuarios",
+          icon: Shield,
+          tourKey: "gestion-institucional",
           access: {
-            permissions: [PERMISOS.USUARIOS.VER],
+            permissions: [
+              PERMISOS.USUARIOS.VER,
+              PERMISOS.ROLES.VER,
+              PERMISOS.AUDITORIA.VER,
+              PERMISOS.SUCURSALES.VER,
+            ],
           },
-        },
-        {
-          title: "Roles",
-          url: "/roles",
-          icon: UserPlus,
-          tourKey: "roles",
-          access: {
-            permissions: [PERMISOS.ROLES.VER],
-          },
+          items: [
+            {
+              title: "Usuarios",
+              url: "/usuarios",
+              icon: Users,
+              access: {
+                permissions: [PERMISOS.USUARIOS.VER],
+              },
+            },
+            {
+              title: "Roles y Permisos",
+              url: "/roles",
+              icon: UserPlus,
+              access: {
+                permissions: [PERMISOS.ROLES.VER],
+              },
+            },
+            {
+              title: "Auditoría y Logs",
+              url: "/auditoria",
+              icon: Shield,
+              access: {
+                permissions: [PERMISOS.AUDITORIA.VER],
+              },
+            },
+            {
+              title: "Sucursales",
+              url: "/sucursales",
+              icon: MapPin,
+              access: {
+                permissions: [PERMISOS.SUCURSALES.VER],
+                roles: ["administrador"],
+              },
+            },
+          ],
         },
         {
           title: "Contenidos",
@@ -125,75 +156,6 @@ export const sidebarData: {
           ],
         },
         {
-          title: "Correspondencia",
-          url: "/correspondencia",
-          icon: FolderOpen,
-          tourKey: "correspondencia",
-          access: {
-            permissions: [PERMISOS.CORRESPONDENCIA.VER],
-          },
-          items: [
-            {
-              title: "Dashboard",
-              url: "/correspondencia/dashboard",
-              icon: LayoutDashboard,
-              access: { permissions: [PERMISOS.CORRESPONDENCIA.VER] },
-            },
-            {
-              title: "Bandeja",
-              url: "/correspondencia",
-              icon: FolderOpen,
-              access: { permissions: [PERMISOS.CORRESPONDENCIA.VER] },
-            },
-            {
-              title: "Registrar",
-              url: "/correspondencia/registrar",
-              icon: FilePlus2,
-              access: { permissions: [PERMISOS.CORRESPONDENCIA.CREAR] },
-            },
-            {
-              title: "Derivaciones",
-              url: "/correspondencia/derivaciones",
-              icon: Forward,
-              access: {
-                permissions: [
-                  PERMISOS.CORRESPONDENCIA.DERIVAR,
-                  PERMISOS.CORRESPONDENCIA.EDITAR,
-                ],
-              },
-            },
-            {
-              title: "Seguimiento",
-              url: "/correspondencia/seguimiento",
-              icon: ClipboardList,
-              access: { permissions: [PERMISOS.CORRESPONDENCIA.VER] },
-            },
-            {
-              title: "Archivo",
-              url: "/correspondencia/archivo",
-              icon: Archive,
-              access: { permissions: [PERMISOS.CORRESPONDENCIA.VER] },
-            },
-            {
-              title: "Reportes",
-              url: "/correspondencia/reportes",
-              icon: BarChart3,
-              access: {
-                permissions: [
-                  PERMISOS.CORRESPONDENCIA.REPORTAR,
-                  PERMISOS.CORRESPONDENCIA.VER,
-                ],
-              },
-            },
-            {
-              title: "Configuración",
-              url: "/correspondencia/configuracion",
-              icon: Settings2,
-              access: { permissions: [PERMISOS.CORRESPONDENCIA.CONFIGURAR] },
-            },
-          ],
-        },
-        {
           title: "RRHH",
           url: "/rrhh",
           icon: Briefcase,
@@ -202,98 +164,10 @@ export const sidebarData: {
             permissions: [PERMISOS.RRHH.VER],
           },
         },
-        {
-          title: "Reconocimientos",
-          url: "/reconocimientos",
-          icon: Trophy,
-          tourKey: "reconocimientos",
-          access: {
-            permissions: [PERMISOS.RECONOCIMIENTOS.VER],
-          },
-          items: [
-            {
-              title: "Dashboard",
-              url: "/reconocimientos",
-              icon: Trophy,
-              access: {
-                permissions: [PERMISOS.RECONOCIMIENTOS.VER],
-              },
-            },
-            {
-              title: "Empleado del Mes",
-              url: "/reconocimientos/empleado-mes",
-              icon: Trophy,
-              access: {
-                permissions: [PERMISOS.RECONOCIMIENTOS.VER],
-              },
-            },
-            {
-              title: "Equipos destacados",
-              url: "/reconocimientos/equipos",
-              icon: Users,
-              access: {
-                permissions: [PERMISOS.RECONOCIMIENTOS.VER],
-              },
-            },
-            {
-              title: "Logros de sucursales",
-              url: "/reconocimientos/sucursales",
-              icon: MapPin,
-              access: {
-                permissions: [PERMISOS.RECONOCIMIENTOS.VER],
-              },
-            },
-            {
-              title: "Aprobaciones",
-              url: "/reconocimientos/aprobaciones",
-              icon: Shield,
-              access: {
-                permissions: [PERMISOS.RECONOCIMIENTOS.APROBAR],
-              },
-            },
-          ],
-        },
-        {
-          title: "Tramites",
-          url: "/tramites",
-          icon: Activity,
-          tourKey: "tramites",
-          access: {
-            permissions: [PERMISOS.TRAMITES.VER],
-          },
-        },
-        {
-          title: "Calendario",
-          url: "/calendario",
-          icon: CalendarDays,
-          tourKey: "calendario",
-          access: {
-            permissions: [PERMISOS.CALENDARIO.VER, PERMISOS.AGENDA.VER],
-          },
-        },
       ],
     },
   ],
   secondary: [
-    {
-      title: "Auditoria",
-      url: "/auditoria",
-      icon: Shield,
-      tourKey: "auditoria",
-      access: {
-        permissions: [PERMISOS.AUDITORIA.VER],
-      },
-    },
-    {
-      title: "Sucursales",
-      url: "/sucursales",
-      icon: MapPin,
-      tourKey: "sucursales",
-      access: {
-        permissions: [PERMISOS.SUCURSALES.VER],
-        roles: ["administrador"],
-      },
-    },
     {
       title: "Secciones Landing",
       url: "/secciones-landing",
@@ -302,20 +176,6 @@ export const sidebarData: {
       access: {
         roles: ["administrador"],
       },
-    },
-    {
-      title: "Onboarding",
-      url: "/configuracion/onboarding",
-      icon: Sparkles,
-      access: {
-        permissions: [PERMISOS.ONBOARDING.CONFIGURAR],
-      },
-    },
-    {
-      title: "Soporte",
-      url: "/soporte",
-      icon: LifeBuoy,
-      tourKey: "soporte",
     },
   ],
 }

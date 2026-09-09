@@ -228,7 +228,7 @@ export function OnboardingTour({ forzar = false, onClose }: Props) {
       {rect && (
         <div
           aria-hidden
-          className="absolute rounded-lg ring-2 ring-[#FFB300] shadow-[0_0_0_4px_rgba(255,179,0,0.25)] transition-all duration-300 animate-pulse-glow pointer-events-none"
+          className="absolute rounded-lg ring-2 ring-[#FFB800] shadow-[0_0_0_4px_rgba(255,184,0,0.25)] transition-all duration-300 animate-pulse-glow pointer-events-none"
           style={{
             top: rect.top - 4,
             left: rect.left - 4,
@@ -257,27 +257,27 @@ export function OnboardingTour({ forzar = false, onClose }: Props) {
         <div className="p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#FFB300] to-[#FF8800] text-[#1a1000]">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0E5296] text-[#FFB800]">
                 <SparklesIcon className="h-3.5 w-3.5" />
               </div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
                 Paso {index + 1} de {pasos.length}
               </p>
             </div>
             <button
               type="button"
               onClick={() => cerrar(false)}
-              className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
               aria-label="Cerrar tour"
             >
               <XIcon className="h-4 w-4" />
             </button>
           </div>
 
-          <h3 id="onboarding-title" className="mt-3 text-lg font-black tracking-tight">
+          <h3 id="onboarding-title" className="mt-3 text-lg font-black tracking-tight text-[#002F6C]">
             {paso.titulo}
           </h3>
-          <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
+          <p className="mt-1.5 text-sm text-slate-600 font-medium leading-relaxed">
             {paso.descripcion}
           </p>
 
@@ -288,10 +288,10 @@ export function OnboardingTour({ forzar = false, onClose }: Props) {
                 key={i}
                 className={`h-1.5 rounded-full transition-all ${
                   i === index
-                    ? "w-6 bg-gradient-to-r from-[#FFB300] to-[#FF8800]"
+                    ? "w-6 bg-[#0E5296]"
                     : i < index
-                      ? "w-1.5 bg-[#FFB300]/60"
-                      : "w-1.5 bg-muted-foreground/20"
+                      ? "w-1.5 bg-[#FFB800]"
+                      : "w-1.5 bg-slate-200"
                 }`}
               />
             ))}
@@ -302,7 +302,7 @@ export function OnboardingTour({ forzar = false, onClose }: Props) {
               type="button"
               onClick={() => setIndex((i) => Math.max(0, i - 1))}
               disabled={index === 0}
-              className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               <ChevronLeftIcon className="h-3.5 w-3.5" />
               Anterior
@@ -311,7 +311,7 @@ export function OnboardingTour({ forzar = false, onClose }: Props) {
               <button
                 type="button"
                 onClick={() => cerrar(false)}
-                className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted"
+                className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-500 transition-colors hover:bg-slate-100 cursor-pointer"
               >
                 Saltar
               </button>
@@ -319,19 +319,19 @@ export function OnboardingTour({ forzar = false, onClose }: Props) {
                 <button
                   type="button"
                   onClick={() => cerrar(true)}
-                  className="inline-flex items-center gap-1 rounded-lg bg-gradient-to-r from-[#FFB300] to-[#FF8800] px-3 py-1.5 text-xs font-bold text-[#1a1000] shadow-md transition-all hover:shadow-lg hover:brightness-105"
+                  className="inline-flex items-center gap-1 rounded-lg bg-[#0E5296] hover:bg-[#002F6C] px-3 py-1.5 text-xs font-bold text-white shadow-md transition-all cursor-pointer"
                 >
-                  <CheckIcon className="h-3.5 w-3.5" />
+                  <CheckIcon className="h-3.5 w-3.5 text-[#FFB800]" />
                   Finalizar
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={() => setIndex((i) => Math.min(pasos.length - 1, i + 1))}
-                  className="inline-flex items-center gap-1 rounded-lg bg-gradient-to-r from-[#FFB300] to-[#FF8800] px-3 py-1.5 text-xs font-bold text-[#1a1000] shadow-md transition-all hover:shadow-lg hover:brightness-105"
+                  className="inline-flex items-center gap-1 rounded-lg bg-[#0E5296] hover:bg-[#002F6C] px-3 py-1.5 text-xs font-bold text-white shadow-md transition-all cursor-pointer"
                 >
                   Siguiente
-                  <ChevronRightIcon className="h-3.5 w-3.5" />
+                  <ChevronRightIcon className="h-3.5 w-3.5 text-[#FFB800]" />
                 </button>
               )}
             </div>

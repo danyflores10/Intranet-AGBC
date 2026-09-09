@@ -69,34 +69,12 @@ export function FullscreenToggle() {
       ? "Cambiar a modo claro"
       : "Cambiar a modo oscuro"
     : "Cambiar tema"
-  const floatingButtonClassName = "pointer-events-auto h-14 w-14 rounded-2xl border-border/70 bg-card/95 text-foreground shadow-[0_8px_24px_-10px_rgba(15,23,42,0.45)] backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-card hover:shadow-[0_14px_30px_-12px_rgba(15,23,42,0.55)] active:translate-y-0 disabled:opacity-55"
-
-  const handleThemeToggle = React.useCallback(() => {
-    setTheme(isDarkTheme ? "light" : "dark")
-  }, [isDarkTheme, setTheme])
+  const floatingButtonClassName = "pointer-events-auto h-12 w-12 rounded-2xl border-border/70 bg-white text-[#0E5296] shadow-lg shadow-black/10 backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50 hover:text-[#0077EE] active:translate-y-0 disabled:opacity-55"
 
   return (
     <div
       className={`pointer-events-none fixed z-40 ${floatingPositionClass}`}
     >
-      <div className="flex flex-col items-end gap-2">
-        <Button
-          variant="outline"
-          size="icon-lg"
-          type="button"
-          onClick={handleThemeToggle}
-          aria-label={themeLabel}
-          title={themeLabel}
-          className={floatingButtonClassName}
-        >
-          {isMounted && isDarkTheme ? (
-            <MoonIcon className="h-6 w-6" />
-          ) : (
-            <SunIcon className="h-6 w-6" />
-          )}
-          <span className="sr-only">{themeLabel}</span>
-        </Button>
-
       <Button
         variant="outline"
         size="icon-lg"
@@ -110,13 +88,12 @@ export function FullscreenToggle() {
         className={floatingButtonClassName}
       >
         {isFullscreen ? (
-          <Minimize2Icon className="h-6 w-6" />
+          <Minimize2Icon className="h-5 w-5" />
         ) : (
-          <Maximize2Icon className="h-6 w-6" />
+          <Maximize2Icon className="h-5 w-5" />
         )}
         <span className="sr-only">{label}</span>
       </Button>
-      </div>
     </div>
   )
 }

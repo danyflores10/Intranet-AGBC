@@ -64,7 +64,7 @@ export function RoleDeleteDialog({ role, onDeleted, onClose }: RoleDeleteDialogP
       }}
     >
       <AlertDialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden rounded-2xl">
-        <div className="flex h-1.5 w-full"><div className="flex-1 bg-[#C41E3A]"/><div className="flex-1 bg-[#FFB300]"/><div className="flex-1 bg-[#2E7D32]"/></div>
+        <div className="h-1.5 w-full bg-gradient-to-r from-[#FFB800] via-[#0077EE] to-[#0E5296]" />
         <div className="p-6 space-y-4">
         <AlertDialogHeader>
           <div className="flex items-start gap-3">

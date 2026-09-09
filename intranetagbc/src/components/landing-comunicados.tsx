@@ -97,11 +97,11 @@ export function LandingComunicados({ comunicados, estaLogueado = false }: { comu
       <section id="comunicados" className="border-t border-border/40 scroll-mt-20">
         <div className="mx-auto max-w-7xl px-6 py-24 md:py-32">
           <div className="mx-auto max-w-2xl text-center mb-16">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#FFB300]/20 bg-[#FFB300]/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#FF8800]">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#FFB800]/30 bg-[#FFB800]/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-[#0E5296] dark:text-[#FFB800]">
               <MegaphoneIcon className="h-3.5 w-3.5" />
               Comunicados
             </div>
-            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl">
+            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl text-foreground">
               Comunicados Oficiales
             </h2>
             <p className="mt-4 text-muted-foreground text-lg">
@@ -115,7 +115,8 @@ export function LandingComunicados({ comunicados, estaLogueado = false }: { comu
               <button
                 type="button"
                 onClick={prev}
-                className="absolute -left-4 top-1/2 z-20 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full border border-border/50 bg-card/90 text-muted-foreground shadow-lg backdrop-blur-sm transition-all hover:border-[#FFB300]/40 hover:bg-card hover:text-[#FF8800] hover:shadow-xl md:-left-6"
+                aria-label="Anterior"
+                className="absolute -left-4 top-1/2 z-20 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full border border-border/50 bg-card/90 text-muted-foreground shadow-lg backdrop-blur-sm transition-all hover:border-[#FFB800] hover:bg-card hover:text-[#0E5296] dark:hover:text-[#FFB800] hover:shadow-xl md:-left-6 cursor-pointer"
               >
                 <ChevronLeftIcon className="h-5 w-5" />
               </button>
@@ -131,35 +132,35 @@ export function LandingComunicados({ comunicados, estaLogueado = false }: { comu
                   key={com.id}
                   type="button"
                   onClick={() => setViewing(com)}
-                  className="group relative flex w-full min-w-[calc(100%/1)] snap-start flex-col overflow-hidden rounded-2xl border border-border/50 bg-card text-left transition-all duration-300 hover:border-[#FFB300]/30 hover:shadow-xl hover:shadow-[#FFB300]/5 hover:-translate-y-1 sm:min-w-[calc(50%-12px)] lg:min-w-[calc(33.333%-16px)]"
+                  className="group relative flex w-full min-w-[calc(100%/1)] snap-start flex-col overflow-hidden rounded-2xl border border-border/50 bg-card text-left transition-all duration-300 hover:border-[#FFB800]/60 hover:shadow-xl hover:shadow-[#0E5296]/10 hover:-translate-y-1 sm:min-w-[calc(50%-12px)] lg:min-w-[calc(33.333%-16px)] cursor-pointer"
                 >
                 {/* Thumbnail */}
-                <div className="relative flex h-48 w-full items-center justify-center overflow-hidden bg-gradient-to-br from-[#FFB300]/10 via-[#FF8800]/5 to-[#F5061D]/10">
+                <div className="relative flex h-48 w-full items-center justify-center overflow-hidden bg-gradient-to-br from-[#FFB800]/15 via-[#0E5296]/10 to-[#0077EE]/15">
                   {com.archivoUrl && com.archivoTipo === "imagen" ? (
                     <img src={com.archivoUrl} alt={com.titulo} className="h-full w-full object-cover" />
                   ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFB300] to-[#FF8800] text-white shadow-lg">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0E5296] text-[#FFB800] shadow-lg shadow-[#0E5296]/20">
                       {com.archivoTipo === "pdf"
                         ? <FileTextIcon className="h-7 w-7" />
                         : <MegaphoneIcon className="h-7 w-7" />}
                     </div>
                   )}
                   {/* Hover overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover:bg-black/10">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-[#FF8800] opacity-0 transform scale-75 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 shadow-lg">
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover:bg-black/15">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/95 text-[#0E5296] dark:text-[#FFB800] opacity-0 transform scale-75 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 shadow-lg">
                       <EyeIcon className="h-5 w-5" />
                     </div>
                   </div>
                   {com.destacado && (
                     <div className="absolute top-3 right-3">
-                      <span className="rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider shadow-sm">
+                      <span className="rounded-full bg-[#FFB800] text-[#0E2A47] font-bold px-2.5 py-1 text-[10px] uppercase tracking-wider shadow-sm">
                         Destacado
                       </span>
                     </div>
                   )}
                   {com.archivoTipo === "pdf" && com.archivoUrl && (
                     <div className="absolute top-3 left-3">
-                      <span className="rounded-full bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400 px-2 py-1 text-[10px] font-bold uppercase tracking-wider shadow-sm flex items-center gap-1">
+                      <span className="rounded-full bg-[#0E5296] text-white px-2 py-1 text-[10px] font-bold uppercase tracking-wider shadow-sm flex items-center gap-1">
                         <FileTextIcon className="h-3 w-3" />PDF
                       </span>
                     </div>
@@ -167,21 +168,17 @@ export function LandingComunicados({ comunicados, estaLogueado = false }: { comu
                 </div>
 
                 <div className="flex flex-1 flex-col p-5">
-                  <h3 className="text-base font-bold leading-snug line-clamp-2 mb-2">{com.titulo}</h3>
+                  <h3 className="text-base font-bold leading-snug line-clamp-2 mb-2 group-hover:text-[#0E5296] dark:group-hover:text-[#FFB800] transition-colors">{com.titulo}</h3>
                   <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">{com.contenido}</p>
                   <div className="flex items-center border-t border-border/30 pt-3">
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <CalendarIcon className="h-3.5 w-3.5" />
+                      <CalendarIcon className="h-3.5 w-3.5 text-[#0E5296] dark:text-[#FFB800]" />
                       <span>{formatDate(com.fecha)}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex h-1 w-full">
-                  <div className="flex-1 bg-[#C41E3A]" />
-                  <div className="flex-1 bg-[#FFB300]" />
-                  <div className="flex-1 bg-[#2E7D32]" />
-                </div>
+                <div className="h-1.5 w-full bg-gradient-to-r from-[#FFB800] via-[#0077EE] to-[#0E5296]" />
               </button>
             ))}
             </div>
@@ -191,7 +188,8 @@ export function LandingComunicados({ comunicados, estaLogueado = false }: { comu
               <button
                 type="button"
                 onClick={next}
-                className="absolute -right-4 top-1/2 z-20 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full border border-border/50 bg-card/90 text-muted-foreground shadow-lg backdrop-blur-sm transition-all hover:border-[#FFB300]/40 hover:bg-card hover:text-[#FF8800] hover:shadow-xl md:-right-6"
+                aria-label="Siguiente"
+                className="absolute -right-4 top-1/2 z-20 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full border border-border/50 bg-card/90 text-muted-foreground shadow-lg backdrop-blur-sm transition-all hover:border-[#FFB800] hover:bg-card hover:text-[#0E5296] dark:hover:text-[#FFB800] hover:shadow-xl md:-right-6 cursor-pointer"
               >
                 <ChevronRightIcon className="h-5 w-5" />
               </button>
@@ -206,10 +204,11 @@ export function LandingComunicados({ comunicados, estaLogueado = false }: { comu
                   key={i}
                   type="button"
                   onClick={() => scrollToPage(i)}
-                  className={`rounded-full transition-all duration-300 ${
+                  aria-label={`Página ${i + 1}`}
+                  className={`rounded-full transition-all duration-300 cursor-pointer ${
                     currentPage === i
-                      ? "h-3 w-3 bg-[#FFB300] shadow-md shadow-[#FFB300]/30"
-                      : "h-2.5 w-2.5 bg-[#FFB300]/25 hover:bg-[#FFB300]/50"
+                      ? "h-3 w-8 bg-[#0E5296] shadow-md shadow-[#0E5296]/20"
+                      : "h-2.5 w-2.5 bg-slate-300 hover:bg-[#FFB800]"
                   }`}
                 />
               ))}
@@ -218,31 +217,27 @@ export function LandingComunicados({ comunicados, estaLogueado = false }: { comu
         </div>
       </section>
 
-      {/* ── Modal Profesional con Header Tricolor ── */}
+      {/* ── Modal Profesional con Header Amarillo & Azul ── */}
       {viewing && (
         <Dialog open={!!viewing} onOpenChange={() => setViewing(null)}>
           <DialogContent className="h-[93vh] !w-[95vw] max-h-[93vh] !max-w-[95vw] sm:!max-w-[94vw] lg:!max-w-[90vw] xl:!max-w-[86vw] 2xl:!max-w-[1500px] !gap-0 !grid !grid-rows-[auto_auto_minmax(0,1fr)] overflow-hidden rounded-2xl border-0 bg-white p-0 shadow-2xl dark:bg-zinc-900 [&>button]:hidden">
             <DialogTitle className="sr-only">{viewing.titulo}</DialogTitle>
 
-            {/* Barra tricolor superior */}
-            <div className="flex h-2 w-full shrink-0">
-              <div className="flex-1 bg-[#C41E3A]" />
-              <div className="flex-1 bg-[#FFB300]" />
-              <div className="flex-1 bg-[#2E7D32]" />
-            </div>
+            {/* Barra superior con gradiente Amarillo a Azul */}
+            <div className="h-2 w-full shrink-0 bg-gradient-to-r from-[#FFB800] via-[#0077EE] to-[#0E5296]" />
 
             <div className="flex items-center justify-between border-b border-border/20 bg-white/90 px-4 py-2.5 dark:bg-zinc-900/90">
               <div className="min-w-0 flex-1">
                 <h3 className="line-clamp-1 text-sm font-bold tracking-tight md:text-base">{viewing.titulo}</h3>
                 <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                  <CalendarIcon className="h-3 w-3 shrink-0" />
+                  <CalendarIcon className="h-3 w-3 shrink-0 text-[#0E5296] dark:text-[#FFB800]" />
                   {formatDate(viewing.fecha)}
                 </p>
               </div>
               <div className="ml-3 flex shrink-0 items-center gap-2">
                 {viewing.archivoUrl && viewing.archivoTipo === "pdf" && (
                   <a href={viewing.archivoUrl} download={viewing.archivoNombre ?? "documento.pdf"} target="_blank" rel="noopener noreferrer">
-                    <Button size="sm" className="rounded-lg bg-[#C41E3A] text-white hover:bg-[#a01830]">
+                    <Button size="sm" className="rounded-lg bg-[#0E5296] text-white hover:bg-[#003B73]">
                       <DownloadIcon className="mr-2 h-4 w-4" />
                       Descargar
                     </Button>
@@ -250,7 +245,7 @@ export function LandingComunicados({ comunicados, estaLogueado = false }: { comu
                 )}
                 <button
                   onClick={() => setViewing(null)}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/50 bg-white transition-colors hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/50 bg-white transition-colors hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 cursor-pointer"
                 >
                   <XIcon className="h-4 w-4" />
                 </button>
@@ -276,7 +271,7 @@ export function LandingComunicados({ comunicados, estaLogueado = false }: { comu
                 </div>
               ) : (
                 <div className="h-full overflow-y-auto p-8 text-center">
-                  <MegaphoneIcon className="mx-auto h-14 w-14 mb-4 text-[#FFB300]/40" />
+                  <MegaphoneIcon className="mx-auto h-14 w-14 mb-4 text-[#FFB800]" />
                   <p className="font-bold text-xl">{viewing.titulo}</p>
                   <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">{viewing.contenido}</p>
                 </div>

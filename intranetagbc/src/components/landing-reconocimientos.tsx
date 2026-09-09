@@ -52,13 +52,13 @@ export function LandingReconocimientos({ data }: Props) {
       <div className="mx-auto max-w-7xl px-6 py-16 md:py-20">
         {/* Header */}
         <div className="mx-auto max-w-2xl text-center mb-12">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#FFB300]/30 bg-[#FFB300]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#FF8800]">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#FFB800]/30 bg-[#FFB800]/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-[#0E5296] dark:text-[#FFB800]">
             <SparklesIcon className="h-3.5 w-3.5" />
             Reconocimientos
           </div>
-          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl text-foreground">
             Celebramos el{" "}
-            <span className="bg-gradient-to-r from-[#FFB300] via-[#FF8800] to-[#C41E3A] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#FFB800] via-[#0077EE] to-[#0E5296] bg-clip-text text-transparent">
               compromiso y excelencia
             </span>{" "}
             de nuestra gente
@@ -75,8 +75,8 @@ export function LandingReconocimientos({ data }: Props) {
         {data.empleadosMes.length > 0 && (
           <BloqueSeccion
             icono={TrophyIcon}
-            gradiente="from-[#FFB300] to-[#FF8800]"
-            color="#FF8800"
+            gradiente="from-[#FFB800] to-[#0E5296]"
+            color="#0E5296"
             titulo="Empleado del Mes"
             subtitulo="Reconocimiento individual a la excelencia y compromiso"
           >

@@ -15,6 +15,12 @@ import {
   ImageIcon,
   XIcon,
   Loader2Icon,
+  LayoutGridIcon,
+  TableIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CheckCircle2Icon,
+  SparklesIcon,
 } from "lucide-react"
 import toast from "react-hot-toast"
 
@@ -83,6 +89,8 @@ function getFileColor(tipo: string | null) {
 
 export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   const [tab, setTab] = useState<Tab>("todos")
+  const [searchQuery, setSearchQuery] = useState("")
+
   const [dialogOpen, setDialogOpen] = useState(false)
   const [catDialogOpen, setCatDialogOpen] = useState(false)
   const [previewDoc, setPreviewDoc] = useState<DocRow | null>(null)
@@ -113,6 +121,11 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
 
   const docsConArchivo = documentos.filter((d) => d.archivo)
   const docsSinArchivo = documentos.filter((d) => !d.archivo)
+
+  const handleTabChange = (t: Tab) => {
+    setTab(t)
+    setSearchQuery("")
+  }
 
   useEffect(() => {
     if (dialogOpen) {
@@ -159,7 +172,6 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
       try {
         const payload: Record<string, string | undefined> = {
           titulo: fd.get("titulo") as string,
-          autor: fd.get("autor") as string,
           categoriaId: categoriaId || undefined,
           estado,
           descripcion: ((fd.get("descripcion") as string) || "").trim() || undefined,
@@ -295,43 +307,58 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
     })
   }
 
-  return (
-    <>
-      <div className="flex flex-1 flex-col gap-6 p-6">
-        <div className="flex items-center gap-1 border-b border-border/40 pb-0">
-          {([
-            { key: "todos" as Tab, label: "Todos los documentos", icon: FileTextIcon },
-            { key: "archivos" as Tab, label: "Archivos", icon: UploadIcon },
-            { key: "categorias" as Tab, label: "Categorías", icon: FolderIcon },
-          ]).map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${tab === t.key ? "border-[#FFB300] text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-            >
-              <t.icon className="h-4 w-4" />
-              {t.label}
-            </button>
-          ))}
-        </div>
+  const filteredDocs = useMemo(() => {
+    return documentos.filter((d) =>
+      d.titulo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (d.descripcion && d.descripcion.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (d.categoria && d.categoria.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (d.nombreArchivo && d.nombreArchivo.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
+  }, [documentos, searchQuery])
 
-        <div className="flex items-center justify-between">
+  const filteredArchivos = useMemo(() => {
+    return docsConArchivo.filter((d) =>
+      d.titulo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (d.nombreArchivo && d.nombreArchivo.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
+  }, [docsConArchivo, searchQuery])
+
+  const filteredCategorias = useMemo(() => {
+    return categorias.filter((c) =>
+      c.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.descripcion && c.descripcion.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
+  }, [categorias, searchQuery])
+
+  const currentList = tab === "todos" ? filteredDocs : tab === "archivos" ? filteredArchivos : filteredCategorias
+
+  return (
+    <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-blue-50/25 to-amber-50/20 min-h-screen">
+      {/* ── Encabezado Institucional ── */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-3xl border-2 border-[#002F6C]/15 bg-gradient-to-r from-white via-blue-50/30 to-amber-50/30 p-6 shadow-xs">
+        <div className="flex items-center gap-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0E5296] text-[#FFCC00] shadow-md ring-2 ring-[#0E5296]/20">
+            <FileTextIcon className="h-7 w-7" />
+          </div>
           <div>
-            <h2 className="text-xl font-bold tracking-tight">
-              {tab === "todos" ? "Todos los documentos" : tab === "archivos" ? "Archivos subidos" : "Categorías"}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {tab === "todos"
-                ? "Repositorio centralizado de documentación"
-                : tab === "archivos"
-                  ? "Documentos con archivos adjuntos para visualizar y descargar"
-                  : "Organiza documentos por tipo"}
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-black tracking-tight text-[#002F6C]">
+                Gestión Documental y Archivos
+              </h1>
+              <span className="rounded-full bg-[#0E5296] text-[#FFCC00] px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                AGBC
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Repositorio centralizado de manuales, normativas, circulares y formularios oficiales
             </p>
           </div>
-          {canCreateDocumento ? (
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {canCreateDocumento && (
             <Button
-              className="bg-linear-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] border-0 font-semibold shadow-md shadow-[#FFB300]/20"
+              className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold rounded-2xl shadow-md shadow-[#0E5296]/20 cursor-pointer text-xs"
               onClick={() => {
                 if (tab === "categorias") {
                   setEditCat(null)
@@ -341,249 +368,216 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                 }
               }}
             >
-              <PlusIcon className="mr-2 h-4 w-4" />
-              {tab === "categorias" ? "Nueva categoría" : "Nuevo documento"}
+              <PlusIcon className="mr-1.5 h-4 w-4 text-[#FFCC00]" />
+              {tab === "categorias" ? "Nueva Categoría" : "Nuevo Documento"}
             </Button>
-          ) : null}
+          )}
+        </div>
+      </div>
+
+      {/* ── Tabs de Navegación ── */}
+      <div className="flex items-center gap-2 rounded-2xl bg-slate-100/80 p-1.5 border border-[#002F6C]/10 w-fit">
+        {([
+          { key: "todos" as Tab, label: "Todos los Documentos", icon: FileTextIcon, count: documentos.length },
+          { key: "archivos" as Tab, label: "Archivos Adjuntos", icon: UploadIcon, count: docsConArchivo.length },
+          { key: "categorias" as Tab, label: "Categorías", icon: FolderIcon, count: categorias.length },
+        ]).map((t) => (
+          <button
+            key={t.key}
+            onClick={() => handleTabChange(t.key)}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black transition-all cursor-pointer ${
+              tab === t.key
+                ? "bg-[#0E5296] text-[#FFCC00] shadow-md shadow-[#0E5296]/20"
+                : "text-slate-600 hover:text-[#002F6C] hover:bg-white/60"
+            }`}
+          >
+            <t.icon className="h-4 w-4" />
+            <span>{t.label}</span>
+            <span className={`ml-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+              tab === t.key ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
+            }`}>
+              {t.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* ── Tarjetas Métricas en Pastel Amarillo y Azul ── */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-sky-200/90 bg-gradient-to-br from-sky-50 via-blue-50/60 to-white p-4 shadow-xs">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0E5296] text-[#FFCC00]">
+            <FileTextIcon className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-2xl font-black text-[#002F6C]">
+              {tab === "categorias" ? categorias.length : documentos.length}
+            </div>
+            <div className="text-xs text-slate-600 font-bold">
+              {tab === "categorias" ? "Total Categorías" : "Total Documentos"}
+            </div>
+          </div>
         </div>
 
-        {tab === "todos" && (
-          <>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-              <Card className="border-border/40"><CardContent className="p-4"><div className="text-2xl font-bold">{documentos.length}</div><div className="text-xs text-muted-foreground">Total documentos</div></CardContent></Card>
-              <Card className="border-border/40"><CardContent className="p-4"><div className="text-2xl font-bold text-green-600">{documentos.filter(d => d.estado === "publicado").length}</div><div className="text-xs text-muted-foreground">Publicados</div></CardContent></Card>
-              <Card className="border-border/40"><CardContent className="p-4"><div className="text-2xl font-bold text-amber-500">{documentos.filter(d => d.estado !== "publicado").length}</div><div className="text-xs text-muted-foreground">Pendientes / Borrador</div></CardContent></Card>
-              <Card className="border-border/40"><CardContent className="p-4"><div className="text-2xl font-bold text-blue-600">{docsConArchivo.length}</div><div className="text-xs text-muted-foreground">Con archivo adjunto</div></CardContent></Card>
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-amber-200/90 bg-gradient-to-br from-amber-50 via-yellow-50/60 to-white p-4 shadow-xs">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FFCC00] text-[#002F6C]">
+            <CheckCircle2Icon className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-2xl font-black text-[#002F6C]">
+              {documentos.filter((d) => d.estado === "publicado").length}
             </div>
+            <div className="text-xs text-slate-600 font-bold">Publicados / Vigentes</div>
+          </div>
+        </div>
 
-            <DataTable
-              data={documentos.map(d => ({ ...d, fecha: d.createdAt.toLocaleDateString("es-BO") }))}
-              searchKey="titulo"
-              searchPlaceholder="Buscar documento..."
-              columns={[
-                {
-                  key: "titulo",
-                  label: "Título",
-                  render: (row) => (
-                    <div className="flex items-center gap-2">
-                      {row.archivo ? (
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: getFileColor(row.tipoArchivo) + "15" }}>
-                          {(() => {
-                            const Icon = getFileIcon(row.tipoArchivo)
-                            return <Icon className="h-4 w-4" style={{ color: getFileColor(row.tipoArchivo) }} />
-                          })()}
-                        </div>
-                      ) : null}
-                      <div>
-                        <span className="font-medium">{row.titulo}</span>
-                        {row.nombreArchivo && <p className="text-[10px] text-muted-foreground truncate max-w-50">{row.nombreArchivo}</p>}
-                      </div>
-                    </div>
-                  )
-                },
-                { key: "categoria", label: "Categoría", render: (row) => <span>{row.categoria || "Sin categoría"}</span> },
-                { key: "fecha", label: "Fecha" },
-                { key: "autor", label: "Autor" },
-                { key: "tamano", label: "Tamaño", render: (row) => <span className="text-xs text-muted-foreground">{row.tamano || "-"}</span> },
-                { key: "estado", label: "Estado", render: (row) => <StatusBadge status={row.estado as "publicado" | "borrador" | "pendiente"} /> },
-              ]}
-              actions={(row) => (
-                <div className="flex items-center justify-end gap-1.5">
-                  {row.archivo && (
-                    <>
-                      <button
-                        type="button"
-                        title="Ver archivo"
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 hover:shadow-md active:scale-95"
-                        onClick={() => setPreviewDoc(row as unknown as DocRow)}
-                      >
-                        <EyeIcon className="h-4 w-4" />
-                      </button>
-                      <a
-                        href={row.archivo}
-                        download={row.nombreArchivo ?? "archivo"}
-                        title="Descargar"
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-green-300 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-500/10 hover:shadow-md active:scale-95"
-                      >
-                        <DownloadIcon className="h-4 w-4" />
-                      </a>
-                    </>
-                  )}
-                  {canEditDocumento ? (
-                    <button
-                      type="button"
-                      title="Editar"
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-[#FFB300]/40 hover:bg-[#FFB300]/10 hover:text-[#FF8800] hover:shadow-md active:scale-95"
-                      onClick={() => openEditDoc(row as unknown as DocRow)}
-                    >
-                      <PencilIcon className="h-4 w-4" />
-                    </button>
-                  ) : null}
-                  {canDeleteDocumento ? (
-                    <button
-                      type="button"
-                      title="Eliminar"
-                      disabled={isPending}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-red-300 hover:bg-red-50 hover:text-red-600 hover:shadow-md dark:hover:border-red-500/30 dark:hover:bg-red-500/10 dark:hover:text-red-400 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
-                      onClick={() => handleDeleteDoc(row.id)}
-                    >
-                      <Trash2Icon className="h-4 w-4" />
-                    </button>
-                  ) : null}
-                </div>
-              )}
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-blue-200/90 bg-gradient-to-br from-blue-50 via-sky-50/50 to-white p-4 shadow-xs">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-200 text-[#002F6C]">
+            <SparklesIcon className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-2xl font-black text-[#002F6C]">
+              {docsConArchivo.length}
+            </div>
+            <div className="text-xs text-slate-600 font-bold">Con Archivo Descargable</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Buscador ── */}
+      <div className="rounded-2xl border-2 border-[#002F6C]/15 bg-gradient-to-r from-white via-blue-50/20 to-amber-50/20 p-4 shadow-xs">
+        <div className="flex items-center justify-between gap-3">
+          <div className="relative w-full md:w-80">
+            <Input
+              type="text"
+              placeholder={`Buscar en ${tab}...`}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-white/90 border-[#002F6C]/20 text-xs font-medium focus:border-[#0E5296]"
             />
-          </>
-        )}
+          </div>
+          <span className="text-xs font-bold text-[#0E5296] bg-white/80 border border-[#0E5296]/20 px-3 py-1.5 rounded-xl shadow-2xs">
+            {currentList.length} encontrados
+          </span>
+        </div>
+      </div>
 
-        {tab === "archivos" && (
-          <>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <Card className="border-border/40"><CardContent className="p-4"><div className="text-2xl font-bold">{docsConArchivo.length}</div><div className="text-xs text-muted-foreground">Total archivos</div></CardContent></Card>
-              <Card className="border-border/40"><CardContent className="p-4"><div className="text-2xl font-bold text-green-600">{docsConArchivo.filter(d => d.estado === "publicado").length}</div><div className="text-xs text-muted-foreground">Activos</div></CardContent></Card>
-              <Card className="border-border/40"><CardContent className="p-4"><div className="text-2xl font-bold text-amber-500">{docsSinArchivo.length}</div><div className="text-xs text-muted-foreground">Sin archivo</div></CardContent></Card>
-            </div>
-
-            {docsConArchivo.length === 0 ? (
-              <Card className="border-border/40 border-dashed">
-                <CardContent className="flex flex-col items-center justify-center gap-3 py-16">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50">
-                    <UploadIcon className="h-8 w-8 text-muted-foreground/30" />
-                  </div>
-                  <p className="text-sm font-semibold text-muted-foreground">No hay archivos subidos</p>
-                  <p className="text-xs text-muted-foreground/60">Crea un documento y adjunta un archivo</p>
-                  {canCreateDocumento ? (
-                    <Button size="sm" className="mt-2 rounded-xl bg-linear-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] border-0" onClick={openCreateDoc}>
-                      <PlusIcon className="h-4 w-4 mr-1" />
-                      Subir documento
-                    </Button>
-                  ) : null}
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {docsConArchivo.map((doc) => {
-                  const Icon = getFileIcon(doc.tipoArchivo)
-                  const color = getFileColor(doc.tipoArchivo)
+      {/* ══════════════════════════════════════════════════════════════ */}
+      {/* VISTA EN TABLA ESTRUCTURADA Y RESPONSIVA AGBC                  */}
+      {/* ══════════════════════════════════════════════════════════════ */}
+      <div className="rounded-3xl border-2 border-[#002F6C]/15 bg-white p-4 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[700px]">
+            <thead>
+              <tr className="border-b-2 border-slate-100 bg-gradient-to-r from-sky-50/70 via-blue-50/50 to-amber-50/50 text-[11px] font-black uppercase text-[#002F6C] tracking-wider">
+                <th className="py-3 px-4">{tab === "categorias" ? "Categoría" : "Documento"}</th>
+                <th className="py-3 px-4">{tab === "categorias" ? "Descripción" : "Categoría / Detalle"}</th>
+                <th className="py-3 px-4">Estado</th>
+                <th className="py-3 px-4">Fecha</th>
+                <th className="py-3 px-4 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-xs">
+              {currentList.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-12 text-center text-slate-400 font-medium">
+                    No hay registros en {tab === "categorias" ? "Categorías" : tab === "archivos" ? "Archivos Adjuntos" : "Todos los Documentos"}.
+                  </td>
+                </tr>
+              ) : (
+                currentList.map((item: any) => {
+                  const isCat = tab === "categorias"
+                  const Icon = isCat ? FolderIcon : getFileIcon(item.tipoArchivo)
+                  const iconColor = isCat ? "#FF8800" : getFileColor(item.tipoArchivo)
 
                   return (
-                    <Card key={doc.id} className="group border-border/40 overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-[#FFB300]/30 hover:-translate-y-0.5">
-                      <CardContent className="p-0">
-                        <div className="flex items-center gap-3 px-4 py-3 border-b border-border/30" style={{ backgroundColor: color + "08" }}>
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-sm" style={{ backgroundColor: color + "18" }}>
-                            <Icon className="h-5 w-5" style={{ color }} />
+                    <tr key={item.id} className="hover:bg-blue-50/30 transition-colors">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFCC00] text-[#002F6C] font-black shadow-xs">
+                            <Icon className="h-5 w-5" style={{ color: iconColor }} />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold truncate group-hover:text-[#FF8800] transition-colors">{doc.titulo}</p>
-                            <p className="text-[10px] text-muted-foreground truncate">{doc.nombreArchivo}</p>
+                          <div>
+                            <p className="font-bold text-[#002F6C]">{isCat ? item.nombre : item.titulo}</p>
+                            {!isCat && item.nombreArchivo && (
+                              <p className="text-[10px] text-slate-400 truncate max-w-[200px]">{item.nombreArchivo}</p>
+                            )}
                           </div>
-                          <span className="text-[10px] font-bold uppercase rounded-full px-2 py-0.5" style={{ backgroundColor: color + "15", color }}>
-                            {doc.tipoArchivo ?? "?"}
-                          </span>
                         </div>
-
-                        <div className="p-4 space-y-3">
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span>Autor: <strong className="text-foreground">{doc.autor}</strong></span>
-                            <span>{doc.tamano ?? "-"}</span>
-                          </div>
-
-                          {doc.categoria && (
-                            <div className="flex items-center gap-1.5">
-                              <FolderIcon className="h-3 w-3 text-[#FFB300]" />
-                              <span className="text-xs text-muted-foreground">{doc.categoria}</span>
-                            </div>
-                          )}
-
-                          <div className="flex items-center gap-2 pt-1">
-                            <StatusBadge status={doc.estado as "publicado" | "borrador" | "pendiente"} />
-                            <span className="text-[10px] text-muted-foreground ml-auto">{doc.createdAt.toLocaleDateString("es-BO")}</span>
-                          </div>
-
-                          <div className="flex items-center gap-2 pt-2 border-t border-border/30">
+                      </td>
+                      <td className="py-3 px-4 max-w-[280px]">
+                        <p className="text-slate-600 truncate">
+                          {isCat ? (item.descripcion || "—") : (item.categoria || "Sin categoría")}
+                        </p>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                          (isCat || item.estado === "publicado") ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
+                        }`}>
+                          <span className={`h-1.5 w-1.5 rounded-full ${(isCat || item.estado === "publicado") ? "bg-emerald-500" : "bg-slate-400"}`} />
+                          {isCat ? "Activo" : item.estado === "publicado" ? "Vigente" : "Borrador"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-slate-500">
+                        {item.createdAt ? new Date(item.createdAt).toLocaleDateString("es-BO") : "—"}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {!isCat && item.archivo && (
                             <button
-                              type="button"
-                              onClick={() => setPreviewDoc(doc)}
-                              className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
+                              onClick={() => setPreviewDoc(item)}
+                              className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-50 text-[#002F6C] hover:bg-[#0E5296] hover:text-white transition-colors cursor-pointer"
+                              title="Ver archivo"
                             >
-                              <EyeIcon className="h-3.5 w-3.5" />
-                              Visualizar
+                              <EyeIcon className="h-4 w-4" />
                             </button>
+                          )}
+                          {!isCat && item.archivo && (
                             <a
-                              href={doc.archivo!}
-                              download={doc.nombreArchivo ?? "archivo"}
-                              className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold text-green-600 hover:bg-green-50 dark:hover:bg-green-500/10 transition-colors"
+                              href={item.archivo}
+                              download={item.nombreArchivo ?? "documento"}
+                              className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors cursor-pointer"
+                              title="Descargar"
                             >
-                              <DownloadIcon className="h-3.5 w-3.5" />
-                              Descargar
+                              <DownloadIcon className="h-4 w-4" />
                             </a>
-                            {canEditDocumento ? (
-                              <button
-                                type="button"
-                                onClick={() => openEditDoc(doc)}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-[#FFB300]/10 hover:text-[#FF8800] transition-colors"
-                              >
-                                <PencilIcon className="h-3.5 w-3.5" />
-                              </button>
-                            ) : null}
-                          </div>
+                          )}
+                          {canEditDocumento && (
+                            <button
+                              onClick={() => {
+                                if (isCat) {
+                                  setEditCat(item)
+                                  setCatDialogOpen(true)
+                                } else {
+                                  openEditDoc(item)
+                                }
+                              }}
+                              className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-[#002F6C] hover:bg-[#0E5296] hover:text-white transition-colors cursor-pointer"
+                              title="Editar"
+                            >
+                              <PencilIcon className="h-4 w-4" />
+                            </button>
+                          )}
+                          {canDeleteDocumento && (
+                            <button
+                              onClick={() => {
+                                if (isCat) handleDeleteCategory(item.id)
+                                else handleDeleteDoc(item.id)
+                              }}
+                              className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
+                              title="Eliminar"
+                            >
+                              <Trash2Icon className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
-                      </CardContent>
-                    </Card>
+                      </td>
+                    </tr>
                   )
-                })}
-              </div>
-            )}
-          </>
-        )}
-
-        {tab === "categorias" && (
-          <DataTable
-            data={categorias}
-            searchKey="nombre"
-            searchPlaceholder="Buscar categoría..."
-            columns={[
-              {
-                key: "nombre",
-                label: "Categoría",
-                render: (row) => (
-                  <div className="flex items-center gap-2">
-                    <FolderIcon className="h-4 w-4 text-[#FFB300]" />
-                    <span className="font-medium">{row.nombre}</span>
-                  </div>
-                )
-              },
-              { key: "descripcion", label: "Descripción", render: (row) => <span className="text-muted-foreground text-sm">{row.descripcion || "-"}</span> },
-            ]}
-            actions={canEditDocumento || canDeleteDocumento
-              ? (row) => (
-                <div className="flex items-center justify-end gap-2">
-                  {canEditDocumento ? (
-                    <button
-                      type="button"
-                      title="Editar"
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-[#FFB300]/40 hover:bg-[#FFB300]/10 hover:text-[#FF8800] hover:shadow-md active:scale-95"
-                      onClick={() => { setEditCat(row); setCatDialogOpen(true) }}
-                    >
-                      <PencilIcon className="h-4 w-4" />
-                    </button>
-                  ) : null}
-                  {canDeleteDocumento ? (
-                    <button
-                      type="button"
-                      title="Eliminar"
-                      disabled={isPending}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-all duration-200 hover:border-red-300 hover:bg-red-50 hover:text-red-600 hover:shadow-md dark:hover:border-red-500/30 dark:hover:bg-red-500/10 dark:hover:text-red-400 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
-                      onClick={() => handleDeleteCategory(row.id)}
-                    >
-                      <Trash2Icon className="h-4 w-4" />
-                    </button>
-                  ) : null}
-                </div>
-              )
-              : undefined}
-          />
-        )}
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {canCreateDocumento || canEditDocumento ? (
@@ -615,58 +609,49 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
               </p>
             </DialogHeader>
 
-            <form onSubmit={handleDocSubmit} className="space-y-5 px-6 pb-6 pt-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">Título *</Label>
-                <Input name="titulo" required defaultValue={editDoc?.titulo} placeholder="Nombre del documento" className="h-11 rounded-xl" />
+            <form onSubmit={handleDocSubmit} className="space-y-4 px-6 pb-6 pt-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-[#002F6C]">Título del documento *</Label>
+                <Input name="titulo" required defaultValue={editDoc?.titulo} placeholder="Ej. Resolución Administrativa N° 045/2026" className="h-11 w-full rounded-xl border-slate-200 focus:border-[#0E5296] text-sm" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Autor *</Label>
-                  <Input name="autor" required defaultValue={editDoc?.autor} placeholder="Nombre del autor" className="h-11 rounded-xl" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Categoría</Label>
-                  <Select
-                    value={categoriaId || "__none__"}
-                    onValueChange={(value) => setCategoriaId(value === "__none__" ? "" : value)}
-                  >
-                    <SelectTrigger className="h-11 w-full rounded-xl">
-                      <SelectValue placeholder="Sin categoría" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">Sin categoría</SelectItem>
-                      {categorias.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-[#002F6C]">Categoría</Label>
+                <Select
+                  value={categoriaId || "__none__"}
+                  onValueChange={(value) => setCategoriaId(value === "__none__" ? "" : value)}
+                >
+                  <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 text-sm">
+                    <SelectValue placeholder="Sin categoría" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Sin categoría</SelectItem>
+                    {categorias.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Estado</Label>
-                  <Select value={estado} onValueChange={setEstado}>
-                    <SelectTrigger className="h-11 w-full rounded-xl">
-                      <SelectValue placeholder="Selecciona un estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="borrador">Borrador</SelectItem>
-                      <SelectItem value="pendiente">Pendiente</SelectItem>
-                      <SelectItem value="publicado">Publicado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-[#002F6C]">Descripción</Label>
+                <Input name="descripcion" defaultValue={editDoc?.descripcion ?? ""} placeholder="Descripción breve del contenido o alcance" className="h-11 w-full rounded-xl border-slate-200 text-sm" />
+              </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Descripción</Label>
-                  <Input name="descripcion" defaultValue={editDoc?.descripcion ?? ""} placeholder="Descripción breve" className="h-11 rounded-xl" />
-                </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-[#002F6C]">Estado de publicación</Label>
+                <Select value={estado} onValueChange={setEstado}>
+                  <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 text-sm">
+                    <SelectValue placeholder="Selecciona un estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="publicado">Publicado (Visible)</SelectItem>
+                    <SelectItem value="borrador">Borrador (Interno)</SelectItem>
+                    <SelectItem value="pendiente">Pendiente de revisión</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -724,7 +709,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                       <>
                         <UploadIcon className="h-8 w-8 text-muted-foreground/30" />
                         <p className="text-sm font-medium text-muted-foreground">Arrastra un archivo o haz clic para seleccionar</p>
-                        <p className="text-[10px] text-muted-foreground/60">PDF, DOC, DOCX, XLS, XLSX, PPT, JPG, PNG — Máx. 10MB</p>
+                        <p className="text-[10px] text-muted-foreground/60">PDF, DOC, DOCX, XLS, XLSX, PPT, JPG, PNG — Sin límite de tamaño</p>
                       </>
                     )}
                   </div>
@@ -749,7 +734,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                 <Button
                   type="submit"
                   disabled={isPending || uploading}
-                  className="rounded-xl border-0 bg-linear-to-r from-[#FFB300] to-[#FF8800] font-semibold text-[#1a1000] shadow-md shadow-[#FFB300]/20"
+                  className="rounded-xl border-0 bg-[#0E5296] hover:bg-[#002F6C] font-bold text-white shadow-md shadow-[#0E5296]/20 cursor-pointer"
                 >
                   {isPending ? "Guardando..." : "Guardar"}
                 </Button>
@@ -762,11 +747,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
       {canCreateDocumento || canEditDocumento ? (
         <Dialog open={catDialogOpen} onOpenChange={setCatDialogOpen}>
           <DialogContent className="p-0 gap-0 overflow-hidden rounded-2xl">
-            <div className="flex h-1.5 w-full">
-              <div className="flex-1 bg-[#C41E3A]" />
-              <div className="flex-1 bg-[#FFB300]" />
-              <div className="flex-1 bg-[#2E7D32]" />
-            </div>
+            <div className="h-1.5 w-full bg-[#0E5296]" />
             <div className="p-6">
               <DialogHeader>
                 <DialogTitle>{editCat ? "Editar categoría" : "Nueva categoría"}</DialogTitle>
@@ -782,7 +763,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
                   <Button type="button" variant="outline" className="rounded-xl" onClick={() => setCatDialogOpen(false)}>Cancelar</Button>
-                  <Button type="submit" disabled={isPending} className="rounded-xl bg-linear-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] border-0 font-semibold shadow-md shadow-[#FFB300]/20">
+                  <Button type="submit" disabled={isPending} className="rounded-xl bg-[#0E5296] hover:bg-[#002F6C] text-white border-0 font-bold shadow-md shadow-[#0E5296]/20 cursor-pointer">
                     {isPending ? "Guardando..." : "Guardar"}
                   </Button>
                 </div>
@@ -798,11 +779,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
             <DialogTitle>{previewDoc?.titulo ?? "Vista previa"}</DialogTitle>
           </DialogHeader>
 
-          <div className="flex h-1.5 w-full rounded-t-2xl overflow-hidden">
-            <div className="flex-1 bg-[#C41E3A]" />
-            <div className="flex-1 bg-[#FFB300]" />
-            <div className="flex-1 bg-[#2E7D32]" />
-          </div>
+          <div className="h-1.5 w-full bg-[#0E5296]" />
 
           {previewDoc && (
             <>
@@ -822,9 +799,9 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                 <a
                   href={previewDoc.archivo!}
                   download={previewDoc.nombreArchivo ?? "archivo"}
-                  className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-[#FFB300] to-[#FF8800] px-4 py-2 text-xs font-bold text-[#1a1000] shadow-md shadow-[#FFB300]/20 hover:shadow-lg transition-all"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#0E5296] hover:bg-[#002F6C] px-4 py-2 text-xs font-bold text-white shadow-md shadow-[#0E5296]/20 transition-all cursor-pointer"
                 >
-                  <DownloadIcon className="h-3.5 w-3.5" />
+                  <DownloadIcon className="h-3.5 w-3.5 text-[#FFB800]" />
                   Descargar
                 </a>
               </div>
@@ -853,9 +830,9 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                     <a
                       href={previewDoc.archivo!}
                       download={previewDoc.nombreArchivo ?? "archivo"}
-                      className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-[#FFB300] to-[#FF8800] px-6 py-2.5 text-sm font-bold text-[#1a1000] shadow-md shadow-[#FFB300]/20 hover:shadow-lg transition-all"
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#0E5296] hover:bg-[#002F6C] px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-[#0E5296]/20 transition-all cursor-pointer"
                     >
-                      <DownloadIcon className="h-4 w-4" />
+                      <DownloadIcon className="h-4 w-4 text-[#FFB800]" />
                       Descargar archivo
                     </a>
                   </div>
@@ -865,6 +842,6 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   )
 }

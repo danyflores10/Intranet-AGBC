@@ -3,6 +3,7 @@ import { obtenerUsuarioRbacActual } from "@/lib/auth/session-access"
 import { puedeAccederUsuario } from "@/lib/rbac"
 import { PERMISOS } from "@/lib/auth/permisos"
 import { obtenerPersonal, obtenerDirectivos } from "@/actions/rrhh"
+import { obtenerUsuarios } from "@/actions/usuarios"
 import { RrhhModule } from "@/components/modules/rrhh-module"
 
 export default async function RrhhPage() {
@@ -10,9 +11,13 @@ export default async function RrhhPage() {
   if (!usuario) redirect("/")
   if (!puedeAccederUsuario(usuario, { permissions: [PERMISOS.RRHH.VER] })) redirect("/dashboard")
 
-  const [personal, directivosDb] = await Promise.all([
+  const [personal, directivosDb, usuariosResult] = await Promise.all([
     obtenerPersonal(),
     obtenerDirectivos(),
+    obtenerUsuarios(),
   ])
-  return <RrhhModule personal={personal} directivos={directivosDb} />
+
+  const usuariosList = usuariosResult.success && usuariosResult.data ? usuariosResult.data : []
+
+  return <RrhhModule personal={personal} directivos={directivosDb} usuarios={usuariosList} />
 }

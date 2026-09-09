@@ -188,15 +188,15 @@ export default function RecuperarContrasenaPage() {
                     <div
                       className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all duration-300 ${
                         i <= currentStepIndex
-                          ? "border-[#FFB300] bg-gradient-to-br from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-md shadow-[#FFB300]/20"
+                          ? "border-[#FFB800] bg-[#0E5296] text-[#FFB800] shadow-md shadow-[#0E5296]/20 font-bold"
                           : "border-border bg-muted text-muted-foreground"
                       }`}
                     >
                       <s.icon className="h-4 w-4" />
                     </div>
                     <span
-                      className={`mt-2 text-[10px] font-semibold uppercase tracking-wider ${
-                        i <= currentStepIndex ? "text-[#FFB300]" : "text-muted-foreground"
+                      className={`mt-2 text-[10px] font-bold uppercase tracking-wider ${
+                        i <= currentStepIndex ? "text-[#0E5296]" : "text-muted-foreground"
                       }`}
                     >
                       {s.label}
@@ -205,7 +205,7 @@ export default function RecuperarContrasenaPage() {
                   {i < steps.length - 1 && (
                     <div
                       className={`mx-2 mb-5 h-0.5 w-12 sm:w-16 transition-colors duration-300 ${
-                        i < currentStepIndex ? "bg-[#FFB300]" : "bg-border"
+                        i < currentStepIndex ? "bg-[#0E5296]" : "bg-border"
                       }`}
                     />
                   )}
@@ -224,29 +224,29 @@ export default function RecuperarContrasenaPage() {
           >
             <FieldGroup>
               <div className="mb-6 text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFB300]/10 to-[#FF8800]/10 border border-[#FFB300]/20">
-                  <Mail className="h-7 w-7 text-[#FFB300]" />
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0E5296]/10 border border-[#0E5296]/20">
+                  <Mail className="h-7 w-7 text-[#0E5296]" />
                 </div>
-                <h1 className="text-2xl font-extrabold tracking-tight">
+                <h1 className="text-2xl font-black tracking-tight text-[#002F6C]">
                   ¿Olvidaste tu contraseña?
                 </h1>
-                <p className="mt-2 text-sm text-muted-foreground">
+                <p className="mt-2 text-sm text-slate-600 font-medium">
                   Ingresa tu correo electrónico y te enviaremos un código de verificación.
                 </p>
               </div>
 
               <Field>
-                <FieldLabel htmlFor="reset-email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <FieldLabel htmlFor="reset-email" className="text-xs font-bold uppercase tracking-wider text-slate-700">
                   Correo electrónico
                 </FieldLabel>
                 <div className="relative group">
-                  <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-[#FFB300]" />
+                  <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#0E5296]" />
                   <Input
                     id="reset-email"
                     type="email"
                     placeholder="tu@correos.gob.bo"
                     autoComplete="email"
-                    className="h-12 pl-11 rounded-xl border-border/60 bg-muted/30 text-sm transition-all focus:border-[#FFB300]/50 focus:ring-[#FFB300]/20 focus:bg-background"
+                    className="h-12 pl-11 rounded-xl border-slate-300 bg-slate-50 text-sm font-medium transition-all focus:border-[#FFB800] focus:ring-4 focus:ring-[#FFB800]/25 focus:bg-white"
                     {...emailForm.register("email")}
                   />
                 </div>
@@ -254,7 +254,7 @@ export default function RecuperarContrasenaPage() {
               </Field>
 
               {serverError && (
-                <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive animate-fade-in">
+                <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive animate-fade-in font-medium">
                   {serverError}
                 </div>
               )}
@@ -262,7 +262,7 @@ export default function RecuperarContrasenaPage() {
               <Field>
                 <Button
                   type="submit"
-                  className="w-full h-12 text-base font-bold rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-lg shadow-[#FFB300]/25 hover:shadow-xl hover:shadow-[#FFB300]/30 hover:brightness-110 border-0 transition-all duration-300"
+                  className="w-full h-12 text-base font-bold rounded-xl bg-[#0E5296] hover:bg-[#002F6C] text-white shadow-lg shadow-[#0E5296]/25 border-0 transition-all cursor-pointer"
                   disabled={emailForm.formState.isSubmitting}
                 >
                   {emailForm.formState.isSubmitting ? (
@@ -291,8 +291,8 @@ export default function RecuperarContrasenaPage() {
           >
             <FieldGroup>
               <div className="mb-6 text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFB300]/10 to-[#FF8800]/10 border border-[#FFB300]/20">
-                  <ShieldCheck className="h-7 w-7 text-[#FFB300]" />
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFB800]/15 to-[#0E5296]/15 border border-[#FFB800]/30">
+                  <ShieldCheck className="h-7 w-7 text-[#0E5296] dark:text-[#FFB800]" />
                 </div>
                 <h1 className="text-2xl font-extrabold tracking-tight">
                   Verifica tu código
@@ -308,14 +308,14 @@ export default function RecuperarContrasenaPage() {
                   Código de verificación
                 </FieldLabel>
                 <div className="relative group">
-                  <ShieldCheck className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-[#FFB300]" />
+                  <ShieldCheck className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-[#0E5296] dark:group-focus-within:text-[#FFB800]" />
                   <Input
                     id="reset-code"
                     type="text"
                     inputMode="numeric"
                     maxLength={6}
                     placeholder="000000"
-                    className="h-14 pl-11 rounded-xl border-border/60 bg-muted/30 text-center text-2xl font-bold tracking-[0.5em] transition-all focus:border-[#FFB300]/50 focus:ring-[#FFB300]/20 focus:bg-background"
+                    className="h-14 pl-11 rounded-xl border-border/60 bg-muted/30 text-center text-2xl font-bold tracking-[0.5em] transition-all focus:border-[#FFB800] focus:ring-4 focus:ring-[#FFB800]/20 focus:bg-background"
                     {...codeForm.register("code")}
                   />
                 </div>
@@ -331,7 +331,7 @@ export default function RecuperarContrasenaPage() {
               <Field>
                 <Button
                   type="submit"
-                  className="w-full h-12 text-base font-bold rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-lg shadow-[#FFB300]/25 hover:shadow-xl hover:shadow-[#FFB300]/30 hover:brightness-110 border-0 transition-all duration-300"
+                  className="w-full h-12 text-base font-bold rounded-xl bg-[#0E5296] hover:bg-[#002F6C] text-white shadow-lg shadow-[#0E5296]/25 border-0 transition-all cursor-pointer"
                   disabled={codeForm.formState.isSubmitting}
                 >
                   {codeForm.formState.isSubmitting ? (
@@ -342,7 +342,7 @@ export default function RecuperarContrasenaPage() {
                   ) : (
                     <>
                       Verificar código
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      <ArrowRight className="ml-2 h-4 w-4 text-[#FFB800]" />
                     </>
                   )}
                 </Button>
@@ -354,7 +354,7 @@ export default function RecuperarContrasenaPage() {
                   setStep("email")
                   setServerError(null)
                 }}
-                className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mx-auto"
+                className="flex items-center justify-center gap-1.5 text-sm text-slate-600 hover:text-[#0E5296] font-bold transition-colors mx-auto cursor-pointer"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 Cambiar correo
@@ -372,36 +372,36 @@ export default function RecuperarContrasenaPage() {
           >
             <FieldGroup>
               <div className="mb-6 text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFB300]/10 to-[#FF8800]/10 border border-[#FFB300]/20">
-                  <KeyRound className="h-7 w-7 text-[#FFB300]" />
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0E5296]/10 border border-[#0E5296]/20">
+                  <KeyRound className="h-7 w-7 text-[#0E5296]" />
                 </div>
-                <h1 className="text-2xl font-extrabold tracking-tight">
+                <h1 className="text-2xl font-black tracking-tight text-[#002F6C]">
                   Nueva contraseña
                 </h1>
-                <p className="mt-2 text-sm text-muted-foreground">
+                <p className="mt-2 text-sm text-slate-600 font-medium">
                   Ingresa tu nueva contraseña para{" "}
-                  <span className="font-semibold text-foreground">{email}</span>
+                  <span className="font-bold text-[#0E5296]">{email}</span>
                 </p>
               </div>
 
               <Field>
-                <FieldLabel htmlFor="new-password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <FieldLabel htmlFor="new-password" className="text-xs font-bold uppercase tracking-wider text-slate-700">
                   Nueva contraseña
                 </FieldLabel>
                 <div className="relative group">
-                  <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-[#FFB300]" />
+                  <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#0E5296]" />
                   <Input
                     id="new-password"
                     type={showPassword ? "text" : "password"}
                     autoComplete="new-password"
                     placeholder="Mínimo 8 caracteres"
-                    className="h-12 pl-11 pr-11 rounded-xl border-border/60 bg-muted/30 text-sm transition-all focus:border-[#FFB300]/50 focus:ring-[#FFB300]/20 focus:bg-background"
+                    className="h-12 pl-11 pr-11 rounded-xl border-slate-300 bg-slate-50 text-sm font-medium transition-all focus:border-[#FFB800] focus:ring-4 focus:ring-[#FFB800]/25 focus:bg-white"
                     {...passwordForm.register("password")}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
                     tabIndex={-1}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -411,23 +411,23 @@ export default function RecuperarContrasenaPage() {
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="confirm-new-password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <FieldLabel htmlFor="confirm-new-password" className="text-xs font-bold uppercase tracking-wider text-slate-700">
                   Confirmar contraseña
                 </FieldLabel>
                 <div className="relative group">
-                  <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-[#FFB300]" />
+                  <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#0E5296]" />
                   <Input
                     id="confirm-new-password"
                     type={showConfirmPassword ? "text" : "password"}
                     autoComplete="new-password"
                     placeholder="Repite tu contraseña"
-                    className="h-12 pl-11 pr-11 rounded-xl border-border/60 bg-muted/30 text-sm transition-all focus:border-[#FFB300]/50 focus:ring-[#FFB300]/20 focus:bg-background"
+                    className="h-12 pl-11 pr-11 rounded-xl border-slate-300 bg-slate-50 text-sm font-medium transition-all focus:border-[#FFB800] focus:ring-4 focus:ring-[#FFB800]/25 focus:bg-white"
                     {...passwordForm.register("confirmPassword")}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
                     tabIndex={-1}
                   >
                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -437,7 +437,7 @@ export default function RecuperarContrasenaPage() {
               </Field>
 
               {serverError && (
-                <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive animate-fade-in">
+                <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive animate-fade-in font-medium">
                   {serverError}
                 </div>
               )}
@@ -445,7 +445,7 @@ export default function RecuperarContrasenaPage() {
               <Field>
                 <Button
                   type="submit"
-                  className="w-full h-12 text-base font-bold rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-lg shadow-[#FFB300]/25 hover:shadow-xl hover:shadow-[#FFB300]/30 hover:brightness-110 border-0 transition-all duration-300"
+                  className="w-full h-12 text-base font-bold rounded-xl bg-[#0E5296] hover:bg-[#002F6C] text-white shadow-lg shadow-[#0E5296]/25 border-0 transition-all cursor-pointer"
                   disabled={passwordForm.formState.isSubmitting}
                 >
                   {passwordForm.formState.isSubmitting ? (
@@ -456,7 +456,7 @@ export default function RecuperarContrasenaPage() {
                   ) : (
                     <>
                       Cambiar contraseña
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      <ArrowRight className="ml-2 h-4 w-4 text-[#FFB800]" />
                     </>
                   )}
                 </Button>
@@ -468,23 +468,23 @@ export default function RecuperarContrasenaPage() {
         {/* Step 4: Success */}
         {step === "success" && (
           <div className="animate-fade-in text-center py-4">
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-green-400/10 to-green-500/10 border border-green-500/20">
-              <CheckCircle2 className="h-10 w-10 text-green-500" />
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 border border-emerald-200">
+              <CheckCircle2 className="h-10 w-10 text-emerald-600" />
             </div>
-            <h1 className="text-2xl font-extrabold tracking-tight">
+            <h1 className="text-2xl font-black tracking-tight text-[#002F6C]">
               ¡Contraseña actualizada!
             </h1>
-            <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+            <p className="mt-3 text-sm text-slate-600 font-medium leading-relaxed">
               Tu contraseña ha sido cambiada exitosamente.<br />
               Ya puedes iniciar sesión con tu nueva contraseña.
             </p>
             <Button
               asChild
-              className="mt-8 w-full h-12 text-base font-bold rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-lg shadow-[#FFB300]/25 hover:shadow-xl hover:shadow-[#FFB300]/30 border-0 transition-all duration-300"
+              className="mt-8 w-full h-12 text-base font-bold rounded-xl bg-[#0E5296] hover:bg-[#002F6C] text-white shadow-lg shadow-[#0E5296]/25 border-0 transition-all cursor-pointer"
             >
               <Link href="/">
                 Ir a iniciar sesión
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-4 w-4 text-[#FFB800]" />
               </Link>
             </Button>
           </div>

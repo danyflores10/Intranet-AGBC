@@ -21,52 +21,26 @@ const institutionalEmailSchema = z
 const nationalIdSchema = z
   .string()
   .trim()
-  .toUpperCase()
-  .min(5, "El CI debe tener al menos 5 caracteres.")
-  .max(20, "El CI no puede superar 20 caracteres.")
-  .regex(/^[A-Z0-9-]+$/, "El CI solo puede incluir letras, numeros y guion.")
+  .optional()
+  .default("")
 
 const dateOfBirthSchema = z
   .string()
   .trim()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "La fecha de nacimiento debe tener formato YYYY-MM-DD.")
-  .refine((value) => {
-    const parsed = new Date(`${value}T00:00:00.000Z`)
-    if (Number.isNaN(parsed.getTime())) {
-      return false
-    }
-
-    return parsed.toISOString().slice(0, 10) === value
-  }, "Ingresa una fecha de nacimiento valida.")
-  .refine((value) => {
-    const parsed = new Date(`${value}T00:00:00.000Z`)
-    const today = new Date()
-    const todayUtc = new Date(Date.UTC(
-      today.getUTCFullYear(),
-      today.getUTCMonth(),
-      today.getUTCDate(),
-    ))
-
-    return parsed.getTime() <= todayUtc.getTime()
-  }, "La fecha de nacimiento no puede estar en el futuro.")
+  .optional()
+  .default("")
 
 const userBaseSchema = z.object({
-  firstName: z
+  name: z
     .string()
     .trim()
-    .min(2, "El nombre debe tener al menos 2 caracteres.")
-    .max(100, "El nombre no puede superar 100 caracteres."),
-  lastNamePaternal: z
-    .string()
-    .trim()
-    .min(2, "El apellido paterno debe tener al menos 2 caracteres.")
-    .max(100, "El apellido paterno no puede superar 100 caracteres."),
-  lastNameMaternal: z
-    .string()
-    .trim()
-    .max(100, "El apellido materno no puede superar 100 caracteres.")
-    .default(""),
-  email: personalEmailSchema,
+    .min(3, "Ingresa el nombre completo (nombres y apellidos).")
+    .max(150, "El nombre no puede superar 150 caracteres.")
+    .optional(),
+  firstName: z.string().trim().optional(),
+  lastNamePaternal: z.string().trim().optional(),
+  lastNameMaternal: z.string().trim().optional().default(""),
+  email: z.string().trim().optional().default(""),
   institutionalEmail: institutionalEmailSchema,
   nationalId: nationalIdSchema,
   dateOfBirth: dateOfBirthSchema,
@@ -77,13 +51,18 @@ const userBaseSchema = z.object({
     .default([]),
 })
 
-export const userCreateSchema = userBaseSchema.extend({
-  password: z
-    .string()
-    .trim()
-    .min(8, "La contrasena debe tener al menos 8 caracteres.")
-    .max(128, "La contrasena no puede superar 128 caracteres."),
-})
+export const userCreateSchema = userBaseSchema
+  .extend({
+    password: z
+      .string()
+      .trim()
+      .min(8, "La contrasena debe tener al menos 8 caracteres.")
+      .max(128, "La contrasena no puede superar 128 caracteres."),
+  })
+  .refine((data) => (data.name && data.name.length >= 3) || (data.firstName && data.firstName.length >= 2), {
+    message: "Ingresa el nombre completo.",
+    path: ["name"],
+  })
 
 export const userUpdateSchema = userBaseSchema
   .extend({

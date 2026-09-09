@@ -6,8 +6,7 @@ import { createId } from "@paralleldrive/cuid2"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
 import { PERMISOS } from "@/lib/auth/permisos"
-
-const MAX_SIZE = 10 * 1024 * 1024 // 10 MB
+ 
 const ALLOWED_TYPES: Record<string, string> = {
   "application/pdf": "pdf",
   "application/msword": "doc",
@@ -94,10 +93,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No se envió archivo" }, { status: 400 })
     }
 
-    if (file.size > MAX_SIZE) {
-      return NextResponse.json({ error: "El archivo no puede superar 10MB" }, { status: 400 })
-    }
-
     const ext = ALLOWED_TYPES[file.type]
     if (!ext) {
       return NextResponse.json(
@@ -119,7 +114,8 @@ export async function POST(request: NextRequest) {
     function formatSize(bytes: number) {
       if (bytes < 1024) return `${bytes} B`
       if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+      if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+      return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
     }
 
     return NextResponse.json({

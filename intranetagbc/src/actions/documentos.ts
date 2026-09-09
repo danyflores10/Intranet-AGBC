@@ -99,7 +99,7 @@ export async function obtenerCategorias() {
 export async function crearDocumento(data: {
   titulo: string
   categoriaId?: string
-  autor: string
+  autor?: string
   estado?: string
   archivo?: string
   nombreArchivo?: string
@@ -108,7 +108,11 @@ export async function crearDocumento(data: {
   descripcion?: string
 }) {
   const sesion = await autorizarAccion(PERMISOS.DOCUMENTOS.CREAR)
-  const [nuevo] = await db.insert(documentos).values(data).returning()
+  const payload = {
+    ...data,
+    autor: (data.autor || "").trim() || "AGBC Institucional",
+  }
+  const [nuevo] = await db.insert(documentos).values(payload).returning()
   await registrarAuditLog({ usuario: sesion.id, accion: `Creó documento: ${data.titulo}`, modulo: "Documentos", resultado: "Exitoso" })
   revalidatePath("/documentos")
   return nuevo

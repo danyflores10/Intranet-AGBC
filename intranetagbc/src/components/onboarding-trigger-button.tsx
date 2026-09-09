@@ -32,7 +32,7 @@ export function OnboardingTriggerButton({
 
   return (
     <Button type="button" variant="outline" size={size} onClick={iniciar} disabled={isPending} className={className}>
-      <SparklesIcon className="mr-1.5 h-4 w-4 text-[#FFB300]" />
+      <SparklesIcon className="mr-1.5 h-4 w-4 text-[#FFB800]" />
       {isPending ? "Iniciando..." : "Ver tour guiado"}
     </Button>
   )

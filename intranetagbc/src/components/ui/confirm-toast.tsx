@@ -26,9 +26,9 @@ const TONOS: Record<Tono, { bg: string; ring: string; btn: string }> = {
     btn: "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20",
   },
   info: {
-    bg: "bg-[#FFB300]/10",
-    ring: "ring-[#FFB300]/30",
-    btn: "bg-gradient-to-r from-[#FFB300] to-[#FF8800] hover:brightness-105 text-[#1a1000] shadow-[#FFB300]/25",
+    bg: "bg-[#FFB800]/10",
+    ring: "ring-[#FFB800]/30",
+    btn: "bg-[#0E5296] hover:bg-[#002F6C] text-white shadow-[#0E5296]/25",
   },
 }
 

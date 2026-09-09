@@ -44,7 +44,11 @@ export default async function EditarPage({
 
   return (
     <CorrespondenciaEditar
-      correspondencia={correspondencia}
+      correspondencia={{
+        ...correspondencia,
+        origen: correspondencia.origen as "interno" | "externo",
+        tipo: correspondencia.tipo as "entrada" | "salida" | "interna",
+      }}
       tiposDocumento={tipos}
       usuarios={usuariosBasicos}
       sucursales={sucursales}

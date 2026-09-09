@@ -91,28 +91,28 @@ function TypewriterTitle() {
 
   const renderText = () => {
     if (charCount <= boliviaStart) {
-      return <span className="text-[#FF8800]">{displayed}</span>
+      return <span className="text-[#002F6C]">{displayed}</span>
     }
     const before = displayed.slice(0, boliviaStart)
     const boliviaPart = displayed.slice(boliviaStart)
     return (
       <>
-        <span className="text-[#FF8800]">{before}</span>
-        <span className="bg-gradient-to-r from-[#C41E3A] via-[#FFB300] to-[#2E7D32] bg-clip-text text-transparent">{boliviaPart}</span>
+        <span className="text-[#002F6C]">{before}</span>
+        <span className="text-[#0E5296] font-black">{boliviaPart}</span>
       </>
     )
   }
 
   return (
     <div className="space-y-6 text-center">
-      <div className="inline-flex items-center gap-2 rounded-full border border-[#FFB300]/20 bg-[#FFB300]/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#FF8800] backdrop-blur-sm">
-        <Sparkles className="h-3.5 w-3.5" />
+      <div className="inline-flex items-center gap-2 rounded-full border-2 border-[#002F6C] bg-[#002F6C] px-5 py-2 text-xs font-black uppercase tracking-widest text-[#FFB800] shadow-md">
+        <Sparkles className="h-4 w-4 text-[#FFB800]" />
         Plataforma Intranet
       </div>
-      <h2 className="text-5xl font-extrabold tracking-tight text-foreground xl:text-6xl 2xl:text-7xl leading-[1.1] min-h-[2.6em]">
+      <h2 className="text-5xl font-black tracking-tight text-[#002F6C] xl:text-6xl 2xl:text-7xl leading-[1.1] min-h-[2.6em]">
         {renderText()}
         <span
-          className={`inline-block w-[4px] h-[1em] align-middle ml-1.5 rounded-sm bg-gradient-to-b from-[#C41E3A] via-[#FFB300] to-[#2E7D32] transition-opacity duration-100 ${
+          className={`inline-block w-[5px] h-[1em] align-middle ml-1.5 rounded-sm bg-[#002F6C] transition-opacity duration-100 ${
             showCursor ? "opacity-100" : "opacity-0"
           }`}
         />
@@ -284,52 +284,20 @@ export function LoginForm({
         : ""
 
   return (
-    <div className={cn("flex min-h-svh", className)} {...props}>
-      <div className="relative hidden w-[55%] overflow-hidden bg-background lg:flex lg:flex-col lg:justify-between">
+    <div className={cn("flex min-h-svh bg-slate-50", className)} {...props}>
+      <div className="relative hidden w-[55%] overflow-hidden bg-[#FFB800] lg:flex lg:flex-col lg:justify-between border-r-2 border-[#002F6C]/20">
 
-        <div className="pointer-events-none absolute inset-0 animate-aurora bg-gradient-to-br from-[#FFB300]/15 via-transparent to-[#FF8800]/10" />
-
-        <div className="pointer-events-none absolute inset-0 hero-grid-pattern animate-grid-pulse" />
-
-        <div className="pointer-events-none absolute inset-0">
-          <div className="animate-landing-blob absolute -top-20 -left-20 h-96 w-96 rounded-full bg-[#FFB300]/12 blur-[100px]" />
-          <div className="animate-landing-blob-delay absolute -bottom-20 -right-20 h-80 w-80 rounded-full bg-[#FF8800]/10 blur-[90px]" />
-          <div className="animate-landing-blob-slow absolute top-1/2 left-1/3 h-64 w-64 rounded-full bg-[#FFB300]/8 blur-[80px]" />
-          <div className="animate-landing-blob absolute top-1/4 right-1/4 h-48 w-48 rounded-full bg-[#FF8800]/6 blur-[70px]" />
-          <div className="animate-landing-blob-delay absolute top-2/3 right-1/3 h-56 w-56 rounded-full bg-[#FFB300]/6 blur-[90px]" />
-        </div>
-
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="animate-shimmer absolute top-1/3 left-0 h-[1px] w-[400px] bg-gradient-to-r from-transparent via-[#FFB300]/25 to-transparent" />
-        </div>
-
-        <div className="pointer-events-none absolute inset-0">
-          <div className="animate-particle absolute top-[20%] left-[15%] h-2 w-2 rounded-full bg-[#FFB300]/30" style={{ animationDelay: '0s' }} />
-          <div className="animate-particle absolute top-[50%] left-[70%] h-1.5 w-1.5 rounded-full bg-[#FF8800]/25" style={{ animationDelay: '2s' }} />
-          <div className="animate-particle absolute top-[70%] left-[30%] h-1 w-1 rounded-full bg-[#FFB300]/40" style={{ animationDelay: '4s' }} />
-          <div className="animate-particle absolute top-[30%] left-[85%] h-2.5 w-2.5 rounded-full bg-[#FFB300]/15" style={{ animationDelay: '1s' }} />
-        </div>
-
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(#002F6C_1px,transparent_1px)] [background-size:24px_24px] opacity-10" />
 
         <div className="relative z-10 flex flex-1 flex-col justify-center items-center px-14 xl:px-20">
           {/* Logo */}
-          <div className="mb-12">
+          <div className="mb-12 flex items-center justify-center">
             <Image
               src="/image/Logooriginal.png"
               alt="Correos de Bolivia"
-              width={220}
-              height={70}
-              className="h-16 w-auto object-contain drop-shadow-sm dark:hidden"
-              style={{ width: "auto" }}
-              priority
-            />
-            <Image
-              src="/image/LogoAmarillo.png"
-              alt="Correos de Bolivia"
-              width={220}
-              height={70}
-              className="hidden h-16 w-auto object-contain drop-shadow-lg dark:block"
+              width={260}
+              height={80}
+              className="h-20 w-auto object-contain drop-shadow-md"
               style={{ width: "auto" }}
               priority
             />
@@ -340,14 +308,14 @@ export function LoginForm({
         </div>
 
         <div className="relative z-10 px-14 pb-8 xl:px-20">
-          <div className="flex items-center gap-3 text-muted-foreground/50 text-xs">
-            <Shield className="h-4 w-4" />
-            <span>Conexión segura — Cifrado de extremo a extremo</span>
+          <div className="flex items-center gap-3 text-[#002F6C]/80 font-semibold text-xs">
+            <Shield className="h-4 w-4 text-[#002F6C]" />
+            <span>Conexión segura — Cifrado de extremo a extremo AGBC</span>
           </div>
         </div>
       </div>
 
-      <div className="flex w-full flex-col bg-background lg:w-[45%]">
+      <div className="flex w-full flex-col bg-slate-50 lg:w-[45%]">
 
         <div className="flex flex-1 flex-col items-center justify-center px-6 py-8 sm:px-12">
 
@@ -357,15 +325,7 @@ export function LoginForm({
               alt="Correos de Bolivia"
               width={160}
               height={45}
-              className="h-10 w-auto object-contain dark:hidden"
-              style={{ width: "auto" }}
-            />
-            <Image
-              src="/image/LogoAmarillo.png"
-              alt="Correos de Bolivia"
-              width={160}
-              height={45}
-              className="hidden h-10 w-auto object-contain dark:block"
+              className="h-10 w-auto object-contain"
               style={{ width: "auto" }}
             />
           </div>
@@ -377,15 +337,7 @@ export function LoginForm({
                 alt="Correos de Bolivia"
                 width={200}
                 height={56}
-                className="h-14 w-auto object-contain dark:hidden"
-                style={{ width: "auto" }}
-              />
-              <Image
-                src="/image/LogoAmarillo.png"
-                alt="Correos de Bolivia"
-                width={200}
-                height={56}
-                className="hidden h-14 w-auto object-contain dark:block"
+                className="h-14 w-auto object-contain"
                 style={{ width: "auto" }}
               />
             </div>
@@ -393,57 +345,54 @@ export function LoginForm({
             <div
               key={shakeKey}
               className={cn(
-                "rounded-2xl border bg-card p-8 shadow-xl shadow-black/5 dark:shadow-black/20 transition-colors",
+                "rounded-2xl border-2 border-slate-200 bg-white p-8 shadow-xl shadow-[#002F6C]/5 transition-colors",
                 isLocked
                   ? "border-red-500/60 shadow-red-500/20"
-                  : "border-border/60 animate-pulse-glow",
+                  : "border-slate-200",
                 shakeClass,
               )}
             >
               {isLocked && (
                 <div className="mb-5 flex items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-500/15">
-                    <TimerIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    <TimerIcon className="h-5 w-5 text-red-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-red-700 dark:text-red-300">
+                    <p className="text-sm font-bold text-red-700">
                       Acceso bloqueado temporalmente
                     </p>
-                    <p className="text-xs text-red-600/90 dark:text-red-300/80">
-                      Demasiados intentos fallidos. Podrás reintentar en{" "}
-                      <span className="font-mono font-bold">{formatRemaining(remainingMs)}</span>.
+                    <p className="text-xs text-red-600">
+                      Demasiados intentos fallidos. Intente nuevamente en {formatRemaining(remainingMs)}.
                     </p>
                   </div>
                 </div>
               )}
+
+              <div className="mb-6 space-y-1 text-center">
+                <h1 className="text-2xl font-black tracking-tight text-[#002F6C]">Iniciar sesión</h1>
+                <p className="text-sm text-slate-500 font-medium">
+                  Ingresa tus credenciales para acceder a la plataforma
+                </p>
+              </div>
+
               <form
-                noValidate
                 onSubmit={signInForm.handleSubmit(onSubmitSignIn)}
-                className="animate-fade-in"
+                className="space-y-4"
               >
                 <FieldGroup>
-                  <div className="mb-6 text-center">
-                    <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent sm:text-4xl">
-                      Bienvenido
-                    </h1>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      Ingresa tus credenciales para acceder al sistema
-                    </p>
-                  </div>
-
                   <Field>
-                    <FieldLabel htmlFor="signin-email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <FieldLabel htmlFor="email" className="text-xs font-bold text-slate-700 uppercase tracking-wide">
                       Correo electrónico
                     </FieldLabel>
-                    <div className="relative group">
-                      <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-[#FFB300]" />
+                    <div className="relative mt-1">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#002F6C]" />
                       <Input
-                        id="signin-email"
+                        id="email"
                         type="email"
+                        placeholder="usuario@correos.gob.bo"
                         autoComplete="email"
-                        placeholder="tu@correos.gob.bo"
                         disabled={isLocked}
-                        className="h-12 pl-11 rounded-xl border-border/60 bg-muted/30 text-sm transition-all focus:border-[#FFB300]/50 focus:ring-[#FFB300]/20 focus:bg-background disabled:cursor-not-allowed disabled:opacity-60"
+                        className="h-12 pl-11 rounded-xl border-slate-300 bg-slate-50 text-sm font-medium transition-all focus:border-[#FFB800] focus:ring-4 focus:ring-[#FFB800]/25 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                         {...signInForm.register("email")}
                       />
                     </div>
@@ -452,30 +401,32 @@ export function LoginForm({
 
                   <Field>
                     <div className="flex items-center justify-between">
-                      <FieldLabel htmlFor="signin-password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      <FieldLabel htmlFor="password" className="text-xs font-bold text-slate-700 uppercase tracking-wide">
                         Contraseña
                       </FieldLabel>
                       <Link
                         href="/recuperar-contrasena"
-                        className="text-xs font-medium text-[#FF8800] underline-offset-4 hover:text-[#FFB300] hover:underline transition-colors"
+                        className="text-xs font-bold text-[#0E5296] hover:underline"
+                        tabIndex={-1}
                       >
                         ¿Olvidaste tu contraseña?
                       </Link>
                     </div>
-                    <div className="relative group">
-                      <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-[#FFB300]" />
+                    <div className="relative mt-1">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#002F6C]" />
                       <Input
-                        id="signin-password"
+                        id="password"
                         type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
                         autoComplete="current-password"
                         disabled={isLocked}
-                        className="h-12 pl-11 pr-11 rounded-xl border-border/60 bg-muted/30 text-sm transition-all focus:border-[#FFB300]/50 focus:ring-[#FFB300]/20 focus:bg-background disabled:cursor-not-allowed disabled:opacity-60"
+                        className="h-12 pl-11 pr-11 rounded-xl border-slate-300 bg-slate-50 text-sm font-medium transition-all focus:border-[#FFB800] focus:ring-4 focus:ring-[#FFB800]/25 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                         {...signInForm.register("password")}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors"
                         tabIndex={-1}
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -487,7 +438,7 @@ export function LoginForm({
                   <Field>
                     <Button
                       type="submit"
-                      className="w-full h-12 text-base font-bold rounded-xl bg-gradient-to-r from-[#FFB300] to-[#FF8800] text-[#1a1000] shadow-lg shadow-[#FFB300]/25 hover:shadow-xl hover:shadow-[#FFB300]/30 hover:brightness-110 border-0 transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="w-full h-12 text-base font-black rounded-xl bg-[#FFB800] hover:bg-[#E5A700] text-[#002F6C] shadow-lg shadow-[#FFB800]/30 border-2 border-[#002F6C] transition-all duration-200 hover:scale-[1.01] active:scale-100 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                       disabled={isSignInPending || isLocked}
                     >
                       {isLocked ? (
@@ -503,12 +454,12 @@ export function LoginForm({
                       ) : (
                         <>
                           Iniciar sesión
-                          <ArrowRight className="ml-2 h-4 w-4" />
+                          <ArrowRight className="ml-2 h-5 w-5 text-[#002F6C]" />
                         </>
                       )}
                     </Button>
                     {!isLocked && failedAttempts > 0 && failedAttempts < MAX_ATTEMPTS && (
-                      <p className="mt-2 text-center text-[11px] font-semibold text-red-600 dark:text-red-400">
+                      <p className="mt-2 text-center text-[11px] font-bold text-red-600">
                         Intento {failedAttempts} de {MAX_ATTEMPTS}. Después del tercer fallo se bloqueará el acceso por 5 minutos.
                       </p>
                     )}
