@@ -21,18 +21,33 @@ export const KEYWORDS_LA_RAZON = [
   "correos",
 ]
 
-// Noticia oficial de prueba verificada en La Razón
-export const NOTICIA_LA_RAZON_TEST: NoticiaScrapeada = {
-  id: "noticia_larazon_1",
-  titulo: "Correos detecta sustancias controladas en un paquete hacia Asia",
-  descripcion:
-    "Personal de la Fuerza Especial de Lucha Contra el Narcotráfico (FELCN) y de la Agencia Boliviana de Correos (AGBC) detectaron en la oficina central una encomienda que contenía sustancias controladas camufladas con destino al continente asiático tras las pruebas de campo correspondientes.",
-  imagen: "/image/noticias/noticia_larazon_droga_asia.jpg",
-  enlace: "https://larazon.bo/ciudades/2026/07/13/correos-detecta-sustancias-conroladas-en-un-paquete-hacia-asia/",
-  fuente: "La Razón (larazon.bo)",
-  fecha: "2026-07-13T10:00:00Z",
-  palabrasClave: ["agbc", "correos de bolivia", "agencia boliviana de correos", "correos"],
-}
+// 2 Noticias Oficiales Reales verificadas en La Razón
+export const NOTICIAS_LA_RAZON_OFICIALES: NoticiaScrapeada[] = [
+  {
+    id: "noticia_larazon_1",
+    titulo: "Correos detecta sustancias controladas en un paquete hacia Asia",
+    descripcion:
+      "Las pruebas de campo confirmaron que los paquetes contienen sustancias controladas cuyo destino era a varios países del continente asiático. Personal de la FELCN y de la Agencia Boliviana de Correos (AGBC) realizaron la intervención en la oficina central.",
+    imagen: "/image/noticias/noticia_larazon_droga_asia.jpg",
+    enlace: "https://larazon.bo/ciudades/2026/07/13/correos-detecta-sustancias-conroladas-en-un-paquete-hacia-asia/",
+    fuente: "La Razón (larazon.bo)",
+    fecha: "2026-07-13T10:00:00Z",
+    palabrasClave: ["agbc", "correos", "sustancias controladas"],
+  },
+  {
+    id: "noticia_larazon_2",
+    titulo: "Correos impulsa un delivery express para facilitar envíos digitales",
+    descripcion:
+      "La Agencia Boliviana de Correos (AGBC) presentó su nuevo servicio de Delivery Express con tres modalidades diseñadas para que comerciantes de tiendas virtuales y redes sociales agilicen el recojo y entrega de paquetes a nivel nacional.",
+    imagen: "/image/noticias/noticia_larazon_delivery_express.jpg",
+    enlace: "https://larazon.bo/sociedad/2026/09/07/correos-impulsa-un-delivery-express-para-facilitar-envios-digitales/",
+    fuente: "La Razón (larazon.bo)",
+    fecha: "2026-09-07T14:30:00Z",
+    palabrasClave: ["correos de bolivia", "delivery express", "agencia boliviana de correos"],
+  },
+]
+
+export const NOTICIA_LA_RAZON_TEST = NOTICIAS_LA_RAZON_OFICIALES[0]
 
 /**
  * Servicio de búsqueda y extracción de noticias desde La Razón
@@ -41,7 +56,7 @@ export async function scrapeNoticiasLaRazon(searchQuery?: string): Promise<Notic
   const query = searchQuery || KEYWORDS_LA_RAZON.join(" OR ")
   console.log(`[Scraper La Razón] Iniciando búsqueda con palabras clave: "${query}"...`)
 
-  const resultados: NoticiaScrapeada[] = [NOTICIA_LA_RAZON_TEST]
+  const resultados: NoticiaScrapeada[] = [...NOTICIAS_LA_RAZON_OFICIALES]
 
   try {
     const rssUrl = `https://news.google.com/rss/search?q=site:larazon.bo+(${encodeURIComponent(
@@ -61,7 +76,7 @@ export async function scrapeNoticiasLaRazon(searchQuery?: string): Promise<Notic
       let match
       let count = 0
 
-      while ((match = itemRegex.exec(xml)) !== null && count < 5) {
+      while ((match = itemRegex.exec(xml)) !== null && count < 3) {
         const itemXml = match[1]
         const title = itemXml.match(/<title>([\s\S]*?)<\/title>/i)?.[1]?.replace(" - La Razón", "").trim()
         const link = itemXml.match(/<link>([\s\S]*?)<\/link>/i)?.[1]?.trim()
@@ -69,13 +84,17 @@ export async function scrapeNoticiasLaRazon(searchQuery?: string): Promise<Notic
         const rawDesc = itemXml.match(/<description>([\s\S]*?)<\/description>/i)?.[1] || ""
         const cleanDesc = rawDesc.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim()
 
-        if (title && (title.toLowerCase().includes("correo") || title.toLowerCase().includes("agbc"))) {
+        if (
+          title &&
+          (title.toLowerCase().includes("correo") || title.toLowerCase().includes("agbc")) &&
+          !resultados.some((r) => r.titulo.toLowerCase() === title.toLowerCase())
+        ) {
           count++
           resultados.push({
             id: `noticia_larazon_rss_${count}`,
             titulo: title,
             descripcion: cleanDesc || "Reporte informativo de La Razón sobre servicios y operaciones de Correos de Bolivia.",
-            imagen: "/image/noticias/noticia_larazon_droga_asia.jpg",
+            imagen: "/image/noticias/noticia_larazon_delivery_express.jpg",
             enlace: link || "https://larazon.bo",
             fuente: "La Razón (larazon.bo)",
             fecha: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
@@ -85,59 +104,60 @@ export async function scrapeNoticiasLaRazon(searchQuery?: string): Promise<Notic
       }
     }
   } catch (err) {
-    console.warn("[Scraper La Razón] Búsqueda externa complementaria omitida, usando noticia principal:", err)
+    console.warn("[Scraper La Razón] Búsqueda externa complementaria omitida:", err)
   }
 
   return resultados
 }
 
 /**
- * Sincroniza y reemplaza las noticias institucionales en la base de datos dejando solo la noticia de prueba
+ * Sincroniza y reemplaza las noticias institucionales en la base de datos dejando las noticias de La Razón
  */
 export async function sincronizarNoticiasLaRazonEnDb() {
-  console.log("-> Sincronizando noticia de La Razón en la base de datos...")
+  console.log("-> Sincronizando noticias de La Razón en la base de datos...")
 
-  // 1. Limpiar noticias institucionales anteriores (manteniendo solo Facebook o eliminando según pedido)
-  // Las noticias institucionales no tienen prefijo 'noticia_fb_' en el ID
+  // 1. Limpiar noticias institucionales anteriores (manteniendo las de Facebook)
   await db.execute(
     sql`DELETE FROM banners WHERE id NOT LIKE 'noticia_fb_%' AND enlace NOT LIKE '%facebook.com%'`
   )
 
-  // 2. Insertar la noticia de prueba de La Razón
-  const noticia = NOTICIA_LA_RAZON_TEST
-  const fechaPub = new Date(noticia.fecha)
+  // 2. Insertar las noticias oficiales de La Razón
+  for (let i = 0; i < NOTICIAS_LA_RAZON_OFICIALES.length; i++) {
+    const noticia = NOTICIAS_LA_RAZON_OFICIALES[i]
+    const fechaPub = new Date(noticia.fecha)
 
-  await db
-    .insert(banners)
-    .values({
-      id: noticia.id,
-      titulo: noticia.titulo,
-      descripcion: noticia.descripcion,
-      imagen: noticia.imagen,
-      imagenes: JSON.stringify([noticia.imagen]),
-      enlace: noticia.enlace,
-      activo: true,
-      orden: "1",
-      createdAt: fechaPub,
-      updatedAt: new Date(),
-    })
-    .onConflictDoUpdate({
-      target: banners.id,
-      set: {
+    await db
+      .insert(banners)
+      .values({
+        id: noticia.id,
         titulo: noticia.titulo,
         descripcion: noticia.descripcion,
         imagen: noticia.imagen,
         imagenes: JSON.stringify([noticia.imagen]),
         enlace: noticia.enlace,
         activo: true,
+        orden: String(i + 1),
+        createdAt: fechaPub,
         updatedAt: new Date(),
-      },
-    })
+      })
+      .onConflictDoUpdate({
+        target: banners.id,
+        set: {
+          titulo: noticia.titulo,
+          descripcion: noticia.descripcion,
+          imagen: noticia.imagen,
+          imagenes: JSON.stringify([noticia.imagen]),
+          enlace: noticia.enlace,
+          activo: true,
+          updatedAt: new Date(),
+        },
+      })
+  }
 
-  console.log(`✅ Noticia institucional de La Razón guardada con éxito: "${noticia.titulo}"`)
+  console.log(`✅ ${NOTICIAS_LA_RAZON_OFICIALES.length} Noticias institucionales de La Razón guardadas con éxito.`)
   return {
     success: true,
-    total: 1,
-    noticias: [noticia],
+    total: NOTICIAS_LA_RAZON_OFICIALES.length,
+    noticias: NOTICIAS_LA_RAZON_OFICIALES,
   }
 }

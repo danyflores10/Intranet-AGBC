@@ -23,17 +23,27 @@ export interface SyncResult {
   timestamp: string;
 }
 
-// Noticia Institucional Oficial de La Razón (Prueba solicitada)
+// Noticias Institucionales Oficiales Reales de La Razón
 export const NOTICIAS_INSTITUCIONALES_BASE = [
   {
     id: "noticia_larazon_1",
     titulo: "Correos detecta sustancias controladas en un paquete hacia Asia",
     descripcion:
-      "Personal de la Fuerza Especial de Lucha Contra el Narcotráfico (FELCN) y de la Agencia Boliviana de Correos (AGBC) detectaron en la oficina central una encomienda que contenía sustancias controladas camufladas con destino al continente asiático tras las pruebas de campo correspondientes.",
+      "Las pruebas de campo confirmaron que los paquetes contienen sustancias controladas cuyo destino era a varios países del continente asiático. Personal de la FELCN y de la Agencia Boliviana de Correos (AGBC) realizaron la intervención en la oficina central.",
     imagen: "/image/noticias/noticia_larazon_droga_asia.jpg",
     enlace: "https://larazon.bo/ciudades/2026/07/13/correos-detecta-sustancias-conroladas-en-un-paquete-hacia-asia/",
     fuente: "La Razón (larazon.bo)",
     fecha: "2026-07-13T10:00:00Z",
+  },
+  {
+    id: "noticia_larazon_2",
+    titulo: "Correos impulsa un delivery express para facilitar envíos digitales",
+    descripcion:
+      "La Agencia Boliviana de Correos (AGBC) presentó su nuevo servicio de Delivery Express con tres modalidades diseñadas para que comerciantes de tiendas virtuales y redes sociales agilicen el recojo y entrega de paquetes a nivel nacional.",
+    imagen: "/image/noticias/noticia_larazon_delivery_express.jpg",
+    enlace: "https://larazon.bo/sociedad/2026/09/07/correos-impulsa-un-delivery-express-para-facilitar-envios-digitales/",
+    fuente: "La Razón (larazon.bo)",
+    fecha: "2026-09-07T14:30:00Z",
   },
 ];
 
