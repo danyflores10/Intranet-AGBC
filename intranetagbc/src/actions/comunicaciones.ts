@@ -13,8 +13,6 @@ import {
   ACCESOS_DIRECTOS_DEFAULT,
 } from "@/lib/constants/accesos"
 
-export type { AccesoDirectoData, AccesoDirectoRow }
-
 function parseAccesoDirectoValor(
   row: { clave: string; valor: string; descripcion: string | null; updatedAt: Date }
 ): AccesoDirectoRow {
