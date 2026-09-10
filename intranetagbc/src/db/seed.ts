@@ -188,6 +188,15 @@ async function seedAccesosDirectos() {
   console.log("-> 3. Sembrando 18 accesos rápidos a sistemas categorizados...")
 
   const { ACCESOS_DIRECTOS_DEFAULT } = await import("../lib/constants/accesos")
+  const clavesValidas = ACCESOS_DIRECTOS_DEFAULT.map((a) => a.clave)
+
+  // Eliminar sistemas antiguos o huérfanos que no pertenezcan a los 18 oficiales del PDF
+  const todosAccesos = await db.select().from(configuracion).where(eq(configuracion.grupo, "accesos_directos"))
+  for (const acc of todosAccesos) {
+    if (!clavesValidas.includes(acc.clave)) {
+      await db.delete(configuracion).where(eq(configuracion.clave, acc.clave))
+    }
+  }
 
   for (const item of ACCESOS_DIRECTOS_DEFAULT) {
     const valorJson = JSON.stringify({

@@ -29,7 +29,7 @@ export const ACCESOS_DIRECTOS_DEFAULT: AccesoDirectoRow[] = [
     url: "https://sigec.correos.gob.bo/",
     categoria: "Links Internos",
     activo: true,
-    imagen: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=800&auto=format&fit=crop",
+    imagen: "/image/accesos/sigec_login.jpg",
     updatedAt: new Date("2026-04-12T00:00:00.000Z"),
   },
   {
@@ -39,7 +39,7 @@ export const ACCESOS_DIRECTOS_DEFAULT: AccesoDirectoRow[] = [
     url: "https://zimbra.correos.gob.bo/",
     categoria: "Links Internos",
     activo: true,
-    imagen: "https://images.unsplash.com/photo-1557200134-90327ee9fafa?q=80&w=800&auto=format&fit=crop",
+    imagen: "/image/accesos/zimbra_mail.jpg",
     updatedAt: new Date("2026-04-12T00:00:00.000Z"),
   },
   {
@@ -49,7 +49,7 @@ export const ACCESOS_DIRECTOS_DEFAULT: AccesoDirectoRow[] = [
     url: "https://intranet.correos.gob.bo:8122/",
     categoria: "Links Internos",
     activo: true,
-    imagen: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=800&auto=format&fit=crop",
+    imagen: "/image/accesos/intranet_portal.jpg",
     updatedAt: new Date("2026-04-12T00:00:00.000Z"),
   },
 
@@ -61,7 +61,7 @@ export const ACCESOS_DIRECTOS_DEFAULT: AccesoDirectoRow[] = [
     url: "https://correos.gob.bo/",
     categoria: "Links Públicos",
     activo: true,
-    imagen: "https://images.unsplash.com/photo-1578575437130-527eed3abbec?q=80&w=800&auto=format&fit=crop",
+    imagen: "/image/accesos/portal_web.jpg",
     updatedAt: new Date("2026-04-12T00:00:00.000Z"),
   },
   {
@@ -71,7 +71,7 @@ export const ACCESOS_DIRECTOS_DEFAULT: AccesoDirectoRow[] = [
     url: "https://institucional.correos.gob.bo:8007/",
     categoria: "Links Públicos",
     activo: true,
-    imagen: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800&auto=format&fit=crop",
+    imagen: "/image/accesos/pagina_institucional.jpg",
     updatedAt: new Date("2026-04-12T00:00:00.000Z"),
   },
 
@@ -83,7 +83,7 @@ export const ACCESOS_DIRECTOS_DEFAULT: AccesoDirectoRow[] = [
     url: "http://172.65.10.55:8116",
     categoria: "Links Operativos",
     activo: true,
-    imagen: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=800&auto=format&fit=crop",
+    imagen: "/image/accesos/sistema_facturacion.jpg",
     updatedAt: new Date("2026-04-12T00:00:00.000Z"),
   },
   {
@@ -93,7 +93,7 @@ export const ACCESOS_DIRECTOS_DEFAULT: AccesoDirectoRow[] = [
     url: "https://chatbot.correos.gob.bo:5000/",
     categoria: "Links Operativos",
     activo: true,
-    imagen: "https://images.unsplash.com/photo-1531746790731-6c087fecd65a?q=80&w=800&auto=format&fit=crop",
+    imagen: "/image/accesos/chatbot_agbc.jpg",
     updatedAt: new Date("2026-04-12T00:00:00.000Z"),
   },
   {
@@ -103,7 +103,7 @@ export const ACCESOS_DIRECTOS_DEFAULT: AccesoDirectoRow[] = [
     url: "https://trackingbo.correos.gob.bo:8100/",
     categoria: "Links Operativos",
     activo: true,
-    imagen: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800&auto=format&fit=crop",
+    imagen: "/image/accesos/siop_tracking.jpg",
     updatedAt: new Date("2026-04-12T00:00:00.000Z"),
   },
   {
@@ -113,7 +113,7 @@ export const ACCESOS_DIRECTOS_DEFAULT: AccesoDirectoRow[] = [
     url: "https://casillas.correos.gob.bo:3001/",
     categoria: "Links Operativos",
     activo: true,
-    imagen: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?q=80&w=800&auto=format&fit=crop",
+    imagen: "/image/accesos/sistema_casillas.jpg",
     updatedAt: new Date("2026-04-12T00:00:00.000Z"),
   },
   {
@@ -123,7 +123,7 @@ export const ACCESOS_DIRECTOS_DEFAULT: AccesoDirectoRow[] = [
     url: "http://172.65.10.55:8108/",
     categoria: "Links Operativos",
     activo: true,
-    imagen: "https://images.unsplash.com/photo-1450133064473-71024230f91b?q=80&w=800&auto=format&fit=crop",
+    imagen: "/image/accesos/verificacion_doc.jpg",
     updatedAt: new Date("2026-04-12T00:00:00.000Z"),
   },
   {
@@ -133,7 +133,7 @@ export const ACCESOS_DIRECTOS_DEFAULT: AccesoDirectoRow[] = [
     url: "https://postar.correos.gob.bo:8104/",
     categoria: "Links Operativos",
     activo: true,
-    imagen: "https://images.unsplash.com/photo-1554224154-26032ffc0d07?q=80&w=800&auto=format&fit=crop",
+    imagen: "/image/accesos/calculadora_postal.jpg",
     updatedAt: new Date("2026-04-12T00:00:00.000Z"),
   },
   {
@@ -143,7 +143,7 @@ export const ACCESOS_DIRECTOS_DEFAULT: AccesoDirectoRow[] = [
     url: "https://qcsmail.ptc.post/login.aspx",
     categoria: "Links Operativos",
     activo: true,
-    imagen: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=800&auto=format&fit=crop",
+    imagen: "/image/accesos/quality_web_system.jpg",
     updatedAt: new Date("2026-04-12T00:00:00.000Z"),
   },
   {
@@ -153,7 +153,7 @@ export const ACCESOS_DIRECTOS_DEFAULT: AccesoDirectoRow[] = [
     url: "https://ips.correos.gob.bo/IPSWeb/ES",
     categoria: "Links Operativos",
     activo: true,
-    imagen: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=800&auto=format&fit=crop",
+    imagen: "/image/accesos/ips_web_client.jpg",
     updatedAt: new Date("2026-04-12T00:00:00.000Z"),
   },
   {
@@ -163,7 +163,7 @@ export const ACCESOS_DIRECTOS_DEFAULT: AccesoDirectoRow[] = [
     url: "https://ips.correos.gob.bo/CDS.Web/LogIn.aspx",
     categoria: "Links Operativos",
     activo: true,
-    imagen: "https://images.unsplash.com/photo-1578575437130-527eed3abbec?q=80&w=800&auto=format&fit=crop",
+    imagen: "/image/accesos/cds_web_client.jpg",
     updatedAt: new Date("2026-04-12T00:00:00.000Z"),
   },
   {
@@ -173,7 +173,7 @@ export const ACCESOS_DIRECTOS_DEFAULT: AccesoDirectoRow[] = [
     url: "https://globaltracktrace.ptc.post/gtt.web/",
     categoria: "Links Operativos",
     activo: true,
-    imagen: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800&auto=format&fit=crop",
+    imagen: "/image/accesos/global_track_trace.jpg",
     updatedAt: new Date("2026-04-12T00:00:00.000Z"),
   },
 
@@ -185,7 +185,7 @@ export const ACCESOS_DIRECTOS_DEFAULT: AccesoDirectoRow[] = [
     url: "http://172.65.10.55:8128/solicitar-acceso",
     categoria: "Consultas y Soporte",
     activo: true,
-    imagen: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=800&auto=format&fit=crop",
+    imagen: "/image/accesos/solicitud_acceso.jpg",
     updatedAt: new Date("2026-04-12T00:00:00.000Z"),
   },
   {
@@ -195,7 +195,7 @@ export const ACCESOS_DIRECTOS_DEFAULT: AccesoDirectoRow[] = [
     url: "http://172.65.10.55:8129/consulta-carnet",
     categoria: "Consultas y Soporte",
     activo: true,
-    imagen: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=800&auto=format&fit=crop",
+    imagen: "/image/accesos/verificacion_marcaciones.jpg",
     updatedAt: new Date("2026-04-12T00:00:00.000Z"),
   },
   {
@@ -205,7 +205,7 @@ export const ACCESOS_DIRECTOS_DEFAULT: AccesoDirectoRow[] = [
     url: "http://172.65.10.55:8117/reportar/",
     categoria: "Consultas y Soporte",
     activo: true,
-    imagen: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?q=80&w=800&auto=format&fit=crop",
+    imagen: "/image/accesos/reporte_errores.jpg",
     updatedAt: new Date("2026-04-12T00:00:00.000Z"),
   },
 ]
