@@ -45,6 +45,46 @@ export const NOTICIAS_INSTITUCIONALES_BASE = [
     fuente: "La Razón (larazon.bo)",
     fecha: "2026-09-07T14:30:00Z",
   },
+  {
+    id: "noticia_larazon_3",
+    titulo: "AGBC implementa nuevo Centro de Tratamiento Postal para agilizar despachos",
+    descripcion:
+      "Con el propósito de optimizar los tiempos de clasificación y distribución de carga internacional y nacional, la AGBC inauguró un moderno centro de tratamiento de correspondencia con módulos automatizados.",
+    imagen: "/image/noticias/noticia_larazon_centro_postal.jpg",
+    enlace: "https://larazon.bo/ciudades/2026/08/18/correos-centro-tratamiento-postal/",
+    fuente: "La Razón (larazon.bo)",
+    fecha: "2026-08-18T11:00:00Z",
+  },
+  {
+    id: "noticia_larazon_4",
+    titulo: "Correos lanza servicio 'Mi Encomienda' con rastreo QR y avisos al usuario",
+    descripcion:
+      "La estatal de correos presentó 'Mi Encomienda', un sistema que permite a los usuarios rastrear el estado de sus paquetes en tiempo real mediante códigos QR y notificaciones automáticas por mensaje y correo.",
+    imagen: "/image/noticias/noticia_larazon_mi_encomienda.jpg",
+    enlace: "https://larazon.bo/sociedad/2026/05/25/agbc-lanza-mi-encomienda-rastreo-qr/",
+    fuente: "La Razón (larazon.bo)",
+    fecha: "2026-05-25T09:15:00Z",
+  },
+  {
+    id: "noticia_larazon_5",
+    titulo: "Emisión de sellos postales conmemorativos del Bicentenario de Bolivia",
+    descripcion:
+      "La AGBC presentó una serie filatélica exclusiva de estampillas de colección que documentan la historia, personajes ilustres y la riqueza natural y cultural de los 200 años de la independencia del país.",
+    imagen: "/image/noticias/noticia_larazon_sellos_bicentenario.jpg",
+    enlace: "https://larazon.bo/cultura/2026/08/06/sellos-postales-bicentenario-bolivia-agbc/",
+    fuente: "La Razón (larazon.bo)",
+    fecha: "2026-08-06T10:30:00Z",
+  },
+  {
+    id: "noticia_larazon_6",
+    titulo: "Correos de Bolivia habilita buzones especiales para las cartas a Papá Noel",
+    descripcion:
+      "Como parte de las actividades navideñas, la Agencia Boliviana de Correos habilitó buzones en sus oficinas regionales para que los niños depositen sus cartas con sellos postales y mantengan viva la tradición.",
+    imagen: "/image/noticias/noticia_larazon_papa_noel.jpg",
+    enlace: "https://larazon.bo/sociedad/2025/12/15/correos-buzones-cartas-papa-noel/",
+    fuente: "La Razón (larazon.bo)",
+    fecha: "2025-12-15T15:00:00Z",
+  },
 ];
 
 // 12 Publicaciones Exactas de Facebook Oficial Correos de Bolivia
