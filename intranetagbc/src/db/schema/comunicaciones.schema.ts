@@ -23,7 +23,7 @@ export const comunicados = pgTable('comunicados', {
 });
 
 export const banners = pgTable('banners', {
-  id: varchar('id', { length: 24 })
+  id: varchar('id', { length: 64 })
     .primaryKey()
     .$defaultFn(() => createId()),
   titulo: varchar('titulo', { length: 200 }).notNull(),

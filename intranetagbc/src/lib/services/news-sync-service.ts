@@ -23,116 +23,18 @@ export interface SyncResult {
   timestamp: string;
 }
 
-// 12 Noticias Oficiales de Prensa Boliviana sobre Correos de Bolivia
+// Noticia Institucional Oficial de La Razón (Prueba solicitada)
 export const NOTICIAS_INSTITUCIONALES_BASE = [
   {
-    id: "noticia_agbc_1",
-    titulo: "Correos de Bolivia y la UPU modernizan intercambio aduanero y postal internacional",
-    descripcion: "La Agencia Boliviana de Información (ABI) destaca el acuerdo con la Unión Postal Universal para la implementación de intercambio de datos electrónicos anticipados y agilización de paquetería.",
-    imagen: "/image/noticias/noticia_abi_1.jpg",
-    enlace: "https://abi.bo",
-    fuente: "Agencia Boliviana de Información (ABI)",
-    fecha: "2026-09-08T10:00:00Z"
+    id: "noticia_larazon_1",
+    titulo: "Correos detecta sustancias controladas en un paquete hacia Asia",
+    descripcion:
+      "Personal de la Fuerza Especial de Lucha Contra el Narcotráfico (FELCN) y de la Agencia Boliviana de Correos (AGBC) detectaron en la oficina central una encomienda que contenía sustancias controladas camufladas con destino al continente asiático tras las pruebas de campo correspondientes.",
+    imagen: "/image/noticias/noticia_larazon_droga_asia.jpg",
+    enlace: "https://larazon.bo/ciudades/2026/07/13/correos-detecta-sustancias-conroladas-en-un-paquete-hacia-asia/",
+    fuente: "La Razón (larazon.bo)",
+    fecha: "2026-07-13T10:00:00Z",
   },
-  {
-    id: "noticia_agbc_2",
-    titulo: "AGBC incorpora nueva flota vehicular y automatización en centros de acopio troncales",
-    descripcion: "El diario La Razón informa sobre la modernización de los centros de tratamiento postal en La Paz, Cochabamba y Santa Cruz con nuevos módulos de pesaje y clasificación digital.",
-    imagen: "/image/noticias/noticia_larazon_2.jpg",
-    enlace: "https://www.la-razon.com",
-    fuente: "La Razón",
-    fecha: "2026-09-07T14:30:00Z"
-  },
-  {
-    id: "noticia_agbc_3",
-    titulo: "Delivery Express: Correos lanza envíos en 24 horas para comercio electrónico",
-    descripcion: "Unitel Digital reporta las nuevas modalidades de envíos de la AGBC con tarifas preferenciales y recojo para tiendas virtuales y emprendedores con cobertura en las 9 capitales.",
-    imagen: "/image/noticias/noticia_unitel_3.jpg",
-    enlace: "https://unitel.bo",
-    fuente: "Unitel Digital",
-    fecha: "2026-08-25T09:00:00Z"
-  },
-  {
-    id: "noticia_agbc_4",
-    titulo: "Histórica emisión de sellos postales por el Bicentenario de Bolivia y Riqueza Filatélica",
-    descripcion: "El Diario, decano de la prensa nacional, reseña la presentación de la serie conmemorativa de estampillas exclusivas en homenaje a los 200 años de historia patria y biodiversidad.",
-    imagen: "/image/noticias/noticia_eldiario_4.jpg",
-    enlace: "https://www.eldiario.net",
-    fuente: "El Diario",
-    fecha: "2026-08-18T16:20:00Z"
-  },
-  {
-    id: "noticia_agbc_5",
-    titulo: "TrackingBO 2.0: Rastreo en tiempo real de encomiendas desde el teléfono móvil",
-    descripcion: "Red Uno de Bolivia presenta la nueva versión del sistema SIOP / TrackingBO de Correos para que los usuarios sigan sus compras y paquetes minuto a minuto por código QR.",
-    imagen: "/image/noticias/noticia_reduno_5.jpg",
-    enlace: "https://www.reduno.com.bo",
-    fuente: "Red Uno",
-    fecha: "2026-08-10T11:15:00Z"
-  },
-  {
-    id: "noticia_agbc_6",
-    titulo: "Alerta ciudadana: Advierten sobre estafas con falsas subastas de paquetes en redes",
-    descripcion: "El Deber advierte a la población sobre publicaciones fraudulentas en Facebook. La AGBC reitera que no subasta paquetes extraviados ni solicita depósitos por enlaces dudosos.",
-    imagen: "/image/noticias/noticia_eldeber_6.jpg",
-    enlace: "https://eldeber.com.bo",
-    fuente: "El Deber",
-    fecha: "2026-07-28T08:45:00Z"
-  },
-  {
-    id: "noticia_agbc_7",
-    titulo: "Programa 'Correo Emprendedor' amplía destinos para exportación artesanal boliviana",
-    descripcion: "ATB Digital reporta la alianza estratégica con artesanos y MYPEs para el despacho internacional con tarifas planas y sello 'Hecho en Bolivia' a más de 190 países de la red postal.",
-    imagen: "/image/noticias/noticia_atb_7.jpg",
-    enlace: "https://www.atb.com.bo",
-    fuente: "ATB Digital",
-    fecha: "2026-07-15T15:00:00Z"
-  },
-  {
-    id: "noticia_agbc_8",
-    titulo: "Inauguran modernas casillas postales inteligentes y horario continuo en agencias",
-    descripcion: "Bolivisión destaca la habilitación de nuevas ventanillas de atención continua y casilleros seguros en oficinas regionales de Sucre, Oruro, Potosí, Tarija, Beni y Pando.",
-    imagen: "/image/noticias/noticia_bolivision_8.jpg",
-    enlace: "https://www.redbolivision.tv.bo",
-    fuente: "Bolivisión",
-    fecha: "2026-06-30T10:30:00Z"
-  },
-  {
-    id: "noticia_agbc_9",
-    titulo: "Exposición de filatelia exhibe cartas históricas y tesoros postales en La Paz",
-    descripcion: "Los Tiempos cubre la muestra filatélica en el Palacio de Comunicaciones con más de 5.000 piezas históricas, correspondencia republicana y los sellos más representativos.",
-    imagen: "/image/noticias/noticia_lostiempos_9.jpg",
-    enlace: "https://www.lostiempos.com",
-    fuente: "Los Tiempos",
-    fecha: "2026-06-18T12:00:00Z"
-  },
-  {
-    id: "noticia_agbc_10",
-    titulo: "'Correos Verde': AGBC implementa sobres y empaques 100% reciclables",
-    descripcion: "El periódico Opinión resalta la iniciativa ecológica de Correos de Bolivia para reducir la huella de carbono con sobres biodegradables y optimización de rutas de reparto.",
-    imagen: "/image/noticias/noticia_opinion_10.jpg",
-    enlace: "https://www.opinion.com.bo",
-    fuente: "Opinión",
-    fecha: "2026-05-22T09:30:00Z"
-  },
-  {
-    id: "noticia_agbc_11",
-    titulo: "Capacitan a operadores postales en ciberseguridad y trazabilidad aduanera",
-    descripcion: "Correo del Sur informa sobre la conclusión del ciclo nacional de capacitación técnica para operadores y carteros de los 9 departamentos en seguridad y atención ciudadana.",
-    imagen: "/image/noticias/noticia_correodelsur_11.jpg",
-    enlace: "https://correodelsur.com",
-    fuente: "Correo del Sur",
-    fecha: "2026-05-05T14:00:00Z"
-  },
-  {
-    id: "noticia_agbc_12",
-    titulo: "Falso: Correos de Bolivia no remata paquetes extraviados por redes sociales",
-    descripcion: "Bolivia Verifica desmiente publicaciones apócrifas que usan el logotipo de Correos para estafar con falsos remates de encomiendas no reclamadas en aeropuertos.",
-    imagen: "/image/noticias/noticia_boliviaverifica_12.jpg",
-    enlace: "https://boliviaverifica.bo",
-    fuente: "Bolivia Verifica",
-    fecha: "2026-04-20T11:00:00Z"
-  }
 ];
 
 // 12 Publicaciones Exactas de Facebook Oficial Correos de Bolivia
@@ -277,7 +179,7 @@ export async function sincronizarNoticiasAuto(force: boolean = false): Promise<S
         if (diffHoras < 24) {
           // Ya se sincronizó en las últimas 24 horas, pero verificamos que haya datos en la BD
           const conteo = await db.select().from(banners);
-          if (conteo.length >= 24) {
+          if (conteo.length >= NOTICIAS_INSTITUCIONALES_BASE.length + NOTICIAS_FACEBOOK_BASE.length) {
             debeSincronizar = false;
           }
         }
@@ -290,13 +192,13 @@ export async function sincronizarNoticiasAuto(force: boolean = false): Promise<S
       return {
         success: true,
         message: "Noticias ya sincronizadas en las últimas 24 horas.",
-        institucionalesCount: 12,
-        facebookCount: 12,
+        institucionalesCount: NOTICIAS_INSTITUCIONALES_BASE.length,
+        facebookCount: NOTICIAS_FACEBOOK_BASE.length,
         timestamp: ahora.toISOString(),
       };
     }
 
-    // 2. Insertar / Actualizar todas las 24 noticias
+    // 2. Insertar / Actualizar las noticias
     const todosLosBanners = [
       ...NOTICIAS_INSTITUCIONALES_BASE.map((n, idx) => ({
         id: n.id,
@@ -344,9 +246,9 @@ export async function sincronizarNoticiasAuto(force: boolean = false): Promise<S
 
     return {
       success: true,
-      message: "Sincronización de 24 noticias completada exitosamente.",
-      institucionalesCount: 12,
-      facebookCount: 12,
+      message: `Sincronización completada (${NOTICIAS_INSTITUCIONALES_BASE.length} institucional de La Razón + ${NOTICIAS_FACEBOOK_BASE.length} Facebook).`,
+      institucionalesCount: NOTICIAS_INSTITUCIONALES_BASE.length,
+      facebookCount: NOTICIAS_FACEBOOK_BASE.length,
       timestamp: ahora.toISOString(),
     };
   } catch (error: any) {
