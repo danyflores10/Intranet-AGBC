@@ -187,13 +187,14 @@ async function seedUsuariosClave() {
 async function seedAccesosDirectos() {
   console.log("-> 3. Sembrando 18 accesos rápidos a sistemas categorizados...")
 
-  const { ACCESOS_DIRECTOS_DEFAULT } = await import("../actions/comunicaciones")
+  const { ACCESOS_DIRECTOS_DEFAULT } = await import("../lib/constants/accesos")
 
   for (const item of ACCESOS_DIRECTOS_DEFAULT) {
     const valorJson = JSON.stringify({
       titulo: item.titulo,
       descripcion: item.descripcion,
       url: item.url,
+      categoria: item.categoria,
       activo: item.activo,
       imagen: item.imagen,
     })
