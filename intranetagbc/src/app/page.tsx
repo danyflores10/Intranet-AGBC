@@ -31,7 +31,7 @@ import { obtenerUsuarioRbacActual } from "@/lib/auth/session-access"
 import { obtenerSucursalesActivas } from "@/actions/sucursales"
 import { obtenerPersonal, obtenerDirectivos } from "@/actions/rrhh"
 import { obtenerConfigPorGrupo } from "@/actions/configuracion"
-import { obtenerDocumentos } from "@/actions/documentos"
+import { obtenerDocumentosPublicados } from "@/actions/documentos"
 import { LoginForm } from "@/components/login-form"
 
 const defaultSucursales = [
@@ -62,7 +62,7 @@ export default async function HomePage() {
   const estaLogueado = !!session?.user
   const esAdmin = usuarioRbac?.roles?.includes("administrador") || usuarioRbac?.roles?.includes("Administrador") || false
 
-  // Carga paralela de datos para la landing
+  // Carga paralela de datos para la landing (solo carga datos protegidos si está autenticado)
   const [
     comunicadosDb,
     accesosDirectos,
@@ -77,9 +77,9 @@ export default async function HomePage() {
     obtenerAccesosDirectosActivos(),
     obtenerBannersActivos(),
     obtenerSucursalesActivas(),
-    obtenerDirectivos(),
-    obtenerPersonal(),
-    obtenerDocumentos(),
+    estaLogueado ? obtenerDirectivos().catch(() => []) : Promise.resolve([]),
+    estaLogueado ? obtenerPersonal().catch(() => []) : Promise.resolve([]),
+    estaLogueado ? obtenerDocumentosPublicados().catch(() => []) : Promise.resolve([]),
     obtenerConfigPorGrupo("visibilidad_landing"),
   ])
 
