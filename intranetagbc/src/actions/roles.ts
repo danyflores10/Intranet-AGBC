@@ -120,13 +120,23 @@ function limpiarPermissionIds(permissionIds: string[] | undefined): string[] {
   return [...new Set(limpios)];
 }
 
+function formatDateSafe(val: unknown): string {
+  if (!val) return new Date().toISOString()
+  if (val instanceof Date) return val.toISOString()
+  if (typeof val === "string") {
+    const d = new Date(val)
+    return isNaN(d.getTime()) ? val : d.toISOString()
+  }
+  return new Date().toISOString()
+}
+
 function mapRoleDTO(role: RolFila, permissionsByRole: PermissionDTO[]): RoleDTO {
   return {
     id: role.id,
     name: role.name,
     permissions: permissionsByRole,
-    createdAt: role.createdAt.toISOString(),
-    updatedAt: role.updatedAt.toISOString(),
+    createdAt: formatDateSafe(role.createdAt),
+    updatedAt: formatDateSafe(role.updatedAt),
   };
 }
 

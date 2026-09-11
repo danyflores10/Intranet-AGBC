@@ -248,7 +248,9 @@ export async function sincronizarTodoPersonalConUsuarios() {
           email: email,
           telefono: null,
           foto: u.image || null,
-          fechaIngreso: u.createdAt ? u.createdAt.toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
+          fechaIngreso: u.createdAt
+            ? (u.createdAt instanceof Date ? u.createdAt.toISOString().slice(0, 10) : new Date(u.createdAt).toISOString().slice(0, 10))
+            : new Date().toISOString().slice(0, 10),
           estado: u.isActive ? "activo" : "inactivo",
         })
         creados++

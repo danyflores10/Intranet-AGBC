@@ -197,7 +197,7 @@ export default async function HomePage() {
           imagen: n.imagen,
           imagenes: n.imagenes,
           enlace: n.enlace,
-          createdAt: n.createdAt.toISOString(),
+          createdAt: n.createdAt instanceof Date ? n.createdAt.toISOString() : new Date(n.createdAt).toISOString(),
         }))} />
       )}
 
@@ -218,7 +218,7 @@ export default async function HomePage() {
         id: c.id,
         titulo: c.titulo,
         contenido: c.contenido,
-        fecha: c.createdAt.toISOString().split("T")[0],
+        fecha: c.createdAt instanceof Date ? c.createdAt.toISOString().split("T")[0] : new Date(c.createdAt).toISOString().split("T")[0],
         estado: c.estado as "publicado",
         destacado: c.destacado,
         archivoUrl: c.archivoUrl,

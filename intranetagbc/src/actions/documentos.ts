@@ -179,8 +179,8 @@ export async function eliminarDocumento(id: string) {
       tipoArchivo: doc.tipoArchivo,
       tamano: doc.tamano,
       descripcion: doc.descripcion,
-      createdAt: doc.createdAt.toISOString(),
-      updatedAt: doc.updatedAt.toISOString(),
+      createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : new Date(doc.createdAt).toISOString(),
+      updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : new Date(doc.updatedAt).toISOString(),
     },
   }
 

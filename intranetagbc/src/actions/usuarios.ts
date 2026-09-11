@@ -328,6 +328,16 @@ async function autorizarAccion(permisoRequerido: string): Promise<SesionConAcces
   return sesion
 }
 
+function formatDateSafe(val: unknown): string {
+  if (!val) return new Date().toISOString()
+  if (val instanceof Date) return val.toISOString()
+  if (typeof val === "string") {
+    const d = new Date(val)
+    return isNaN(d.getTime()) ? val : d.toISOString()
+  }
+  return new Date().toISOString()
+}
+
 function mapRowsToUsuarios(rows: UsuarioFilaConRol[]): UsuarioDTO[] {
   const usuarioMap = new Map<string, UsuarioDTO>()
 
@@ -352,8 +362,8 @@ function mapRowsToUsuarios(rows: UsuarioFilaConRol[]): UsuarioDTO[] {
         dateOfBirth: formatBirthDate(row.userDateOfBirth),
         isActive: row.userIsActive,
         roles: row.roleId && row.roleName ? [{ id: row.roleId, name: row.roleName }] : [],
-        createdAt: row.userCreatedAt.toISOString(),
-        updatedAt: row.userUpdatedAt.toISOString(),
+        createdAt: formatDateSafe(row.userCreatedAt),
+        updatedAt: formatDateSafe(row.userUpdatedAt),
       })
       continue
     }

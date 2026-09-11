@@ -234,7 +234,7 @@ export async function importarPersonalLote(registros: ImportPersonalRecord[]) {
 
     // Guardar snapshot de seguridad antes de procesar cambios para permitir revertir
     const personalPrevio = await db.select().from(personal)
-    snapshotPersonalAntesDeImportacion = JSON.parse(JSON.stringify(personalPrevio))
+    snapshotPersonalAntesDeImportacion = personalPrevio.map((p) => ({ ...p }))
 
     // Cargar todo el personal existente para cruce y deduplicación inteligente
     const todosPersonal = [...personalPrevio]
@@ -411,14 +411,27 @@ export async function revertirUltimaImportacionRRHH() {
     if (snapshotPersonalAntesDeImportacion && snapshotPersonalAntesDeImportacion.length > 0) {
       await db.delete(personal)
       for (const p of snapshotPersonalAntesDeImportacion) {
-        await db.insert(personal).values(p)
+        await db.insert(personal).values({
+          id: p.id,
+          nombre: p.nombre,
+          ci: p.ci,
+          cargo: p.cargo,
+          unidad: p.unidad,
+          email: p.email,
+          telefono: p.telefono,
+          fechaIngreso: p.fechaIngreso,
+          estado: p.estado,
+          foto: p.foto,
+          createdAt: p.createdAt ? (p.createdAt instanceof Date ? p.createdAt : new Date(p.createdAt)) : new Date(),
+          updatedAt: p.updatedAt ? (p.updatedAt instanceof Date ? p.updatedAt : new Date(p.updatedAt)) : new Date(),
+        })
       }
       snapshotPersonalAntesDeImportacion = null
     } else {
       // Si no hay snapshot en memoria, limpiar automáticamente todos los registros inválidos/corruptos
       const all = await db.select().from(personal)
       for (const p of all) {
-        const nombreTrim = p.nombre.trim()
+        const nombreTrim = p.nombre ? p.nombre.trim() : ""
         const isBogus =
           /^[0-9]+$/.test(nombreTrim) ||
           nombreTrim.length < 3 ||
@@ -432,6 +445,9 @@ export async function revertirUltimaImportacionRRHH() {
       }
     }
 
+    // Sincronizar bidireccionalmente el personal restaurado con las cuentas de usuario
+    await sincronizarTodoPersonalConUsuarios()
+
     await registrarAuditLog({
       usuario: "sistema",
       accion: "Revirtió importación de Excel en RRHH",
@@ -440,6 +456,7 @@ export async function revertirUltimaImportacionRRHH() {
     })
 
     revalidatePath("/rrhh")
+    revalidatePath("/usuarios")
     revalidatePath("/dashboard")
     revalidatePath("/")
 
@@ -448,6 +465,7 @@ export async function revertirUltimaImportacionRRHH() {
       message: "Cambios revertidos exitosamente. El padrón ha sido restaurado.",
     }
   } catch (err: unknown) {
+    console.error("Error en revertirUltimaImportacionRRHH:", err)
     return {
       success: false,
       message: err instanceof Error ? err.message : "Error al revertir los cambios.",
