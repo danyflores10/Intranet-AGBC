@@ -30,11 +30,11 @@ interface AccesoDirecto {
 }
 
 const CATEGORIAS_DEFAULT = [
-  "Todos",
   "Links Internos",
   "Links Públicos",
   "Links Operativos",
   "Consultas y Soporte",
+  "Todos",
 ]
 
 export function LandingAccesos({ accesos }: { accesos: AccesoDirecto[] }) {
@@ -44,15 +44,22 @@ export function LandingAccesos({ accesos }: { accesos: AccesoDirecto[] }) {
   const [selectedAcceso, setSelectedAcceso] = useState<AccesoDirecto | null>(null)
   const pageSize = 12
 
-  // Extraer categorías dinámicas si hubiera adicionales
+  // Categorías ordenadas con "Todos" al final (lado derecho)
   const categoriasDisponibles = useMemo(() => {
-    const cats = new Set<string>(CATEGORIAS_DEFAULT)
+    const ordenBase = [
+      "Links Internos",
+      "Links Públicos",
+      "Links Operativos",
+      "Consultas y Soporte",
+    ]
+    const extras = new Set<string>()
     accesos.forEach((a) => {
-      if (a.categoria && a.categoria.trim()) {
-        cats.add(a.categoria.trim())
+      const cat = a.categoria?.trim()
+      if (cat && !ordenBase.includes(cat) && cat.toLowerCase() !== "todos") {
+        extras.add(cat)
       }
     })
-    return Array.from(cats)
+    return [...ordenBase, ...Array.from(extras), "Todos"]
   }, [accesos])
 
   const accesosFiltrados = useMemo(() => {

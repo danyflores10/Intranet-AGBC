@@ -211,6 +211,7 @@ export default async function HomePage() {
           descripcion: a.descripcion,
           url: a.url,
           imagen: a.imagen,
+          categoria: a.categoria,
         }))} />
       )}
 
