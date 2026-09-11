@@ -31,7 +31,7 @@ import { obtenerUsuarioRbacActual } from "@/lib/auth/session-access"
 import { obtenerSucursalesActivas } from "@/actions/sucursales"
 import { obtenerPersonal, obtenerDirectivos } from "@/actions/rrhh"
 import { obtenerConfigPorGrupo } from "@/actions/configuracion"
-import { obtenerDocumentosPublicados } from "@/actions/documentos"
+import { obtenerDocumentos } from "@/actions/documentos"
 import { LoginForm } from "@/components/login-form"
 
 const defaultSucursales = [
@@ -57,12 +57,17 @@ export default async function HomePage() {
     headers: await headers(),
   })
 
+  // Si no hay sesión, mostrar directamente el formulario de login
+  if (!session) {
+    return <LoginForm />
+  }
+
   // Obtener rol y permisos RBAC del usuario
   const usuarioRbac = await obtenerUsuarioRbacActual()
-  const estaLogueado = !!session?.user
+  const estaLogueado = true
   const esAdmin = usuarioRbac?.roles?.includes("administrador") || usuarioRbac?.roles?.includes("Administrador") || false
 
-  // Carga paralela de datos para la landing (solo carga datos protegidos si está autenticado)
+  // Carga paralela de datos para la landing
   const [
     comunicadosDb,
     accesosDirectos,
@@ -77,9 +82,9 @@ export default async function HomePage() {
     obtenerAccesosDirectosActivos(),
     obtenerBannersActivos(),
     obtenerSucursalesActivas(),
-    estaLogueado ? obtenerDirectivos().catch(() => []) : Promise.resolve([]),
-    estaLogueado ? obtenerPersonal().catch(() => []) : Promise.resolve([]),
-    estaLogueado ? obtenerDocumentosPublicados().catch(() => []) : Promise.resolve([]),
+    obtenerDirectivos(),
+    obtenerPersonal(),
+    obtenerDocumentos(),
     obtenerConfigPorGrupo("visibilidad_landing"),
   ])
 
@@ -99,14 +104,12 @@ export default async function HomePage() {
     : defaultSucursales
 
   // Datos para el navbar
-  const usuario = session?.user
-    ? {
-        name: session.user.name || "Usuario",
-        email: session.user.email,
-        image: session.user.image,
-        rol: usuarioRbac?.roles?.[0] || "Funcionario",
-      }
-    : null
+  const usuario = {
+    name: session.user.name || "Usuario",
+    email: session.user.email,
+    image: session.user.image,
+    rol: usuarioRbac?.roles?.[0] || "Funcionario",
+  }
 
   return (
     <main className="min-h-screen bg-background">
@@ -114,7 +117,7 @@ export default async function HomePage() {
       <LandingNavbar
         estaLogueado={estaLogueado}
         esAdmin={esAdmin}
-        usuario={usuario ? { name: usuario.name, image: usuario.image } : null}
+        usuario={usuario}
       />
 
       {/* ── Hero con Personita Mascota 3D de Correos y Textos de Intranet ── */}
@@ -147,23 +150,12 @@ export default async function HomePage() {
                 Accede de forma rápida y segura a los sistemas operativos, seguimiento de correspondencia SIGEC, comunicados oficiales, directorio de personal y herramientas de gestión institucional.
               </p>
 
-              {/* Botón: Solo para Administrador o Login si no hay sesión */}
-              {session ? (
-                esAdmin && (
-                  <div className="animate-fade-in-up animation-delay-300 pt-2">
-                    <Button size="lg" asChild className="h-13 px-8 text-base font-bold bg-[#0E5296] hover:bg-[#003B73] text-white shadow-xl shadow-[#0E5296]/20 border-0 rounded-2xl transition-all hover:scale-[1.02] cursor-pointer">
-                      <Link href="/dashboard">
-                        Ir al Panel de Administración
-                        <ArrowRight className="ml-2 h-5 w-5 text-[#FFB800]" />
-                      </Link>
-                    </Button>
-                  </div>
-                )
-              ) : (
+              {/* Botón: Únicamente para Administrador */}
+              {esAdmin && (
                 <div className="animate-fade-in-up animation-delay-300 pt-2">
                   <Button size="lg" asChild className="h-13 px-8 text-base font-bold bg-[#0E5296] hover:bg-[#003B73] text-white shadow-xl shadow-[#0E5296]/20 border-0 rounded-2xl transition-all hover:scale-[1.02] cursor-pointer">
-                    <Link href="/login">
-                      Ingresar a la Intranet
+                    <Link href="/dashboard">
+                      Ir al Panel de Administración
                       <ArrowRight className="ml-2 h-5 w-5 text-[#FFB800]" />
                     </Link>
                   </Button>

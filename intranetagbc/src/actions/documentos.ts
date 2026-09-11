@@ -90,27 +90,6 @@ export async function obtenerDocumentos() {
     .orderBy(desc(documentos.createdAt))
 }
 
-export async function obtenerDocumentosPublicados() {
-  return db.select({
-    id: documentos.id,
-    titulo: documentos.titulo,
-    categoriaId: documentos.categoriaId,
-    categoria: documentoCategorias.nombre,
-    autor: documentos.autor,
-    estado: documentos.estado,
-    archivo: documentos.archivo,
-    nombreArchivo: documentos.nombreArchivo,
-    tipoArchivo: documentos.tipoArchivo,
-    tamano: documentos.tamano,
-    descripcion: documentos.descripcion,
-    createdAt: documentos.createdAt,
-    updatedAt: documentos.updatedAt,
-  }).from(documentos)
-    .leftJoin(documentoCategorias, eq(documentos.categoriaId, documentoCategorias.id))
-    .where(eq(documentos.estado, "publicado"))
-    .orderBy(desc(documentos.createdAt))
-}
-
 export async function obtenerCategorias() {
   await requerirSesionAutenticada()
 
