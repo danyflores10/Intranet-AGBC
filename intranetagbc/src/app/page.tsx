@@ -13,6 +13,7 @@ import {
   CalendarDays,
   Phone,
   Briefcase,
+  Globe,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -46,37 +47,7 @@ const defaultSucursales = [
   },
   {
     nombre: "Regional Santa Cruz",
-    direccion: "Calle Cobija Entre Sucre y Ballivián N° 24",
-    tipo: "regional" as const,
-  },
-  {
-    nombre: "Regional Oruro",
-    direccion: "Calle Presidente Montes Esq. Junín N° 1456",
-    tipo: "regional" as const,
-  },
-  {
-    nombre: "Regional Potosí",
-    direccion: "Calle Hoyos Esq. Topater, Villa Imperial de Potosí",
-    tipo: "regional" as const,
-  },
-  {
-    nombre: "Regional Tarija",
-    direccion: "Calle Mariscal Sucre Esq. Virginio Lema N° 397",
-    tipo: "regional" as const,
-  },
-  {
-    nombre: "Regional Sucre",
-    direccion: "Calle Junín Esq. Ayacucho N° 699",
-    tipo: "regional" as const,
-  },
-  {
-    nombre: "Regional Beni",
-    direccion: "Calle Cipriano Barace N° 10 Entre Manuel Limpias y Calle Sucre",
-    tipo: "regional" as const,
-  },
-  {
-    nombre: "Regional Pando",
-    direccion: "Av. Bruno Racua N° 59",
+    direccion: "Calle Junín Esq. Calle 24 de Septiembre",
     tipo: "regional" as const,
   },
 ]
@@ -86,29 +57,35 @@ export default async function HomePage() {
     headers: await headers(),
   })
 
-  // Si no hay sesión, mostrar el formulario de login
-  if (!session) {
-    return <LoginForm />
-  }
+  // Obtener rol y permisos RBAC del usuario
+  const usuarioRbac = await obtenerUsuarioRbacActual()
+  const estaLogueado = !!session?.user
+  const esAdmin = usuarioRbac?.roles?.includes("administrador") || usuarioRbac?.roles?.includes("Administrador") || false
 
-  const usuario = await obtenerUsuarioRbacActual()
-  const esAdmin = usuario?.roles.includes("administrador") ?? false
-  const estaLogueado = true
-
-  const [comunicadosDb, bannersDb, accesosDirectos, sucursalesDb, personalDb, directivosDb, seccionesConfig, documentosDb] = await Promise.all([
+  // Carga paralela de datos para la landing
+  const [
+    comunicadosDb,
+    accesosDirectos,
+    bannersDb,
+    sucursalesDb,
+    directivosDb,
+    personalDb,
+    documentosDb,
+    visibilidadConfig,
+  ] = await Promise.all([
     obtenerComunicadosPublicados(),
-    obtenerBannersActivos(),
     obtenerAccesosDirectosActivos(),
+    obtenerBannersActivos(),
     obtenerSucursalesActivas(),
-    obtenerPersonal(),
     obtenerDirectivos(),
-    obtenerConfigPorGrupo("secciones_landing"),
+    obtenerPersonal(),
     obtenerDocumentos(),
+    obtenerConfigPorGrupo("visibilidad_landing"),
   ])
 
-  // Mapear configuración de secciones (por defecto todas visibles)
+  // Helper para verificar visibilidad de secciones
   const seccionVisible = (clave: string) => {
-    const config = seccionesConfig.find((c) => c.clave === clave)
+    const config = visibilidadConfig.find((c) => c.clave === clave)
     return config ? config.valor === "true" : true
   }
 
@@ -121,8 +98,18 @@ export default async function HomePage() {
       }))
     : defaultSucursales
 
+  // Datos para el navbar
+  const usuario = session?.user
+    ? {
+        name: session.user.name || "Usuario",
+        email: session.user.email,
+        image: session.user.image,
+        rol: usuarioRbac?.roles?.[0] || "Funcionario",
+      }
+    : null
+
   return (
-    <main className="flex min-h-svh flex-col overflow-hidden">
+    <main className="min-h-screen bg-background">
       {/* ── Navbar ── */}
       <LandingNavbar
         estaLogueado={estaLogueado}
@@ -130,61 +117,150 @@ export default async function HomePage() {
         usuario={usuario ? { name: usuario.name, image: usuario.image } : null}
       />
 
-      {/* ── Hero ── */}
-      <section className="relative pt-[80px] bg-white border-b border-slate-100">
+      {/* ── Hero con Personita Mascota 3D de Correos y Textos de Intranet ── */}
+      <section className="relative pt-[80px] bg-gradient-to-b from-white via-slate-50/60 to-white border-b border-slate-100 overflow-hidden">
         {/* Clean subtle geometric pattern */}
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(#0E5296_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.035]" />
-          <div className="absolute -top-24 right-1/4 h-[350px] w-[350px] rounded-full bg-[#FFB800]/10 blur-[90px]" />
-          <div className="absolute top-1/2 -left-20 h-[400px] w-[400px] rounded-full bg-[#0E5296]/6 blur-[100px]" />
+          <div className="absolute -top-24 right-1/4 h-[350px] w-[350px] rounded-full bg-[#FFB800]/15 blur-[90px]" />
+          <div className="absolute top-1/2 -left-20 h-[400px] w-[400px] rounded-full bg-[#0E5296]/8 blur-[100px]" />
         </div>
 
-        <div className="mx-auto max-w-7xl px-6 pb-24 pt-16 md:pb-32 md:pt-24">
-          <div className="mx-auto max-w-4xl text-center">
-            {/* Badge */}
-            <div className="animate-fade-in-up mb-8 inline-flex items-center gap-2.5 rounded-full border border-[#FFB800]/40 bg-[#FFB800]/15 px-5 py-2 text-sm font-bold text-[#0E5296] shadow-sm">
-              <Sparkles className="h-4 w-4 text-[#FFB800]" />
-              Plataforma de gestión interna v2.0
+        <div className="mx-auto max-w-7xl px-6 pb-16 pt-10 md:pb-24 md:pt-14">
+          <div className="grid grid-cols-1 lg:grid-cols-12 items-center gap-10 lg:gap-12">
+            {/* Columna Izquierda: Textos y Botones de la Intranet */}
+            <div className="lg:col-span-7 text-left space-y-6">
+              {/* Badge */}
+              <div className="animate-fade-in-up inline-flex items-center gap-2.5 rounded-full border border-[#FFB800]/40 bg-[#FFB800]/15 px-4 py-1.5 text-xs sm:text-sm font-bold text-[#0E5296] shadow-xs">
+                <Sparkles className="h-4 w-4 text-[#FFB800]" />
+                Intranet AGBC • Agencia Boliviana de Correos
+              </div>
+
+              <h1 className="animate-fade-in-up animation-delay-100 text-3xl font-black tracking-tight sm:text-4xl md:text-5xl lg:text-[3.5rem] leading-[1.1] text-[#0A192F]">
+                El portal digital para todo el equipo postal.
+                <span className="text-[#FFB800] block mt-1.5">
+                  Conectados en un solo lugar.
+                </span>
+              </h1>
+
+              <p className="animate-fade-in-up animation-delay-200 text-slate-600 text-base sm:text-lg leading-relaxed font-medium max-w-2xl">
+                Accede de forma rápida y segura a los sistemas operativos, seguimiento de correspondencia SIGEC, comunicados oficiales, directorio de personal y herramientas de gestión institucional.
+              </p>
+
+              {/* Botones de Acción */}
+              <div className="animate-fade-in-up animation-delay-300 flex flex-wrap items-center gap-4 pt-2">
+                {session ? (
+                  esAdmin ? (
+                    <>
+                      <Button size="lg" asChild className="h-13 px-8 text-base font-bold bg-[#0E5296] hover:bg-[#003B73] text-white shadow-xl shadow-[#0E5296]/20 border-0 rounded-2xl transition-all hover:scale-[1.02] cursor-pointer">
+                        <Link href="/dashboard">
+                          Panel de Administración
+                          <ArrowRight className="ml-2 h-5 w-5 text-[#FFB800]" />
+                        </Link>
+                      </Button>
+                      <Button size="lg" variant="outline" asChild className="h-13 px-7 text-base font-bold text-[#002F6C] border-2 border-slate-200 hover:border-[#0E5296]/40 hover:bg-slate-50 rounded-2xl transition-all cursor-pointer">
+                        <a href="#aplicaciones">
+                          Explorar Sistemas
+                        </a>
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button size="lg" asChild className="h-13 px-8 text-base font-bold bg-[#0E5296] hover:bg-[#003B73] text-white shadow-xl shadow-[#0E5296]/20 border-0 rounded-2xl transition-all hover:scale-[1.02] cursor-pointer">
+                        <a href="#aplicaciones">
+                          Acceder a Sistemas
+                          <ArrowRight className="ml-2 h-5 w-5 text-[#FFB800]" />
+                        </a>
+                      </Button>
+                      <Button size="lg" variant="outline" asChild className="h-13 px-7 text-base font-bold text-[#002F6C] border-2 border-slate-200 hover:border-[#0E5296]/40 hover:bg-slate-50 rounded-2xl transition-all cursor-pointer">
+                        <a href="#comunicados">
+                          Ver Comunicados
+                        </a>
+                      </Button>
+                    </>
+                  )
+                ) : (
+                  <>
+                    <Button size="lg" asChild className="h-13 px-8 text-base font-bold bg-[#0E5296] hover:bg-[#003B73] text-white shadow-xl shadow-[#0E5296]/20 border-0 rounded-2xl transition-all hover:scale-[1.02] cursor-pointer">
+                      <Link href="/login">
+                        Ingresar a la Intranet
+                        <ArrowRight className="ml-2 h-5 w-5 text-[#FFB800]" />
+                      </Link>
+                    </Button>
+                    <Button size="lg" variant="outline" asChild className="h-13 px-7 text-base font-bold text-[#002F6C] border-2 border-slate-200 hover:border-[#0E5296]/40 hover:bg-slate-50 rounded-2xl transition-all cursor-pointer">
+                      <a href="#comunicados">
+                        Comunicados Públicos
+                      </a>
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              {/* Píldoras de características / Info rápida */}
+              <div className="animate-fade-in-up animation-delay-400 grid grid-cols-3 gap-3 pt-6 border-t border-slate-200/80 max-w-xl">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#0E5296]/10 text-[#0E5296]">
+                    <Globe className="h-4 w-4" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-700 leading-tight">18 Sistemas Integrados</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#FFCC00]/20 text-[#002F6C]">
+                    <Mail className="h-4 w-4" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-700 leading-tight">Gestión SIGEC & Email</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-700">
+                    <Shield className="h-4 w-4" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-700 leading-tight">Seguridad & RBAC</span>
+                </div>
+              </div>
             </div>
 
-            <h1 className="animate-fade-in-up animation-delay-100 text-5xl font-black tracking-tight sm:text-6xl md:text-7xl lg:text-8xl leading-[1] text-[#0A192F]">
-              Todo tu equipo.
-              <br />
-              <span className="text-[#FFB800]">
-                Un solo lugar.
-              </span>
-            </h1>
+            {/* Columna Derecha: Personita Mascota 3D de Correos de Bolivia */}
+            <div className="lg:col-span-5 flex justify-center lg:justify-end animate-fade-in-up animation-delay-200">
+              <div className="relative w-full max-w-[420px]">
+                {/* Glow decorativo detrás */}
+                <div className="absolute -inset-4 rounded-3xl bg-gradient-to-tr from-[#FFCC00]/30 via-[#0E5296]/20 to-[#0077EE]/20 blur-2xl opacity-75" />
 
-            <p className="animate-fade-in-up animation-delay-200 mx-auto mt-8 max-w-2xl text-lg text-slate-600 sm:text-xl leading-relaxed font-medium">
-              Centraliza documentos, recursos humanos y gestión institucional
-              en una plataforma segura, moderna y eficiente.
-            </p>
+                {/* Tarjeta con Mascota */}
+                <div className="relative overflow-hidden rounded-3xl border-2 border-slate-200/80 bg-gradient-to-b from-white/90 to-slate-50/90 p-3 shadow-2xl shadow-[#0E5296]/15 backdrop-blur-sm group hover:border-[#FFCC00] transition-all duration-500">
+                  <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50/60 via-slate-100/50 to-blue-50/60">
+                    <Image
+                      src="/image/mascota_intranet.jpg"
+                      alt="Mascota Oficial de Correos de Bolivia - Intranet AGBC"
+                      fill
+                      priority
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, 420px"
+                    />
+                    
+                    {/* Badge flotante superior derecho */}
+                    <div className="absolute top-3 right-3 flex items-center gap-1.5 rounded-xl bg-[#002F6C]/90 backdrop-blur-md px-3 py-1.5 text-[11px] font-black text-[#FFCC00] border border-[#FFCC00]/40 shadow-lg animate-pulse">
+                      <Sparkles className="h-3.5 w-3.5 text-[#FFCC00]" />
+                      <span>Plataforma Activa</span>
+                    </div>
 
-            <div className="animate-fade-in-up animation-delay-300 mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              {session ? (
-                esAdmin ? (
-                  <Button size="lg" asChild className="h-14 px-10 text-base font-bold bg-[#0E5296] hover:bg-[#003B73] text-white shadow-xl shadow-[#0E5296]/20 border-0 rounded-2xl transition-all hover:scale-[1.02] cursor-pointer">
-                    <Link href="/dashboard">
-                      Ir al Panel de Administración
-                      <ArrowRight className="ml-2 h-5 w-5 text-[#FFB800]" />
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button size="lg" asChild className="h-14 px-10 text-base font-bold bg-[#0E5296] hover:bg-[#003B73] text-white shadow-xl shadow-[#0E5296]/20 border-0 rounded-2xl transition-all hover:scale-[1.02] cursor-pointer">
-                    <Link href="/dashboard">
-                      Panel de Usuario
-                      <ArrowRight className="ml-2 h-5 w-5 text-[#FFB800]" />
-                    </Link>
-                  </Button>
-                )
-              ) : (
-                <Button size="lg" asChild className="h-14 px-10 text-base font-bold bg-[#0E5296] hover:bg-[#003B73] text-white shadow-xl shadow-[#0E5296]/20 border-0 rounded-2xl transition-all hover:scale-[1.02] cursor-pointer">
-                  <Link href="/">
-                    Comenzar ahora
-                    <ArrowRight className="ml-2 h-5 w-5 text-[#FFB800]" />
-                  </Link>
-                </Button>
-              )}
+                    {/* Badge flotante inferior izquierdo */}
+                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between rounded-xl bg-white/95 backdrop-blur-md px-4 py-2.5 border border-slate-200 shadow-xl">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0E5296] text-[#FFCC00] font-black text-xs">
+                          AGBC
+                        </div>
+                        <div>
+                          <p className="text-xs font-black text-[#002F6C]">Correos de Bolivia</p>
+                          <p className="text-[10px] font-bold text-slate-500">Transformación Digital</p>
+                        </div>
+                      </div>
+                      <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-800">
+                        Online
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
