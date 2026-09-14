@@ -70,20 +70,21 @@ interface Props {
 }
 
 function getFileIcon(tipo: string | null) {
-  if (!tipo) return FileIcon
-  if (tipo.includes("pdf")) return FileTextIcon
-  if (tipo.includes("xls") || tipo.includes("csv") || tipo.includes("spreadsheet")) return FileSpreadsheetIcon
-  if (tipo.includes("image") || tipo.includes("jpg") || tipo.includes("png") || tipo.includes("webp")) return ImageIcon
+  const t = (tipo || "").toLowerCase()
+  if (t.includes("pdf")) return FileTextIcon
+  if (t.includes("xls") || t.includes("csv") || t.includes("spreadsheet") || t.includes("sheet") || t.includes("excel")) return FileSpreadsheetIcon
+  if (t.includes("doc") || t.includes("word")) return FileTextIcon
+  if (t.includes("image") || t.includes("jpg") || t.includes("png") || t.includes("webp")) return ImageIcon
   return FileIcon
 }
 
 function getFileColor(tipo: string | null) {
-  if (!tipo) return "#6B7280"
-  if (tipo.includes("pdf")) return "#C41E3A"
-  if (tipo.includes("doc")) return "#1976D2"
-  if (tipo.includes("xls") || tipo.includes("csv") || tipo.includes("spreadsheet")) return "#2E7D32"
-  if (tipo.includes("ppt") || tipo.includes("presentation")) return "#FF8800"
-  if (tipo.includes("image") || tipo.includes("jpg") || tipo.includes("png")) return "#7B1FA2"
+  const t = (tipo || "").toLowerCase()
+  if (t.includes("pdf")) return "#C41E3A"
+  if (t.includes("doc") || t.includes("word")) return "#1976D2"
+  if (t.includes("xls") || t.includes("csv") || t.includes("spreadsheet") || t.includes("sheet") || t.includes("excel")) return "#2E7D32"
+  if (t.includes("ppt") || t.includes("presentation")) return "#FF8800"
+  if (t.includes("image") || t.includes("jpg") || t.includes("png") || t.includes("webp")) return "#7B1FA2"
   return "#6B7280"
 }
 
@@ -807,36 +808,87 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
               </div>
 
               <div className="flex-1 overflow-auto bg-muted/20" style={{ height: "70vh" }}>
-                {previewDoc.tipoArchivo?.includes("pdf") ? (
-                  <iframe src={previewDoc.archivo!} className="h-full w-full" title={previewDoc.titulo} />
-                ) : previewDoc.tipoArchivo && ["jpg", "jpeg", "png", "webp", "gif"].some(ext => previewDoc.tipoArchivo!.includes(ext)) ? (
-                  <div className="flex h-full items-center justify-center p-6">
-                    <Image
-                      src={previewDoc.archivo!}
-                      alt={previewDoc.titulo}
-                      className="max-h-full max-w-full object-contain rounded-xl shadow-lg"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center gap-4 h-full px-6">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-muted/50">
-                      {(() => {
-                        const Icon = getFileIcon(previewDoc.tipoArchivo)
-                        return <Icon className="h-10 w-10 text-muted-foreground/30" />
-                      })()}
+                {(() => {
+                  const t = (previewDoc.tipoArchivo || "").toLowerCase()
+                  const fileUrl = (previewDoc.archivo || "").toLowerCase()
+                  const fileName = (previewDoc.nombreArchivo || "").toLowerCase()
+                  
+                  const isPdf = t.includes("pdf") || fileUrl.endsWith(".pdf") || fileName.endsWith(".pdf")
+                  const isImage = ["jpg", "jpeg", "png", "webp", "gif"].some(ext => t.includes(ext) || fileUrl.endsWith("." + ext) || fileName.endsWith("." + ext))
+                  const isExcel = t.includes("xls") || t.includes("sheet") || t.includes("csv") || fileUrl.endsWith(".xlsx") || fileUrl.endsWith(".xls") || fileUrl.endsWith(".csv") || fileName.endsWith(".xlsx") || fileName.endsWith(".xls") || fileName.endsWith(".csv")
+                  const isWord = t.includes("doc") || t.includes("word") || fileUrl.endsWith(".docx") || fileUrl.endsWith(".doc") || fileName.endsWith(".docx") || fileName.endsWith(".doc")
+
+                  if (isPdf) {
+                    return <iframe src={previewDoc.archivo!} className="h-full w-full border-0" title={previewDoc.titulo} />
+                  }
+
+                  if (isImage) {
+                    return (
+                      <div className="flex h-full items-center justify-center p-6">
+                        <img
+                          src={previewDoc.archivo!}
+                          alt={previewDoc.titulo}
+                          className="max-h-full max-w-full object-contain rounded-xl shadow-lg"
+                        />
+                      </div>
+                    )
+                  }
+
+                  const formatName = isExcel ? "Plantilla / Hoja de Cálculo Excel" : isWord ? "Documento de Texto Word" : "Archivo Institucional"
+                  const formatBadgeColor = isExcel ? "bg-emerald-100 text-emerald-800 border-emerald-300" : isWord ? "bg-blue-100 text-blue-800 border-blue-300" : "bg-slate-100 text-slate-800 border-slate-300"
+                  const Icon = getFileIcon(previewDoc.tipoArchivo)
+
+                  return (
+                    <div className="flex flex-col items-center justify-center gap-5 h-full px-6 py-8">
+                      <div className="flex h-24 w-24 items-center justify-center rounded-3xl shadow-sm border" style={{ backgroundColor: getFileColor(previewDoc.tipoArchivo) + "12", borderColor: getFileColor(previewDoc.tipoArchivo) + "30" }}>
+                        <Icon className="h-12 w-12" style={{ color: getFileColor(previewDoc.tipoArchivo) }} />
+                      </div>
+
+                      <div className="text-center max-w-md space-y-1.5">
+                        <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full border shadow-2xs ${formatBadgeColor}`}>
+                          {formatName}
+                        </span>
+                        <h4 className="text-base font-bold text-[#002F6C] line-clamp-2">{previewDoc.titulo}</h4>
+                        <p className="text-xs text-slate-500 font-mono">{previewDoc.nombreArchivo}</p>
+                      </div>
+
+                      <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 max-w-md w-full shadow-xs text-xs space-y-2 text-slate-600">
+                        <div className="flex justify-between">
+                          <span className="font-semibold text-slate-400">Categoría:</span>
+                          <span className="font-bold text-[#0E5296]">{previewDoc.categoria || "General"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-semibold text-slate-400">Tamaño:</span>
+                          <span className="font-medium text-slate-700">{previewDoc.tamano || "—"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-semibold text-slate-400">Estado:</span>
+                          <span className="font-medium text-emerald-600 font-bold capitalize">{previewDoc.estado}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-center gap-3">
+                        <a
+                          href={previewDoc.archivo!}
+                          download={previewDoc.nombreArchivo ?? "documento"}
+                          className="inline-flex items-center gap-2 rounded-xl bg-[#0E5296] hover:bg-[#002F6C] px-6 py-3 text-xs font-bold text-white shadow-md shadow-[#0E5296]/20 transition-all cursor-pointer hover:scale-105"
+                        >
+                          <DownloadIcon className="h-4 w-4 text-[#FFB800]" />
+                          Descargar / Abrir Archivo
+                        </a>
+                        <a
+                          href={previewDoc.archivo!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-5 py-3 text-xs font-bold text-[#002F6C] shadow-xs transition-all cursor-pointer"
+                        >
+                          <EyeIcon className="h-4 w-4 text-[#0E5296]" />
+                          Abrir en nueva pestaña
+                        </a>
+                      </div>
                     </div>
-                    <p className="text-sm font-semibold text-muted-foreground">Vista previa no disponible para este tipo de archivo</p>
-                    <p className="text-xs text-muted-foreground/60">Descarga el archivo para visualizarlo</p>
-                    <a
-                      href={previewDoc.archivo!}
-                      download={previewDoc.nombreArchivo ?? "archivo"}
-                      className="inline-flex items-center gap-2 rounded-xl bg-[#0E5296] hover:bg-[#002F6C] px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-[#0E5296]/20 transition-all cursor-pointer"
-                    >
-                      <DownloadIcon className="h-4 w-4 text-[#FFB800]" />
-                      Descargar archivo
-                    </a>
-                  </div>
-                )}
+                  )
+                })()}
               </div>
             </>
           )}
