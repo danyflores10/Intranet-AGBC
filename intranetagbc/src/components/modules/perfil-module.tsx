@@ -35,7 +35,6 @@ interface Props {
     lastNameMaternal: string | null
     email: string
     institutionalEmail: string
-    nationalId: string
     dateOfBirth: string | Date
     avatarUrl: string | null
     roles: string[]
@@ -296,19 +295,11 @@ export function PerfilModule({ perfil }: Props) {
                     <Input value={perfil.institutionalEmail} disabled className="opacity-50 bg-muted/30" />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                      <FingerprintIcon className="h-3 w-3" /> CI
-                    </Label>
-                    <Input value={perfil.nationalId} disabled className="opacity-50 bg-muted/30" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                      <CalendarIcon className="h-3 w-3" /> Fecha de nacimiento
-                    </Label>
-                    <Input value={perfil.dateOfBirth ? (typeof perfil.dateOfBirth === "string" ? perfil.dateOfBirth : perfil.dateOfBirth.toISOString().split("T")[0]) : ""} disabled className="opacity-50 bg-muted/30" />
-                  </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <CalendarIcon className="h-3 w-3" /> Fecha de nacimiento
+                  </Label>
+                  <Input value={perfil.dateOfBirth ? (typeof perfil.dateOfBirth === "string" ? perfil.dateOfBirth : perfil.dateOfBirth.toISOString().split("T")[0]) : ""} disabled className="opacity-50 bg-muted/30" />
                 </div>
                 <div className="flex justify-end pt-2">
                   <Button type="submit" disabled={isPending} className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold shadow-lg shadow-[#0E5296]/20 transition-all cursor-pointer">
@@ -490,15 +481,6 @@ export function PerfilModule({ perfil }: Props) {
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Email</p>
                     <p className="text-xs font-semibold text-[#002F6C] truncate">{perfil.email}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0E5296]/10 text-[#0E5296]">
-                    <FingerprintIcon className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">CI</p>
-                    <p className="text-xs font-mono font-semibold text-[#002F6C]">{perfil.nationalId}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">

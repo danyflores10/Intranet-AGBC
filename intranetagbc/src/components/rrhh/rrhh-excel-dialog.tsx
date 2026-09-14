@@ -28,7 +28,6 @@ import { importarPersonalLote, type ImportPersonalRecord } from "@/actions/rrhh"
 interface PersonalRow {
   id: string
   nombre: string
-  ci?: string
   cargo: string
   unidad?: string
   email: string | null
@@ -200,7 +199,6 @@ export function RrhhExcelDialog({ open, onClose, personal, onImportSuccess }: Pr
         const nombreIdx = findColIndex(/nombre|nombres|funcionario|personal|empleado/)
         const paternoIdx = findColIndex(/paterno|primer apellido/)
         const maternoIdx = findColIndex(/materno|segundo apellido/)
-        const ciIdx = findColIndex(/\bci\b|c\.i|carnet|cedula|documento|identificaci/)
         const cargoIdx = findColIndex(/cargo|puesto|item|ocupacion|funcion/)
         const emailIdx = findColIndex(/correo|email|institucional|mail/)
         const telefonoIdx = findColIndex(/telefono|celular|contacto|movil/)
@@ -219,7 +217,6 @@ export function RrhhExcelDialog({ open, onClose, personal, onImportSuccess }: Pr
           const nombres = String(getVal(nombreIdx)).trim()
           const paterno = String(getVal(paternoIdx)).trim()
           const materno = String(getVal(maternoIdx)).trim()
-          const ciRaw = String(getVal(ciIdx)).trim()
           const cargo = String(getVal(cargoIdx)).trim()
           const email = String(getVal(emailIdx)).trim()
           const telefono = String(getVal(telefonoIdx)).trim()
@@ -246,7 +243,6 @@ export function RrhhExcelDialog({ open, onClose, personal, onImportSuccess }: Pr
           normalized.push({
             id: idRaw && idRaw.length > 5 ? idRaw : undefined,
             nombre: nombreCompleto,
-            ci: ciRaw && ciRaw !== "—" && !ciRaw.toLowerCase().includes("sin asignar") ? ciRaw.slice(0, 20) : undefined,
             cargo: cargo || undefined,
             email: email && email !== "Sin asignar" && email.includes("@") ? email : undefined,
             telefono: telefono && telefono !== "Sin asignar" ? telefono : undefined,
@@ -315,16 +311,13 @@ export function RrhhExcelDialog({ open, onClose, personal, onImportSuccess }: Pr
     parsedRecords.forEach((rec) => {
       const recNombreNorm = normalizarTexto(rec.nombre)
       const recEmail = rec.email ? rec.email.trim().toLowerCase() : null
-      const recCi = rec.ci ? rec.ci.trim() : null
 
       const match = personal.find((p) => {
         // 1. Por ID si existiera
         if (rec.id && p.id === rec.id) return true
-        // 2. Por CI
-        if (recCi && p.ci && p.ci.trim() === recCi && p.ci !== "—") return true
-        // 3. Por Correo Electrónico
+        // 2. Por Correo Electrónico
         if (recEmail && p.email && p.email.trim().toLowerCase() === recEmail) return true
-        // 4. Por Nombre Completo Normalizado
+        // 3. Por Nombre Completo Normalizado
         const pNombreNorm = normalizarTexto(p.nombre)
         if (recNombreNorm && pNombreNorm === recNombreNorm) return true
         if (recNombreNorm.length >= 4 && pNombreNorm.length >= 4) {

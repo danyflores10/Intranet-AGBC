@@ -19,7 +19,6 @@ export const users = pgTable(
     emailVerified: boolean('email_verified')
       .default(false)
       .notNull(),
-    nationalId: varchar('national_id', { length: 20 }).notNull().unique(),
     dateOfBirth: date('date_of_birth').notNull(),
     isActive: boolean('is_active')
       .default(true)

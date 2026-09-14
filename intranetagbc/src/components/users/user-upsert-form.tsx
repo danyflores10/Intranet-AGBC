@@ -38,7 +38,6 @@ function generarPasswordSegura(): string {
 type UserFormValues = {
   name: string
   institutionalEmail: string
-  nationalId: string
   dateOfBirth: string
   isActive: boolean
   password: string
@@ -54,7 +53,6 @@ type UserUpsertFormProps = {
   defaultLastNameMaternal?: string
   defaultEmail?: string
   defaultInstitutionalEmail?: string
-  defaultNationalId?: string
   defaultDateOfBirth?: string
   defaultIsActive?: boolean
   defaultRoleIds?: string[]
@@ -71,7 +69,6 @@ export function UserUpsertForm({
   defaultLastNamePaternal = "",
   defaultLastNameMaternal = "",
   defaultInstitutionalEmail = "",
-  defaultNationalId = "",
   defaultDateOfBirth = "",
   defaultIsActive = true,
   defaultRoleIds = [],
@@ -99,7 +96,6 @@ export function UserUpsertForm({
     defaultValues: {
       name: initialName,
       institutionalEmail: defaultInstitutionalEmail,
-      nationalId: defaultNationalId || "AGBC-REG",
       dateOfBirth: defaultDateOfBirth || "1995-01-01",
       isActive: defaultIsActive,
       password: mode === "create" ? generatedDefaultPass : "",
@@ -126,7 +122,6 @@ export function UserUpsertForm({
       const res = await revelarPasswordUsuario({
         adminPassword: adminPasswordInput,
         email: defaultInstitutionalEmail || form.getValues("institutionalEmail"),
-        ci: defaultNationalId || form.getValues("nationalId"),
       })
       if (res.success && res.data) {
         setIsAdminUnlocked(true)
@@ -184,7 +179,6 @@ export function UserUpsertForm({
     const basePayload = {
       name: values.name.trim(),
       institutionalEmail: values.institutionalEmail.trim().toLowerCase(),
-      nationalId: values.nationalId ? values.nationalId.trim().toUpperCase() : "AGBC-REG",
       dateOfBirth: values.dateOfBirth || "1995-01-01",
       isActive: Boolean(values.isActive),
       roleIds: values.roleIds?.slice(0, 1) ?? [],

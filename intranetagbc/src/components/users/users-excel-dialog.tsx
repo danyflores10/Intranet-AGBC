@@ -70,7 +70,6 @@ export function UsersExcelDialog({ open, onClose, users, onImportSuccess }: Prop
         const rolesText = u.roles.map((r) => r.name).join(", ") || "Funcionario"
         return [
           u.name,
-          u.nationalId || "No registrado",
           u.institutionalEmail || "Sin asignar",
           u.email || "Sin asignar",
           rolesText.toUpperCase(),
@@ -88,7 +87,6 @@ export function UsersExcelDialog({ open, onClose, users, onImportSuccess }: Prop
         [],
         [
           "NOMBRES Y APELLIDOS",
-          "C.I. / DOCUMENTO",
           "CORREO INSTITUCIONAL",
           "CORREO PERSONAL",
           "ROL ASIGNADO",
@@ -103,7 +101,6 @@ export function UsersExcelDialog({ open, onClose, users, onImportSuccess }: Prop
 
       ws["!cols"] = [
         { wch: 32 }, // Nombres
-        { wch: 18 }, // CI
         { wch: 32 }, // Correo Inst
         { wch: 30 }, // Correo Pers
         { wch: 22 }, // Rol
@@ -170,17 +167,15 @@ export function UsersExcelDialog({ open, onClose, users, onImportSuccess }: Prop
           const nombres = findVal(["nombre", "funcionario", "personal"])
           const paterno = findVal(["paterno", "apellido paterno", "primer apellido"])
           const materno = findVal(["materno", "apellido materno", "segundo apellido"])
-          const ci = findVal(["ci", "carnet", "cedula", "documento", "identificacion"])
           const correoInst = findVal(["institucional", "correo oficial", "correo trabajo"])
           const correoPers = findVal(["correo", "email", "personal"])
           const cargo = findVal(["cargo", "puesto", "funcion", "rol", "departamento"])
 
-          if (nombres || ci) {
+          if (nombres) {
             normalized.push({
               nombres,
               paterno: paterno || undefined,
               materno: materno || undefined,
-              ci,
               correoInstitucional: correoInst || undefined,
               correoPersonal: correoPers || undefined,
               cargo: cargo || undefined,
@@ -190,7 +185,7 @@ export function UsersExcelDialog({ open, onClose, users, onImportSuccess }: Prop
         })
 
         if (normalized.length === 0) {
-          toast.error("No se detectaron columnas de personal válidas (Nombres, CI, etc.)")
+          toast.error("No se detectaron columnas de usuarios válidas (Nombres, etc.)")
           return
         }
 
@@ -251,15 +246,12 @@ export function UsersExcelDialog({ open, onClose, users, onImportSuccess }: Prop
         .filter(Boolean)
         .join(" ")
       const recNombreNorm = normalizarTexto(recNombreCompleto || rec.nombres)
-      const recCi = rec.ci ? rec.ci.trim().toUpperCase() : null
       const recEmail = rec.correoInstitucional ? rec.correoInstitucional.trim().toLowerCase() : null
 
       const match = users.find((u) => {
-        // 1. Por CI
-        if (recCi && u.nationalId && u.nationalId.trim().toUpperCase() === recCi) return true
-        // 2. Por Correo Institucional
+        // 1. Por Correo Institucional
         if (recEmail && u.institutionalEmail && u.institutionalEmail.trim().toLowerCase() === recEmail) return true
-        // 3. Por Nombre Completo Normalizado
+        // 2. Por Nombre Completo Normalizado
         const uNombreNorm = normalizarTexto(u.name)
         if (recNombreNorm && uNombreNorm === recNombreNorm) return true
         if (recNombreNorm.length >= 4 && uNombreNorm.length >= 4) {
@@ -342,7 +334,7 @@ export function UsersExcelDialog({ open, onClose, users, onImportSuccess }: Prop
             <div className="rounded-2xl border-2 border-sky-200/80 bg-gradient-to-br from-sky-50 via-blue-50/40 to-white p-4">
               <h4 className="text-xs font-black text-[#002F6C]">Reporte Institucional de Usuarios</h4>
               <p className="text-[11px] text-slate-600 font-medium mt-1">
-                Genera un archivo Excel (.xlsx) estructurado para Recursos Humanos con nombres completos, C.I., correos oficiales, roles y estado de cuenta de los <strong>{users.length}</strong> usuarios.
+                Genera un archivo Excel (.xlsx) estructurado para Recursos Humanos con nombres completos, correos oficiales, roles y estado de cuenta de los <strong>{users.length}</strong> usuarios.
               </p>
             </div>
 
@@ -478,7 +470,7 @@ export function UsersExcelDialog({ open, onClose, users, onImportSuccess }: Prop
                   <div className="max-h-40 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 text-[10px] space-y-1">
                     <p className="font-bold text-[#002F6C] px-1">Vista previa detallada:</p>
                     {parsedRecords.slice(0, 5).map((r, i) => {
-                      const isNew = nuevosRecords.some((nr) => nr.nombres === r.nombres && nr.ci === r.ci)
+                      const isNew = nuevosRecords.some((nr) => nr.nombres === r.nombres && nr.correoInstitucional === r.correoInstitucional)
                       return (
                         <div
                           key={i}
@@ -495,7 +487,7 @@ export function UsersExcelDialog({ open, onClose, users, onImportSuccess }: Prop
                             </span>
                             <span className="font-bold text-slate-800">{r.nombres} {r.paterno || ""}</span>
                           </div>
-                          <span className="font-mono text-slate-500">CI: {r.ci || "S/CI"}</span>
+                          <span className="font-mono text-slate-500">{r.correoInstitucional || r.cargo || "Personal"}</span>
                         </div>
                       )
                     })}

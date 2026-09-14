@@ -118,7 +118,6 @@ export function UsersTable({ users, canEdit, canDelete, currentUserId, currentUs
                               </span>
                             )}
                           </div>
-                          <p className="text-[11px] text-slate-400 font-medium">CI: {u.nationalId}</p>
                         </div>
                       </div>
                     </td>

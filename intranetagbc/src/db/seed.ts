@@ -98,7 +98,6 @@ async function seedUsuariosClave() {
 
   // 1. Super Administrador Principal
   const adminEmail = "admin@correos.gob.bo"
-  const adminCi = "9976322"
   const defaultGlobalPassword = "Correos2026!"
   const adminPasswordHash = await authContext.password.hash(defaultGlobalPassword)
 
@@ -120,7 +119,6 @@ async function seedUsuariosClave() {
       institutionalEmail: adminEmail,
       email: adminEmail,
       emailVerified: true,
-      nationalId: adminCi,
       dateOfBirth: "1985-05-15",
       isActive: true,
     })

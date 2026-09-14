@@ -18,12 +18,6 @@ const institutionalEmailSchema = z
     return !!domain && ALLOWED_DOMAINS.includes(domain as (typeof ALLOWED_DOMAINS)[number])
   }, "Solo se permiten correos institucionales autorizados.")
 
-const nationalIdSchema = z
-  .string()
-  .trim()
-  .optional()
-  .default("")
-
 const dateOfBirthSchema = z
   .string()
   .trim()
@@ -42,7 +36,6 @@ const userBaseSchema = z.object({
   lastNameMaternal: z.string().trim().optional().default(""),
   email: z.string().trim().optional().default(""),
   institutionalEmail: institutionalEmailSchema,
-  nationalId: nationalIdSchema,
   dateOfBirth: dateOfBirthSchema,
   isActive: z.boolean().default(true),
   roleIds: z

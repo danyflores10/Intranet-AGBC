@@ -55,7 +55,6 @@ export type UsuarioDTO = {
   institutionalEmail: string
   email: string
   emailVerified: boolean
-  nationalId: string
   dateOfBirth: string
   isActive: boolean
   roles: RolUsuarioDTO[]
@@ -81,7 +80,6 @@ export type CreateUserInput = {
   lastNameMaternal?: string
   email?: string
   institutionalEmail: string
-  nationalId?: string
   dateOfBirth?: string
   isActive?: boolean
   password: string
@@ -95,7 +93,6 @@ export type UpdateUserInput = {
   lastNameMaternal?: string
   email?: string
   institutionalEmail?: string
-  nationalId?: string
   dateOfBirth?: string
   isActive?: boolean
   password?: string
@@ -110,7 +107,6 @@ type UsuarioFilaConRol = {
   userInstitutionalEmail: string
   userEmail: string | null
   userEmailVerified: boolean
-  userNationalId: string
   userDateOfBirth: string | Date
   userIsActive: boolean
   userCreatedAt: Date
@@ -199,10 +195,6 @@ function isEmailDomainAllowed(email: string): boolean {
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
-
-function isValidNationalId(nationalId: string): boolean {
-  return /^[A-Z0-9-]{5,20}$/.test(nationalId)
 }
 
 function isValidBirthDate(value: string): boolean {
@@ -382,7 +374,6 @@ function mapRowsToUsuarios(rows: UsuarioFilaConRol[]): UsuarioDTO[] {
         institutionalEmail: row.userInstitutionalEmail,
         email: row.userEmail ?? "",
         emailVerified: row.userEmailVerified,
-        nationalId: row.userNationalId,
         dateOfBirth: formatBirthDate(row.userDateOfBirth),
         isActive: row.userIsActive,
         roles: row.roleId && row.roleName ? [{ id: row.roleId, name: row.roleName }] : [],
@@ -417,7 +408,6 @@ async function findUserByIdWithRoles(userId: string, runner: QueryRunner = db): 
       userInstitutionalEmail: users.institutionalEmail,
       userEmail: users.email,
       userEmailVerified: users.emailVerified,
-      userNationalId: users.nationalId,
       userDateOfBirth: users.dateOfBirth,
       userIsActive: users.isActive,
       userCreatedAt: users.createdAt,
@@ -442,13 +432,14 @@ async function findMissingRoleIds(roleIds: string[], runner: QueryRunner = db): 
     return []
   }
 
-  const existingRoles = await runner
+  const foundRoles = await runner
     .select({ id: roles.id })
     .from(roles)
     .where(inArray(roles.id, uniqueRoleIds))
 
-  const existingRoleSet = new Set(existingRoles.map((role) => role.id))
-  return uniqueRoleIds.filter((roleId) => !existingRoleSet.has(roleId))
+  const foundRoleIds = new Set(foundRoles.map((role) => role.id))
+
+  return uniqueRoleIds.filter((roleId) => !foundRoleIds.has(roleId))
 }
 
 async function replaceRoles(runner: QueryRunner, userId: string, roleIds: string[]): Promise<void> {
@@ -469,32 +460,12 @@ async function replaceRoles(runner: QueryRunner, userId: string, roleIds: string
     .values(uniqueRoleIds.map((roleId) => ({ userId, roleId })))
 }
 
-async function findUserByInstitutionalEmail(
-  institutionalEmail: string,
-  options?: { excludeUserId?: string },
-): Promise<{ id: string } | null> {
-  const normalized = normalizarEmail(institutionalEmail)
-  const institutionalEmailCondition = sql`lower(${users.institutionalEmail}) = ${normalized}`
-  const finalConditionWithoutExclude = institutionalEmailCondition
-  const finalCondition = options?.excludeUserId
-    ? and(finalConditionWithoutExclude, ne(users.id, options.excludeUserId))
-    : finalConditionWithoutExclude
-
-  const [existing] = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(finalCondition)
-    .limit(1)
-
-  return existing ?? null
-}
-
 async function findUserByPersonalEmail(
   email: string,
   options?: { excludeUserId?: string },
 ): Promise<{ id: string } | null> {
   const normalized = normalizarEmail(email)
-  const emailCondition = sql`lower(${users.email}) = ${normalized}`
+  const emailCondition = eq(users.email, normalized)
   const finalCondition = options?.excludeUserId
     ? and(emailCondition, ne(users.id, options.excludeUserId))
     : emailCondition
@@ -508,15 +479,15 @@ async function findUserByPersonalEmail(
   return existing ?? null
 }
 
-async function findUserByNationalId(
-  nationalId: string,
+async function findUserByInstitutionalEmail(
+  institutionalEmail: string,
   options?: { excludeUserId?: string },
 ): Promise<{ id: string } | null> {
-  const normalized = normalizarTexto(nationalId)
-  const nationalIdCondition = sql`lower(${users.nationalId}) = ${normalized}`
+  const normalized = normalizarEmail(institutionalEmail)
+  const emailCondition = eq(users.institutionalEmail, normalized)
   const finalCondition = options?.excludeUserId
-    ? and(nationalIdCondition, ne(users.id, options.excludeUserId))
-    : nationalIdCondition
+    ? and(emailCondition, ne(users.id, options.excludeUserId))
+    : emailCondition
 
   const [existing] = await db
     .select({ id: users.id })
@@ -551,10 +522,6 @@ function obtenerMensajeErrorUnicidad(error: unknown): string | null {
     return "Ya existe un usuario con ese correo."
   }
 
-  if (message.includes("national_id")) {
-    return "Ya existe un usuario con ese CI."
-  }
-
   return "Ya existe un registro con uno de los datos unicos enviados."
 }
 
@@ -571,7 +538,6 @@ export async function obtenerUsuarios(): Promise<ResultadoAccion<UsuarioDTO[]>> 
         userInstitutionalEmail: users.institutionalEmail,
         userEmail: users.email,
         userEmailVerified: users.emailVerified,
-        userNationalId: users.nationalId,
         userDateOfBirth: users.dateOfBirth,
         userIsActive: users.isActive,
         userCreatedAt: users.createdAt,
@@ -656,9 +622,6 @@ export async function crearUsuario(data: CreateUserInput): Promise<ResultadoAcci
     const lastNameMaternal = normalizarNombreOpcional(desglose.lastNameMaternal)
     const institutionalEmail = normalizarEmail(data.institutionalEmail)
     const email = data.email && data.email.trim().length > 0 ? normalizarEmail(data.email) : institutionalEmail
-    const nationalId = data.nationalId && data.nationalId.trim().length > 0
-      ? normalizarCi(data.nationalId)
-      : `AGBC-${Date.now().toString().slice(-6)}`
     const dateOfBirth = data.dateOfBirth && data.dateOfBirth.trim().length > 0
       ? normalizarFechaNacimiento(data.dateOfBirth)
       : "1995-01-01"
@@ -688,12 +651,6 @@ export async function crearUsuario(data: CreateUserInput): Promise<ResultadoAcci
       return respuestaError("Ya existe un usuario con ese correo institucional.")
     }
 
-    const existingUserByNationalId = await findUserByNationalId(nationalId)
-
-    if (existingUserByNationalId) {
-      return respuestaError("Ya existe un usuario con ese CI.")
-    }
-
     const missingRoleIds = await findMissingRoleIds(roleIds)
 
     if (missingRoleIds.length > 0) {
@@ -713,7 +670,6 @@ export async function crearUsuario(data: CreateUserInput): Promise<ResultadoAcci
           institutionalEmail,
           email,
           emailVerified: false,
-          nationalId,
           dateOfBirth,
           isActive,
           image: null,
@@ -750,7 +706,7 @@ export async function crearUsuario(data: CreateUserInput): Promise<ResultadoAcci
       accion: `Creó usuario: ${firstName} ${lastNamePaternal}`,
       modulo: "Usuarios",
       resultado: "Exitoso",
-      detalles: `Email: ${institutionalEmail}, CI: ${nationalId}`,
+      detalles: `Email: ${institutionalEmail}`,
     })
 
     // Sincronizar automáticamente con la tabla personal
@@ -764,7 +720,6 @@ export async function crearUsuario(data: CreateUserInput): Promise<ResultadoAcci
         nombre: `${firstName} ${lastNamePaternal}`.trim(),
         emailInstitucional: institutionalEmail,
         password,
-        ci: nationalId !== "—" ? nationalId : undefined,
       }).catch((err) => console.error("Error al enviar credenciales por correo al crear usuario:", err))
     }
 
@@ -809,7 +764,6 @@ export async function editarUsuario(
     const hasLastNameMaternal = typeof data.lastNameMaternal !== "undefined"
     const hasEmail = typeof data.email !== "undefined"
     const hasInstitutionalEmail = typeof data.institutionalEmail !== "undefined"
-    const hasNationalId = typeof data.nationalId !== "undefined"
     const hasDateOfBirth = typeof data.dateOfBirth !== "undefined"
     const hasIsActive = typeof data.isActive !== "undefined"
     const hasPassword = typeof data.password !== "undefined"
@@ -821,7 +775,6 @@ export async function editarUsuario(
       && !hasLastNameMaternal
       && !hasEmail
       && !hasInstitutionalEmail
-      && !hasNationalId
       && !hasDateOfBirth
       && !hasIsActive
       && !hasPassword
@@ -845,9 +798,6 @@ export async function editarUsuario(
     const finalInstitutionalEmail = hasInstitutionalEmail
       ? normalizarEmail(data.institutionalEmail ?? "")
       : usuarioActual.institutionalEmail
-    const finalNationalId = hasNationalId
-      ? normalizarCi(data.nationalId ?? "")
-      : usuarioActual.nationalId
     const finalDateOfBirth = hasDateOfBirth
       ? normalizarFechaNacimiento(data.dateOfBirth ?? "")
       : usuarioActual.dateOfBirth
@@ -906,20 +856,6 @@ export async function editarUsuario(
       }
     }
 
-    if (hasNationalId) {
-      if (!isValidNationalId(finalNationalId)) {
-        return respuestaError("El CI enviado no es valido.")
-      }
-
-      const existingUser = await findUserByNationalId(finalNationalId, {
-        excludeUserId: userIdLimpio,
-      })
-
-      if (existingUser) {
-        return respuestaError("Ya existe un usuario con ese CI.")
-      }
-    }
-
     if (hasDateOfBirth) {
       if (!isValidBirthDate(finalDateOfBirth)) {
         return respuestaError("La fecha de nacimiento enviada no es valida.")
@@ -958,7 +894,6 @@ export async function editarUsuario(
         || hasLastNameMaternal
         || hasEmail
         || hasInstitutionalEmail
-        || hasNationalId
         || hasDateOfBirth
         || hasIsActive
       ) {
@@ -974,7 +909,6 @@ export async function editarUsuario(
                 institutionalEmail: finalInstitutionalEmail,
               }
               : {}),
-            ...(hasNationalId ? { nationalId: finalNationalId } : {}),
             ...(hasDateOfBirth ? { dateOfBirth: finalDateOfBirth } : {}),
             ...(hasIsActive ? { isActive: finalIsActive } : {}),
           })
@@ -1156,11 +1090,9 @@ export async function eliminarUsuario(userId: string): Promise<ResultadoAccion<D
     try {
       const emailNorm = usuarioActual.institutionalEmail?.trim().toLowerCase()
       const personalEmail = usuarioActual.email?.trim().toLowerCase()
-      const ciNorm = usuarioActual.nationalId?.trim()
       const conditions = []
       if (emailNorm) conditions.push(eq(personal.email, emailNorm))
       if (personalEmail) conditions.push(eq(personal.email, personalEmail))
-      if (ciNorm && ciNorm !== "—") conditions.push(eq(personal.ci, ciNorm))
       if (conditions.length > 0) {
         await db.delete(personal).where(or(...conditions))
       }
@@ -1227,11 +1159,9 @@ export async function cambiarEstadoUsuario(
     try {
       const emailNorm = usuarioCompleto.institutionalEmail?.trim().toLowerCase()
       const personalEmail = usuarioCompleto.email?.trim().toLowerCase()
-      const ciNorm = usuarioCompleto.nationalId?.trim()
       const conditions = []
       if (emailNorm) conditions.push(eq(personal.email, emailNorm))
       if (personalEmail) conditions.push(eq(personal.email, personalEmail))
-      if (ciNorm && ciNorm !== "—") conditions.push(eq(personal.ci, ciNorm))
       if (conditions.length > 0) {
         await db.update(personal).set({ estado: isActive ? "activo" : "inactivo" }).where(or(...conditions))
       }
@@ -1286,7 +1216,6 @@ export type ImportUserRecord = {
   nombres: string
   paterno?: string
   materno?: string
-  ci: string
   correoInstitucional?: string
   correoPersonal?: string
   fechaNacimiento?: string
@@ -1303,7 +1232,6 @@ export type ImportSummaryResult = {
 
 export async function importarUsuariosLote(
   registros: {
-    ci: string
     nombres: string
     paterno?: string
     materno?: string
@@ -1329,13 +1257,6 @@ export async function importarUsuariosLote(
     const mensajes: string[] = []
 
     for (const reg of registros) {
-      const ciLimpio = (reg.ci || "").toString().trim()
-      if (!ciLimpio) {
-        totalOmitidos++
-        mensajes.push(`Fila omitida: CI vacío.`)
-        continue
-      }
-
       let firstName = (reg.nombres || "").trim()
       let lastNamePaternal = (reg.paterno || "").trim()
       let lastNameMaternal = (reg.materno || "").trim() || null
@@ -1356,7 +1277,7 @@ export async function importarUsuariosLote(
 
       if (!firstName) {
         totalOmitidos++
-        mensajes.push(`Fila omitida: Nombre vacío para CI ${ciLimpio}.`)
+        mensajes.push(`Fila omitida: Nombre vacío.`)
         continue
       }
 
@@ -1371,12 +1292,12 @@ export async function importarUsuariosLote(
       const [existe] = await db
         .select({ id: users.id })
         .from(users)
-        .where(or(eq(users.nationalId, ciLimpio), eq(users.institutionalEmail, instEmail)))
+        .where(eq(users.institutionalEmail, instEmail))
         .limit(1)
 
       if (existe) {
         totalOmitidos++
-        mensajes.push(`Usuario omitido (ya registrado con CI o Correo): ${firstName} ${lastNamePaternal}`)
+        mensajes.push(`Usuario omitido (ya registrado con Correo): ${firstName} ${lastNamePaternal}`)
         continue
       }
 
@@ -1409,7 +1330,6 @@ export async function importarUsuariosLote(
               institutionalEmail: instEmail,
               email: persEmail,
               emailVerified: true,
-              nationalId: ciLimpio,
               dateOfBirth: reg.fechaNacimiento ? formatBirthDate(reg.fechaNacimiento) : "1990-01-01",
               isActive: true,
             })
@@ -1434,7 +1354,7 @@ export async function importarUsuariosLote(
         totalImportados++
       } catch (err) {
         totalOmitidos++
-        mensajes.push(`Error al insertar ${firstName} (CI: ${ciLimpio}): ${String(err)}`)
+        mensajes.push(`Error al insertar ${firstName}: ${String(err)}`)
       }
     }
 
@@ -1499,12 +1419,10 @@ export async function revelarPasswordUsuario({
   adminPassword,
   userId,
   email,
-  ci,
 }: {
   adminPassword: string
   userId?: string
   email?: string
-  ci?: string
 }): Promise<ResultadoAccion<{ verified: boolean; password?: string; isCustom?: boolean }>> {
   try {
     const sesion = await obtenerSesionConAccesoActual()
@@ -1549,24 +1467,6 @@ export async function revelarPasswordUsuario({
         .select({ id: users.id })
         .from(users)
         .where(or(eq(users.institutionalEmail, emailNorm), eq(users.email, emailNorm)))
-        .limit(1)
-
-      if (usr) {
-        const [acc] = await db
-          .select({ idToken: account.idToken, password: account.password, userId: account.userId })
-          .from(account)
-          .where(eq(account.userId, usr.id))
-          .limit(1)
-        targetAcc = acc
-      }
-    }
-
-    if (!targetAcc && ci) {
-      const ciNorm = ci.trim()
-      const [usr] = await db
-        .select({ id: users.id })
-        .from(users)
-        .where(eq(users.nationalId, ciNorm))
         .limit(1)
 
       if (usr) {

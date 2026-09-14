@@ -14,7 +14,6 @@ export type User = {
   institutionalEmail: string
   email: string
   emailVerified: boolean
-  nationalId: string
   dateOfBirth: string
   isActive: boolean
   roles: UserRole[]
@@ -29,7 +28,6 @@ export type UserCreatePayload = {
   lastNameMaternal?: string
   email?: string
   institutionalEmail: string
-  nationalId: string
   dateOfBirth: string
   isActive: boolean
   password: string
@@ -43,7 +41,6 @@ export type UserUpdatePayload = {
   lastNameMaternal?: string
   email?: string
   institutionalEmail: string
-  nationalId: string
   dateOfBirth: string
   isActive: boolean
   password?: string

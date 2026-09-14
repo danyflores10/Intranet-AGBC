@@ -50,7 +50,6 @@ export function UserEditDialog({
         lastNameMaternal: payload.lastNameMaternal,
         email: payload.email || payload.institutionalEmail,
         institutionalEmail: payload.institutionalEmail,
-        nationalId: payload.nationalId,
         dateOfBirth: payload.dateOfBirth,
         isActive: payload.isActive,
         roleIds: payload.roleIds,
@@ -102,7 +101,6 @@ export function UserEditDialog({
           defaultLastNamePaternal={currentUser.lastNamePaternal}
           defaultLastNameMaternal={currentUser.lastNameMaternal ?? ""}
           defaultInstitutionalEmail={currentUser.institutionalEmail}
-          defaultNationalId={currentUser.nationalId}
           defaultDateOfBirth={currentUser.dateOfBirth}
           defaultIsActive={currentUser.isActive}
           defaultRoleIds={currentUser.roles.map((role) => role.id)}

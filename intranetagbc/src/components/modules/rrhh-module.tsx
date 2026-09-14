@@ -107,7 +107,6 @@ export function cleanImageUrl(url?: string | null): string {
 interface PersonalRow {
   id: string
   nombre: string
-  ci: string
   cargo: string
   unidad: string
   email: string | null
@@ -143,7 +142,6 @@ interface UsuarioItem {
   institutionalEmail?: string | null
   phoneNumber?: string | null
   avatarUrl?: string | null
-  nationalId?: string | null
 }
 
 interface Props {
@@ -155,7 +153,6 @@ interface Props {
     name?: string | null
     email?: string | null
     institutionalEmail?: string | null
-    nationalId?: string | null
   } | null
 }
 
@@ -468,7 +465,6 @@ export function RrhhModule({ personal, directivos, usuarios = [], usuarioActual 
         list.push({
           id: u.id,
           nombre: u.name,
-          ci: u.nationalId || "—",
           cargo: "Funcionario Institucional",
           unidad: "Personal General",
           email: email || null,
@@ -511,7 +507,6 @@ export function RrhhModule({ personal, directivos, usuarios = [], usuarioActual 
       const res = await revelarPasswordUsuario({
         adminPassword: adminPasswordInput,
         email: pEditItem?.email || undefined,
-        ci: pEditItem?.ci || undefined,
       })
       if (res.success && res.data) {
         setIsAdminUnlocked(true)
@@ -590,7 +585,6 @@ export function RrhhModule({ personal, directivos, usuarios = [], usuarioActual 
       try {
         const payload = {
           nombre: (fd.get("nombre") as string).trim(),
-          ci: ((fd.get("ci") as string) || pEditItem?.ci || "—").trim(),
           cargo: (fd.get("cargo") as string).trim(),
           unidad: ((fd.get("unidad") as string) || pEditItem?.unidad || "General").trim(),
           email: (fd.get("email") as string) ? (fd.get("email") as string).trim() : undefined,
@@ -1074,8 +1068,7 @@ export function RrhhModule({ personal, directivos, usuarios = [], usuarioActual 
                     usuarioActual && (
                       item.id === usuarioActual.id ||
                       (item.email && usuarioActual.institutionalEmail && item.email.toLowerCase().trim() === usuarioActual.institutionalEmail.toLowerCase().trim()) ||
-                      (item.email && usuarioActual.email && item.email.toLowerCase().trim() === usuarioActual.email.toLowerCase().trim()) ||
-                      (item.ci && item.ci !== "—" && usuarioActual.nationalId && item.ci.trim() === usuarioActual.nationalId.trim())
+                      (item.email && usuarioActual.email && item.email.toLowerCase().trim() === usuarioActual.email.toLowerCase().trim())
                     )
                   )
 
@@ -1385,15 +1378,9 @@ export function RrhhModule({ personal, directivos, usuarios = [], usuarioActual 
                 <Input name="nombre" required defaultValue={pEditItem?.nombre} placeholder="Ej. Maria Lopez Arce" className="h-10 text-xs" />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-[#002F6C]">Cargo Institucional *</Label>
-                  <Input name="cargo" required defaultValue={pEditItem?.cargo} placeholder="Ej. Analista de Sistemas" className="h-10 text-xs" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-[#002F6C]">Cédula de Identidad (CI)</Label>
-                  <Input name="ci" defaultValue={pEditItem?.ci && pEditItem.ci !== "—" ? pEditItem.ci : ""} placeholder="Ej. 6845123 LP" className="h-10 text-xs" />
-                </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-[#002F6C]">Cargo Institucional *</Label>
+                <Input name="cargo" required defaultValue={pEditItem?.cargo} placeholder="Ej. Analista de Sistemas" className="h-10 text-xs" />
               </div>
 
               <div className="grid grid-cols-2 gap-3">

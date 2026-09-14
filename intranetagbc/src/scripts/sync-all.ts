@@ -28,8 +28,8 @@ async function run() {
   console.log("\n=== LISTA DE USUARIOS Y CORREOS HABILITADOS PARA LOGIN ===")
   for (const user of u) {
     const matchingAcc = a.find((acc) => acc.userId === user.id)
-    const matchingPers = p.find((pers) => pers.email === user.institutionalEmail || pers.ci === user.nationalId)
-    console.log(`- Nombre: ${user.firstName} ${user.lastNamePaternal} | Email: ${user.institutionalEmail} | CI: ${user.nationalId} | Tiene Cuenta: ${!!matchingAcc} | En Personal: ${!!matchingPers}`)
+    const matchingPers = p.find((pers) => pers.email === user.institutionalEmail)
+    console.log(`- Nombre: ${user.firstName} ${user.lastNamePaternal} | Email: ${user.institutionalEmail} | Tiene Cuenta: ${!!matchingAcc} | En Personal: ${!!matchingPers}`)
   }
 
   process.exit(0)

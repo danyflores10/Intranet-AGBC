@@ -46,7 +46,6 @@ export function UserCreateDialog({ roles, onCreated }: UserCreateDialogProps) {
         lastNameMaternal: payload.lastNameMaternal,
         email: payload.email || payload.institutionalEmail,
         institutionalEmail: payload.institutionalEmail,
-        nationalId: payload.nationalId,
         dateOfBirth: payload.dateOfBirth,
         isActive: payload.isActive,
         password: payload.password,

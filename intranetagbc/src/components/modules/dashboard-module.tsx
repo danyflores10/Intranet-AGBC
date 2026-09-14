@@ -65,7 +65,6 @@ interface PersonalItem {
   nombre?: string
   nombres?: string
   apellidos?: string
-  ci?: string
   cargo: string
   unidad?: string
   area?: string
@@ -96,7 +95,6 @@ interface UsuarioItem {
   lastNamePaternal?: string
   email: string
   institutionalEmail?: string
-  nationalId?: string
   emailVerified?: boolean
   isActive?: boolean
   roles?: Array<{ id: string; name: string }> | string[]
@@ -832,9 +830,7 @@ export function DashboardModule({
                               <h3 className="text-xs font-black text-[#002F6C] line-clamp-1">{nombreCompleto}</h3>
                               <p className="text-[10px] text-slate-500 font-medium line-clamp-1 mt-0.5">{cargoStr}</p>
                               <div className="mt-0.5 flex items-center justify-center gap-1.5 text-[9px] text-slate-400 font-medium">
-                                <span>{p.ci ? `CI: ${p.ci}` : "Nómina"}</span>
-                                <span>•</span>
-                                <span className="truncate max-w-[90px]">{areaStr}</span>
+                                <span className="truncate max-w-[150px]">{areaStr}</span>
                               </div>
                             </div>
 
@@ -1007,9 +1003,6 @@ export function DashboardModule({
                               </div>
                               <h3 className="text-xs font-black text-[#002F6C] line-clamp-1">{u.name}</h3>
                               <p className="text-[10px] text-slate-500 font-medium line-clamp-1 mt-0.5">{u.institutionalEmail || u.email}</p>
-                              <div className="mt-0.5 flex items-center justify-center gap-1.5 text-[9px] text-slate-400 font-medium">
-                                <span>CI: {u.nationalId || "No reg."}</span>
-                              </div>
                             </div>
 
                             {/* Footer: ID + Botón circular de gestionar */}

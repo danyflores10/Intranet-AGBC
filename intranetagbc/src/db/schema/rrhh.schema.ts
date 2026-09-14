@@ -6,7 +6,6 @@ export const personal = pgTable('personal', {
     .primaryKey()
     .$defaultFn(() => createId()),
   nombre: varchar('nombre', { length: 200 }).notNull(),
-  ci: varchar('ci', { length: 20 }).notNull(),
   cargo: varchar('cargo', { length: 150 }).notNull(),
   unidad: varchar('unidad', { length: 150 }).notNull().default('General'),
   email: varchar('email', { length: 150 }),

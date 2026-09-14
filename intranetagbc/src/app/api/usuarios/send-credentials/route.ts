@@ -24,7 +24,6 @@ export async function POST(req: NextRequest) {
     let targetEmail = email
     let targetName = "Funcionario"
     let targetInstitutionalEmail = email
-    let targetCi = undefined
     let targetPassword = password || "Correos2026!"
 
     if (userId) {
@@ -33,7 +32,6 @@ export async function POST(req: NextRequest) {
         targetName = `${usr.firstName} ${usr.lastNamePaternal}`.trim()
         targetInstitutionalEmail = usr.institutionalEmail
         targetEmail = usr.email || usr.institutionalEmail
-        targetCi = usr.nationalId
 
         const [acc] = await db.select().from(account).where(eq(account.userId, usr.id)).limit(1)
         if (acc?.idToken) {
@@ -45,7 +43,6 @@ export async function POST(req: NextRequest) {
       if (p) {
         targetName = p.nombre
         targetEmail = p.email || targetEmail
-        targetCi = p.ci
       }
     }
 
@@ -58,7 +55,6 @@ export async function POST(req: NextRequest) {
       nombre: targetName,
       emailInstitucional: targetInstitutionalEmail,
       password: targetPassword,
-      ci: targetCi,
     })
 
     return NextResponse.json({

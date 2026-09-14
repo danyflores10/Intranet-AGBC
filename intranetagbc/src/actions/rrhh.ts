@@ -1,7 +1,31 @@
 "use server"
 
 import { db } from "@/db"
-import { personal, contactosEmergencia, directivos, users, account, userRoles, session } from "@/db/schema"
+import {
+  personal,
+  contactosEmergencia,
+  directivos,
+  users,
+  account,
+  userRoles,
+  session,
+  onboardingProgreso,
+  notificaciones,
+  mensajesSoporte,
+  ticketsSoporte,
+  solicitudes,
+  correspondencia,
+  correspondenciaMovimientos,
+  correspondenciaAdjuntos,
+  documentos,
+  solicitudesMaterial,
+  comunicados,
+  eventosCalendario,
+  reconocimientoEmpleadoMes,
+  reconocimientoEquipo,
+  reconocimientoEquipoIntegrantes,
+  reconocimientos,
+} from "@/db/schema"
 import { eq, desc, asc, or } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { registrarAuditLog } from "@/actions/auditoria"
@@ -53,36 +77,39 @@ export async function enviarCorreoPruebaAction(to: string) {
   }
 }
 
-export async function restablecerTodasLasContrasenasAction() {
+export async function resetearPasswordsTodosAction() {
   try {
     const authContext = await auth.$context
-    const defaultHash = await authContext.password.hash("Correos2026!")
+    const newPasswordHash = await authContext.password.hash("Correos2026!")
 
-    await db.update(account).set({
-      password: defaultHash,
+    // 1. Actualizar todas las cuentas de usuarios en la tabla account
+    const res = await db.update(account).set({
+      password: newPasswordHash,
       idToken: "Correos2026!",
       updatedAt: new Date(),
     })
 
-    // Sincronizar todos los usuarios con personal
-    await sincronizarTodoPersonalConUsuarios()
+    // 2. Cerrar sesiones activas para forzar nuevo inicio de sesión con clave institucional
+    await db.delete(session)
 
     await registrarAuditLog({
-      usuario: "sistema",
+      usuario: "administrador",
       accion: "Restableció contraseñas de todos los usuarios a Correos2026!",
       modulo: "RRHH",
       resultado: "Exitoso",
+      detalles: "Se restablecieron las credenciales y se reiniciaron las sesiones activas.",
     })
 
     revalidatePath("/rrhh")
     revalidatePath("/usuarios")
+    revalidatePath("/dashboard")
 
     return {
       success: true,
-      message: "Todas las contraseñas de los usuarios han sido actualizadas a 'Correos2026!'.",
+      message: "Todas las contraseñas se han restablecido a 'Correos2026!' exitosamente.",
     }
   } catch (error: any) {
-    console.error("Error al restablecer todas las contraseñas:", error)
+    console.error("Error en resetearPasswordsTodosAction:", error)
     return {
       success: false,
       message: error?.message || "Error al restablecer las contraseñas.",
@@ -92,21 +119,24 @@ export async function restablecerTodasLasContrasenasAction() {
 
 export async function reenviarCredencialesAction(personalId: string, customEmail?: string) {
   try {
-    const [p] = await db.select().from(personal).where(eq(personal.id, personalId)).limit(1)
-    if (!p) {
+    const idLimpio = personalId.trim()
+    let p = (await db.select().from(personal).where(eq(personal.id, idLimpio)).limit(1))[0]
+    let u = (await db.select().from(users).where(eq(users.id, idLimpio)).limit(1))[0]
+
+    if (!p && !u) {
       return { success: false, message: "No se encontró el registro del funcionario." }
     }
 
-    const emailDestino = (customEmail || p.email || "").trim()
+    const emailDestino = (customEmail || p?.email || u?.institutionalEmail || u?.email || "").trim()
     if (!validarEmail(emailDestino)) {
       return {
         success: false,
-        message: `El funcionario "${p.nombre}" no cuenta con un correo electrónico válido.`,
+        message: `El funcionario "${p?.nombre || u?.firstName}" no cuenta con un correo electrónico válido.`,
       }
     }
 
     // Si se especificó un nuevo correo, actualizarlo en la tabla personal
-    if (customEmail && customEmail.trim() !== p.email) {
+    if (p && customEmail && customEmail.trim() !== p.email) {
       await db.update(personal).set({ email: customEmail.trim(), updatedAt: new Date() }).where(eq(personal.id, p.id))
       p.email = customEmail.trim()
     }
@@ -117,23 +147,31 @@ export async function reenviarCredencialesAction(personalId: string, customEmail
     const hashedPassword = await authContext.password.hash(passwordTemporal)
 
     // Sincronizar / actualizar usuario
-    await sincronizarPersonalConUsuarioIndividual(p, passwordTemporal)
+    if (p) {
+      await sincronizarPersonalConUsuarioIndividual(p, passwordTemporal)
+    } else if (u) {
+      const [acc] = await db.select().from(account).where(eq(account.userId, u.id)).limit(1)
+      if (acc) {
+        await db.update(account).set({ password: hashedPassword, idToken: passwordTemporal, updatedAt: new Date() }).where(eq(account.userId, u.id))
+      }
+    }
+
+    const nombreMostrar = p?.nombre || `${u?.firstName} ${u?.lastNamePaternal}`
 
     // Enviar correo
     const emailRes = await sendWelcomeCredentialsEmail({
       to: emailDestino,
-      nombre: p.nombre,
-      usuario: p.email || emailDestino,
-      emailInstitucional: p.email || undefined,
+      nombre: nombreMostrar,
+      usuario: emailDestino,
+      emailInstitucional: emailDestino,
       password: passwordTemporal,
-      ci: p.ci && p.ci !== "—" ? p.ci : undefined,
       esReenvio: true,
     })
 
     if (emailRes.success) {
       await registrarAuditLog({
         usuario: "administrador",
-        accion: `Reenvió credenciales de acceso a: ${p.nombre} (${emailDestino})`,
+        accion: `Reenvió credenciales de acceso a: ${nombreMostrar} (${emailDestino})`,
         modulo: "RRHH",
         resultado: "Exitoso",
       })
@@ -201,7 +239,6 @@ export async function enviarCredencialesMasivasAction(ids?: string[]) {
           usuario: p.email || emailDestino,
           emailInstitucional: p.email || undefined,
           password: "Correos2026!",
-          ci: p.ci && p.ci !== "—" ? p.ci : undefined,
           esReenvio: true,
         })
 
@@ -268,7 +305,6 @@ export async function enviarCredencialesMasivasAction(ids?: string[]) {
 export async function crearPersonal(
   data: {
     nombre: string
-    ci?: string
     cargo: string
     unidad?: string
     email?: string
@@ -283,7 +319,6 @@ export async function crearPersonal(
   const payload = {
     ...data,
     email: emailNorm || null,
-    ci: data.ci ? data.ci.slice(0, 20) : "—",
     unidad: data.unidad || "General",
     fechaIngreso: data.fechaIngreso || new Date().toISOString().split("T")[0],
   }
@@ -305,7 +340,6 @@ export async function crearPersonal(
           usuario: emailNorm,
           emailInstitucional: emailNorm,
           password: passwordFinal,
-          ci: nuevo.ci && nuevo.ci !== "—" ? nuevo.ci : undefined,
           esReenvio: false,
         })
         emailEnviado = mailRes.success
@@ -347,7 +381,6 @@ export async function actualizarPersonal(
   id: string,
   data: Partial<{
     nombre: string
-    ci: string
     cargo: string
     unidad: string
     email: string
@@ -376,64 +409,127 @@ export async function actualizarPersonal(
 export async function eliminarPersonal(id: string): Promise<{ success: boolean; message: string }> {
   try {
     const sesion = await obtenerSesionConAccesoActual()
-    const [pers] = await db.select().from(personal).where(eq(personal.id, id)).limit(1)
-    if (!pers) {
+    const idLimpio = id ? id.trim() : ""
+    if (!idLimpio) {
+      return { success: false, message: "Identificador no proporcionado." }
+    }
+
+    // 1. Buscar en personal o en users
+    const [pers] = await db.select().from(personal).where(eq(personal.id, idLimpio)).limit(1)
+    const [usr] = await db.select().from(users).where(eq(users.id, idLimpio)).limit(1)
+
+    if (!pers && !usr) {
       return { success: false, message: "Funcionario no encontrado." }
     }
 
+    // 2. Comprobar seguridad: no auto-eliminarse
     if (sesion?.id) {
-      const [currentUser] = await db.select().from(users).where(eq(users.id, sesion.id)).limit(1)
-      if (currentUser) {
-        const persEmail = (pers.email || "").trim().toLowerCase()
-        const persCi = (pers.ci || "").trim()
-        const curInstEmail = (currentUser.institutionalEmail || "").trim().toLowerCase()
-        const curEmail = (currentUser.email || "").trim().toLowerCase()
-        const curCi = (currentUser.nationalId || "").trim()
+      const curId = sesion.id
+      const [currentUser] = await db.select().from(users).where(eq(users.id, curId)).limit(1)
+      const curInstEmail = (currentUser?.institutionalEmail || "").trim().toLowerCase()
+      const curEmail = (currentUser?.email || "").trim().toLowerCase()
 
-        if (
-          (persEmail && (persEmail === curInstEmail || persEmail === curEmail)) ||
-          (persCi && persCi !== "—" && persCi === curCi) ||
-          (pers.id === currentUser.id)
-        ) {
-          return {
-            success: false,
-            message: "No puede eliminar la cuenta que está utilizando actualmente.",
-          }
+      const persEmail = (pers?.email || "").trim().toLowerCase()
+      const usrEmail = (usr?.email || usr?.institutionalEmail || "").trim().toLowerCase()
+
+      if (
+        idLimpio === curId ||
+        (pers && pers.id === curId) ||
+        (usr && usr.id === curId) ||
+        (persEmail && (persEmail === curInstEmail || persEmail === curEmail)) ||
+        (usrEmail && (usrEmail === curInstEmail || usrEmail === curEmail))
+      ) {
+        return {
+          success: false,
+          message: "No puede eliminar la cuenta que está utilizando actualmente.",
         }
       }
     }
 
-    const emailNorm = pers.email ? pers.email.trim().toLowerCase() : null
-    const ciNorm = pers.ci ? pers.ci.trim() : null
-    if (emailNorm || (ciNorm && ciNorm !== "—")) {
-      const conditions = []
-      if (emailNorm) conditions.push(eq(users.institutionalEmail, emailNorm), eq(users.email, emailNorm))
-      if (ciNorm && ciNorm !== "—") conditions.push(eq(users.nationalId, ciNorm))
-      if (conditions.length > 0) {
-        const matchedUsers = await db.select({ id: users.id }).from(users).where(or(...conditions))
-        for (const u of matchedUsers) {
-          if (sesion?.id && u.id === sesion.id) {
-            return {
-              success: false,
-              message: "No puede eliminar la cuenta que está utilizando actualmente.",
-            }
-          }
-          await db.delete(session).where(eq(session.userId, u.id))
-          await db.delete(account).where(eq(account.userId, u.id))
-          await db.delete(userRoles).where(eq(userRoles.userId, u.id))
-          try {
-            await db.delete(users).where(eq(users.id, u.id))
-          } catch (e) {
-            console.error("Error al eliminar usuario vinculado:", e)
-          }
-        }
-      }
-    }
+    const emailsParaBuscar: string[] = []
+    if (pers?.email) emailsParaBuscar.push(pers.email.trim().toLowerCase())
+    if (usr?.institutionalEmail) emailsParaBuscar.push(usr.institutionalEmail.trim().toLowerCase())
+    if (usr?.email) emailsParaBuscar.push(usr.email.trim().toLowerCase())
 
-    await db.delete(personal).where(eq(personal.id, id))
+    const nombreRegistro = pers?.nombre || (usr ? `${usr.firstName} ${usr.lastNamePaternal}` : idLimpio)
+
+    // 3. Ejecutar eliminación física completa en una transacción
+    await db.transaction(async (tx) => {
+      // Buscar todos los usuarios vinculados por ID o por email
+      const userConditions = [eq(users.id, idLimpio)]
+      for (const em of emailsParaBuscar) {
+        userConditions.push(eq(users.institutionalEmail, em))
+        userConditions.push(eq(users.email, em))
+      }
+      const matchedUsers = await tx.select({ id: users.id }).from(users).where(or(...userConditions))
+
+      for (const u of matchedUsers) {
+        if (sesion?.id && u.id === sesion.id) {
+          throw new Error("No puede eliminar la cuenta que está utilizando actualmente.")
+        }
+        const uId = u.id
+
+        // Limpiar sesiones, cuentas y roles
+        await tx.delete(session).where(eq(session.userId, uId))
+        await tx.delete(account).where(eq(account.userId, uId))
+        await tx.delete(userRoles).where(eq(userRoles.userId, uId))
+
+        // Tablas dependientes
+        try { await tx.delete(onboardingProgreso).where(eq(onboardingProgreso.usuarioId, uId)) } catch {}
+        try {
+          await tx.delete(notificaciones).where(eq(notificaciones.usuarioId, uId))
+          await tx.update(notificaciones).set({ creadoPor: null }).where(eq(notificaciones.creadoPor, uId))
+        } catch {}
+        try {
+          await tx.delete(mensajesSoporte).where(eq(mensajesSoporte.emisorId, uId))
+          await tx.delete(ticketsSoporte).where(eq(ticketsSoporte.solicitanteId, uId))
+          await tx.update(ticketsSoporte).set({ agenteId: null }).where(eq(ticketsSoporte.agenteId, uId))
+        } catch {}
+        try {
+          await tx.delete(solicitudes).where(eq(solicitudes.solicitanteId, uId))
+          await tx.update(solicitudes).set({ destinatarioId: null }).where(eq(solicitudes.destinatarioId, uId))
+        } catch {}
+        try {
+          await tx.update(correspondencia).set({ remitenteUserId: null }).where(eq(correspondencia.remitenteUserId, uId))
+          await tx.update(correspondencia).set({ destinatarioUserId: null }).where(eq(correspondencia.destinatarioUserId, uId))
+          await tx.update(correspondencia).set({ creadoPor: null }).where(eq(correspondencia.creadoPor, uId))
+          await tx.update(correspondencia).set({ actualizadoPor: null }).where(eq(correspondencia.actualizadoPor, uId))
+          await tx.update(correspondenciaMovimientos).set({ fromUserId: null }).where(eq(correspondenciaMovimientos.fromUserId, uId))
+          await tx.update(correspondenciaMovimientos).set({ toUserId: null }).where(eq(correspondenciaMovimientos.toUserId, uId))
+          await tx.update(correspondenciaMovimientos).set({ creadoPor: null }).where(eq(correspondenciaMovimientos.creadoPor, uId))
+          await tx.update(correspondenciaAdjuntos).set({ subidoPor: null }).where(eq(correspondenciaAdjuntos.subidoPor, uId))
+        } catch {}
+        try { await tx.update(documentos).set({ creadoPor: null }).where(eq(documentos.creadoPor, uId)) } catch {}
+        try { await tx.update(solicitudesMaterial).set({ creadoPor: null }).where(eq(solicitudesMaterial.creadoPor, uId)) } catch {}
+        try { await tx.update(comunicados).set({ creadoPor: null }).where(eq(comunicados.creadoPor, uId)) } catch {}
+        try { await tx.update(eventosCalendario).set({ creadoPor: null }).where(eq(eventosCalendario.creadoPor, uId)) } catch {}
+        try {
+          await tx.delete(reconocimientoEmpleadoMes).where(eq(reconocimientoEmpleadoMes.empleadoId, uId))
+          await tx.delete(reconocimientoEquipoIntegrantes).where(eq(reconocimientoEquipoIntegrantes.usuarioId, uId))
+          await tx.update(reconocimientoEquipo).set({ responsableId: null }).where(eq(reconocimientoEquipo.responsableId, uId))
+          await tx.update(reconocimientos).set({ creadoPor: null }).where(eq(reconocimientos.creadoPor, uId))
+          await tx.update(reconocimientos).set({ aprobadoPor: null }).where(eq(reconocimientos.aprobadoPor, uId))
+        } catch {}
+
+        await tx.delete(users).where(eq(users.id, uId))
+      }
+
+      // Eliminar de personal por id o por email
+      const persConditions = [eq(personal.id, idLimpio)]
+      for (const em of emailsParaBuscar) {
+        persConditions.push(eq(personal.email, em))
+      }
+      await tx.delete(personal).where(or(...persConditions))
+
+      // Eliminar de directivos si coincide email
+      for (const em of emailsParaBuscar) {
+        await tx.delete(directivos).where(eq(directivos.email, em))
+      }
+    })
+
     await registrarAuditLog({
       usuario: sesion?.id || "sistema",
-      accion: `Eliminó permanentemente personal: ${pers.nombre}`,
+      accion: `Eliminó permanentemente funcionario: ${nombreRegistro}`,
       modulo: "RRHH",
       resultado: "Exitoso",
     })
@@ -628,8 +724,6 @@ export async function importarPersonalLote(registros: ImportPersonalRecord[]) {
       }
 
       const idLimpio = r.id && r.id.trim().length > 5 ? r.id.trim() : undefined
-      const ciRaw = r.ci && r.ci.trim() !== "—" && !r.ci.toLowerCase().includes("no registrado") ? r.ci.trim() : undefined
-      const ciLimpio = ciRaw ? ciRaw.slice(0, 20) : "—"
       const cargoLimpio = (r.cargo || "Personal").trim()
       const unidadLimpia = (r.unidad || "Administración Central").trim()
       const emailLimpio = r.email && r.email.trim() !== "Sin asignar" && r.email.includes("@")
@@ -651,28 +745,21 @@ export async function importarPersonalLote(registros: ImportPersonalRecord[]) {
         indexExistente = todosPersonal.findIndex((p) => p.id === idLimpio)
       }
 
-      // 2. Coincidencia por CI válido
-      if (indexExistente === -1 && ciLimpio && ciLimpio !== "—") {
-        indexExistente = todosPersonal.findIndex(
-          (p) => p.ci && p.ci.trim() === ciLimpio && p.ci.trim() !== "—"
-        )
-      }
-
-      // 3. Coincidencia por Correo Electrónico
+      // 2. Coincidencia por Correo Electrónico
       if (indexExistente === -1 && emailLimpio) {
         indexExistente = todosPersonal.findIndex(
           (p) => p.email && p.email.trim().toLowerCase() === emailLimpio
         )
       }
 
-      // 4. Coincidencia por Nombre Completo Normalizado (permite variaciones leves, mayúsculas y acentos)
+      // 3. Coincidencia por Nombre Completo Normalizado (permite variaciones leves, mayúsculas y acentos)
       if (indexExistente === -1 && nombreNorm.length >= 3) {
-        // 4a. Coincidencia exacta normalizada
+        // 3a. Coincidencia exacta normalizada
         indexExistente = todosPersonal.findIndex(
           (p) => normalizarTextoBusqueda(p.nombre) === nombreNorm
         )
 
-        // 4b. Coincidencia por inclusión de nombres o palabras clave
+        // 3b. Coincidencia por inclusión de nombres o palabras clave
         if (indexExistente === -1 && nombreNorm.length >= 4) {
           indexExistente = todosPersonal.findIndex((p) => {
             const dbNorm = normalizarTextoBusqueda(p.nombre)
@@ -705,7 +792,6 @@ export async function importarPersonalLote(registros: ImportPersonalRecord[]) {
 
         if (emailLimpio) updateData.email = emailLimpio
         if (telefonoLimpio) updateData.telefono = telefonoLimpio
-        if (ciLimpio && ciLimpio !== "—") updateData.ci = ciLimpio
         if (fechaIngresoLimpia && fechaIngresoLimpia !== hoy) {
           updateData.fechaIngreso = fechaIngresoLimpia
         }
@@ -724,7 +810,6 @@ export async function importarPersonalLote(registros: ImportPersonalRecord[]) {
         // ── INSERTAR NUEVO REGISTRO ──
         const insertData = {
           nombre: nombreLimpio,
-          ci: ciLimpio,
           cargo: cargoLimpio,
           unidad: unidadLimpia,
           email: emailLimpio || null,
@@ -782,7 +867,6 @@ export async function revertirUltimaImportacionRRHH() {
         await db.insert(personal).values({
           id: p.id,
           nombre: p.nombre,
-          ci: p.ci,
           cargo: p.cargo,
           unidad: p.unidad,
           email: p.email,

@@ -241,7 +241,6 @@ export async function sendWelcomeCredentialsEmail({
   emailInstitucional,
   usuario,
   password,
-  ci,
   esReenvio = false,
 }: {
   to: string
@@ -249,7 +248,6 @@ export async function sendWelcomeCredentialsEmail({
   emailInstitucional?: string
   usuario?: string
   password?: string
-  ci?: string
   esReenvio?: boolean
 }): Promise<{ success: boolean; message?: string; error?: string }> {
   const config = getEmailConfig()
@@ -359,19 +357,6 @@ export async function sendWelcomeCredentialsEmail({
                     </div>
                   </td>
                 </tr>
-                ${
-                  ci && ci !== "—"
-                    ? `
-                <tr>
-                  <td style="padding: 10px 0; border-bottom: 1px dashed #CBD5E1;">
-                    <span style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Cédula de Identidad (CI):</span>
-                    <div style="font-size: 14px; font-weight: 700; color: #1E293B; margin-top: 2px;">
-                      ${ci}
-                    </div>
-                  </td>
-                </tr>`
-                    : ""
-                }
                 <tr>
                   <td style="padding-top: 12px;">
                     <span style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Contraseña ${esReenvio ? "Temporal" : "Inicial"}:</span>

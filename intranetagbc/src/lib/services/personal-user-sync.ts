@@ -64,22 +64,17 @@ export async function sincronizarPersonalConUsuarioIndividual(
   try {
     const authContext = await auth.$context
     const emailNorm = normalizarEmail(p.email, p.nombre)
-    const ciRaw = p.ci ? p.ci.trim() : ""
-    const ciNorm = ciRaw && ciRaw !== "—" && ciRaw.length >= 4 ? ciRaw : null
 
     const desglose = desglosarNombreCompleto(p.nombre)
     const firstName = desglose.firstName
     const lastNamePaternal = desglose.lastNamePaternal || "AGBC"
     const lastNameMaternal = desglose.lastNameMaternal
 
-    // Buscar si ya existe el usuario por email institucional, email personal o por CI
+    // Buscar si ya existe el usuario por email institucional o email personal
     const conditions = [
       eq(users.institutionalEmail, emailNorm),
       eq(users.email, emailNorm),
     ]
-    if (ciNorm) {
-      conditions.push(eq(users.nationalId, ciNorm))
-    }
 
     const [usrExistente] = await db
       .select()
@@ -93,7 +88,6 @@ export async function sincronizarPersonalConUsuarioIndividual(
       : "Correos2026!"
 
     const hashedPassword = await authContext.password.hash(passwordAEstablecer)
-    const hoyStr = new Date().toISOString().slice(0, 10)
     const dateOfBirth = p.fechaIngreso && /^\d{4}-\d{2}-\d{2}$/.test(p.fechaIngreso)
       ? p.fechaIngreso
       : "1995-01-01"
@@ -116,7 +110,6 @@ export async function sincronizarPersonalConUsuarioIndividual(
           lastNameMaternal,
           institutionalEmail: emailNorm,
           email: emailNorm,
-          nationalId: ciNorm || usrExistente.nationalId,
           isActive,
           image: cleanImageUrl(p.foto) || usrExistente.image,
           updatedAt: new Date(),
@@ -160,7 +153,6 @@ export async function sincronizarPersonalConUsuarioIndividual(
     } else {
       // Crear nuevo usuario
       const newUserId = createId()
-      const nationalIdToUse = ciNorm || `AGBC-${createId().slice(0, 8).toUpperCase()}`
 
       await db.insert(users).values({
         id: newUserId,
@@ -170,7 +162,6 @@ export async function sincronizarPersonalConUsuarioIndividual(
         institutionalEmail: emailNorm,
         email: emailNorm,
         emailVerified: false,
-        nationalId: nationalIdToUse,
         dateOfBirth,
         isActive,
         image: cleanImageUrl(p.foto) || null,
@@ -200,7 +191,6 @@ export async function sincronizarPersonalConUsuarioIndividual(
           nombre: p.nombre,
           emailInstitucional: emailNorm,
           password: passwordAEstablecer,
-          ci: ciNorm || undefined,
         }).catch((err) => console.error("Error al enviar credenciales por correo al crear personal:", err))
       }
 
@@ -238,15 +228,11 @@ export async function sincronizarTodoPersonalConUsuarios() {
     const personalEmails = new Set(
       todosPersonal.map((p) => (p.email || "").trim().toLowerCase()).filter(Boolean)
     )
-    const personalCIs = new Set(
-      todosPersonal.map((p) => (p.ci || "").trim()).filter((ci) => ci && ci !== "—")
-    )
 
     for (const u of todosUsuarios) {
       const email = (u.institutionalEmail || u.email || "").trim().toLowerCase()
-      const ci = (u.nationalId || "").trim()
 
-      const yaEnPersonal = personalEmails.has(email) || (ci && ci !== "—" && personalCIs.has(ci))
+      const yaEnPersonal = personalEmails.has(email)
 
       if (!yaEnPersonal && email) {
         const nombreCompleto = [u.firstName, u.lastNamePaternal, u.lastNameMaternal]
@@ -256,7 +242,6 @@ export async function sincronizarTodoPersonalConUsuarios() {
         await db.insert(personal).values({
           id: createId(),
           nombre: nombreCompleto || "Funcionario Institucional",
-          ci: ci || "—",
           cargo: "Funcionario Institucional",
           unidad: "Administración Central",
           email: email,

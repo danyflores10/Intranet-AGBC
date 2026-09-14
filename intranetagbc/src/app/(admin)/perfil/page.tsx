@@ -19,7 +19,6 @@ export default async function PerfilPage() {
     lastNameMaternal: perfil.lastNameMaternal ?? "",
     email: perfil.email ?? "",
     institutionalEmail: perfil.institutionalEmail,
-    nationalId: perfil.nationalId,
     dateOfBirth: perfil.dateOfBirth,
     avatarUrl: perfil.image,
     roles: usuario.roles,

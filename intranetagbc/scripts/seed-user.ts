@@ -13,7 +13,6 @@ const USER_DATA = {
   lastNameMaternal: "Aguilar",
   institutionalEmail: "danielwilsonfloresaguilar10@gmail.com",
   email: "danielwilsonfloresaguilar10@gmail.com",
-  nationalId: "00000001",
   dateOfBirth: "2000-01-01",
   password: "123456789",
 }
@@ -48,7 +47,6 @@ async function main() {
       institutionalEmail: USER_DATA.institutionalEmail,
       email: USER_DATA.email,
       emailVerified: false,
-      nationalId: USER_DATA.nationalId,
       dateOfBirth: USER_DATA.dateOfBirth,
       isActive: true,
       image: null,
