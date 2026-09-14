@@ -1,4 +1,4 @@
-﻿export const PERMISOS_ROLES = {
+export const PERMISOS_ROLES = {
   VER: "ver roles",
   CREAR: "crear roles",
   EDITAR: "editar roles",
@@ -76,13 +76,6 @@ export const PERMISOS_CORRESPONDENCIA = {
   CONFIGURAR: "configurar correspondencia",
 } as const
 
-export const PERMISOS_REPORTES = {
-  VER: "ver reportes",
-  CREAR: "crear reportes",
-  EDITAR: "editar reportes",
-  ELIMINAR: "eliminar reportes",
-} as const
-
 export const PERMISOS_RRHH = {
   VER: "ver rrhh",
   CREAR: "crear rrhh",
@@ -95,13 +88,6 @@ export const PERMISOS_CALENDARIO = {
   CREAR: "crear calendario",
   EDITAR: "editar calendario",
   ELIMINAR: "eliminar calendario",
-} as const
-
-export const PERMISOS_AGENDA = {
-  VER: "ver agenda",
-  CREAR: "crear agenda",
-  EDITAR: "editar agenda",
-  ELIMINAR: "eliminar agenda",
 } as const
 
 export const PERMISOS_SUCURSALES = {
@@ -123,13 +109,6 @@ export const PERMISOS_CONTENIDOS = {
   ELIMINAR: "eliminar contenidos",
 } as const
 
-export const PERMISOS_CONTACTOS = {
-  VER: "ver contactos",
-  CREAR: "crear contactos",
-  EDITAR: "editar contactos",
-  ELIMINAR: "eliminar contactos",
-} as const
-
 export const PERMISOS_SOPORTE = {
   VER: "ver soporte",
   CREAR: "crear soporte",
@@ -137,9 +116,11 @@ export const PERMISOS_SOPORTE = {
   ELIMINAR: "eliminar soporte",
 } as const
 
-export const PERMISOS_ONBOARDING = {
-  VER: "ver onboarding",
-  CONFIGURAR: "configurar onboarding",
+export const PERMISOS_REPORTES = {
+  VER: "ver reportes",
+  CREAR: "ver reportes",
+  EDITAR: "ver reportes",
+  ELIMINAR: "ver reportes",
 } as const
 
 export const PERMISOS_RECONOCIMIENTOS = {
@@ -147,13 +128,21 @@ export const PERMISOS_RECONOCIMIENTOS = {
   CREAR: "crear reconocimientos",
   EDITAR: "editar reconocimientos",
   ELIMINAR: "eliminar reconocimientos",
-  APROBAR: "aprobar reconocimientos",
-  PUBLICAR: "publicar reconocimientos",
-  ARCHIVAR: "archivar reconocimientos",
-  DESTACAR: "destacar reconocimientos",
-  LANDING: "mostrar en landing reconocimientos",
-  REPORTES: "reportes reconocimientos",
+  APROBAR: "editar reconocimientos",
+  PUBLICAR: "editar reconocimientos",
+  ARCHIVAR: "editar reconocimientos",
+  DESTACAR: "editar reconocimientos",
+  LANDING: "editar reconocimientos",
+  REPORTES: "ver reconocimientos",
 } as const
+
+export const PERMISOS_ONBOARDING = {
+  VER: "ver configuracion",
+  CONFIGURAR: "editar configuracion",
+} as const
+
+export const PERMISOS_AGENDA = PERMISOS_CALENDARIO
+export const PERMISOS_CONTACTOS = PERMISOS_RRHH
 
 export const PERMISOS = {
   ROLES: PERMISOS_ROLES,
@@ -167,17 +156,17 @@ export const PERMISOS = {
   DOCUMENTOS: PERMISOS_DOCUMENTOS,
   ARCHIVO: PERMISOS_ARCHIVO,
   CORRESPONDENCIA: PERMISOS_CORRESPONDENCIA,
-  REPORTES: PERMISOS_REPORTES,
   RRHH: PERMISOS_RRHH,
   CALENDARIO: PERMISOS_CALENDARIO,
-  AGENDA: PERMISOS_AGENDA,
+  AGENDA: PERMISOS_CALENDARIO,
   SUCURSALES: PERMISOS_SUCURSALES,
   CONFIGURACION: PERMISOS_CONFIGURACION,
   CONTENIDOS: PERMISOS_CONTENIDOS,
-  CONTACTOS: PERMISOS_CONTACTOS,
+  CONTACTOS: PERMISOS_RRHH,
   SOPORTE: PERMISOS_SOPORTE,
   RECONOCIMIENTOS: PERMISOS_RECONOCIMIENTOS,
   ONBOARDING: PERMISOS_ONBOARDING,
+  REPORTES: PERMISOS_REPORTES,
 } as const
 
 export type PermisoRol = (typeof PERMISOS_ROLES)[keyof typeof PERMISOS_ROLES]

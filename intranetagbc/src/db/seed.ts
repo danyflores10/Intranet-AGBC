@@ -43,15 +43,26 @@ async function seedRolesYPermisos() {
   }
 
   // Extraer todos los permisos del objeto PERMISOS
-  const listaPermisos: string[] = []
+  const listaPermisosSet = new Set<string>()
   function extraer(obj: any) {
     for (const val of Object.values(obj)) {
-      if (typeof val === "string") listaPermisos.push(val)
+      if (typeof val === "string") listaPermisosSet.add(val)
       else if (typeof val === "object" && val !== null) extraer(val)
     }
   }
   extraer(PERMISOS)
+  const listaPermisos = [...listaPermisosSet]
 
+  // 1. Eliminar permisos obsoletos que ya no existen en la definición actual del sistema
+  const permisosEnDb = await db.select().from(permissions)
+  for (const p of permisosEnDb) {
+    if (!listaPermisosSet.has(p.name)) {
+      await db.delete(rolePermissions).where(eq(rolePermissions.permissionId, p.id))
+      await db.delete(permissions).where(eq(permissions.id, p.id))
+    }
+  }
+
+  // 2. Insertar los permisos válidos
   for (const permName of listaPermisos) {
     const [existe] = await db.select().from(permissions).where(eq(permissions.name, permName)).limit(1)
     if (!existe) {
@@ -59,7 +70,7 @@ async function seedRolesYPermisos() {
     }
   }
 
-  // Asignar todos los permisos al rol de administrador
+  // 3. Asignar todos los permisos vigentes al rol de administrador
   const [adminRole] = await db.select().from(roles).where(eq(roles.name, "administrador")).limit(1)
   if (adminRole) {
     const todosPerms = await db.select().from(permissions)

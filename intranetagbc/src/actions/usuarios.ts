@@ -4,12 +4,36 @@ import { revalidatePath } from "next/cache"
 import { and, asc, eq, inArray, ne, or, sql } from "drizzle-orm"
 
 import { db } from "@/db"
-import { account, personal, roles, userRoles, users } from "@/db/schema"
+import {
+  account,
+  comunicados,
+  correspondencia,
+  correspondenciaAdjuntos,
+  correspondenciaMovimientos,
+  directivos,
+  documentos,
+  eventosCalendario,
+  mensajesSoporte,
+  notificaciones,
+  onboardingProgreso,
+  personal,
+  reconocimientoEmpleadoMes,
+  reconocimientoEquipoIntegrantes,
+  reconocimientos,
+  roles,
+  session,
+  solicitudes,
+  solicitudesMaterial,
+  ticketsSoporte,
+  userRoles,
+  users,
+} from "@/db/schema"
 import { auth } from "@/lib/auth"
 import { PERMISOS } from "@/lib/auth/permisos"
 import { obtenerSesionConAccesoActual, type SesionConAcceso } from "@/lib/auth/session-access"
 import { registrarAuditLog } from "@/actions/auditoria"
 import { sincronizarTodoPersonalConUsuarios } from "@/lib/services/personal-user-sync"
+import { sendWelcomeCredentialsEmail } from "@/lib/email"
 
 type ResultadoAccion<TData> = {
   success: boolean
@@ -639,7 +663,7 @@ export async function crearUsuario(data: CreateUserInput): Promise<ResultadoAcci
       ? normalizarFechaNacimiento(data.dateOfBirth)
       : "1995-01-01"
     const isActive = typeof data.isActive === "boolean" ? data.isActive : true
-    const password = data.password
+    const password = data.password && data.password.trim().length >= 6 ? data.password.trim() : "Correos2026!"
     const roleIds = limpiarRoleIds(data.roleIds)
 
     if (firstName.length < 2 || firstName.length > 100) {
@@ -652,10 +676,6 @@ export async function crearUsuario(data: CreateUserInput): Promise<ResultadoAcci
 
     if (!isEmailDomainAllowed(institutionalEmail)) {
       return respuestaError("Solo se permiten correos institucionales autorizados.")
-    }
-
-    if (password.length < 6) {
-      return respuestaError("La contrasena debe tener al menos 6 caracteres.")
     }
 
     if (roleIds.length > 1) {
@@ -735,6 +755,18 @@ export async function crearUsuario(data: CreateUserInput): Promise<ResultadoAcci
 
     // Sincronizar automáticamente con la tabla personal
     await sincronizarTodoPersonalConUsuarios()
+
+    // Enviar correo de bienvenida con credenciales
+    const emailDestino = data.email && data.email.trim().includes("@") ? data.email.trim() : institutionalEmail
+    if (emailDestino && emailDestino.includes("@")) {
+      sendWelcomeCredentialsEmail({
+        to: emailDestino,
+        nombre: `${firstName} ${lastNamePaternal}`.trim(),
+        emailInstitucional: institutionalEmail,
+        password,
+        ci: nationalId !== "—" ? nationalId : undefined,
+      }).catch((err) => console.error("Error al enviar credenciales por correo al crear usuario:", err))
+    }
 
     revalidatePath("/usuarios")
     revalidatePath("/rrhh")
@@ -1054,22 +1086,86 @@ export async function eliminarUsuario(userId: string): Promise<ResultadoAccion<D
       return respuestaError("No se puede desactivar un usuario con rol super_admin.")
     }
 
-    // Eliminación física permanente de la base de datos
+    // Eliminación física permanente de la base de datos desvinculando tablas hijas con foreign keys
     await db.transaction(async (tx) => {
+      // 1. Sesiones, cuentas y roles
+      await tx.delete(session).where(eq(session.userId, userIdLimpio))
       await tx.delete(account).where(eq(account.userId, userIdLimpio))
       await tx.delete(userRoles).where(eq(userRoles.userId, userIdLimpio))
+
+      // 2. Desvincular o limpiar tablas hijas que tienen clave foránea a users.id
+      try {
+        await tx.delete(onboardingProgreso).where(eq(onboardingProgreso.usuarioId, userIdLimpio))
+      } catch {}
+
+      try {
+        await tx.delete(notificaciones).where(eq(notificaciones.usuarioId, userIdLimpio))
+        await tx.update(notificaciones).set({ creadoPor: null }).where(eq(notificaciones.creadoPor, userIdLimpio))
+      } catch {}
+
+      try {
+        await tx.delete(mensajesSoporte).where(eq(mensajesSoporte.emisorId, userIdLimpio))
+        await tx.delete(ticketsSoporte).where(eq(ticketsSoporte.solicitanteId, userIdLimpio))
+        await tx.update(ticketsSoporte).set({ agenteId: null }).where(eq(ticketsSoporte.agenteId, userIdLimpio))
+      } catch {}
+
+      try {
+        await tx.delete(solicitudes).where(eq(solicitudes.solicitanteId, userIdLimpio))
+        await tx.update(solicitudes).set({ destinatarioId: null }).where(eq(solicitudes.destinatarioId, userIdLimpio))
+      } catch {}
+
+      try {
+        await tx.update(correspondencia).set({ remitenteUserId: null }).where(eq(correspondencia.remitenteUserId, userIdLimpio))
+        await tx.update(correspondencia).set({ destinatarioUserId: null }).where(eq(correspondencia.destinatarioUserId, userIdLimpio))
+        await tx.update(correspondencia).set({ creadoPor: null }).where(eq(correspondencia.creadoPor, userIdLimpio))
+        await tx.update(correspondencia).set({ actualizadoPor: null }).where(eq(correspondencia.actualizadoPor, userIdLimpio))
+        await tx.update(correspondenciaMovimientos).set({ fromUserId: null }).where(eq(correspondenciaMovimientos.fromUserId, userIdLimpio))
+        await tx.update(correspondenciaMovimientos).set({ toUserId: null }).where(eq(correspondenciaMovimientos.toUserId, userIdLimpio))
+        await tx.update(correspondenciaMovimientos).set({ creadoPor: null }).where(eq(correspondenciaMovimientos.creadoPor, userIdLimpio))
+        await tx.update(correspondenciaAdjuntos).set({ subidoPor: null }).where(eq(correspondenciaAdjuntos.subidoPor, userIdLimpio))
+      } catch {}
+
+      try {
+        await tx.update(documentos).set({ creadoPor: null }).where(eq(documentos.creadoPor, userIdLimpio))
+      } catch {}
+
+      try {
+        await tx.update(solicitudesMaterial).set({ creadoPor: null }).where(eq(solicitudesMaterial.creadoPor, userIdLimpio))
+      } catch {}
+
+      try {
+        await tx.update(comunicados).set({ creadoPor: null }).where(eq(comunicados.creadoPor, userIdLimpio))
+      } catch {}
+
+      try {
+        await tx.update(eventosCalendario).set({ creadoPor: null }).where(eq(eventosCalendario.creadoPor, userIdLimpio))
+      } catch {}
+
+      try {
+        await tx.delete(reconocimientoEmpleadoMes).where(eq(reconocimientoEmpleadoMes.empleadoId, userIdLimpio))
+        await tx.delete(reconocimientoEquipoIntegrantes).where(eq(reconocimientoEquipoIntegrantes.usuarioId, userIdLimpio))
+        await tx.update(reconocimientos).set({ creadoPor: null }).where(eq(reconocimientos.creadoPor, userIdLimpio))
+        await tx.update(reconocimientos).set({ aprobadoPor: null }).where(eq(reconocimientos.aprobadoPor, userIdLimpio))
+      } catch {}
+
+      // 3. Eliminar de users
       await tx.delete(users).where(eq(users.id, userIdLimpio))
     })
 
-    // También limpiar de la tabla de personal si estaba enlazado
+    // También limpiar de la tabla de personal y directivos si estaba enlazado
     try {
       const emailNorm = usuarioActual.institutionalEmail?.trim().toLowerCase()
+      const personalEmail = usuarioActual.email?.trim().toLowerCase()
       const ciNorm = usuarioActual.nationalId?.trim()
       const conditions = []
       if (emailNorm) conditions.push(eq(personal.email, emailNorm))
+      if (personalEmail) conditions.push(eq(personal.email, personalEmail))
       if (ciNorm && ciNorm !== "—") conditions.push(eq(personal.ci, ciNorm))
       if (conditions.length > 0) {
         await db.delete(personal).where(or(...conditions))
+      }
+      if (emailNorm) {
+        await db.delete(directivos).where(eq(directivos.email, emailNorm))
       }
     } catch {}
 
@@ -1086,6 +1182,11 @@ export async function eliminarUsuario(userId: string): Promise<ResultadoAccion<D
       resultado: "Exitoso",
       detalles: `Email: ${usuarioEliminado.institutionalEmail}`,
     })
+
+    revalidatePath("/usuarios")
+    revalidatePath("/rrhh")
+    revalidatePath("/")
+    revalidatePath("/dashboard")
 
     return respuestaExitosa("Usuario eliminado permanentemente de la base de datos.", usuarioEliminado)
   } catch (error) {
@@ -1122,6 +1223,23 @@ export async function cambiarEstadoUsuario(
       return respuestaError("Usuario no encontrado.")
     }
 
+    // Sincronizar estado en la tabla de personal y directivos
+    try {
+      const emailNorm = usuarioCompleto.institutionalEmail?.trim().toLowerCase()
+      const personalEmail = usuarioCompleto.email?.trim().toLowerCase()
+      const ciNorm = usuarioCompleto.nationalId?.trim()
+      const conditions = []
+      if (emailNorm) conditions.push(eq(personal.email, emailNorm))
+      if (personalEmail) conditions.push(eq(personal.email, personalEmail))
+      if (ciNorm && ciNorm !== "—") conditions.push(eq(personal.ci, ciNorm))
+      if (conditions.length > 0) {
+        await db.update(personal).set({ estado: isActive ? "activo" : "inactivo" }).where(or(...conditions))
+      }
+      if (emailNorm) {
+        await db.update(directivos).set({ estado: isActive ? "activo" : "inactivo" }).where(eq(directivos.email, emailNorm))
+      }
+    } catch {}
+
     await registrarAuditLog({
       usuario: sesion.id,
       accion: isActive
@@ -1131,6 +1249,11 @@ export async function cambiarEstadoUsuario(
       resultado: "Exitoso",
       detalles: `Email: ${usuarioCompleto.institutionalEmail}, Estado: ${isActive ? "Activo" : "Inactivo"}`,
     })
+
+    revalidatePath("/usuarios")
+    revalidatePath("/rrhh")
+    revalidatePath("/")
+    revalidatePath("/dashboard")
 
     return respuestaExitosa(
       isActive ? "Usuario reactivado exitosamente." : "Usuario dado de baja exitosamente.",

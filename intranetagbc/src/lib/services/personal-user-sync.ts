@@ -3,6 +3,7 @@ import { eq, or, sql } from "drizzle-orm"
 import { db } from "@/db"
 import { account, personal, roles, userRoles, users } from "@/db/schema"
 import { auth } from "@/lib/auth"
+import { sendWelcomeCredentialsEmail } from "@/lib/email"
 
 export function desglosarNombreCompleto(nombreCompleto?: string): {
   firstName: string
@@ -80,15 +81,10 @@ export async function sincronizarPersonalConUsuarioIndividual(
       .where(or(...conditions))
       .limit(1)
 
-    // Determinar la contraseña a usar
-    let passwordAEstablecer = passwordPersonalizada?.trim()
-    if (!passwordAEstablecer || passwordAEstablecer.length < 6) {
-      if (ciNorm && ciNorm.length >= 6) {
-        passwordAEstablecer = ciNorm
-      } else {
-        passwordAEstablecer = "Correos2026!"
-      }
-    }
+    // Determinar la contraseña a usar (Predeterminada institucional: Correos2026!)
+    const passwordAEstablecer = passwordPersonalizada?.trim() && passwordPersonalizada.trim().length >= 6
+      ? passwordPersonalizada.trim()
+      : "Correos2026!"
 
     const hashedPassword = await authContext.password.hash(passwordAEstablecer)
     const hoyStr = new Date().toISOString().slice(0, 10)
@@ -189,6 +185,18 @@ export async function sincronizarPersonalConUsuarioIndividual(
         userId: newUserId,
         roleId: defaultRoleId,
       })
+
+      // Enviar correo de bienvenida con credenciales
+      const emailDestino = p.email && p.email.trim().includes("@") ? p.email.trim() : emailNorm
+      if (emailDestino && emailDestino.includes("@")) {
+        sendWelcomeCredentialsEmail({
+          to: emailDestino,
+          nombre: p.nombre,
+          emailInstitucional: emailNorm,
+          password: passwordAEstablecer,
+          ci: ciNorm || undefined,
+        }).catch((err) => console.error("Error al enviar credenciales por correo al crear personal:", err))
+      }
 
       return { userId: newUserId, action: "created" }
     }

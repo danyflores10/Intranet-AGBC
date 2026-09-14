@@ -37,6 +37,7 @@ export async function crearPersonal(
   },
   password?: string
 ) {
+  const passwordFinal = password && password.trim().length >= 6 ? password.trim() : "Correos2026!"
   const payload = {
     ...data,
     ci: data.ci ? data.ci.slice(0, 20) : "—",
@@ -47,12 +48,14 @@ export async function crearPersonal(
 
   // Sincronizar automáticamente con la cuenta de usuario (users + account + roles)
   if (nuevo) {
-    await sincronizarPersonalConUsuarioIndividual(nuevo, password)
+    await sincronizarPersonalConUsuarioIndividual(nuevo, passwordFinal)
   }
 
   await registrarAuditLog({ usuario: "sistema", accion: `Registró personal: ${data.nombre}`, modulo: "RRHH", resultado: "Exitoso" })
   revalidatePath("/rrhh")
   revalidatePath("/usuarios")
+  revalidatePath("/")
+  revalidatePath("/dashboard")
   return nuevo
 }
 
@@ -81,6 +84,8 @@ export async function actualizarPersonal(
   await registrarAuditLog({ usuario: "sistema", accion: `Actualizó personal ID: ${id}`, modulo: "RRHH", resultado: "Exitoso" })
   revalidatePath("/rrhh")
   revalidatePath("/usuarios")
+  revalidatePath("/")
+  revalidatePath("/dashboard")
   return actualizado
 }
 
@@ -99,7 +104,9 @@ export async function eliminarPersonal(id: string) {
           for (const u of matchedUsers) {
             await db.delete(account).where(eq(account.userId, u.id))
             await db.delete(userRoles).where(eq(userRoles.userId, u.id))
-            await db.delete(users).where(eq(users.id, u.id))
+            try {
+              await db.delete(users).where(eq(users.id, u.id))
+            } catch {}
           }
         }
       } catch {}
@@ -110,6 +117,8 @@ export async function eliminarPersonal(id: string) {
   await registrarAuditLog({ usuario: "sistema", accion: `Eliminó permanentemente personal ID: ${id}`, modulo: "RRHH", resultado: "Exitoso" })
   revalidatePath("/rrhh")
   revalidatePath("/usuarios")
+  revalidatePath("/")
+  revalidatePath("/dashboard")
 }
 
 /* ═══════════════════════ DIRECTIVOS ═══════════════════════ */
