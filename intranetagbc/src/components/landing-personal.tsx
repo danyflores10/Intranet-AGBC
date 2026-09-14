@@ -37,6 +37,11 @@ function buildPhoneHref(phone?: string | null) {
   return `tel:${normalized}`
 }
 
+function cleanImageUrl(url?: string | null): string {
+  if (!url || typeof url !== "string") return ""
+  return url.split("?")[0].trim()
+}
+
 export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
@@ -143,10 +148,11 @@ export function LandingPersonal({ personal }: { personal: PersonalItem[] }) {
                               {p.foto ? (
                                 <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full border border-amber-300 shadow-xs">
                                   <Image
-                                    src={p.foto}
+                                    src={cleanImageUrl(p.foto)}
                                     alt={p.nombre}
                                     fill
                                     className="object-cover"
+                                    unoptimized
                                   />
                                 </div>
                               ) : (

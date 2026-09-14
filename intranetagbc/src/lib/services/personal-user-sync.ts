@@ -48,6 +48,12 @@ export function normalizarEmail(email?: string | null, nombre?: string): string 
   return generarEmailInstitucional(nombre)
 }
 
+export function cleanImageUrl(url?: string | null): string | null {
+  if (!url || typeof url !== "string") return null
+  const cleaned = url.split("?")[0].trim()
+  return cleaned.length > 0 ? cleaned : null
+}
+
 /**
  * Sincroniza un registro individual de personal con las tablas de autenticación (users + account + userRoles).
  */
@@ -112,7 +118,7 @@ export async function sincronizarPersonalConUsuarioIndividual(
           email: emailNorm,
           nationalId: ciNorm || usrExistente.nationalId,
           isActive,
-          image: p.foto || usrExistente.image,
+          image: cleanImageUrl(p.foto) || usrExistente.image,
           updatedAt: new Date(),
         })
         .where(eq(users.id, usrExistente.id))
@@ -167,7 +173,7 @@ export async function sincronizarPersonalConUsuarioIndividual(
         nationalId: nationalIdToUse,
         dateOfBirth,
         isActive,
-        image: p.foto || null,
+        image: cleanImageUrl(p.foto) || null,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
@@ -255,7 +261,7 @@ export async function sincronizarTodoPersonalConUsuarios() {
           unidad: "Administración Central",
           email: email,
           telefono: null,
-          foto: u.image || null,
+          foto: cleanImageUrl(u.image) || null,
           fechaIngreso: u.createdAt
             ? (u.createdAt instanceof Date ? u.createdAt.toISOString().slice(0, 10) : new Date(u.createdAt).toISOString().slice(0, 10))
             : new Date().toISOString().slice(0, 10),

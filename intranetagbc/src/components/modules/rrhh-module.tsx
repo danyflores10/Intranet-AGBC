@@ -99,6 +99,11 @@ function getColor(name: string) {
   return AVATAR_COLORS[hashName(name) % AVATAR_COLORS.length]
 }
 
+export function cleanImageUrl(url?: string | null): string {
+  if (!url || typeof url !== "string") return ""
+  return url.split("?")[0].trim()
+}
+
 interface PersonalRow {
   id: string
   nombre: string
@@ -204,7 +209,7 @@ function FotoUploader({
       <div className="relative group">
         {fotoUrl ? (
           <div className="relative h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-md ring-2 ring-[#0E5296]/20">
-            <Image src={fotoUrl} alt={nombre} fill className="object-cover" />
+            <Image src={cleanImageUrl(fotoUrl)} alt={nombre} fill className="object-cover" unoptimized />
           </div>
         ) : (
           <div
@@ -468,7 +473,7 @@ export function RrhhModule({ personal, directivos, usuarios = [], usuarioActual 
           unidad: "Personal General",
           email: email || null,
           telefono: u.phoneNumber || null,
-          foto: u.avatarUrl || null,
+          foto: u.avatarUrl ? cleanImageUrl(u.avatarUrl) : null,
           fechaIngreso: new Date().toISOString().slice(0, 10),
           estado: "activo",
         })
@@ -1099,7 +1104,7 @@ export function RrhhModule({ personal, directivos, usuarios = [], usuarioActual 
                           <div className="relative shrink-0">
                             {item.foto ? (
                               <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-amber-300 shadow-xs">
-                                <Image src={item.foto} alt={item.nombre} fill className="object-cover" />
+                                <Image src={cleanImageUrl(item.foto)} alt={item.nombre} fill className="object-cover" unoptimized />
                               </div>
                             ) : (
                               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFCC00] text-[#002F6C] font-black text-xs shadow-xs border border-amber-300">

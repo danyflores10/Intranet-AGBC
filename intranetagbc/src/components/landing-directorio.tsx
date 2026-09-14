@@ -46,6 +46,11 @@ function initials(n: string) {
     .join("")
 }
 
+function cleanImageUrl(url?: string | null): string {
+  if (!url || typeof url !== "string") return ""
+  return url.split("?")[0].trim()
+}
+
 function buildPhoneHref(phone?: string | null) {
   if (!phone) return null
 
@@ -258,10 +263,11 @@ export function LandingDirectorio({ directivos }: { directivos: DirectivoItem[] 
                         {d.foto ? (
                           <div className="relative h-28 w-28 overflow-hidden rounded-full border-2 border-[#FFB800]/40">
                             <Image
-                              src={d.foto}
+                              src={cleanImageUrl(d.foto)}
                               alt={d.nombre}
                               fill
                               className="object-cover"
+                              unoptimized
                             />
                           </div>
                         ) : (
