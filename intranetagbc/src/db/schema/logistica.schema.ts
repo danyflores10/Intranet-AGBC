@@ -36,7 +36,7 @@ export const solicitudesMaterial = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().$onUpdateFn(() => new Date()).notNull(),
   },
-  (t) => [index('solicitudes_estado_idx').on(t.estado)],
+  (t) => [index('solicitudes_material_estado_idx').on(t.estado)],
 );
 
 export const proveedores = pgTable('proveedores', {

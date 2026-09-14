@@ -35,6 +35,10 @@ import {
   Undo2Icon,
   AlertTriangleIcon,
   SendIcon,
+  FlaskConicalIcon,
+  CheckSquareIcon,
+  SquareIcon,
+  CheckIcon,
 } from "lucide-react"
 import toast from "react-hot-toast"
 
@@ -56,6 +60,9 @@ import {
   revertirUltimaImportacionRRHH,
   confirmarCambiosImportacionRRHH,
   enviarCredencialesMasivasAction,
+  reenviarCredencialesAction,
+  enviarCorreoPruebaAction,
+  probarConexionSmtpAction,
 } from "@/actions/rrhh"
 import { verificarPasswordAdmin, revelarPasswordUsuario } from "@/actions/usuarios"
 
@@ -256,23 +263,155 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
   const [processingAction, setProcessingAction] = useState(false)
   const [itemAEliminar, setItemAEliminar] = useState<{ id: string; nombre: string; tipo: "personal" | "directivo" } | null>(null)
   const [eliminandoItem, setEliminandoItem] = useState(false)
+
+  // ── Selección múltiple para envíos masivos ──
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+
+  // ── Reenvío individual de credenciales ──
+  const [funcionarioParaReenvio, setFuncionarioParaReenvio] = useState<{ id: string; nombre: string; email: string } | null>(null)
+  const [emailInputReenvio, setEmailInputReenvio] = useState("")
+  const [enviandoIndividual, setEnviandoIndividual] = useState(false)
+
+  // ── Envío masivo multi-paso ──
   const [showBulkEmailModal, setShowBulkEmailModal] = useState(false)
+  const [bulkTargetIds, setBulkTargetIds] = useState<string[] | null>(null) // null = todos
+  const [bulkStep, setBulkStep] = useState<"confirm" | "progress" | "summary">("confirm")
+  const [bulkSummary, setBulkSummary] = useState<{
+    total: number
+    enviados: number
+    fallidos: number
+    sinCorreo: number
+    detalles: Array<{ id: string; nombre: string; email: string | null; estado: string; motivo?: string }>
+  } | null>(null)
   const [enviandoMasivo, setEnviandoMasivo] = useState(false)
 
-  const handleEnviarCredencialesMasivas = async () => {
+  // ── Modal de prueba SMTP ──
+  const [showTestEmailModal, setShowTestEmailModal] = useState(false)
+  const [testEmailInput, setTestEmailInput] = useState("")
+  const [enviandoTestEmail, setEnviandoTestEmail] = useState(false)
+  const [probandoConexion, setProbandoConexion] = useState(false)
+  const [testEmailResult, setTestEmailResult] = useState<{ success: boolean; message: string } | null>(null)
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]))
+  }
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === filteredPersonal.length && filteredPersonal.length > 0) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(filteredPersonal.map((p) => p.id))
+    }
+  }
+
+  const handleOpenBulkModal = (ids?: string[]) => {
+    setBulkTargetIds(ids && ids.length > 0 ? ids : null)
+    setBulkStep("confirm")
+    setBulkSummary(null)
+    setShowBulkEmailModal(true)
+  }
+
+  const handleEjecutarEnvioMasivo = async () => {
     setEnviandoMasivo(true)
+    setBulkStep("progress")
     try {
-      const res = await enviarCredencialesMasivasAction()
+      const idsAEnviar = bulkTargetIds || (selectedIds.length > 0 ? selectedIds : undefined)
+      const res = await enviarCredencialesMasivasAction(idsAEnviar)
       if (res.success) {
-        toast.success(res.message || "Credenciales enviadas correctamente a los funcionarios")
-        setShowBulkEmailModal(false)
+        setBulkSummary({
+          total: res.total || 0,
+          enviados: res.enviados || 0,
+          fallidos: res.fallidos || 0,
+          sinCorreo: res.sinCorreo || 0,
+          detalles: res.detalles || [],
+        })
+        setBulkStep("summary")
+        toast.success(res.message || "Proceso de envío finalizado")
+        if (selectedIds.length > 0) setSelectedIds([])
       } else {
-        toast.error(res.message || "Error al enviar credenciales masivas")
+        toast.error(res.message || "Error al procesar el envío masivo")
+        setBulkStep("confirm")
       }
     } catch {
-      toast.error("Ocurrió un error al procesar el envío de correos")
+      toast.error("Ocurrió un error al procesar los envíos masivos")
+      setBulkStep("confirm")
     } finally {
       setEnviandoMasivo(false)
+    }
+  }
+
+  const handleOpenReenvioModal = (item: PersonalRow) => {
+    setFuncionarioParaReenvio({
+      id: item.id,
+      nombre: item.nombre,
+      email: item.email || "",
+    })
+    setEmailInputReenvio(item.email || "")
+  }
+
+  const handleEjecutarReenvioIndividual = async () => {
+    if (!funcionarioParaReenvio) return
+    if (!emailInputReenvio.trim()) {
+      toast.error("Ingrese una dirección de correo electrónico válida")
+      return
+    }
+
+    setEnviandoIndividual(true)
+    try {
+      const res = await reenviarCredencialesAction(funcionarioParaReenvio.id, emailInputReenvio.trim())
+      if (res.success) {
+        toast.success(res.message || `Credenciales enviadas a ${emailInputReenvio}`)
+        setFuncionarioParaReenvio(null)
+        router.refresh()
+      } else {
+        toast.error(res.message || "No se pudo enviar el correo de credenciales")
+      }
+    } catch {
+      toast.error("Ocurrió un error inesperado al enviar las credenciales")
+    } finally {
+      setEnviandoIndividual(false)
+    }
+  }
+
+  const handleProbarConexionSmtp = async () => {
+    setProbandoConexion(true)
+    setTestEmailResult(null)
+    try {
+      const res = await probarConexionSmtpAction()
+      setTestEmailResult(res)
+      if (res.success) {
+        toast.success(res.message)
+      } else {
+        toast.error(res.message)
+      }
+    } catch {
+      toast.error("Error al verificar la conexión SMTP")
+    } finally {
+      setProbandoConexion(false)
+    }
+  }
+
+  const handleEnviarTestEmail = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!testEmailInput.trim()) {
+      toast.error("Ingrese el correo de destino")
+      return
+    }
+
+    setEnviandoTestEmail(true)
+    setTestEmailResult(null)
+    try {
+      const res = await enviarCorreoPruebaAction(testEmailInput.trim())
+      setTestEmailResult(res)
+      if (res.success) {
+        toast.success(res.message)
+      } else {
+        toast.error(res.message)
+      }
+    } catch {
+      toast.error("Error al enviar correo de prueba")
+    } finally {
+      setEnviandoTestEmail(false)
     }
   }
 
@@ -646,15 +785,29 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
 
         <div className="flex flex-wrap items-center gap-2">
           {tab === "personal" && (
-            <Button
-              variant="outline"
-              className="bg-white hover:bg-blue-50 border-[#0E5296]/30 text-[#002F6C] font-bold rounded-2xl shadow-xs cursor-pointer text-xs flex items-center gap-1.5"
-              onClick={() => setShowBulkEmailModal(true)}
-              title="Enviar credenciales institucionales y enlace de acceso a todos los usuarios"
-            >
-              <SendIcon className="h-4 w-4 text-[#0E5296]" />
-              Enviar Credenciales a Todos
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                className="bg-white hover:bg-amber-50 border-amber-300 text-[#002F6C] font-bold rounded-2xl shadow-xs cursor-pointer text-xs flex items-center gap-1.5"
+                onClick={() => {
+                  setTestEmailResult(null)
+                  setShowTestEmailModal(true)
+                }}
+                title="Probar servidor SMTP institucional y enviar correo de prueba"
+              >
+                <FlaskConicalIcon className="h-4 w-4 text-amber-600" />
+                Probar Correo SMTP
+              </Button>
+              <Button
+                variant="outline"
+                className="bg-white hover:bg-blue-50 border-[#0E5296]/30 text-[#002F6C] font-bold rounded-2xl shadow-xs cursor-pointer text-xs flex items-center gap-1.5"
+                onClick={() => handleOpenBulkModal(selectedIds.length > 0 ? selectedIds : undefined)}
+                title="Enviar credenciales institucionales y enlace de acceso a los funcionarios"
+              >
+                <SendIcon className="h-4 w-4 text-[#0E5296]" />
+                {selectedIds.length > 0 ? `Enviar a Seleccionados (${selectedIds.length})` : "Enviar Credenciales a Todos"}
+              </Button>
+            </>
           )}
           <Button
             className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold rounded-2xl shadow-md shadow-[#0E5296]/20 cursor-pointer text-xs"
@@ -803,6 +956,43 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
         </div>
       </div>
 
+      {/* ── Barra Flotante de Selección Múltiple ── */}
+      {tab === "personal" && selectedIds.length > 0 && (
+        <div className="rounded-2xl border-2 border-[#0E5296]/30 bg-gradient-to-r from-blue-50 via-white to-amber-50 p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-md animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-3">
+            <span className="flex h-3 w-3 rounded-full bg-[#0E5296] animate-ping" />
+            <div>
+              <span className="text-xs font-black text-[#002F6C]">
+                {selectedIds.length} funcionario(s) seleccionado(s)
+              </span>
+              <p className="text-[11px] text-slate-500 font-medium">
+                Puede enviar credenciales por correo masivamente a la selección.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedIds([])}
+              className="h-8 px-3 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+            >
+              Deseleccionar todos
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => handleOpenBulkModal(selectedIds)}
+              className="h-8 px-4 rounded-xl bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold text-xs shadow-xs cursor-pointer flex items-center gap-1.5"
+            >
+              <SendIcon className="h-3.5 w-3.5 text-[#FFCC00]" />
+              Enviar credenciales a seleccionados ({selectedIds.length})
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* ══════════════════════════════════════════════════════════════ */}
       {/* VISTA EN TABLA ESTRUCTURADA ESTILO INSTITUCIONAL AGBC          */}
       {/* ══════════════════════════════════════════════════════════════ */}
@@ -857,6 +1047,22 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
           <table className="w-full text-left border-collapse min-w-[760px]">
             <thead>
               <tr className="border-b border-slate-200/80 bg-gradient-to-r from-blue-50/80 via-white to-amber-50/60 text-[10px] font-black uppercase tracking-wider text-[#002F6C]">
+                {tab === "personal" && (
+                  <th className="py-3.5 px-3 text-center w-10">
+                    <button
+                      type="button"
+                      onClick={handleSelectAll}
+                      className="text-[#002F6C] hover:text-[#0E5296] transition-colors p-0.5 cursor-pointer"
+                      title={selectedIds.length === filteredPersonal.length && filteredPersonal.length > 0 ? "Deseleccionar todos" : "Seleccionar todos"}
+                    >
+                      {selectedIds.length > 0 && selectedIds.length === filteredPersonal.length ? (
+                        <CheckSquareIcon className="h-4 w-4 text-[#0E5296]" />
+                      ) : (
+                        <SquareIcon className="h-4 w-4 text-slate-400" />
+                      )}
+                    </button>
+                  </th>
+                )}
                 <th className="py-3.5 px-4">{tab === "personal" ? "Funcionario / Cargo" : "Directivo / Autoridad"}</th>
                 {tab === "directorio" && <th className="py-3.5 px-4">Dirección Asignada</th>}
                 <th className="py-3.5 px-4">Correo Institucional</th>
@@ -869,7 +1075,7 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
             <tbody className="divide-y divide-slate-100 text-xs">
               {paginatedList.length === 0 ? (
                 <tr>
-                  <td colSpan={tab === "personal" ? 6 : 5} className="py-12 text-center text-slate-400 font-medium">
+                  <td colSpan={tab === "personal" ? 7 : 5} className="py-12 text-center text-slate-400 font-medium">
                     No se encontraron registros en {tab === "personal" ? "Padrón de Funcionarios" : "Directorio Ejecutivo"}.
                   </td>
                 </tr>
@@ -880,6 +1086,23 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
 
                   return (
                     <tr key={item.id} className="hover:bg-blue-50/40 transition-colors group">
+                      {/* Checkbox de selección para personal */}
+                      {tab === "personal" && (
+                        <td className="py-3 px-3 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleSelect(item.id)}
+                            className="text-[#0E5296] hover:scale-110 transition-transform p-0.5 cursor-pointer"
+                          >
+                            {selectedIds.includes(item.id) ? (
+                              <CheckSquareIcon className="h-4 w-4 text-[#0E5296]" />
+                            ) : (
+                              <SquareIcon className="h-4 w-4 text-slate-300 group-hover:text-slate-400" />
+                            )}
+                          </button>
+                        </td>
+                      )}
+
                       {/* Funcionario / Directivo (Avatar + Nombre + Cargo) */}
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
@@ -971,6 +1194,17 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
                       {/* Acciones */}
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          {/* Botón de Enviar Credenciales Individual */}
+                          {tab === "personal" && (
+                            <button
+                              onClick={() => handleOpenReenvioModal(item)}
+                              className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-[#0E5296] hover:bg-[#0E5296] hover:text-white transition-colors cursor-pointer shadow-2xs border border-blue-200"
+                              title="Enviar o reenviar credenciales a este funcionario"
+                            >
+                              <SendIcon className="h-3.5 w-3.5 text-[#0E5296] hover:text-white" />
+                            </button>
+                          )}
+
                           {/* Botón de Baja / Alta rápida */}
                           <button
                             onClick={() => {
@@ -1547,8 +1781,13 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
         </DialogContent>
       </Dialog>
 
-      {/* ── Modal de Confirmación para Envío Masivo de Credenciales ── */}
-      <Dialog open={showBulkEmailModal} onOpenChange={(open) => !open && !enviandoMasivo && setShowBulkEmailModal(false)}>
+      {/* ── Modal de Reenvío Individual de Credenciales ── */}
+      <Dialog
+        open={Boolean(funcionarioParaReenvio)}
+        onOpenChange={(open) => {
+          if (!open && !enviandoIndividual) setFuncionarioParaReenvio(null)
+        }}
+      >
         <DialogContent className="p-0 gap-0 overflow-hidden rounded-3xl max-w-md w-full border-2 border-[#0E5296]/20 bg-white shadow-2xl">
           <div className="h-2 w-full bg-gradient-to-r from-[#002F6C] via-[#0E5296] to-[#FFCC00]" />
           <div className="p-6 space-y-4">
@@ -1558,52 +1797,312 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
               </div>
               <div className="space-y-1">
                 <DialogTitle className="text-base font-black text-[#002F6C]">
-                  ¿Enviar credenciales masivas a todos los funcionarios?
+                  Enviar Credenciales de Acceso
                 </DialogTitle>
                 <DialogDescription className="text-xs text-slate-500 font-medium">
-                  Se enviará una notificación por correo a cada funcionario registrado en la Intranet.
+                  Enviar correo de acceso para <strong>{funcionarioParaReenvio?.nombre}</strong>.
                 </DialogDescription>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-3.5 space-y-2 text-xs text-slate-700">
-              <p className="font-bold text-[#002F6C]">Cada funcionario recibirá:</p>
-              <ul className="list-disc list-inside space-y-1 text-slate-600 text-[11px]">
-                <li>Su usuario / correo institucional (<span className="font-mono font-semibold">@correos.gob.bo</span>)</li>
-                <li>Contraseña predeterminada: <strong className="font-mono text-[#0E5296]">Correos2026!</strong></li>
-                <li>Enlace directo de acceso: <span className="font-mono font-bold text-[#0E5296]">https://intranet.correos.gob.bo:8122/</span></li>
-              </ul>
+            <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-3.5 space-y-2 text-xs">
+              <Label className="text-xs font-bold text-[#002F6C]">Correo electrónico de destino:</Label>
+              <Input
+                type="email"
+                value={emailInputReenvio}
+                onChange={(e) => setEmailInputReenvio(e.target.value)}
+                placeholder="funcionario@correos.gob.bo"
+                className="h-10 text-xs bg-white border-blue-300 font-medium"
+              />
+              <p className="text-[11px] text-slate-500">
+                🔒 Se generará y enviará la contraseña de acceso junto al enlace del sistema. Por seguridad, la contraseña no se muestra en pantalla.
+              </p>
             </div>
 
             <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
               <Button
                 type="button"
                 variant="outline"
-                disabled={enviandoMasivo}
-                onClick={() => setShowBulkEmailModal(false)}
+                disabled={enviandoIndividual}
+                onClick={() => setFuncionarioParaReenvio(null)}
                 className="rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
               >
                 Cancelar
               </Button>
               <Button
                 type="button"
-                disabled={enviandoMasivo}
-                onClick={handleEnviarCredencialesMasivas}
+                disabled={enviandoIndividual}
+                onClick={handleEjecutarReenvioIndividual}
                 className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold rounded-xl text-xs shadow-md shadow-[#0E5296]/20 cursor-pointer flex items-center gap-1.5"
               >
-                {enviandoMasivo ? (
+                {enviandoIndividual ? (
                   <>
                     <Loader2Icon className="h-3.5 w-3.5 animate-spin" />
-                    Enviando correos...
+                    Enviando...
                   </>
                 ) : (
                   <>
                     <SendIcon className="h-3.5 w-3.5 text-[#FFCC00]" />
-                    Sí, Enviar a Todos
+                    Confirmar y Enviar
                   </>
                 )}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Modal Multi-paso de Envío Masivo de Credenciales ── */}
+      <Dialog
+        open={showBulkEmailModal}
+        onOpenChange={(open) => {
+          if (!open && !enviandoMasivo) {
+            setShowBulkEmailModal(false)
+            setBulkStep("confirm")
+            setBulkSummary(null)
+          }
+        }}
+      >
+        <DialogContent className="p-0 gap-0 overflow-hidden rounded-3xl max-w-lg w-full border-2 border-[#0E5296]/20 bg-white shadow-2xl">
+          <div className="h-2 w-full bg-gradient-to-r from-[#002F6C] via-[#0E5296] to-[#FFCC00]" />
+          <div className="p-6 space-y-4">
+            {/* PASO 1: CONFIRMACIÓN */}
+            {bulkStep === "confirm" && (
+              <>
+                <div className="flex items-start gap-3.5">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-[#0E5296] border border-blue-200">
+                    <SendIcon className="h-6 w-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <DialogTitle className="text-base font-black text-[#002F6C]">
+                      {bulkTargetIds && bulkTargetIds.length > 0
+                        ? `¿Enviar credenciales a ${bulkTargetIds.length} funcionario(s)?`
+                        : `¿Enviar credenciales a todos los funcionarios (${padronUnificado.length})?`}
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-slate-500 font-medium">
+                      Se enviará una notificación por correo a cada funcionario con sus datos de ingreso.
+                    </DialogDescription>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-3.5 space-y-2 text-xs text-slate-700">
+                  <p className="font-bold text-[#002F6C]">Cada correo incluirá:</p>
+                  <ul className="list-disc list-inside space-y-1 text-slate-600 text-[11px]">
+                    <li>Usuario / Correo institucional</li>
+                    <li>Contraseña de acceso inicial/temporal</li>
+                    <li>Botón y enlace directo al sistema: <span className="font-mono text-xs text-blue-800">https://intranet.correos.gob.bo:8122/</span></li>
+                    <li>Aviso de recomendación de cambio de contraseña</li>
+                  </ul>
+                </div>
+
+                <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowBulkEmailModal(false)}
+                    className="rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleEjecutarEnvioMasivo}
+                    className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold rounded-xl text-xs shadow-md shadow-[#0E5296]/20 cursor-pointer flex items-center gap-1.5"
+                  >
+                    <SendIcon className="h-3.5 w-3.5 text-[#FFCC00]" />
+                    Iniciar Envío Masivo
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {/* PASO 2: PROGRESO EN VIVO */}
+            {bulkStep === "progress" && (
+              <div className="py-8 flex flex-col items-center justify-center text-center space-y-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-50 text-[#0E5296] border-2 border-blue-200 animate-pulse">
+                  <Loader2Icon className="h-8 w-8 animate-spin text-[#0E5296]" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-base font-black text-[#002F6C]">Enviando credenciales por correo...</h3>
+                  <p className="text-xs text-slate-500 max-w-sm">
+                    El servidor SMTP de Correos de Bolivia está procesando y entregando los correos. Por favor espere.
+                  </p>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden max-w-xs">
+                  <div className="bg-[#0E5296] h-2 rounded-full animate-indeterminate" style={{ width: "70%" }} />
+                </div>
+              </div>
+            )}
+
+            {/* PASO 3: RESUMEN FINAL */}
+            {bulkStep === "summary" && bulkSummary && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+                    <CheckCircle2Icon className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <DialogTitle className="text-base font-black text-[#002F6C]">
+                      Resumen del Proceso de Envío
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-slate-500 font-medium">
+                      El proceso de envío masivo ha finalizado.
+                    </DialogDescription>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2.5">
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3 text-center">
+                    <div className="text-xl font-black text-emerald-700">{bulkSummary.enviados}</div>
+                    <div className="text-[10px] font-bold text-emerald-800">Enviados con éxito</div>
+                  </div>
+                  <div className="rounded-2xl border border-red-200 bg-red-50/70 p-3 text-center">
+                    <div className="text-xl font-black text-red-600">{bulkSummary.fallidos}</div>
+                    <div className="text-[10px] font-bold text-red-800">Con error</div>
+                  </div>
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-3 text-center">
+                    <div className="text-xl font-black text-amber-600">{bulkSummary.sinCorreo}</div>
+                    <div className="text-[10px] font-bold text-amber-800">Sin correo</div>
+                  </div>
+                </div>
+
+                {bulkSummary.detalles.filter((d) => d.estado !== "enviado").length > 0 && (
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-bold text-slate-700">Detalles de registros no enviados:</span>
+                    <div className="max-h-36 overflow-y-auto divide-y divide-slate-100 rounded-xl border border-slate-200 bg-slate-50 text-xs">
+                      {bulkSummary.detalles
+                        .filter((d) => d.estado !== "enviado")
+                        .map((d, i) => (
+                          <div key={i} className="p-2 flex items-center justify-between text-[11px]">
+                            <span className="font-bold text-slate-700">{d.nombre}</span>
+                            <span className="text-slate-500 text-[10px]">{d.motivo || d.estado}</span>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setShowBulkEmailModal(false)
+                      setBulkStep("confirm")
+                      setBulkSummary(null)
+                    }}
+                    className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold rounded-xl text-xs cursor-pointer"
+                  >
+                    Cerrar Resumen
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Modal de Prueba SMTP y Diagnóstico ── */}
+      <Dialog
+        open={showTestEmailModal}
+        onOpenChange={(open) => {
+          if (!open && !enviandoTestEmail && !probandoConexion) {
+            setShowTestEmailModal(false)
+            setTestEmailResult(null)
+          }
+        }}
+      >
+        <DialogContent className="p-0 gap-0 overflow-hidden rounded-3xl max-w-md w-full border-2 border-amber-300 bg-white shadow-2xl">
+          <div className="h-2 w-full bg-gradient-to-r from-amber-400 via-amber-500 to-[#0E5296]" />
+          <div className="p-6 space-y-4">
+            <div className="flex items-start gap-3.5">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-800 border border-amber-200">
+                <FlaskConicalIcon className="h-6 w-6 text-amber-700" />
+              </div>
+              <div className="space-y-1">
+                <DialogTitle className="text-base font-black text-[#002F6C]">
+                  Diagnóstico y Prueba de Servidor SMTP
+                </DialogTitle>
+                <DialogDescription className="text-xs text-slate-500 font-medium">
+                  Verifique la entrega de correos desde el servidor institucional Zimbra.
+                </DialogDescription>
+              </div>
+            </div>
+
+            <form onSubmit={handleEnviarTestEmail} className="space-y-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-[#002F6C]">Correo de destino para la prueba:</Label>
+                <Input
+                  type="email"
+                  required
+                  placeholder="ejemplo@gmail.com o usuario@correos.gob.bo"
+                  value={testEmailInput}
+                  onChange={(e) => setTestEmailInput(e.target.value)}
+                  className="h-10 text-xs bg-white border-amber-200 focus:border-[#0E5296]"
+                />
+              </div>
+
+              {testEmailResult && (
+                <div
+                  className={`rounded-2xl p-3 text-xs leading-relaxed border ${
+                    testEmailResult.success
+                      ? "bg-emerald-50 border-emerald-200 text-emerald-800 font-medium"
+                      : "bg-red-50 border-red-200 text-red-800 font-medium"
+                  }`}
+                >
+                  <div className="font-bold mb-0.5">
+                    {testEmailResult.success ? "✅ Resultado Exitoso:" : "❌ Error en la prueba:"}
+                  </div>
+                  {testEmailResult.message}
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={probandoConexion || enviandoTestEmail}
+                  onClick={handleProbarConexionSmtp}
+                  className="h-9 rounded-xl text-xs font-bold border-slate-200 text-[#002F6C] cursor-pointer"
+                >
+                  {probandoConexion ? (
+                    <>
+                      <Loader2Icon className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                      Verificando...
+                    </>
+                  ) : (
+                    "Test Conexión"
+                  )}
+                </Button>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setShowTestEmailModal(false)}
+                    className="h-9 rounded-xl text-xs text-slate-500"
+                  >
+                    Cerrar
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={enviandoTestEmail || probandoConexion}
+                    className="h-9 px-3.5 bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold rounded-xl text-xs shadow-xs cursor-pointer flex items-center gap-1.5"
+                  >
+                    {enviandoTestEmail ? (
+                      <>
+                        <Loader2Icon className="h-3.5 w-3.5 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <SendIcon className="h-3.5 w-3.5 text-[#FFCC00]" />
+                        Enviar Correo de Prueba
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </form>
           </div>
         </DialogContent>
       </Dialog>

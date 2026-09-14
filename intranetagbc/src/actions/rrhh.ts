@@ -10,7 +10,12 @@ import {
   sincronizarPersonalConUsuarioIndividual,
   sincronizarTodoPersonalConUsuarios,
 } from "@/lib/services/personal-user-sync"
-import { sendWelcomeCredentialsEmail } from "@/lib/email"
+import {
+  validarEmail,
+  sendWelcomeCredentialsEmail,
+  sendTestEmail,
+  verifySmtpConnection,
+} from "@/lib/email"
 
 /* ═══════════════════════ PERSONAL ═══════════════════════ */
 
@@ -23,6 +28,28 @@ export async function sincronizarPersonalYUsuariosAction() {
   revalidatePath("/rrhh")
   revalidatePath("/usuarios")
   return res
+}
+
+export async function probarConexionSmtpAction() {
+  return verifySmtpConnection()
+}
+
+export async function enviarCorreoPruebaAction(to: string) {
+  try {
+    if (!validarEmail(to)) {
+      return {
+        success: false,
+        message: "La dirección de correo electrónico ingresada no es válida.",
+      }
+    }
+    const res = await sendTestEmail(to)
+    return res
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error?.message || "Error al enviar correo de prueba.",
+    }
+  }
 }
 
 export async function restablecerTodasLasContrasenasAction() {
@@ -62,53 +89,177 @@ export async function restablecerTodasLasContrasenasAction() {
   }
 }
 
-export async function enviarCredencialesMasivasAction() {
+export async function reenviarCredencialesAction(personalId: string, customEmail?: string) {
   try {
-    const todos = await db.select().from(personal)
+    const [p] = await db.select().from(personal).where(eq(personal.id, personalId)).limit(1)
+    if (!p) {
+      return { success: false, message: "No se encontró el registro del funcionario." }
+    }
+
+    const emailDestino = (customEmail || p.email || "").trim()
+    if (!validarEmail(emailDestino)) {
+      return {
+        success: false,
+        message: `El funcionario "${p.nombre}" no cuenta con un correo electrónico válido.`,
+      }
+    }
+
+    // Si se especificó un nuevo correo, actualizarlo en la tabla personal
+    if (customEmail && customEmail.trim() !== p.email) {
+      await db.update(personal).set({ email: customEmail.trim(), updatedAt: new Date() }).where(eq(personal.id, p.id))
+      p.email = customEmail.trim()
+    }
+
+    // Asegurar y restablecer clave segura temporal
+    const passwordTemporal = "Correos2026!"
+    const authContext = await auth.$context
+    const hashedPassword = await authContext.password.hash(passwordTemporal)
+
+    // Sincronizar / actualizar usuario
+    await sincronizarPersonalConUsuarioIndividual(p, passwordTemporal)
+
+    // Enviar correo
+    const emailRes = await sendWelcomeCredentialsEmail({
+      to: emailDestino,
+      nombre: p.nombre,
+      usuario: p.email || emailDestino,
+      emailInstitucional: p.email || undefined,
+      password: passwordTemporal,
+      ci: p.ci && p.ci !== "—" ? p.ci : undefined,
+      esReenvio: true,
+    })
+
+    if (emailRes.success) {
+      await registrarAuditLog({
+        usuario: "administrador",
+        accion: `Reenvió credenciales de acceso a: ${p.nombre} (${emailDestino})`,
+        modulo: "RRHH",
+        resultado: "Exitoso",
+      })
+
+      return {
+        success: true,
+        message: `Credenciales enviadas correctamente a ${emailDestino}.`,
+      }
+    } else {
+      return {
+        success: false,
+        message: emailRes.error || "No se pudo enviar el correo de credenciales. Revise la configuración SMTP.",
+      }
+    }
+  } catch (error: any) {
+    console.error("Error en reenviarCredencialesAction:", error)
+    return {
+      success: false,
+      message: error?.message || "Ocurrió un error al procesar el reenvío de credenciales.",
+    }
+  }
+}
+
+export async function enviarCredencialesMasivasAction(ids?: string[]) {
+  try {
+    let funcionarios: (typeof personal.$inferSelect)[] = []
+
+    if (ids && ids.length > 0) {
+      const todos = await db.select().from(personal)
+      funcionarios = todos.filter((p) => ids.includes(p.id))
+    } else {
+      funcionarios = await db.select().from(personal)
+    }
+
     let enviados = 0
     let fallidos = 0
+    let sinCorreo = 0
+    const detalles: Array<{
+      id: string
+      nombre: string
+      email: string | null
+      estado: "enviado" | "error" | "sin_correo"
+      motivo?: string
+    }> = []
 
-    for (const p of todos) {
-      const emailDestino = p.email && p.email.trim().includes("@")
-        ? p.email.trim()
-        : null
+    for (const p of funcionarios) {
+      const emailDestino = p.email ? p.email.trim() : null
 
-      if (emailDestino) {
-        try {
-          const res = await sendWelcomeCredentialsEmail({
-            to: emailDestino,
+      if (!emailDestino || !validarEmail(emailDestino)) {
+        sinCorreo++
+        detalles.push({
+          id: p.id,
+          nombre: p.nombre,
+          email: emailDestino,
+          estado: "sin_correo",
+          motivo: "Sin correo registrado o formato inválido",
+        })
+        continue
+      }
+
+      try {
+        const res = await sendWelcomeCredentialsEmail({
+          to: emailDestino,
+          nombre: p.nombre,
+          usuario: p.email || emailDestino,
+          emailInstitucional: p.email || undefined,
+          password: "Correos2026!",
+          ci: p.ci && p.ci !== "—" ? p.ci : undefined,
+          esReenvio: true,
+        })
+
+        if (res.success) {
+          enviados++
+          detalles.push({
+            id: p.id,
             nombre: p.nombre,
-            emailInstitucional: p.email || `${p.nombre.toLowerCase().replace(/\s+/g, ".")}@correos.gob.bo`,
-            password: "Correos2026!",
-            ci: p.ci && p.ci !== "—" ? p.ci : undefined,
+            email: emailDestino,
+            estado: "enviado",
           })
-          if (res.success) enviados++
-          else fallidos++
-        } catch {
+        } else {
           fallidos++
+          detalles.push({
+            id: p.id,
+            nombre: p.nombre,
+            email: emailDestino,
+            estado: "error",
+            motivo: res.error || "Error al entregar correo",
+          })
         }
+      } catch (err: any) {
+        fallidos++
+        detalles.push({
+          id: p.id,
+          nombre: p.nombre,
+          email: emailDestino,
+          estado: "error",
+          motivo: err?.message || "Error inesperado",
+        })
       }
     }
 
     await registrarAuditLog({
-      usuario: "sistema",
-      accion: `Envió credenciales masivas por correo: ${enviados} exitosos, ${fallidos} fallidos`,
+      usuario: "administrador",
+      accion: `Ejecutó envío masivo de credenciales: ${enviados} enviados, ${fallidos} errores, ${sinCorreo} sin correo de un total de ${funcionarios.length}`,
       modulo: "RRHH",
-      resultado: "Exitoso",
+      resultado: fallidos === 0 ? "Exitoso" : "Parcial",
     })
 
     return {
       success: true,
-      message: `Proceso completado: Se enviaron credenciales a ${enviados} funcionarios (${fallidos} fallidos o sin correo).`,
-      total: todos.length,
+      message: `Proceso finalizado: ${enviados} enviados con éxito, ${fallidos} con error, ${sinCorreo} sin correo registrado.`,
+      total: funcionarios.length,
       enviados,
       fallidos,
+      sinCorreo,
+      detalles,
     }
   } catch (error: any) {
     console.error("Error al enviar credenciales masivas:", error)
     return {
       success: false,
       message: error?.message || "Error al procesar el envío masivo de correos.",
+      total: 0,
+      enviados: 0,
+      fallidos: 0,
+      sinCorreo: 0,
+      detalles: [],
     }
   }
 }
@@ -127,25 +278,68 @@ export async function crearPersonal(
   password?: string
 ) {
   const passwordFinal = password && password.trim().length >= 6 ? password.trim() : "Correos2026!"
+  const emailNorm = data.email ? data.email.trim() : ""
   const payload = {
     ...data,
+    email: emailNorm || null,
     ci: data.ci ? data.ci.slice(0, 20) : "—",
     unidad: data.unidad || "General",
     fechaIngreso: data.fechaIngreso || new Date().toISOString().split("T")[0],
   }
   const [nuevo] = await db.insert(personal).values(payload).returning()
 
+  let emailEnviado = false
+  let mensajeCorreo = ""
+
   // Sincronizar automáticamente con la cuenta de usuario (users + account + roles)
   if (nuevo) {
     await sincronizarPersonalConUsuarioIndividual(nuevo, passwordFinal)
+
+    // Enviar correo de bienvenida
+    if (emailNorm && validarEmail(emailNorm)) {
+      try {
+        const mailRes = await sendWelcomeCredentialsEmail({
+          to: emailNorm,
+          nombre: nuevo.nombre,
+          usuario: emailNorm,
+          emailInstitucional: emailNorm,
+          password: passwordFinal,
+          ci: nuevo.ci && nuevo.ci !== "—" ? nuevo.ci : undefined,
+          esReenvio: false,
+        })
+        emailEnviado = mailRes.success
+        if (mailRes.success) {
+          mensajeCorreo = "Usuario creado correctamente. Las credenciales fueron enviadas al correo registrado."
+        } else {
+          mensajeCorreo = "Usuario creado, pero no se pudo enviar el correo. Puede intentar reenviar las credenciales."
+        }
+      } catch {
+        emailEnviado = false
+        mensajeCorreo = "Usuario creado, pero no se pudo enviar el correo. Puede intentar reenviar las credenciales."
+      }
+    } else {
+      mensajeCorreo = "Usuario creado correctamente (sin correo registrado para el envío de credenciales)."
+    }
   }
 
-  await registrarAuditLog({ usuario: "sistema", accion: `Registró personal: ${data.nombre}`, modulo: "RRHH", resultado: "Exitoso" })
+  await registrarAuditLog({
+    usuario: "sistema",
+    accion: `Registró funcionario: ${data.nombre} (Email enviado: ${emailEnviado ? "Sí" : "No"})`,
+    modulo: "RRHH",
+    resultado: "Exitoso",
+  })
+
   revalidatePath("/rrhh")
   revalidatePath("/usuarios")
   revalidatePath("/")
   revalidatePath("/dashboard")
-  return nuevo
+
+  return {
+    success: true,
+    data: nuevo,
+    emailEnviado,
+    message: mensajeCorreo,
+  }
 }
 
 export async function actualizarPersonal(
