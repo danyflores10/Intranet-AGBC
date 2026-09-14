@@ -8,6 +8,8 @@ type UsersTableProps = {
   users: User[]
   canEdit: boolean
   canDelete: boolean
+  currentUserId?: string
+  currentUserEmail?: string
   onEdit: (user: User) => void
   onDelete: (user: User) => void
   onToggleStatus?: (user: User) => void
@@ -43,7 +45,7 @@ function getUserLevel(roles: { id: string; name: string }[]) {
   return { level: "Nivel 3", label: "Operador / Funcionario", bg: "bg-slate-100 text-slate-700 border-slate-200" }
 }
 
-export function UsersTable({ users, canEdit, canDelete, onEdit, onDelete, onToggleStatus }: UsersTableProps) {
+export function UsersTable({ users, canEdit, canDelete, currentUserId, currentUserEmail, onEdit, onDelete, onToggleStatus }: UsersTableProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 8
   const totalPages = Math.max(1, Math.ceil(users.length / pageSize))
@@ -72,67 +74,64 @@ export function UsersTable({ users, canEdit, canDelete, onEdit, onDelete, onTogg
           <thead>
             <tr className="border-b border-slate-200/80 bg-gradient-to-r from-blue-50/80 via-white to-amber-50/60 text-[10px] font-black uppercase tracking-wider text-[#002F6C]">
               <th className="py-3.5 px-4">Usuario / Funcionario</th>
-              <th className="py-3.5 px-4">Nivel de Acceso</th>
-              <th className="py-3.5 px-4">Rol Asignado</th>
-              <th className="py-3.5 px-4 text-center">Estado de Cuenta</th>
-              <th className="py-3.5 px-4 text-center">Última Actividad</th>
-              {(canEdit || canDelete) && (
-                <th className="py-3.5 px-4 text-right">Acciones</th>
-              )}
+              <th className="py-3.5 px-4">Correo Institucional</th>
+              <th className="py-3.5 px-4 text-center">Nivel / Rol</th>
+              <th className="py-3.5 px-4 text-center">Estado</th>
+              <th className="py-3.5 px-4 text-center">Fecha Alta</th>
+              {(canEdit || canDelete) && <th className="py-3.5 px-4 text-right">Acciones</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs">
             {paginatedUsers.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-12 text-center text-slate-400 font-medium">
-                  No hay usuarios que coincidan con la búsqueda.
+                <td colSpan={canEdit || canDelete ? 6 : 5} className="py-12 text-center text-slate-400 font-medium">
+                  No se encontraron usuarios que coincidan con la búsqueda.
                 </td>
               </tr>
             ) : (
               paginatedUsers.map((u) => {
-                const rolesText = u.roles.map((r) => r.name).join(", ") || "Funcionario Base"
                 const userLevel = getUserLevel(u.roles)
+                const isSelf = Boolean(
+                  (currentUserId && u.id === currentUserId) ||
+                  (currentUserEmail && (
+                    (u.institutionalEmail && u.institutionalEmail.toLowerCase().trim() === currentUserEmail.toLowerCase().trim()) ||
+                    (u.email && u.email.toLowerCase().trim() === currentUserEmail.toLowerCase().trim())
+                  ))
+                )
 
                 return (
-                  <tr
-                    key={u.id}
-                    className="hover:bg-blue-50/40 transition-colors group"
-                  >
-                    {/* Usuario (Avatar + Nombre + Correo) */}
+                  <tr key={u.id} className="hover:bg-blue-50/40 transition-colors group">
+                    {/* Funcionario */}
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FFCC00] text-[#002F6C] font-black text-xs shadow-xs border border-amber-300">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#002F6C] text-[#FFCC00] font-black text-xs shadow-xs border border-blue-900/20">
                           {getInitials(u.name)}
                         </div>
                         <div className="min-w-0 space-y-0.5">
-                          <p className="font-black text-[#002F6C] text-xs truncate max-w-[200px]">
-                            {u.name}
-                          </p>
-                          <p className="text-xs truncate max-w-[200px]">
-                            <span className="text-slate-400 font-medium">Cargo: </span>
-                            <span className="text-[#0E5296] font-bold">{rolesText || "Personal"}</span>
-                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-black text-[#002F6C] text-xs truncate max-w-[200px]">
+                              {u.name}
+                            </p>
+                            {isSelf && (
+                              <span className="rounded-md bg-blue-100 text-[#002F6C] text-[9px] font-black px-1.5 py-0.2 border border-blue-200">
+                                Tú
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-400 font-medium">CI: {u.nationalId}</p>
                         </div>
                       </div>
                     </td>
 
-                    {/* Nivel de Usuario */}
-                    <td className="py-3 px-4">
-                      <span
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider border shadow-2xs ${userLevel.bg}`}
-                      >
-                        <span>{userLevel.level}:</span>
-                        <span>{userLevel.label}</span>
-                      </span>
+                    {/* Correo */}
+                    <td className="py-3 px-4 font-mono font-medium text-slate-600 text-[11px]">
+                      {u.institutionalEmail}
                     </td>
 
-                    {/* Rol */}
-                    <td className="py-3 px-4">
-                      <span
-                        className="inline-block rounded-xl bg-slate-100 border border-slate-200 text-[#002F6C] px-2.5 py-0.5 text-[10px] font-bold max-w-[150px] truncate"
-                        title={rolesText}
-                      >
-                        {rolesText}
+                    {/* Nivel / Rol */}
+                    <td className="py-3 px-4 text-center">
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider border shadow-2xs ${userLevel.bg}`}>
+                        {userLevel.label}
                       </span>
                     </td>
 
@@ -142,21 +141,17 @@ export function UsersTable({ users, canEdit, canDelete, onEdit, onDelete, onTogg
                         className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
                           u.isActive
                             ? "bg-emerald-50 text-emerald-700"
-                            : "bg-slate-100 text-slate-500"
+                            : "bg-red-50 text-red-600"
                         }`}
                       >
-                        <span
-                          className={`h-2 w-2 rounded-full ${
-                            u.isActive ? "bg-emerald-500" : "bg-slate-400"
-                          }`}
-                        />
+                        <span className={`h-2 w-2 rounded-full ${u.isActive ? "bg-emerald-500" : "bg-red-500"}`} />
                         {u.isActive ? "Activo" : "Inactivo"}
                       </span>
                     </td>
 
-                    {/* Actualizado */}
-                    <td className="py-3 px-4 text-center text-[10px] text-slate-500 font-medium">
-                      {formatDate(u.updatedAt)}
+                    {/* Fecha de Registro */}
+                    <td className="py-3 px-4 text-center text-slate-500 text-[11px] font-medium">
+                      {formatDate(u.createdAt)}
                     </td>
 
                     {/* Acciones */}
@@ -165,13 +160,19 @@ export function UsersTable({ users, canEdit, canDelete, onEdit, onDelete, onTogg
                         <div className="flex items-center justify-end gap-1.5">
                           {canEdit && onToggleStatus && (
                             <button
-                              onClick={() => onToggleStatus(u)}
-                              className={`flex h-7 items-center gap-1 px-2 rounded-lg text-[10px] font-bold transition-colors cursor-pointer shadow-2xs ${
-                                u.isActive
-                                  ? "bg-amber-50 text-amber-800 hover:bg-amber-500 hover:text-white border border-amber-200"
-                                  : "bg-emerald-50 text-emerald-800 hover:bg-emerald-600 hover:text-white border border-emerald-200"
+                              disabled={isSelf && u.isActive}
+                              onClick={() => {
+                                if (isSelf && u.isActive) return
+                                onToggleStatus(u)
+                              }}
+                              className={`flex h-7 items-center gap-1 px-2 rounded-lg text-[10px] font-bold transition-colors shadow-2xs ${
+                                isSelf && u.isActive
+                                  ? "bg-slate-100 text-slate-400 opacity-40 cursor-not-allowed border border-slate-200"
+                                  : u.isActive
+                                  ? "bg-amber-50 text-amber-800 hover:bg-amber-500 hover:text-white border border-amber-200 cursor-pointer"
+                                  : "bg-emerald-50 text-emerald-800 hover:bg-emerald-600 hover:text-white border border-emerald-200 cursor-pointer"
                               }`}
-                              title={u.isActive ? "Dar de baja a este usuario" : "Reactivar / Dar de alta"}
+                              title={isSelf && u.isActive ? "No puedes darte de baja a ti mismo" : u.isActive ? "Dar de baja a este usuario" : "Reactivar / Dar de alta"}
                             >
                               {u.isActive ? (
                                 <>
@@ -197,9 +198,17 @@ export function UsersTable({ users, canEdit, canDelete, onEdit, onDelete, onTogg
                           )}
                           {canDelete && (
                             <button
-                              onClick={() => onDelete(u)}
-                              className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-colors cursor-pointer shadow-2xs"
-                              title="Eliminar usuario"
+                              disabled={isSelf}
+                              onClick={() => {
+                                if (isSelf) return
+                                onDelete(u)
+                              }}
+                              className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors shadow-2xs ${
+                                isSelf
+                                  ? "bg-slate-100 text-slate-300 opacity-30 cursor-not-allowed"
+                                  : "bg-red-50 text-red-600 hover:bg-red-600 hover:text-white cursor-pointer"
+                              }`}
+                              title={isSelf ? "No puede eliminar la cuenta que está utilizando actualmente." : "Eliminar usuario"}
                             >
                               <Trash2Icon className="h-3.5 w-3.5" />
                             </button>

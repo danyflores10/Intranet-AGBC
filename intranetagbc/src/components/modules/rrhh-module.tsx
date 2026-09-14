@@ -61,8 +61,6 @@ import {
   confirmarCambiosImportacionRRHH,
   enviarCredencialesMasivasAction,
   reenviarCredencialesAction,
-  enviarCorreoPruebaAction,
-  probarConexionSmtpAction,
 } from "@/actions/rrhh"
 import { verificarPasswordAdmin, revelarPasswordUsuario } from "@/actions/usuarios"
 
@@ -147,6 +145,13 @@ interface Props {
   personal: PersonalRow[]
   directivos: DirectivoRow[]
   usuarios?: UsuarioItem[]
+  usuarioActual?: {
+    id: string
+    name?: string | null
+    email?: string | null
+    institutionalEmail?: string | null
+    nationalId?: string | null
+  } | null
 }
 
 function FotoUploader({
@@ -235,7 +240,7 @@ function FotoUploader({
   )
 }
 
-export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
+export function RrhhModule({ personal, directivos, usuarios = [], usuarioActual }: Props) {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>("personal")
   const [searchQuery, setSearchQuery] = useState("")
@@ -284,13 +289,6 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
     detalles: Array<{ id: string; nombre: string; email: string | null; estado: string; motivo?: string }>
   } | null>(null)
   const [enviandoMasivo, setEnviandoMasivo] = useState(false)
-
-  // ── Modal de prueba SMTP ──
-  const [showTestEmailModal, setShowTestEmailModal] = useState(false)
-  const [testEmailInput, setTestEmailInput] = useState("")
-  const [enviandoTestEmail, setEnviandoTestEmail] = useState(false)
-  const [probandoConexion, setProbandoConexion] = useState(false)
-  const [testEmailResult, setTestEmailResult] = useState<{ success: boolean; message: string } | null>(null)
 
   const handleToggleSelect = (id: string) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]))
@@ -373,56 +371,22 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
     }
   }
 
-  const handleProbarConexionSmtp = async () => {
-    setProbandoConexion(true)
-    setTestEmailResult(null)
-    try {
-      const res = await probarConexionSmtpAction()
-      setTestEmailResult(res)
-      if (res.success) {
-        toast.success(res.message)
-      } else {
-        toast.error(res.message)
-      }
-    } catch {
-      toast.error("Error al verificar la conexión SMTP")
-    } finally {
-      setProbandoConexion(false)
-    }
-  }
-
-  const handleEnviarTestEmail = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!testEmailInput.trim()) {
-      toast.error("Ingrese el correo de destino")
-      return
-    }
-
-    setEnviandoTestEmail(true)
-    setTestEmailResult(null)
-    try {
-      const res = await enviarCorreoPruebaAction(testEmailInput.trim())
-      setTestEmailResult(res)
-      if (res.success) {
-        toast.success(res.message)
-      } else {
-        toast.error(res.message)
-      }
-    } catch {
-      toast.error("Error al enviar correo de prueba")
-    } finally {
-      setEnviandoTestEmail(false)
-    }
-  }
-
   const handleConfirmarEliminacionFisica = async () => {
     if (!itemAEliminar) return
     setEliminandoItem(true)
     try {
       if (itemAEliminar.tipo === "personal") {
-        await eliminarPersonal(itemAEliminar.id)
+        const res = await eliminarPersonal(itemAEliminar.id)
+        if (res && !res.success) {
+          toast.error(res.message || "No se pudo eliminar el registro")
+          return
+        }
       } else {
-        await eliminarDirectivo(itemAEliminar.id)
+        const res = await eliminarDirectivo(itemAEliminar.id)
+        if (res && !res.success) {
+          toast.error(res.message || "No se pudo eliminar el directivo")
+          return
+        }
       }
       toast.success(`${itemAEliminar.tipo === "personal" ? "Funcionario" : "Directivo"} eliminado permanentemente`)
       setItemAEliminar(null)
@@ -621,31 +585,36 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
       try {
         const payload = {
           nombre: (fd.get("nombre") as string).trim(),
+          ci: ((fd.get("ci") as string) || pEditItem?.ci || "—").trim(),
           cargo: (fd.get("cargo") as string).trim(),
-          email: (fd.get("email") as string) || undefined,
-          telefono: (fd.get("telefono") as string) || undefined,
+          unidad: ((fd.get("unidad") as string) || pEditItem?.unidad || "General").trim(),
+          email: (fd.get("email") as string) ? (fd.get("email") as string).trim() : undefined,
+          telefono: (fd.get("telefono") as string) ? (fd.get("telefono") as string).trim() : undefined,
           foto: pFotoUrl || undefined,
-          ci: "—",
-          unidad: "General",
-          fechaIngreso: pEditItem?.fechaIngreso || new Date().toISOString().split("T")[0],
+          fechaIngreso: (fd.get("fechaIngreso") as string) || pEditItem?.fechaIngreso || new Date().toISOString().split("T")[0],
         }
         if (pEditItem) {
           await actualizarPersonal(
             pEditItem.id,
             {
               ...payload,
-              estado: fd.get("estado") as string,
+              estado: (fd.get("estado") as string) || pEditItem.estado,
             },
             pPassword || undefined
           )
           toast.success("Personal actualizado correctamente")
         } else {
-          await crearPersonal(payload, "Correos2026!")
-          toast.success("Funcionario registrado exitosamente. Se enviaron las credenciales a su correo institucional.")
+          const res = await crearPersonal(payload, "Correos2026!")
+          if (res?.success) {
+            toast.success(res.message || "Funcionario registrado exitosamente. Se enviaron las credenciales a su correo institucional.")
+          } else {
+            toast.success("Funcionario registrado exitosamente.")
+          }
         }
         setPDialogOpen(false)
         setPEditItem(null)
         setPFotoUrl(null)
+        router.refresh()
       } catch {
         toast.error("Error al guardar personal")
       }
@@ -680,6 +649,7 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
         setDDialogOpen(false)
         setDEditItem(null)
         setDFotoUrl(null)
+        router.refresh()
       } catch {
         toast.error("Error al guardar directivo")
       }
@@ -687,11 +657,24 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
   }
 
   async function handleTogglePersonalStatus(item: PersonalRow) {
+    const isSelf = Boolean(
+      usuarioActual && (
+        item.id === usuarioActual.id ||
+        (item.email && usuarioActual.institutionalEmail && item.email.toLowerCase().trim() === usuarioActual.institutionalEmail.toLowerCase().trim()) ||
+        (item.email && usuarioActual.email && item.email.toLowerCase().trim() === usuarioActual.email.toLowerCase().trim())
+      )
+    )
+    if (isSelf && item.estado === "activo") {
+      toast.error("No puede desactivar la cuenta que está utilizando actualmente.")
+      return
+    }
+
     const nextEstado = item.estado === "activo" ? "inactivo" : "activo"
     startTransition(async () => {
       try {
         await actualizarPersonal(item.id, { estado: nextEstado })
         toast.success(`Personal ${nextEstado === "activo" ? "dado de alta" : "dado de baja"} correctamente`)
+        router.refresh()
       } catch {
         toast.error("Error al actualizar estado")
       }
@@ -699,11 +682,24 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
   }
 
   async function handleToggleDirectivoStatus(item: DirectivoRow) {
+    const isSelf = Boolean(
+      usuarioActual && (
+        item.id === usuarioActual.id ||
+        (item.email && usuarioActual.institutionalEmail && item.email.toLowerCase().trim() === usuarioActual.institutionalEmail.toLowerCase().trim()) ||
+        (item.email && usuarioActual.email && item.email.toLowerCase().trim() === usuarioActual.email.toLowerCase().trim())
+      )
+    )
+    if (isSelf && item.estado === "activo") {
+      toast.error("No puede desactivar la cuenta que está utilizando actualmente.")
+      return
+    }
+
     const nextEstado = item.estado === "activo" ? "inactivo" : "activo"
     startTransition(async () => {
       try {
         await actualizarDirectivo(item.id, { estado: nextEstado })
         toast.success(`Directivo ${nextEstado === "activo" ? "dado de alta" : "dado de baja"} correctamente`)
+        router.refresh()
       } catch {
         toast.error("Error al actualizar estado")
       }
@@ -785,29 +781,15 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
 
         <div className="flex flex-wrap items-center gap-2">
           {tab === "personal" && (
-            <>
-              <Button
-                variant="outline"
-                className="bg-white hover:bg-amber-50 border-amber-300 text-[#002F6C] font-bold rounded-2xl shadow-xs cursor-pointer text-xs flex items-center gap-1.5"
-                onClick={() => {
-                  setTestEmailResult(null)
-                  setShowTestEmailModal(true)
-                }}
-                title="Probar servidor SMTP institucional y enviar correo de prueba"
-              >
-                <FlaskConicalIcon className="h-4 w-4 text-amber-600" />
-                Probar Correo SMTP
-              </Button>
-              <Button
-                variant="outline"
-                className="bg-white hover:bg-blue-50 border-[#0E5296]/30 text-[#002F6C] font-bold rounded-2xl shadow-xs cursor-pointer text-xs flex items-center gap-1.5"
-                onClick={() => handleOpenBulkModal(selectedIds.length > 0 ? selectedIds : undefined)}
-                title="Enviar credenciales institucionales y enlace de acceso a los funcionarios"
-              >
-                <SendIcon className="h-4 w-4 text-[#0E5296]" />
-                {selectedIds.length > 0 ? `Enviar a Seleccionados (${selectedIds.length})` : "Enviar Credenciales a Todos"}
-              </Button>
-            </>
+            <Button
+              variant="outline"
+              className="bg-white hover:bg-blue-50 border-[#0E5296]/30 text-[#002F6C] font-bold rounded-2xl shadow-xs cursor-pointer text-xs flex items-center gap-1.5"
+              onClick={() => handleOpenBulkModal(selectedIds.length > 0 ? selectedIds : undefined)}
+              title="Enviar credenciales institucionales y enlace de acceso a los funcionarios"
+            >
+              <SendIcon className="h-4 w-4 text-[#0E5296]" />
+              {selectedIds.length > 0 ? `Enviar a Seleccionados (${selectedIds.length})` : "Enviar Credenciales a Todos"}
+            </Button>
           )}
           <Button
             className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold rounded-2xl shadow-md shadow-[#0E5296]/20 cursor-pointer text-xs"
@@ -1083,6 +1065,14 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
                 paginatedList.map((item: any) => {
                   const initials = getInitials(item.nombre)
                   const isActivo = item.estado === "activo"
+                  const isCurrentUser = Boolean(
+                    usuarioActual && (
+                      item.id === usuarioActual.id ||
+                      (item.email && usuarioActual.institutionalEmail && item.email.toLowerCase().trim() === usuarioActual.institutionalEmail.toLowerCase().trim()) ||
+                      (item.email && usuarioActual.email && item.email.toLowerCase().trim() === usuarioActual.email.toLowerCase().trim()) ||
+                      (item.ci && item.ci !== "—" && usuarioActual.nationalId && item.ci.trim() === usuarioActual.nationalId.trim())
+                    )
+                  )
 
                   return (
                     <tr key={item.id} className="hover:bg-blue-50/40 transition-colors group">
@@ -1123,7 +1113,14 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
                             />
                           </div>
                           <div className="min-w-0 space-y-0.5">
-                            <p className="font-black text-[#002F6C] text-xs truncate max-w-[220px]">{item.nombre}</p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-black text-[#002F6C] text-xs truncate max-w-[220px]">{item.nombre}</p>
+                              {isCurrentUser && (
+                                <span className="rounded-md bg-blue-100 text-[#002F6C] text-[9px] font-black px-1.5 py-0.2 border border-blue-200">
+                                  Tú
+                                </span>
+                              )}
+                            </div>
                             <p className="text-xs truncate max-w-[220px]">
                               <span className="text-slate-400 font-medium">Cargo: </span>
                               <span className="text-[#0E5296] font-bold">{item.cargo || "Personal"}</span>
@@ -1207,19 +1204,23 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
 
                           {/* Botón de Baja / Alta rápida */}
                           <button
+                            disabled={isCurrentUser && isActivo}
                             onClick={() => {
+                              if (isCurrentUser && isActivo) return
                               if (tab === "personal") {
                                 handleTogglePersonalStatus(item)
                               } else {
                                 handleToggleDirectivoStatus(item)
                               }
                             }}
-                            className={`flex h-7 items-center gap-1 px-2 rounded-lg text-[10px] font-bold transition-colors cursor-pointer shadow-2xs ${
-                              isActivo
-                                ? "bg-amber-50 text-amber-800 hover:bg-amber-500 hover:text-white border border-amber-200"
-                                : "bg-emerald-50 text-emerald-800 hover:bg-emerald-600 hover:text-white border border-emerald-200"
+                            className={`flex h-7 items-center gap-1 px-2 rounded-lg text-[10px] font-bold transition-colors shadow-2xs ${
+                              isCurrentUser && isActivo
+                                ? "bg-slate-100 text-slate-400 opacity-40 cursor-not-allowed border border-slate-200"
+                                : isActivo
+                                ? "bg-amber-50 text-amber-800 hover:bg-amber-500 hover:text-white border border-amber-200 cursor-pointer"
+                                : "bg-emerald-50 text-emerald-800 hover:bg-emerald-600 hover:text-white border border-emerald-200 cursor-pointer"
                             }`}
-                            title={isActivo ? "Dar de baja" : "Reactivar / Dar de alta"}
+                            title={isCurrentUser && isActivo ? "No puedes darte de baja a ti mismo" : isActivo ? "Dar de baja" : "Reactivar / Dar de alta"}
                           >
                             {isActivo ? (
                               <>
@@ -1251,9 +1252,17 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
 
                           {/* Botón de Eliminar */}
                           <button
-                            onClick={() => setItemAEliminar({ id: item.id, nombre: item.nombre, tipo: tab === "directorio" ? "directivo" : "personal" })}
-                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-colors cursor-pointer shadow-2xs"
-                            title="Eliminar permanentemente"
+                            disabled={isCurrentUser}
+                            onClick={() => {
+                              if (isCurrentUser) return
+                              setItemAEliminar({ id: item.id, nombre: item.nombre, tipo: tab === "directorio" ? "directivo" : "personal" })
+                            }}
+                            className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors shadow-2xs ${
+                              isCurrentUser
+                                ? "bg-slate-100 text-slate-300 opacity-30 cursor-not-allowed"
+                                : "bg-red-50 text-red-600 hover:bg-red-600 hover:text-white cursor-pointer"
+                            }`}
+                            title={isCurrentUser ? "No puede eliminar la cuenta que está utilizando actualmente." : "Eliminar permanentemente"}
                           >
                             <Trash2Icon className="h-3.5 w-3.5" />
                           </button>
@@ -1371,9 +1380,15 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
                 <Input name="nombre" required defaultValue={pEditItem?.nombre} placeholder="Ej. Maria Lopez Arce" className="h-10 text-xs" />
               </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-[#002F6C]">Cargo Institucional *</Label>
-                <Input name="cargo" required defaultValue={pEditItem?.cargo} placeholder="Ej. Analista de Sistemas" className="h-10 text-xs" />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-[#002F6C]">Cargo Institucional *</Label>
+                  <Input name="cargo" required defaultValue={pEditItem?.cargo} placeholder="Ej. Analista de Sistemas" className="h-10 text-xs" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-[#002F6C]">Cédula de Identidad (CI)</Label>
+                  <Input name="ci" defaultValue={pEditItem?.ci && pEditItem.ci !== "—" ? pEditItem.ci : ""} placeholder="Ej. 6845123 LP" className="h-10 text-xs" />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -1997,112 +2012,6 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
                 </div>
               </div>
             )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Modal de Prueba SMTP y Diagnóstico ── */}
-      <Dialog
-        open={showTestEmailModal}
-        onOpenChange={(open) => {
-          if (!open && !enviandoTestEmail && !probandoConexion) {
-            setShowTestEmailModal(false)
-            setTestEmailResult(null)
-          }
-        }}
-      >
-        <DialogContent className="p-0 gap-0 overflow-hidden rounded-3xl max-w-md w-full border-2 border-amber-300 bg-white shadow-2xl">
-          <div className="h-2 w-full bg-gradient-to-r from-amber-400 via-amber-500 to-[#0E5296]" />
-          <div className="p-6 space-y-4">
-            <div className="flex items-start gap-3.5">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-800 border border-amber-200">
-                <FlaskConicalIcon className="h-6 w-6 text-amber-700" />
-              </div>
-              <div className="space-y-1">
-                <DialogTitle className="text-base font-black text-[#002F6C]">
-                  Diagnóstico y Prueba de Servidor SMTP
-                </DialogTitle>
-                <DialogDescription className="text-xs text-slate-500 font-medium">
-                  Verifique la entrega de correos desde el servidor institucional Zimbra.
-                </DialogDescription>
-              </div>
-            </div>
-
-            <form onSubmit={handleEnviarTestEmail} className="space-y-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-[#002F6C]">Correo de destino para la prueba:</Label>
-                <Input
-                  type="email"
-                  required
-                  placeholder="ejemplo@gmail.com o usuario@correos.gob.bo"
-                  value={testEmailInput}
-                  onChange={(e) => setTestEmailInput(e.target.value)}
-                  className="h-10 text-xs bg-white border-amber-200 focus:border-[#0E5296]"
-                />
-              </div>
-
-              {testEmailResult && (
-                <div
-                  className={`rounded-2xl p-3 text-xs leading-relaxed border ${
-                    testEmailResult.success
-                      ? "bg-emerald-50 border-emerald-200 text-emerald-800 font-medium"
-                      : "bg-red-50 border-red-200 text-red-800 font-medium"
-                  }`}
-                >
-                  <div className="font-bold mb-0.5">
-                    {testEmailResult.success ? "✅ Resultado Exitoso:" : "❌ Error en la prueba:"}
-                  </div>
-                  {testEmailResult.message}
-                </div>
-              )}
-
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={probandoConexion || enviandoTestEmail}
-                  onClick={handleProbarConexionSmtp}
-                  className="h-9 rounded-xl text-xs font-bold border-slate-200 text-[#002F6C] cursor-pointer"
-                >
-                  {probandoConexion ? (
-                    <>
-                      <Loader2Icon className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                      Verificando...
-                    </>
-                  ) : (
-                    "Test Conexión"
-                  )}
-                </Button>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setShowTestEmailModal(false)}
-                    className="h-9 rounded-xl text-xs text-slate-500"
-                  >
-                    Cerrar
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={enviandoTestEmail || probandoConexion}
-                    className="h-9 px-3.5 bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold rounded-xl text-xs shadow-xs cursor-pointer flex items-center gap-1.5"
-                  >
-                    {enviandoTestEmail ? (
-                      <>
-                        <Loader2Icon className="h-3.5 w-3.5 animate-spin" />
-                        Enviando...
-                      </>
-                    ) : (
-                      <>
-                        <SendIcon className="h-3.5 w-3.5 text-[#FFCC00]" />
-                        Enviar Correo de Prueba
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </form>
           </div>
         </DialogContent>
       </Dialog>

@@ -19,5 +19,5 @@ export default async function RrhhPage() {
 
   const usuariosList = usuariosResult.success && usuariosResult.data ? usuariosResult.data : []
 
-  return <RrhhModule personal={personal} directivos={directivosDb} usuarios={usuariosList} />
+  return <RrhhModule personal={personal} directivos={directivosDb} usuarios={usuariosList} usuarioActual={usuario} />
 }

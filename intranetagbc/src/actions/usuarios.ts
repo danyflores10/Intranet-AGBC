@@ -1069,7 +1069,7 @@ export async function eliminarUsuario(userId: string): Promise<ResultadoAccion<D
     }
 
     if (sesion.id === userIdLimpio) {
-      return respuestaError("No puedes desactivar tu propio usuario desde este modulo.")
+      return respuestaError("No puede eliminar la cuenta que está utilizando actualmente.")
     }
 
     const usuarioActual = await findUserByIdWithRoles(userIdLimpio)

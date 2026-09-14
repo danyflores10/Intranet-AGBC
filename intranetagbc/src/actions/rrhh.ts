@@ -1,11 +1,12 @@
 "use server"
 
 import { db } from "@/db"
-import { personal, contactosEmergencia, directivos, users, account, userRoles } from "@/db/schema"
+import { personal, contactosEmergencia, directivos, users, account, userRoles, session } from "@/db/schema"
 import { eq, desc, asc, or } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { registrarAuditLog } from "@/actions/auditoria"
 import { auth } from "@/lib/auth"
+import { obtenerSesionConAccesoActual } from "@/lib/auth/session-access"
 import {
   sincronizarPersonalConUsuarioIndividual,
   sincronizarTodoPersonalConUsuarios,
@@ -372,36 +373,81 @@ export async function actualizarPersonal(
   return actualizado
 }
 
-export async function eliminarPersonal(id: string) {
-  const [pers] = await db.select().from(personal).where(eq(personal.id, id)).limit(1)
-  if (pers) {
+export async function eliminarPersonal(id: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const sesion = await obtenerSesionConAccesoActual()
+    const [pers] = await db.select().from(personal).where(eq(personal.id, id)).limit(1)
+    if (!pers) {
+      return { success: false, message: "Funcionario no encontrado." }
+    }
+
+    if (sesion?.id) {
+      const [currentUser] = await db.select().from(users).where(eq(users.id, sesion.id)).limit(1)
+      if (currentUser) {
+        const persEmail = (pers.email || "").trim().toLowerCase()
+        const persCi = (pers.ci || "").trim()
+        const curInstEmail = (currentUser.institutionalEmail || "").trim().toLowerCase()
+        const curEmail = (currentUser.email || "").trim().toLowerCase()
+        const curCi = (currentUser.nationalId || "").trim()
+
+        if (
+          (persEmail && (persEmail === curInstEmail || persEmail === curEmail)) ||
+          (persCi && persCi !== "—" && persCi === curCi) ||
+          (pers.id === currentUser.id)
+        ) {
+          return {
+            success: false,
+            message: "No puede eliminar la cuenta que está utilizando actualmente.",
+          }
+        }
+      }
+    }
+
     const emailNorm = pers.email ? pers.email.trim().toLowerCase() : null
     const ciNorm = pers.ci ? pers.ci.trim() : null
     if (emailNorm || (ciNorm && ciNorm !== "—")) {
-      try {
-        const conditions = []
-        if (emailNorm) conditions.push(eq(users.institutionalEmail, emailNorm), eq(users.email, emailNorm))
-        if (ciNorm && ciNorm !== "—") conditions.push(eq(users.nationalId, ciNorm))
-        if (conditions.length > 0) {
-          const matchedUsers = await db.select({ id: users.id }).from(users).where(or(...conditions))
-          for (const u of matchedUsers) {
-            await db.delete(account).where(eq(account.userId, u.id))
-            await db.delete(userRoles).where(eq(userRoles.userId, u.id))
-            try {
-              await db.delete(users).where(eq(users.id, u.id))
-            } catch {}
+      const conditions = []
+      if (emailNorm) conditions.push(eq(users.institutionalEmail, emailNorm), eq(users.email, emailNorm))
+      if (ciNorm && ciNorm !== "—") conditions.push(eq(users.nationalId, ciNorm))
+      if (conditions.length > 0) {
+        const matchedUsers = await db.select({ id: users.id }).from(users).where(or(...conditions))
+        for (const u of matchedUsers) {
+          if (sesion?.id && u.id === sesion.id) {
+            return {
+              success: false,
+              message: "No puede eliminar la cuenta que está utilizando actualmente.",
+            }
+          }
+          await db.delete(session).where(eq(session.userId, u.id))
+          await db.delete(account).where(eq(account.userId, u.id))
+          await db.delete(userRoles).where(eq(userRoles.userId, u.id))
+          try {
+            await db.delete(users).where(eq(users.id, u.id))
+          } catch (e) {
+            console.error("Error al eliminar usuario vinculado:", e)
           }
         }
-      } catch {}
+      }
     }
-  }
 
-  await db.delete(personal).where(eq(personal.id, id))
-  await registrarAuditLog({ usuario: "sistema", accion: `Eliminó permanentemente personal ID: ${id}`, modulo: "RRHH", resultado: "Exitoso" })
-  revalidatePath("/rrhh")
-  revalidatePath("/usuarios")
-  revalidatePath("/")
-  revalidatePath("/dashboard")
+    await db.delete(personal).where(eq(personal.id, id))
+    await registrarAuditLog({
+      usuario: sesion?.id || "sistema",
+      accion: `Eliminó permanentemente personal: ${pers.nombre}`,
+      modulo: "RRHH",
+      resultado: "Exitoso",
+    })
+
+    revalidatePath("/rrhh")
+    revalidatePath("/usuarios")
+    revalidatePath("/")
+    revalidatePath("/dashboard")
+
+    return { success: true, message: "Funcionario eliminado permanentemente." }
+  } catch (error: any) {
+    console.error("Error en eliminarPersonal:", error)
+    return { success: false, message: error?.message || "Error al eliminar funcionario." }
+  }
 }
 
 /* ═══════════════════════ DIRECTIVOS ═══════════════════════ */
@@ -449,11 +495,41 @@ export async function actualizarDirectivo(id: string, data: Partial<{
   return actualizado
 }
 
-export async function eliminarDirectivo(id: string) {
-  await db.delete(directivos).where(eq(directivos.id, id))
-  await registrarAuditLog({ usuario: "sistema", accion: `Eliminó directivo ID: ${id}`, modulo: "RRHH", resultado: "Exitoso" })
-  revalidatePath("/rrhh")
-  revalidatePath("/")
+export async function eliminarDirectivo(id: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const sesion = await obtenerSesionConAccesoActual()
+    const [d] = await db.select().from(directivos).where(eq(directivos.id, id)).limit(1)
+    if (!d) return { success: false, message: "Directivo no encontrado." }
+
+    if (sesion?.id) {
+      const [currentUser] = await db.select().from(users).where(eq(users.id, sesion.id)).limit(1)
+      if (currentUser && d.email) {
+        const dEmail = d.email.trim().toLowerCase()
+        const curInstEmail = (currentUser.institutionalEmail || "").trim().toLowerCase()
+        const curEmail = (currentUser.email || "").trim().toLowerCase()
+        if (dEmail === curInstEmail || dEmail === curEmail) {
+          return {
+            success: false,
+            message: "No puede eliminar la cuenta que está utilizando actualmente.",
+          }
+        }
+      }
+    }
+
+    await db.delete(directivos).where(eq(directivos.id, id))
+    await registrarAuditLog({
+      usuario: sesion?.id || "sistema",
+      accion: `Eliminó directivo: ${d.nombre}`,
+      modulo: "RRHH",
+      resultado: "Exitoso",
+    })
+    revalidatePath("/rrhh")
+    revalidatePath("/")
+
+    return { success: true, message: "Directivo eliminado permanentemente." }
+  } catch (error: any) {
+    return { success: false, message: error?.message || "Error al eliminar directivo." }
+  }
 }
 
 

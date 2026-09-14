@@ -278,6 +278,8 @@ export function UsersModule({
             users={filteredUsers}
             canEdit={canEditUser}
             canDelete={canDeleteUser}
+            currentUserId={usuario?.id}
+            currentUserEmail={usuario?.email}
             onEdit={setUserToEdit}
             onDelete={setUserToDelete}
             onToggleStatus={handleToggleStatus}

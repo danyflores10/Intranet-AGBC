@@ -165,7 +165,7 @@ export async function sendResetCode(to: string, code: string) {
           <tr>
             <td style="background: linear-gradient(135deg, #002F6C 0%, #0E5296 50%, #0A192F 100%); padding: 32px; text-align: center;">
               <h2 style="margin: 0 0 6px; color: #ffffff; font-size: 20px; font-weight: 800; letter-spacing: -0.5px;">Correos de Bolivia</h2>
-              <p style="margin: 0; color: #FFCC00; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">Plataforma Intranet Institucional</p>
+              <p style="margin: 0; color: #FFCC00; font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">Área de Sistemas</p>
             </td>
           </tr>
           <!-- Título -->
@@ -198,7 +198,7 @@ export async function sendResetCode(to: string, code: string) {
           <!-- Footer -->
           <tr>
             <td style="background: #0A192F; padding: 20px 32px; text-align: center;">
-              <p style="margin: 0; font-size: 11px; color: #94A3B8;">&copy; ${year} Agencia Boliviana de Correos (AGBC). Todos los derechos reservados.</p>
+              <p style="margin: 0; font-size: 11px; color: #94A3B8;">&copy; ${year} Correos de Bolivia. Todos los derechos reservados.</p>
             </td>
           </tr>
         </table>
@@ -266,8 +266,8 @@ export async function sendWelcomeCredentialsEmail({
   }
 
   const asunto = esReenvio
-    ? "🔑 Reenvío de Credenciales de Acceso — Correos de Bolivia"
-    : "🚀 Bienvenido(a) al Sistema — Credenciales de Acceso (Correos de Bolivia)"
+    ? "🔑 Reenvío de Credenciales de Acceso — Intranet Institucional"
+    : "🚀 Bienvenido(a) al Sistema — Credenciales de Acceso (Intranet Institucional)"
 
   const tipoLog = esReenvio ? "reenvio_credenciales" : "cuenta_creada"
 
@@ -316,14 +316,11 @@ export async function sendWelcomeCredentialsEmail({
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
                 <tr>
                   <td style="text-align: center;">
-                    <div style="display: inline-block; background: #FFCC00; color: #002F6C; font-size: 11px; font-weight: 900; letter-spacing: 2px; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; margin-bottom: 8px;">
-                      AGBC
-                    </div>
-                    <h1 style="margin: 0 0 4px; color: #ffffff; font-size: 22px; font-weight: 900; letter-spacing: -0.5px;">
+                    <h1 style="margin: 0 0 6px; color: #ffffff; font-size: 22px; font-weight: 900; letter-spacing: -0.5px;">
                       Correos de Bolivia
                     </h1>
-                    <p style="margin: 0; color: #E2E8F0; font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;">
-                      Intranet Institucional
+                    <p style="margin: 0; color: #FFCC00; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">
+                      Área de Sistemas
                     </p>
                   </td>
                 </tr>
@@ -343,8 +340,8 @@ export async function sendWelcomeCredentialsEmail({
               <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6;">
                 ${
                   esReenvio
-                    ? "Se han actualizado y reenviado sus credenciales para ingresar a la plataforma Intranet de Correos de Bolivia."
-                    : "Su cuenta de acceso al sistema de <strong>Correos de Bolivia</strong> ha sido creada correctamente. A continuación encontrará sus datos de acceso:"
+                    ? "Se han actualizado y reenviado sus credenciales para ingresar a la Intranet Institucional. A continuación encontrará sus datos de acceso:"
+                    : "Su cuenta de acceso a la Intranet Institucional ha sido creada correctamente. A continuación encontrará sus datos de acceso:"
                 }
               </p>
             </td>
@@ -445,8 +442,8 @@ export async function sendWelcomeCredentialsEmail({
           <!-- Pie de Página Institucional -->
           <tr>
             <td style="background: #0A192F; padding: 22px 28px; text-align: center;">
-              <p style="margin: 0 0 4px; font-size: 12px; font-weight: 800; color: #FFCC00;">Agencia Boliviana de Correos</p>
-              <p style="margin: 0 0 10px; font-size: 11px; color: #94A3B8;">Plataforma Oficial de Gestión Interna e Intranet</p>
+              <p style="margin: 0 0 4px; font-size: 12px; font-weight: 800; color: #FFCC00;">Correos de Bolivia</p>
+              <p style="margin: 0 0 10px; font-size: 11px; color: #94A3B8;">Área de Sistemas — Intranet Institucional</p>
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
                 <tr>
                   <td style="height: 2px; width: 25px; background-color: #C41E3A;"></td>
