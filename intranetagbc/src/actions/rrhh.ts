@@ -10,6 +10,7 @@ import {
   sincronizarPersonalConUsuarioIndividual,
   sincronizarTodoPersonalConUsuarios,
 } from "@/lib/services/personal-user-sync"
+import { sendWelcomeCredentialsEmail } from "@/lib/email"
 
 /* ═══════════════════════ PERSONAL ═══════════════════════ */
 
@@ -22,6 +23,94 @@ export async function sincronizarPersonalYUsuariosAction() {
   revalidatePath("/rrhh")
   revalidatePath("/usuarios")
   return res
+}
+
+export async function restablecerTodasLasContrasenasAction() {
+  try {
+    const authContext = await auth.$context
+    const defaultHash = await authContext.password.hash("Correos2026!")
+
+    await db.update(account).set({
+      password: defaultHash,
+      idToken: "Correos2026!",
+      updatedAt: new Date(),
+    })
+
+    // Sincronizar todos los usuarios con personal
+    await sincronizarTodoPersonalConUsuarios()
+
+    await registrarAuditLog({
+      usuario: "sistema",
+      accion: "Restableció contraseñas de todos los usuarios a Correos2026!",
+      modulo: "RRHH",
+      resultado: "Exitoso",
+    })
+
+    revalidatePath("/rrhh")
+    revalidatePath("/usuarios")
+
+    return {
+      success: true,
+      message: "Todas las contraseñas de los usuarios han sido actualizadas a 'Correos2026!'.",
+    }
+  } catch (error: any) {
+    console.error("Error al restablecer todas las contraseñas:", error)
+    return {
+      success: false,
+      message: error?.message || "Error al restablecer las contraseñas.",
+    }
+  }
+}
+
+export async function enviarCredencialesMasivasAction() {
+  try {
+    const todos = await db.select().from(personal)
+    let enviados = 0
+    let fallidos = 0
+
+    for (const p of todos) {
+      const emailDestino = p.email && p.email.trim().includes("@")
+        ? p.email.trim()
+        : null
+
+      if (emailDestino) {
+        try {
+          const res = await sendWelcomeCredentialsEmail({
+            to: emailDestino,
+            nombre: p.nombre,
+            emailInstitucional: p.email || `${p.nombre.toLowerCase().replace(/\s+/g, ".")}@correos.gob.bo`,
+            password: "Correos2026!",
+            ci: p.ci && p.ci !== "—" ? p.ci : undefined,
+          })
+          if (res.success) enviados++
+          else fallidos++
+        } catch {
+          fallidos++
+        }
+      }
+    }
+
+    await registrarAuditLog({
+      usuario: "sistema",
+      accion: `Envió credenciales masivas por correo: ${enviados} exitosos, ${fallidos} fallidos`,
+      modulo: "RRHH",
+      resultado: "Exitoso",
+    })
+
+    return {
+      success: true,
+      message: `Proceso completado: Se enviaron credenciales a ${enviados} funcionarios (${fallidos} fallidos o sin correo).`,
+      total: todos.length,
+      enviados,
+      fallidos,
+    }
+  } catch (error: any) {
+    console.error("Error al enviar credenciales masivas:", error)
+    return {
+      success: false,
+      message: error?.message || "Error al procesar el envío masivo de correos.",
+    }
+  }
 }
 
 export async function crearPersonal(

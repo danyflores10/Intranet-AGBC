@@ -183,24 +183,30 @@ export async function sendWelcomeCredentialsEmail({
   ci?: string
 }) {
   const year = new Date().getFullYear()
-  const baseUrl = process.env.BETTER_AUTH_URL || process.env.NEXTAUTH_URL || "http://localhost:3000"
-  const loginUrl = `${baseUrl}/`
+  const loginUrl = "https://intranet.correos.gob.bo:8122/"
+  const baseUrl = process.env.NEXTAUTH_URL || process.env.BETTER_AUTH_URL || "https://intranet.correos.gob.bo:8122"
   const passwordToShow = password || "Correos2026!"
 
   try {
     if (!process.env.SMTP_USER || !process.env.SMTP_HOST) {
-      console.warn("SMTP no configurado. Credenciales generadas para:", {
+      console.warn("SMTP no configurado en entorno. Credenciales:", {
         to,
         nombre,
         emailInstitucional,
         password: passwordToShow,
       })
-      return { success: false, warning: "SMTP no configurado" }
+      return { success: false, warning: "Servicio SMTP no configurado en variables de entorno." }
     }
 
-    await transporter.sendMail({
+    // Si tiene correo personal e institucional distintos, enviar a ambos
+    const destinatarios = [to]
+    if (emailInstitucional && emailInstitucional.includes("@") && emailInstitucional.toLowerCase() !== to.toLowerCase()) {
+      destinatarios.push(emailInstitucional)
+    }
+
+    const info = await transporter.sendMail({
       from: process.env.SMTP_FROM || `"Intranet AGBC" <${process.env.SMTP_USER}>`,
-      to,
+      to: destinatarios.join(", "),
       subject: "🚀 Bienvenido(a) a la Intranet — Correos de Bolivia (Credenciales de Acceso)",
       html: `
 <!DOCTYPE html>

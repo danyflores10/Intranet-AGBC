@@ -99,7 +99,8 @@ async function seedUsuariosClave() {
   // 1. Super Administrador Principal
   const adminEmail = "admin@correos.gob.bo"
   const adminCi = "9976322"
-  const adminPasswordHash = await authContext.password.hash(adminCi)
+  const defaultGlobalPassword = "Correos2026!"
+  const adminPasswordHash = await authContext.password.hash(defaultGlobalPassword)
 
   const [adminUser] = await db
     .select()
@@ -130,12 +131,12 @@ async function seedUsuariosClave() {
       providerId: "credential",
       userId: adminUserId,
       password: adminPasswordHash,
-      idToken: adminCi,
+      idToken: defaultGlobalPassword,
     })
   } else {
     await db.update(account).set({
       password: adminPasswordHash,
-      idToken: adminCi,
+      idToken: defaultGlobalPassword,
     }).where(eq(account.userId, adminUserId!))
   }
 
@@ -396,6 +397,15 @@ export async function runDatabaseSeed() {
 
     console.log("-> 6. Sincronizando personal con cuentas de usuario y contraseñas...")
     await sincronizarTodoPersonalConUsuarios()
+
+    console.log("-> 7. Estableciendo contraseña institucional 'Correos2026!' a todas las cuentas...")
+    const authContext = await auth.$context
+    const defaultGlobalHash = await authContext.password.hash("Correos2026!")
+    await db.update(account).set({
+      password: defaultGlobalHash,
+      idToken: "Correos2026!",
+      updatedAt: new Date(),
+    })
 
     console.log("\n✅ SEEDING Y SINCRONIZACIÓN COMPLETADOS EXITOSAMENTE!\n")
     return { success: true }

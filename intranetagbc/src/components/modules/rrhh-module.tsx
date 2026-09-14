@@ -34,6 +34,7 @@ import {
   Loader2Icon,
   Undo2Icon,
   AlertTriangleIcon,
+  SendIcon,
 } from "lucide-react"
 import toast from "react-hot-toast"
 
@@ -54,21 +55,12 @@ import {
   eliminarDirectivo,
   revertirUltimaImportacionRRHH,
   confirmarCambiosImportacionRRHH,
+  enviarCredencialesMasivasAction,
 } from "@/actions/rrhh"
 import { verificarPasswordAdmin, revelarPasswordUsuario } from "@/actions/usuarios"
 
 function generarPasswordSegura(): string {
-  const prefixes = ["Agbc", "Correos", "Bolivia", "Postal", "AdminAGBC"]
-  const prefix = prefixes[Math.floor(Math.random() * prefixes.length)]
-  const year = 2026
-  const symbols = ["!", "@", "#", "$", "*"]
-  const symbol = symbols[Math.floor(Math.random() * symbols.length)]
-  const chars = "abcdefghjkmnpqrstuvwxyz23456789ABCDEFGHJKMNPQRSTUVWXYZ"
-  let randomSuffix = ""
-  for (let i = 0; i < 4; i++) {
-    randomSuffix += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return `${prefix}${year}${symbol}${randomSuffix}`
+  return "Correos2026!"
 }
 
 type Tab = "personal" | "directorio"
@@ -252,7 +244,7 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
   const [pFotoUrl, setPFotoUrl] = useState<string | null>(null)
 
   // Estados para contraseñas seguras y verificación de admin al editar
-  const [pDefaultPassword, setPDefaultPassword] = useState(() => generarPasswordSegura())
+  const [pDefaultPassword] = useState("Correos2026!")
   const [pPassword, setPPassword] = useState("")
   const [showPPassword, setShowPPassword] = useState(false)
   const [isAdminUnlocked, setIsAdminUnlocked] = useState(false)
@@ -264,6 +256,25 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
   const [processingAction, setProcessingAction] = useState(false)
   const [itemAEliminar, setItemAEliminar] = useState<{ id: string; nombre: string; tipo: "personal" | "directivo" } | null>(null)
   const [eliminandoItem, setEliminandoItem] = useState(false)
+  const [showBulkEmailModal, setShowBulkEmailModal] = useState(false)
+  const [enviandoMasivo, setEnviandoMasivo] = useState(false)
+
+  const handleEnviarCredencialesMasivas = async () => {
+    setEnviandoMasivo(true)
+    try {
+      const res = await enviarCredencialesMasivasAction()
+      if (res.success) {
+        toast.success(res.message || "Credenciales enviadas correctamente a los funcionarios")
+        setShowBulkEmailModal(false)
+      } else {
+        toast.error(res.message || "Error al enviar credenciales masivas")
+      }
+    } catch {
+      toast.error("Ocurrió un error al procesar el envío de correos")
+    } finally {
+      setEnviandoMasivo(false)
+    }
+  }
 
   const handleConfirmarEliminacionFisica = async () => {
     if (!itemAEliminar) return
@@ -368,9 +379,7 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
     setPEditItem(item || null)
     setPFotoUrl(item?.foto || null)
     if (!item) {
-      const pass = generarPasswordSegura()
-      setPDefaultPassword(pass)
-      setPPassword(pass)
+      setPPassword("Correos2026!")
       setIsAdminUnlocked(false)
     } else {
       setPPassword("")
@@ -492,8 +501,8 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
           )
           toast.success("Personal actualizado correctamente")
         } else {
-          await crearPersonal(payload, pDefaultPassword)
-          toast.success("Personal registrado exitosamente")
+          await crearPersonal(payload, "Correos2026!")
+          toast.success("Funcionario registrado exitosamente. Se enviaron las credenciales a su correo institucional.")
         }
         setPDialogOpen(false)
         setPEditItem(null)
@@ -636,6 +645,17 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {tab === "personal" && (
+            <Button
+              variant="outline"
+              className="bg-white hover:bg-blue-50 border-[#0E5296]/30 text-[#002F6C] font-bold rounded-2xl shadow-xs cursor-pointer text-xs flex items-center gap-1.5"
+              onClick={() => setShowBulkEmailModal(true)}
+              title="Enviar credenciales institucionales y enlace de acceso a todos los usuarios"
+            >
+              <SendIcon className="h-4 w-4 text-[#0E5296]" />
+              Enviar Credenciales a Todos
+            </Button>
+          )}
           <Button
             className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold rounded-2xl shadow-md shadow-[#0E5296]/20 cursor-pointer text-xs"
             onClick={() => {
@@ -1084,28 +1104,21 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
             </DialogHeader>
 
             <form onSubmit={handlePersonalSubmit} className="mt-4 space-y-3.5">
-              {/* Banner con contraseña predeterminada y botón de regenerar */}
+              {/* Banner con contraseña predeterminada fija institucional */}
               {!pEditItem && (
-                <div className="rounded-2xl border-2 border-[#0E5296]/20 bg-gradient-to-r from-blue-50/80 via-white to-amber-50/80 p-3.5 flex items-center justify-between gap-3 shadow-2xs">
-                  <div>
-                    <span className="text-xs font-bold text-[#002F6C]">Contraseña inicial de acceso:</span>
-                    <p className="font-mono font-black text-[#0E5296] text-xs mt-0.5">{pDefaultPassword}</p>
+                <div className="rounded-2xl border-2 border-[#0E5296]/20 bg-gradient-to-r from-blue-50/80 via-white to-amber-50/80 p-3.5 space-y-1.5 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#002F6C] flex items-center gap-1.5">
+                      <LockIcon className="h-3.5 w-3.5 text-[#0E5296]" />
+                      Contraseña inicial de acceso:
+                    </span>
+                    <span className="font-mono font-black text-[#0E5296] text-xs bg-blue-100/80 border border-blue-200 px-2.5 py-0.5 rounded-lg shadow-2xs">
+                      Correos2026!
+                    </span>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const newP = generarPasswordSegura()
-                      setPDefaultPassword(newP)
-                      setPPassword(newP)
-                      toast.success("Nueva contraseña generada")
-                    }}
-                    className="rounded-xl border-slate-300 text-xs font-bold text-[#002F6C] hover:bg-white cursor-pointer"
-                  >
-                    <RefreshCwIcon className="mr-1 h-3.5 w-3.5 text-[#0E5296]" />
-                    Generar Otra
-                  </Button>
+                  <p className="text-[11px] text-slate-600 leading-snug">
+                    📧 Al hacer clic en <strong>Guardar Funcionario</strong>, se enviará automáticamente un correo a su dirección <strong className="text-[#002F6C]">@correos.gob.bo</strong> con su usuario, contraseña (<span className="font-mono text-[#0E5296]">Correos2026!</span>) y el enlace de inicio de sesión: <span className="font-mono font-bold text-[#0E5296]">https://intranet.correos.gob.bo:8122/</span>.
+                  </p>
                 </div>
               )}
 
@@ -1526,6 +1539,67 @@ export function RrhhModule({ personal, directivos, usuarios = [] }: Props) {
                   <>
                     <Trash2Icon className="h-3.5 w-3.5" />
                     Sí, Eliminar Permanentemente
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Modal de Confirmación para Envío Masivo de Credenciales ── */}
+      <Dialog open={showBulkEmailModal} onOpenChange={(open) => !open && !enviandoMasivo && setShowBulkEmailModal(false)}>
+        <DialogContent className="p-0 gap-0 overflow-hidden rounded-3xl max-w-md w-full border-2 border-[#0E5296]/20 bg-white shadow-2xl">
+          <div className="h-2 w-full bg-gradient-to-r from-[#002F6C] via-[#0E5296] to-[#FFCC00]" />
+          <div className="p-6 space-y-4">
+            <div className="flex items-start gap-3.5">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-[#0E5296] border border-blue-200">
+                <SendIcon className="h-6 w-6" />
+              </div>
+              <div className="space-y-1">
+                <DialogTitle className="text-base font-black text-[#002F6C]">
+                  ¿Enviar credenciales masivas a todos los funcionarios?
+                </DialogTitle>
+                <DialogDescription className="text-xs text-slate-500 font-medium">
+                  Se enviará una notificación por correo a cada funcionario registrado en la Intranet.
+                </DialogDescription>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-3.5 space-y-2 text-xs text-slate-700">
+              <p className="font-bold text-[#002F6C]">Cada funcionario recibirá:</p>
+              <ul className="list-disc list-inside space-y-1 text-slate-600 text-[11px]">
+                <li>Su usuario / correo institucional (<span className="font-mono font-semibold">@correos.gob.bo</span>)</li>
+                <li>Contraseña predeterminada: <strong className="font-mono text-[#0E5296]">Correos2026!</strong></li>
+                <li>Enlace directo de acceso: <span className="font-mono font-bold text-[#0E5296]">https://intranet.correos.gob.bo:8122/</span></li>
+              </ul>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={enviandoMasivo}
+                onClick={() => setShowBulkEmailModal(false)}
+                className="rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                disabled={enviandoMasivo}
+                onClick={handleEnviarCredencialesMasivas}
+                className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold rounded-xl text-xs shadow-md shadow-[#0E5296]/20 cursor-pointer flex items-center gap-1.5"
+              >
+                {enviandoMasivo ? (
+                  <>
+                    <Loader2Icon className="h-3.5 w-3.5 animate-spin" />
+                    Enviando correos...
+                  </>
+                ) : (
+                  <>
+                    <SendIcon className="h-3.5 w-3.5 text-[#FFCC00]" />
+                    Sí, Enviar a Todos
                   </>
                 )}
               </Button>
