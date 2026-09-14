@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer())
     await writeFile(filePath, buffer)
 
-    const imageUrl = `/image/avatars/${fileName}?t=${Date.now()}`
+    const imageUrl = `/image/avatars/${fileName}`
 
     await db
       .update(users)
