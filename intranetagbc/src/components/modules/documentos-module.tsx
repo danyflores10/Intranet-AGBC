@@ -21,6 +21,7 @@ import {
   ChevronRightIcon,
   CheckCircle2Icon,
   SparklesIcon,
+  LayersIcon,
 } from "lucide-react"
 import toast from "react-hot-toast"
 
@@ -46,6 +47,15 @@ import { PERMISOS } from "@/lib/auth/permisos"
 import { crearContextoAcceso, puedeAcceder, type UsuarioRbac } from "@/lib/rbac"
 import Image from "next/image"
 import { DocumentContentViewer } from "@/components/modules/document-content-viewer"
+import { DocumentosBulkDialog } from "@/components/modules/documentos-bulk-dialog"
+
+export function getDocumentUrl(archivo: string | null): string {
+  if (!archivo) return ""
+  if (archivo.startsWith("http://") || archivo.startsWith("https://")) return archivo
+  if (archivo.startsWith("/api/documentos/")) return archivo
+  const clean = archivo.replace(/^\/?(documentos\/)?/, "")
+  return `/api/documentos/${clean}`
+}
 
 type Tab = "todos" | "archivos" | "categorias"
 
@@ -94,6 +104,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   const [searchQuery, setSearchQuery] = useState("")
 
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false)
   const [catDialogOpen, setCatDialogOpen] = useState(false)
   const [previewDoc, setPreviewDoc] = useState<DocRow | null>(null)
   const [editDoc, setEditDoc] = useState<DocRow | null>(null)
@@ -358,6 +369,16 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {canCreateDocumento && tab !== "categorias" && (
+            <Button
+              variant="outline"
+              className="border-2 border-[#0E5296] bg-white hover:bg-blue-50/90 text-[#002F6C] font-black rounded-2xl shadow-xs cursor-pointer text-xs transition-all"
+              onClick={() => setBulkDialogOpen(true)}
+            >
+              <LayersIcon className="mr-1.5 h-4 w-4 text-[#0E5296]" />
+              Subir varios documentos
+            </Button>
+          )}
           {canCreateDocumento && (
             <Button
               className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold rounded-2xl shadow-md shadow-[#0E5296]/20 cursor-pointer text-xs"
@@ -371,7 +392,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
               }}
             >
               <PlusIcon className="mr-1.5 h-4 w-4 text-[#FFCC00]" />
-              {tab === "categorias" ? "Nueva Categoría" : "Nuevo Documento"}
+              {tab === "categorias" ? "Nueva Categoría" : "Subir nuevo documento"}
             </Button>
           )}
         </div>
@@ -535,7 +556,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                           )}
                           {!isCat && item.archivo && (
                             <a
-                              href={item.archivo}
+                              href={`${getDocumentUrl(item.archivo)}?download=1`}
                               download={item.nombreArchivo ?? "documento"}
                               className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors cursor-pointer"
                               title="Descargar"
@@ -784,154 +805,169 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
           <div className="h-1.5 w-full bg-[#0E5296]" />
 
           {previewDoc && (
-            <>
-              <div className="flex items-center justify-between border-b border-border/40 px-6 py-4">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: getFileColor(previewDoc.tipoArchivo) + "15" }}>
+            (() => {
+              const fileEffectiveUrl = getDocumentUrl(previewDoc.archivo)
+              const downloadUrl = `${fileEffectiveUrl}?download=1`
+
+              return (
+                <>
+                  <div className="flex items-center justify-between border-b border-border/40 px-6 py-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: getFileColor(previewDoc.tipoArchivo) + "15" }}>
+                        {(() => {
+                          const Icon = getFileIcon(previewDoc.tipoArchivo)
+                          return <Icon className="h-5 w-5" style={{ color: getFileColor(previewDoc.tipoArchivo) }} />
+                        })()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold truncate">{previewDoc.titulo}</p>
+                        <p className="text-[11px] text-muted-foreground">{previewDoc.nombreArchivo} — {previewDoc.tamano}</p>
+                      </div>
+                    </div>
+                    <a
+                      href={downloadUrl}
+                      download={previewDoc.nombreArchivo ?? "archivo"}
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#0E5296] hover:bg-[#002F6C] px-4 py-2 text-xs font-bold text-white shadow-md shadow-[#0E5296]/20 transition-all cursor-pointer"
+                    >
+                      <DownloadIcon className="h-3.5 w-3.5 text-[#FFB800]" />
+                      Descargar
+                    </a>
+                  </div>
+
+                  <div className="flex-1 overflow-auto bg-muted/20" style={{ height: "70vh" }}>
                     {(() => {
+                      const t = (previewDoc.tipoArchivo || "").toLowerCase()
+                      const fileUrl = (previewDoc.archivo || "").toLowerCase()
+                      const fileName = (previewDoc.nombreArchivo || "").toLowerCase()
+                      
+                      const isPdf = t.includes("pdf") || fileUrl.endsWith(".pdf") || fileName.endsWith(".pdf")
+                      const isImage = ["jpg", "jpeg", "png", "webp", "gif"].some(ext => t.includes(ext) || fileUrl.endsWith("." + ext) || fileName.endsWith("." + ext))
+                      const isExcel = t.includes("xls") || t.includes("sheet") || t.includes("csv") || fileUrl.endsWith(".xlsx") || fileUrl.endsWith(".xls") || fileUrl.endsWith(".csv") || fileName.endsWith(".xlsx") || fileName.endsWith(".xls") || fileName.endsWith(".csv")
+                      const isWord = t.includes("doc") || t.includes("word") || fileUrl.endsWith(".docx") || fileUrl.endsWith(".doc") || fileName.endsWith(".docx") || fileName.endsWith(".doc")
+
+                      if (isPdf) {
+                        return (
+                          <div className="flex flex-col h-full w-full">
+                            <iframe src={fileEffectiveUrl} className="flex-1 w-full border-0 min-h-[500px]" title={previewDoc.titulo} />
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/40 bg-slate-100/80 px-4 py-2 text-xs">
+                              <span className="font-mono text-slate-500 truncate max-w-sm">{previewDoc.nombreArchivo}</span>
+                              <div className="flex items-center gap-2">
+                                <a
+                                  href={fileEffectiveUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3 py-1.5 font-medium text-slate-700 shadow-2xs transition-colors"
+                                >
+                                  <EyeIcon className="h-3.5 w-3.5 text-[#0E5296]" />
+                                  Abrir en nueva ventana
+                                </a>
+                                <a
+                                  href={downloadUrl}
+                                  download={previewDoc.nombreArchivo ?? "documento.pdf"}
+                                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#0E5296] hover:bg-[#002F6C] px-3 py-1.5 font-bold text-white shadow-2xs transition-colors"
+                                >
+                                  <DownloadIcon className="h-3.5 w-3.5 text-[#FFB800]" />
+                                  Descargar PDF
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      }
+
+                      if (isImage) {
+                        return (
+                          <div className="flex h-full items-center justify-center p-6">
+                            <img
+                              src={fileEffectiveUrl}
+                              alt={previewDoc.titulo}
+                              className="max-h-full max-w-full object-contain rounded-xl shadow-lg"
+                            />
+                          </div>
+                        )
+                      }
+
+                      if (isExcel || isWord) {
+                        return (
+                          <DocumentContentViewer
+                            url={fileEffectiveUrl}
+                            fileName={previewDoc.nombreArchivo ?? previewDoc.titulo}
+                            title={previewDoc.titulo}
+                            tipoArchivo={previewDoc.tipoArchivo}
+                          />
+                        )
+                      }
+
+                      const formatName = "Archivo Institucional"
+                      const formatBadgeColor = "bg-slate-100 text-slate-800 border-slate-300"
                       const Icon = getFileIcon(previewDoc.tipoArchivo)
-                      return <Icon className="h-5 w-5" style={{ color: getFileColor(previewDoc.tipoArchivo) }} />
-                    })()}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold truncate">{previewDoc.titulo}</p>
-                    <p className="text-[11px] text-muted-foreground">{previewDoc.nombreArchivo} — {previewDoc.tamano}</p>
-                  </div>
-                </div>
-                <a
-                  href={previewDoc.archivo!}
-                  download={previewDoc.nombreArchivo ?? "archivo"}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#0E5296] hover:bg-[#002F6C] px-4 py-2 text-xs font-bold text-white shadow-md shadow-[#0E5296]/20 transition-all cursor-pointer"
-                >
-                  <DownloadIcon className="h-3.5 w-3.5 text-[#FFB800]" />
-                  Descargar
-                </a>
-              </div>
 
-              <div className="flex-1 overflow-auto bg-muted/20" style={{ height: "70vh" }}>
-                {(() => {
-                  const t = (previewDoc.tipoArchivo || "").toLowerCase()
-                  const fileUrl = (previewDoc.archivo || "").toLowerCase()
-                  const fileName = (previewDoc.nombreArchivo || "").toLowerCase()
-                  
-                  const isPdf = t.includes("pdf") || fileUrl.endsWith(".pdf") || fileName.endsWith(".pdf")
-                  const isImage = ["jpg", "jpeg", "png", "webp", "gif"].some(ext => t.includes(ext) || fileUrl.endsWith("." + ext) || fileName.endsWith("." + ext))
-                  const isExcel = t.includes("xls") || t.includes("sheet") || t.includes("csv") || fileUrl.endsWith(".xlsx") || fileUrl.endsWith(".xls") || fileUrl.endsWith(".csv") || fileName.endsWith(".xlsx") || fileName.endsWith(".xls") || fileName.endsWith(".csv")
-                  const isWord = t.includes("doc") || t.includes("word") || fileUrl.endsWith(".docx") || fileUrl.endsWith(".doc") || fileName.endsWith(".docx") || fileName.endsWith(".doc")
+                      return (
+                        <div className="flex flex-col items-center justify-center gap-5 h-full px-6 py-8">
+                          <div className="flex h-24 w-24 items-center justify-center rounded-3xl shadow-sm border" style={{ backgroundColor: getFileColor(previewDoc.tipoArchivo) + "12", borderColor: getFileColor(previewDoc.tipoArchivo) + "30" }}>
+                            <Icon className="h-12 w-12" style={{ color: getFileColor(previewDoc.tipoArchivo) }} />
+                          </div>
 
-                  if (isPdf) {
-                    return (
-                      <div className="flex flex-col h-full w-full">
-                        <iframe src={previewDoc.archivo!} className="flex-1 w-full border-0 min-h-[500px]" title={previewDoc.titulo} />
-                        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/40 bg-slate-100/80 px-4 py-2 text-xs">
-                          <span className="font-mono text-slate-500 truncate max-w-sm">{previewDoc.nombreArchivo}</span>
-                          <div className="flex items-center gap-2">
+                          <div className="text-center max-w-md space-y-1.5">
+                            <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full border shadow-2xs ${formatBadgeColor}`}>
+                              {formatName}
+                            </span>
+                            <h4 className="text-base font-bold text-[#002F6C] line-clamp-2">{previewDoc.titulo}</h4>
+                            <p className="text-xs text-slate-500 font-mono">{previewDoc.nombreArchivo}</p>
+                          </div>
+
+                          <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 max-w-md w-full shadow-xs text-xs space-y-2 text-slate-600">
+                            <div className="flex justify-between">
+                              <span className="font-semibold text-slate-400">Categoría:</span>
+                              <span className="font-bold text-[#0E5296]">{previewDoc.categoria || "General"}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="font-semibold text-slate-400">Tamaño:</span>
+                              <span className="font-medium text-slate-700">{previewDoc.tamano || "—"}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="font-semibold text-slate-400">Estado:</span>
+                              <span className="font-medium text-emerald-600 font-bold capitalize">{previewDoc.estado}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap items-center justify-center gap-3">
                             <a
-                              href={previewDoc.archivo!}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3 py-1.5 font-medium text-slate-700 shadow-2xs transition-colors"
+                              href={downloadUrl}
+                              download={previewDoc.nombreArchivo ?? "documento"}
+                              className="inline-flex items-center gap-2 rounded-xl bg-[#0E5296] hover:bg-[#002F6C] px-6 py-3 text-xs font-bold text-white shadow-md shadow-[#0E5296]/20 transition-all cursor-pointer hover:scale-105"
                             >
-                              <EyeIcon className="h-3.5 w-3.5 text-[#0E5296]" />
-                              Abrir en nueva ventana
+                              <DownloadIcon className="h-4 w-4 text-[#FFB800]" />
+                              Descargar / Abrir Archivo
                             </a>
                             <a
-                              href={previewDoc.archivo!}
-                              download={previewDoc.nombreArchivo ?? "documento.pdf"}
-                              className="inline-flex items-center gap-1.5 rounded-lg bg-[#0E5296] hover:bg-[#002F6C] px-3 py-1.5 font-bold text-white shadow-2xs transition-colors"
+                              href={fileEffectiveUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-5 py-3 text-xs font-bold text-[#002F6C] shadow-xs transition-all cursor-pointer"
                             >
-                              <DownloadIcon className="h-3.5 w-3.5 text-[#FFB800]" />
-                              Descargar PDF
+                              <EyeIcon className="h-4 w-4 text-[#0E5296]" />
+                              Abrir en nueva pestaña
                             </a>
                           </div>
                         </div>
-                      </div>
-                    )
-                  }
-
-                  if (isImage) {
-                    return (
-                      <div className="flex h-full items-center justify-center p-6">
-                        <img
-                          src={previewDoc.archivo!}
-                          alt={previewDoc.titulo}
-                          className="max-h-full max-w-full object-contain rounded-xl shadow-lg"
-                        />
-                      </div>
-                    )
-                  }
-
-                  if (isExcel || isWord) {
-                    return (
-                      <DocumentContentViewer
-                        url={previewDoc.archivo!}
-                        fileName={previewDoc.nombreArchivo ?? previewDoc.titulo}
-                        title={previewDoc.titulo}
-                        tipoArchivo={previewDoc.tipoArchivo}
-                      />
-                    )
-                  }
-
-                  const formatName = "Archivo Institucional"
-                  const formatBadgeColor = "bg-slate-100 text-slate-800 border-slate-300"
-                  const Icon = getFileIcon(previewDoc.tipoArchivo)
-
-                  return (
-                    <div className="flex flex-col items-center justify-center gap-5 h-full px-6 py-8">
-                      <div className="flex h-24 w-24 items-center justify-center rounded-3xl shadow-sm border" style={{ backgroundColor: getFileColor(previewDoc.tipoArchivo) + "12", borderColor: getFileColor(previewDoc.tipoArchivo) + "30" }}>
-                        <Icon className="h-12 w-12" style={{ color: getFileColor(previewDoc.tipoArchivo) }} />
-                      </div>
-
-                      <div className="text-center max-w-md space-y-1.5">
-                        <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full border shadow-2xs ${formatBadgeColor}`}>
-                          {formatName}
-                        </span>
-                        <h4 className="text-base font-bold text-[#002F6C] line-clamp-2">{previewDoc.titulo}</h4>
-                        <p className="text-xs text-slate-500 font-mono">{previewDoc.nombreArchivo}</p>
-                      </div>
-
-                      <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 max-w-md w-full shadow-xs text-xs space-y-2 text-slate-600">
-                        <div className="flex justify-between">
-                          <span className="font-semibold text-slate-400">Categoría:</span>
-                          <span className="font-bold text-[#0E5296]">{previewDoc.categoria || "General"}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="font-semibold text-slate-400">Tamaño:</span>
-                          <span className="font-medium text-slate-700">{previewDoc.tamano || "—"}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="font-semibold text-slate-400">Estado:</span>
-                          <span className="font-medium text-emerald-600 font-bold capitalize">{previewDoc.estado}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap items-center justify-center gap-3">
-                        <a
-                          href={previewDoc.archivo!}
-                          download={previewDoc.nombreArchivo ?? "documento"}
-                          className="inline-flex items-center gap-2 rounded-xl bg-[#0E5296] hover:bg-[#002F6C] px-6 py-3 text-xs font-bold text-white shadow-md shadow-[#0E5296]/20 transition-all cursor-pointer hover:scale-105"
-                        >
-                          <DownloadIcon className="h-4 w-4 text-[#FFB800]" />
-                          Descargar / Abrir Archivo
-                        </a>
-                        <a
-                          href={previewDoc.archivo!}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-5 py-3 text-xs font-bold text-[#002F6C] shadow-xs transition-all cursor-pointer"
-                        >
-                          <EyeIcon className="h-4 w-4 text-[#0E5296]" />
-                          Abrir en nueva pestaña
-                        </a>
-                      </div>
-                    </div>
-                  )
-                })()}
-              </div>
-            </>
+                      )
+                    })()}
+                  </div>
+                </>
+              )
+            })()
           )}
         </DialogContent>
       </Dialog>
+
+      <DocumentosBulkDialog
+        open={bulkDialogOpen}
+        onClose={() => setBulkDialogOpen(false)}
+        existingDocs={documentos}
+        categorias={categorias}
+        onSuccess={() => {}}
+      />
     </div>
   )
 }

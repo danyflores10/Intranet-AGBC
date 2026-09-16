@@ -136,6 +136,154 @@ export async function actualizarDocumento(id: string, data: Partial<{
   return actualizado
 }
 
+export interface DocumentoImportItem {
+  id?: string
+  titulo: string
+  categoriaNombre?: string | null
+  categoriaId?: string | null
+  descripcion?: string | null
+  estado?: string
+  archivo: string
+  nombreArchivo: string
+  tipoArchivo?: string | null
+  tamano?: string | null
+  esActualizacion?: boolean
+}
+
+export interface ResultadoImportacionDocumentos {
+  nuevos: number
+  existentes: number
+  actualizados: number
+  errores: number
+  detalles: Array<{
+    archivo: string
+    titulo: string
+    estado: "nuevo" | "actualizado" | "existente" | "error"
+    mensaje?: string
+  }>
+}
+
+export async function importarDocumentosLote(items: DocumentoImportItem[]): Promise<ResultadoImportacionDocumentos> {
+  const sesion = await autorizarAccion(PERMISOS.DOCUMENTOS.CREAR)
+
+  const catsDb = await db.select().from(documentoCategorias)
+  const catMap = new Map<string, string>()
+  for (const c of catsDb) {
+    catMap.set(normalizarTexto(c.nombre), c.id)
+  }
+
+  // Preload existing documents for duplicate comparison
+  const docsDb = await db.select().from(documentos)
+  const existingByFilename = new Map<string, typeof docsDb[0]>()
+  const existingByTitle = new Map<string, typeof docsDb[0]>()
+
+  for (const d of docsDb) {
+    if (d.nombreArchivo) {
+      existingByFilename.set(normalizarTexto(d.nombreArchivo), d)
+    }
+    if (d.titulo) {
+      existingByTitle.set(normalizarTexto(d.titulo), d)
+    }
+  }
+
+  const resultado: ResultadoImportacionDocumentos = {
+    nuevos: 0,
+    existentes: 0,
+    actualizados: 0,
+    errores: 0,
+    detalles: [],
+  }
+
+  for (const item of items) {
+    try {
+      let catId = item.categoriaId
+      if (!catId && item.categoriaNombre) {
+        catId = catMap.get(normalizarTexto(item.categoriaNombre))
+      }
+
+      const normFile = normalizarTexto(item.nombreArchivo || "")
+      const normTitle = normalizarTexto(item.titulo || "")
+      const existingDoc = item.id 
+        ? docsDb.find((d) => d.id === item.id)
+        : (existingByFilename.get(normFile) || existingByTitle.get(normTitle))
+
+      if (existingDoc) {
+        if (item.esActualizacion) {
+          // Update existing doc
+          await db
+            .update(documentos)
+            .set({
+              titulo: item.titulo,
+              categoriaId: catId || existingDoc.categoriaId,
+              descripcion: item.descripcion || existingDoc.descripcion,
+              estado: item.estado || "publicado",
+              archivo: item.archivo || existingDoc.archivo,
+              nombreArchivo: item.nombreArchivo || existingDoc.nombreArchivo,
+              tipoArchivo: item.tipoArchivo || existingDoc.tipoArchivo,
+              tamano: item.tamano || existingDoc.tamano,
+            })
+            .where(eq(documentos.id, existingDoc.id))
+
+          resultado.actualizados++
+          resultado.detalles.push({
+            archivo: item.nombreArchivo,
+            titulo: item.titulo,
+            estado: "actualizado",
+            mensaje: "Actualizado correctamente",
+          })
+        } else {
+          resultado.existentes++
+          resultado.detalles.push({
+            archivo: item.nombreArchivo,
+            titulo: item.titulo,
+            estado: "existente",
+            mensaje: "Ya existe en el sistema (omitido)",
+          })
+        }
+      } else {
+        // Insert new document
+        await db.insert(documentos).values({
+          titulo: item.titulo,
+          categoriaId: catId || undefined,
+          descripcion: item.descripcion || undefined,
+          estado: item.estado || "publicado",
+          archivo: item.archivo,
+          nombreArchivo: item.nombreArchivo,
+          tipoArchivo: item.tipoArchivo || undefined,
+          tamano: item.tamano || undefined,
+          autor: "AGBC Institucional",
+        })
+
+        resultado.nuevos++
+        resultado.detalles.push({
+          archivo: item.nombreArchivo,
+          titulo: item.titulo,
+          estado: "nuevo",
+          mensaje: "Importado exitosamente",
+        })
+      }
+    } catch (err: any) {
+      resultado.errores++
+      resultado.detalles.push({
+        archivo: item.nombreArchivo,
+        titulo: item.titulo,
+        estado: "error",
+        mensaje: err?.message || "Error al procesar",
+      })
+    }
+  }
+
+  await registrarAuditLog({
+    usuario: sesion.id,
+    accion: `Importación de documentos: ${resultado.nuevos} nuevos, ${resultado.actualizados} actualizados, ${resultado.existentes} existentes, ${resultado.errores} errores`,
+    modulo: "Documentos",
+    resultado: "Exitoso",
+  })
+
+  revalidatePath("/documentos")
+  return resultado
+}
+
 export async function eliminarDocumento(id: string) {
   const sesion = await autorizarAccion(PERMISOS.DOCUMENTOS.ELIMINAR)
 

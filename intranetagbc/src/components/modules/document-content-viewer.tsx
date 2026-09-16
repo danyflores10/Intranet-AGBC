@@ -30,6 +30,11 @@ export function DocumentContentViewer({ url, fileName, title, tipoArchivo }: Doc
   const isDocx = ext === "docx"
   const isLegacyDoc = ext === "doc"
 
+  const effectiveUrl = (url.startsWith("/api/documentos/") || url.startsWith("http://") || url.startsWith("https://"))
+    ? url
+    : `/api/documentos/${url.replace(/^\/?(documentos\/)?/, "")}`
+  const downloadUrl = effectiveUrl.includes("?") ? `${effectiveUrl}&download=1` : `${effectiveUrl}?download=1`
+
   useEffect(() => {
     let isCancelled = false
     setLoading(true)
@@ -43,7 +48,7 @@ export function DocumentContentViewer({ url, fileName, title, tipoArchivo }: Doc
           return
         }
 
-        const res = await fetch(url)
+        const res = await fetch(effectiveUrl)
         if (!res.ok) {
           throw new Error(`No se pudo cargar el archivo (${res.status})`)
         }
@@ -83,7 +88,7 @@ export function DocumentContentViewer({ url, fileName, title, tipoArchivo }: Doc
     return () => {
       isCancelled = true
     }
-  }, [url, isExcel, isDocx, isLegacyDoc])
+  }, [effectiveUrl, isExcel, isDocx, isLegacyDoc])
 
   const handleSheetChange = (sheetName: string) => {
     if (!workbook) return
@@ -114,7 +119,7 @@ export function DocumentContentViewer({ url, fileName, title, tipoArchivo }: Doc
         </div>
         <div className="flex gap-2 pt-2">
           <a
-            href={url}
+            href={downloadUrl}
             download={fileName}
             className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-[#0E5296] hover:bg-[#002F6C] rounded-xl shadow-xs"
           >
@@ -143,7 +148,7 @@ export function DocumentContentViewer({ url, fileName, title, tipoArchivo }: Doc
         </div>
         <div className="flex gap-2 pt-3">
           <a
-            href={url}
+            href={downloadUrl}
             download={fileName}
             className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-[#0E5296] hover:bg-[#002F6C] rounded-xl shadow-md"
           >
@@ -227,7 +232,7 @@ export function DocumentContentViewer({ url, fileName, title, tipoArchivo }: Doc
             Hoja: <strong className="text-slate-700">{activeSheet}</strong> ({tableData.length} filas)
           </span>
           <a
-            href={url}
+            href={downloadUrl}
             download={fileName}
             className="inline-flex items-center gap-1 font-sans font-bold text-[#0E5296] hover:underline"
           >
@@ -253,7 +258,7 @@ export function DocumentContentViewer({ url, fileName, title, tipoArchivo }: Doc
         <div className="flex items-center justify-between px-4 py-2 border-t bg-white text-[11px] text-slate-500">
           <span className="font-mono">{fileName}</span>
           <a
-            href={url}
+            href={downloadUrl}
             download={fileName}
             className="inline-flex items-center gap-1 font-bold text-[#0E5296] hover:underline"
           >
