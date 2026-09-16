@@ -37,6 +37,22 @@ type Doc = {
   updatedAt: Date | null
 }
 
+function buildPagination(current: number, total: number): Array<number | "ellipsis"> {
+  if (total <= 6) {
+    return Array.from({ length: total }, (_, index) => index + 1)
+  }
+
+  if (current <= 3) {
+    return [1, 2, 3, 4, "ellipsis", total]
+  }
+
+  if (current >= total - 2) {
+    return [1, "ellipsis", total - 3, total - 2, total - 1, total]
+  }
+
+  return [1, "ellipsis", current - 1, current, current + 1, "ellipsis", total]
+}
+
 export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
   const docsPublicados = useMemo(
     () => documentos.filter((d) => d.estado === "publicado"),
@@ -312,20 +328,29 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                 </button>
 
                 <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }).map((_, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setCurrentPage(idx + 1)}
-                      className={`h-7 w-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        currentPage === idx + 1
-                          ? "bg-[#0E5296] text-white shadow-xs"
-                          : "bg-card text-muted-foreground hover:bg-muted border border-border/60"
-                      }`}
-                    >
-                      {idx + 1}
-                    </button>
-                  ))}
+                  {buildPagination(currentPage, totalPages).map((item, idx) => {
+                    if (item === "ellipsis") {
+                      return (
+                        <span key={`ellipsis-${idx}`} className="px-1 text-xs font-bold text-muted-foreground/60">
+                          ...
+                        </span>
+                      )
+                    }
+                    return (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => setCurrentPage(item)}
+                        className={`h-7 w-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          currentPage === item
+                            ? "bg-[#0E5296] text-white shadow-xs"
+                            : "bg-card text-muted-foreground hover:bg-muted border border-border/60"
+                        }`}
+                      >
+                        {item}
+                      </button>
+                    )
+                  })}
                 </div>
 
                 <button

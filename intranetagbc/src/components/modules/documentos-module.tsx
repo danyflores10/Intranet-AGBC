@@ -99,9 +99,27 @@ function getFileColor(tipo: string | null) {
   return "#6B7280"
 }
 
+function buildPagination(current: number, total: number): Array<number | "ellipsis"> {
+  if (total <= 6) {
+    return Array.from({ length: total }, (_, index) => index + 1)
+  }
+
+  if (current <= 3) {
+    return [1, 2, 3, 4, "ellipsis", total]
+  }
+
+  if (current >= total - 2) {
+    return [1, "ellipsis", total - 3, total - 2, total - 1, total]
+  }
+
+  return [1, "ellipsis", current - 1, current, current + 1, "ellipsis", total]
+}
+
 export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   const [tab, setTab] = useState<Tab>("todos")
   const [searchQuery, setSearchQuery] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 10
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false)
@@ -138,6 +156,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   const handleTabChange = (t: Tab) => {
     setTab(t)
     setSearchQuery("")
+    setCurrentPage(1)
   }
 
   useEffect(() => {
@@ -344,6 +363,8 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   }, [categorias, searchQuery])
 
   const currentList = tab === "todos" ? filteredDocs : tab === "archivos" ? filteredArchivos : filteredCategorias
+  const totalPages = Math.max(1, Math.ceil(currentList.length / pageSize))
+  const paginatedList = currentList.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-blue-50/25 to-amber-50/20 min-h-screen">
@@ -474,7 +495,10 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
               type="text"
               placeholder={`Buscar en ${tab}...`}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                setCurrentPage(1)
+              }}
               className="bg-white/90 border-[#002F6C]/20 text-xs font-medium focus:border-[#0E5296]"
             />
           </div>
@@ -507,7 +531,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                   </td>
                 </tr>
               ) : (
-                currentList.map((item: any) => {
+                paginatedList.map((item: any) => {
                   const isCat = tab === "categorias"
                   const Icon = isCat ? FolderIcon : getFileIcon(item.tipoArchivo)
                   const iconColor = isCat ? "#FF8800" : getFileColor(item.tipoArchivo)
@@ -601,6 +625,63 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
             </tbody>
           </table>
         </div>
+
+        {/* Paginación Centrada al pie de tabla */}
+        {totalPages > 1 && (
+          <div className="mt-4 flex flex-col items-center justify-center gap-2 pt-3 border-t border-[#002F6C]/10 text-center">
+            <div className="flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#002F6C] shadow-xs hover:bg-slate-50 disabled:opacity-30 cursor-pointer transition-colors"
+                title="Página anterior"
+              >
+                <ChevronLeftIcon className="h-4 w-4" />
+              </button>
+
+              <div className="flex items-center gap-1">
+                {buildPagination(currentPage, totalPages).map((item, idx) => {
+                  if (item === "ellipsis") {
+                    return (
+                      <span key={`ellipsis-${idx}`} className="px-1 text-xs font-bold text-slate-400">
+                        ...
+                      </span>
+                    )
+                  }
+                  return (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => setCurrentPage(item)}
+                      className={`h-7 w-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        currentPage === item
+                          ? "bg-[#0E5296] text-white shadow-xs"
+                          : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                disabled={currentPage >= totalPages}
+                className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#002F6C] shadow-xs hover:bg-slate-50 disabled:opacity-30 cursor-pointer transition-colors"
+                title="Siguiente página"
+              >
+                <ChevronRightIcon className="h-4 w-4" />
+              </button>
+            </div>
+
+            <span className="text-[11px] font-medium text-slate-400">
+              Página {currentPage} de {totalPages} • Mostrando {Math.min(currentList.length, (currentPage - 1) * pageSize + 1)} - {Math.min(currentList.length, currentPage * pageSize)} de {currentList.length} registros
+            </span>
+          </div>
+        )}
       </div>
 
       {canCreateDocumento || canEditDocumento ? (
