@@ -146,10 +146,6 @@ export default async function HomePage() {
                 </span>
               </h1>
 
-              <p className="animate-fade-in-up animation-delay-200 text-slate-600 text-base sm:text-lg leading-relaxed font-medium max-w-2xl">
-                Accede de forma rápida y segura a los sistemas operativos, seguimiento de correspondencia SIGEC, comunicados oficiales, directorio de personal y herramientas de gestión institucional.
-              </p>
-
               {/* Botón: Únicamente para Administrador */}
               {esAdmin && (
                 <div className="animate-fade-in-up animation-delay-300 pt-2">

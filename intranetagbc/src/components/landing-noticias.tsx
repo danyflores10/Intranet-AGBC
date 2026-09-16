@@ -678,30 +678,30 @@ export function LandingNoticias({ noticias }: { noticias: NoticiaLanding[] }) {
         const esReelModal = selectedNoticia.enlace?.includes("/r/") || selectedNoticia.enlace?.includes("/reel") || selectedNoticia.enlace?.includes("video")
         return (
           <Dialog open={Boolean(selectedNoticia)} onOpenChange={(open) => !open && setSelectedNoticia(null)}>
-            <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden rounded-3xl border-2 border-[#002F6C]/15 bg-white shadow-2xl max-h-[90vh] flex flex-col">
-              <div className={`h-2 w-full ${
+            <DialogContent className="max-w-4xl lg:max-w-5xl w-[95vw] sm:w-[92vw] p-0 gap-0 overflow-hidden rounded-3xl border-2 border-[#002F6C]/15 bg-white shadow-2xl max-h-[92vh] flex flex-col">
+              <div className={`h-2.5 w-full ${
                 esFb
                   ? "bg-gradient-to-r from-[#1877F2] via-[#0077EE] to-[#0E5296]"
                   : "bg-gradient-to-r from-[#FFCC00] via-[#0077EE] to-[#0E5296]"
               }`} />
-              <div className="p-6 overflow-y-auto space-y-4">
+              <div className="p-6 sm:p-8 overflow-y-auto space-y-5">
                 <DialogHeader>
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex flex-wrap items-center gap-2 mb-1.5">
                     {esFb ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#1877F2]/10 text-[#1877F2] border border-[#1877F2]/30 px-3 py-0.5 text-xs font-black">
-                        <svg className="h-3 w-3 fill-current" viewBox="0 0 24 24">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#1877F2]/10 text-[#1877F2] border border-[#1877F2]/30 px-3.5 py-1 text-xs font-black">
+                        <svg className="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
                           <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                         </svg>
                         {esReelModal ? "Reel / Video en Facebook Oficial" : "Publicación en Facebook Oficial"}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 text-[#0E5296] border border-blue-200 px-3 py-0.5 text-xs font-black">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 text-[#0E5296] border border-blue-200 px-3.5 py-1 text-xs font-black">
                         <NewspaperIcon className="h-3.5 w-3.5" />
                         Noticia Institucional AGBC
                       </span>
                     )}
 
-                    <span className="text-xs text-slate-400 font-medium">
+                    <span className="text-xs sm:text-sm text-slate-400 font-medium">
                       {new Date(selectedNoticia.createdAt).toLocaleDateString("es-BO", {
                         day: "numeric",
                         month: "long",
@@ -709,7 +709,7 @@ export function LandingNoticias({ noticias }: { noticias: NoticiaLanding[] }) {
                       })}
                     </span>
                   </div>
-                  <DialogTitle className="text-xl font-black text-[#002F6C] leading-snug">
+                  <DialogTitle className="text-xl sm:text-2xl font-black text-[#002F6C] leading-snug tracking-tight">
                     {selectedNoticia.titulo}
                   </DialogTitle>
                 </DialogHeader>
@@ -717,7 +717,7 @@ export function LandingNoticias({ noticias }: { noticias: NoticiaLanding[] }) {
                 {/* Reproductor de Video / Reel si es Reel de Facebook */}
                 {esReelModal ? (
                   <div className="space-y-3">
-                    <div className="relative w-full rounded-2xl overflow-hidden border-2 border-[#1877F2]/40 shadow-xl bg-slate-950 aspect-[16/10] max-h-[380px] flex items-center justify-center group">
+                    <div className="relative w-full rounded-2xl overflow-hidden border-2 border-[#1877F2]/40 shadow-xl bg-slate-950 aspect-[16/9] max-h-[460px] flex items-center justify-center group">
                       {/* Imagen de fondo / miniatura oficial del reel */}
                       {getImagenes(selectedNoticia).length > 0 && (
                         <img
@@ -733,19 +733,19 @@ export function LandingNoticias({ noticias }: { noticias: NoticiaLanding[] }) {
                         href={selectedNoticia.enlace || "https://www.facebook.com/profile.php?id=61592782342439"}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="relative z-10 flex flex-col items-center gap-2 text-white hover:scale-105 transition-all p-4 rounded-2xl bg-black/40 backdrop-blur-md border border-white/20 shadow-2xl"
+                        className="relative z-10 flex flex-col items-center gap-2.5 text-white hover:scale-105 transition-all p-5 rounded-2xl bg-black/50 backdrop-blur-md border border-white/20 shadow-2xl"
                       >
-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#1877F2] text-white shadow-lg shadow-[#1877F2]/50 animate-pulse">
-                          <PlayIcon className="h-7 w-7 fill-current ml-1" />
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#1877F2] text-white shadow-xl shadow-[#1877F2]/50 animate-pulse">
+                          <PlayIcon className="h-8 w-8 fill-current ml-1" />
                         </div>
-                        <span className="text-xs font-black tracking-wide uppercase">
+                        <span className="text-xs sm:text-sm font-black tracking-wide uppercase">
                           Reproducir Reel Oficial
                         </span>
                       </a>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs bg-blue-50/80 p-3 rounded-xl border border-blue-200">
-                      <span className="flex items-center gap-1.5 font-bold text-[#1877F2]">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs sm:text-sm bg-blue-50/80 p-3.5 rounded-2xl border border-blue-200">
+                      <span className="flex items-center gap-2 font-bold text-[#1877F2]">
                         <CheckCircle2Icon className="h-4 w-4 text-[#1877F2]" />
                         <span>Publicación multimedia verificada de Correos de Bolivia</span>
                       </span>
@@ -754,27 +754,27 @@ export function LandingNoticias({ noticias }: { noticias: NoticiaLanding[] }) {
                           href={selectedNoticia.enlace}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs font-black text-white bg-[#1877F2] hover:bg-[#0c63d4] px-3 py-1.5 rounded-lg shadow-xs transition-colors"
+                          className="inline-flex items-center gap-1.5 text-xs font-black text-white bg-[#1877F2] hover:bg-[#0c63d4] px-4 py-2 rounded-xl shadow-xs transition-colors"
                         >
                           <span>Ver en Facebook</span>
-                          <ExternalLinkIcon className="h-3 w-3" />
+                          <ExternalLinkIcon className="h-3.5 w-3.5" />
                         </a>
                       )}
                     </div>
                   </div>
                 ) : getImagenes(selectedNoticia).length > 0 ? (
-                  <div className="space-y-2">
-                    <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-sm max-h-80 bg-slate-100">
+                  <div className="space-y-3">
+                    <div className="relative w-full rounded-2xl overflow-hidden border border-slate-200/90 shadow-md bg-slate-900/5 flex items-center justify-center min-h-[260px] max-h-[500px]">
                       <img
                         src={getImagenes(selectedNoticia)[0]}
                         alt={selectedNoticia.titulo}
-                        className="w-full h-full object-cover max-h-80"
+                        className="w-full h-auto max-h-[500px] object-contain rounded-2xl"
                       />
                     </div>
                     {getImagenes(selectedNoticia).length > 1 && (
-                      <div className="grid grid-cols-4 gap-2 pt-1">
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5 pt-1">
                         {getImagenes(selectedNoticia).slice(1).map((img, i) => (
-                          <div key={i} className="rounded-xl overflow-hidden border border-slate-200 aspect-[16/10]">
+                          <div key={i} className="rounded-xl overflow-hidden border border-slate-200 aspect-[16/10] bg-slate-100 shadow-xs hover:opacity-90 transition-opacity">
                             <img src={img} alt={`Foto ${i + 2}`} className="w-full h-full object-cover" />
                           </div>
                         ))}
@@ -785,22 +785,22 @@ export function LandingNoticias({ noticias }: { noticias: NoticiaLanding[] }) {
 
                 {/* Descripción completa */}
                 {selectedNoticia.descripcion && (
-                  <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
-                    <p className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                  <div className="rounded-2xl bg-slate-50/90 p-5 sm:p-6 border border-slate-100 shadow-inner">
+                    <p className="text-sm sm:text-base text-slate-700 leading-relaxed whitespace-pre-wrap">
                       {selectedNoticia.descripcion}
                     </p>
                   </div>
                 )}
 
                 {/* Footer con Enlaces */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100">
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-100">
+                  <div className="flex items-center gap-2.5 w-full sm:w-auto">
                     {selectedNoticia.enlace?.trim() ? (
                       <a
                         href={selectedNoticia.enlace}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`inline-flex items-center justify-center gap-2 text-xs font-black px-4 py-2.5 rounded-xl transition-all shadow-xs flex-1 sm:flex-none ${
+                        className={`inline-flex items-center justify-center gap-2 text-xs sm:text-sm font-black px-5 py-3 rounded-xl transition-all shadow-xs flex-1 sm:flex-none ${
                           esFb
                             ? "bg-[#1877F2] text-white hover:bg-[#0c63d4]"
                             : "bg-[#0E5296] text-white hover:bg-[#002F6C]"
@@ -808,21 +808,21 @@ export function LandingNoticias({ noticias }: { noticias: NoticiaLanding[] }) {
                       >
                         {esFb ? (
                           <>
-                            <svg className="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
+                            <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
                               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                             </svg>
                             <span>{esReelModal ? "Ver Reel en Facebook" : "Ver en Facebook"}</span>
-                            <ExternalLinkIcon className="h-3 w-3" />
+                            <ExternalLinkIcon className="h-3.5 w-3.5" />
                           </>
                         ) : (
                           <>
                             <span>Abrir enlace oficial</span>
-                            <ExternalLinkIcon className="h-3.5 w-3.5" />
+                            <ExternalLinkIcon className="h-4 w-4" />
                           </>
                         )}
                       </a>
                     ) : (
-                      <span className="text-[11px] text-slate-400">Publicación oficial AGBC</span>
+                      <span className="text-xs text-slate-400">Publicación oficial AGBC</span>
                     )}
 
                     {esFb && (
@@ -830,10 +830,10 @@ export function LandingNoticias({ noticias }: { noticias: NoticiaLanding[] }) {
                         href="https://www.facebook.com/profile.php?id=61592782342439"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 px-3 py-2.5 rounded-xl transition-all"
+                        className="inline-flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 px-4 py-3 rounded-xl transition-all"
                       >
                         <span>Perfil Oficial</span>
-                        <ExternalLinkIcon className="h-3 w-3" />
+                        <ExternalLinkIcon className="h-3.5 w-3.5" />
                       </a>
                     )}
                   </div>
@@ -841,7 +841,7 @@ export function LandingNoticias({ noticias }: { noticias: NoticiaLanding[] }) {
                   <Button
                     onClick={() => setSelectedNoticia(null)}
                     variant="outline"
-                    className="border-slate-200 font-bold text-xs rounded-xl px-4 w-full sm:w-auto"
+                    className="border-slate-200 font-bold text-xs sm:text-sm rounded-xl px-5 h-11 w-full sm:w-auto hover:bg-slate-100"
                   >
                     Cerrar
                   </Button>
