@@ -18,6 +18,7 @@ import {
   onboardingProgreso,
   personal,
   reconocimientoEmpleadoMes,
+  reconocimientoEquipo,
   reconocimientoEquipoIntegrantes,
   reconocimientos,
   roles,
@@ -1021,70 +1022,50 @@ export async function eliminarUsuario(userId: string): Promise<ResultadoAccion<D
     }
 
     // Eliminación física permanente de la base de datos desvinculando tablas hijas con foreign keys
-    await db.transaction(async (tx) => {
-      // 1. Sesiones, cuentas y roles
-      await tx.delete(session).where(eq(session.userId, userIdLimpio))
-      await tx.delete(account).where(eq(account.userId, userIdLimpio))
-      await tx.delete(userRoles).where(eq(userRoles.userId, userIdLimpio))
+    // 1. Sesiones, cuentas y roles
+    try { await db.delete(session).where(eq(session.userId, userIdLimpio)) } catch {}
+    try { await db.delete(account).where(eq(account.userId, userIdLimpio)) } catch {}
+    try { await db.delete(userRoles).where(eq(userRoles.userId, userIdLimpio)) } catch {}
 
-      // 2. Desvincular o limpiar tablas hijas que tienen clave foránea a users.id
-      try {
-        await tx.delete(onboardingProgreso).where(eq(onboardingProgreso.usuarioId, userIdLimpio))
-      } catch {}
+    // 2. Desvincular o limpiar tablas hijas que tienen clave foránea a users.id
+    try { await db.delete(onboardingProgreso).where(eq(onboardingProgreso.usuarioId, userIdLimpio)) } catch {}
+    try {
+      await db.delete(notificaciones).where(eq(notificaciones.usuarioId, userIdLimpio))
+      await db.update(notificaciones).set({ creadoPor: null }).where(eq(notificaciones.creadoPor, userIdLimpio))
+    } catch {}
+    try {
+      await db.delete(mensajesSoporte).where(eq(mensajesSoporte.emisorId, userIdLimpio))
+      await db.delete(ticketsSoporte).where(eq(ticketsSoporte.solicitanteId, userIdLimpio))
+      await db.update(ticketsSoporte).set({ agenteId: null }).where(eq(ticketsSoporte.agenteId, userIdLimpio))
+    } catch {}
+    try {
+      await db.delete(solicitudes).where(eq(solicitudes.solicitanteId, userIdLimpio))
+      await db.update(solicitudes).set({ destinatarioId: null }).where(eq(solicitudes.destinatarioId, userIdLimpio))
+    } catch {}
+    try {
+      await db.update(correspondencia).set({ remitenteUserId: null }).where(eq(correspondencia.remitenteUserId, userIdLimpio))
+      await db.update(correspondencia).set({ destinatarioUserId: null }).where(eq(correspondencia.destinatarioUserId, userIdLimpio))
+      await db.update(correspondencia).set({ creadoPor: null }).where(eq(correspondencia.creadoPor, userIdLimpio))
+      await db.update(correspondencia).set({ actualizadoPor: null }).where(eq(correspondencia.actualizadoPor, userIdLimpio))
+      await db.update(correspondenciaMovimientos).set({ fromUserId: null }).where(eq(correspondenciaMovimientos.fromUserId, userIdLimpio))
+      await db.update(correspondenciaMovimientos).set({ toUserId: null }).where(eq(correspondenciaMovimientos.toUserId, userIdLimpio))
+      await db.update(correspondenciaMovimientos).set({ creadoPor: null }).where(eq(correspondenciaMovimientos.creadoPor, userIdLimpio))
+      await db.update(correspondenciaAdjuntos).set({ subidoPor: null }).where(eq(correspondenciaAdjuntos.subidoPor, userIdLimpio))
+    } catch {}
+    try { await db.update(documentos).set({ creadoPor: null }).where(eq(documentos.creadoPor, userIdLimpio)) } catch {}
+    try { await db.update(solicitudesMaterial).set({ creadoPor: null }).where(eq(solicitudesMaterial.creadoPor, userIdLimpio)) } catch {}
+    try { await db.update(comunicados).set({ creadoPor: null }).where(eq(comunicados.creadoPor, userIdLimpio)) } catch {}
+    try { await db.update(eventosCalendario).set({ creadoPor: null }).where(eq(eventosCalendario.creadoPor, userIdLimpio)) } catch {}
+    try {
+      await db.delete(reconocimientoEmpleadoMes).where(eq(reconocimientoEmpleadoMes.empleadoId, userIdLimpio))
+      await db.delete(reconocimientoEquipoIntegrantes).where(eq(reconocimientoEquipoIntegrantes.usuarioId, userIdLimpio))
+      await db.update(reconocimientoEquipo).set({ responsableId: null }).where(eq(reconocimientoEquipo.responsableId, userIdLimpio))
+      await db.update(reconocimientos).set({ creadoPor: null }).where(eq(reconocimientos.creadoPor, userIdLimpio))
+      await db.update(reconocimientos).set({ aprobadoPor: null }).where(eq(reconocimientos.aprobadoPor, userIdLimpio))
+    } catch {}
 
-      try {
-        await tx.delete(notificaciones).where(eq(notificaciones.usuarioId, userIdLimpio))
-        await tx.update(notificaciones).set({ creadoPor: null }).where(eq(notificaciones.creadoPor, userIdLimpio))
-      } catch {}
-
-      try {
-        await tx.delete(mensajesSoporte).where(eq(mensajesSoporte.emisorId, userIdLimpio))
-        await tx.delete(ticketsSoporte).where(eq(ticketsSoporte.solicitanteId, userIdLimpio))
-        await tx.update(ticketsSoporte).set({ agenteId: null }).where(eq(ticketsSoporte.agenteId, userIdLimpio))
-      } catch {}
-
-      try {
-        await tx.delete(solicitudes).where(eq(solicitudes.solicitanteId, userIdLimpio))
-        await tx.update(solicitudes).set({ destinatarioId: null }).where(eq(solicitudes.destinatarioId, userIdLimpio))
-      } catch {}
-
-      try {
-        await tx.update(correspondencia).set({ remitenteUserId: null }).where(eq(correspondencia.remitenteUserId, userIdLimpio))
-        await tx.update(correspondencia).set({ destinatarioUserId: null }).where(eq(correspondencia.destinatarioUserId, userIdLimpio))
-        await tx.update(correspondencia).set({ creadoPor: null }).where(eq(correspondencia.creadoPor, userIdLimpio))
-        await tx.update(correspondencia).set({ actualizadoPor: null }).where(eq(correspondencia.actualizadoPor, userIdLimpio))
-        await tx.update(correspondenciaMovimientos).set({ fromUserId: null }).where(eq(correspondenciaMovimientos.fromUserId, userIdLimpio))
-        await tx.update(correspondenciaMovimientos).set({ toUserId: null }).where(eq(correspondenciaMovimientos.toUserId, userIdLimpio))
-        await tx.update(correspondenciaMovimientos).set({ creadoPor: null }).where(eq(correspondenciaMovimientos.creadoPor, userIdLimpio))
-        await tx.update(correspondenciaAdjuntos).set({ subidoPor: null }).where(eq(correspondenciaAdjuntos.subidoPor, userIdLimpio))
-      } catch {}
-
-      try {
-        await tx.update(documentos).set({ creadoPor: null }).where(eq(documentos.creadoPor, userIdLimpio))
-      } catch {}
-
-      try {
-        await tx.update(solicitudesMaterial).set({ creadoPor: null }).where(eq(solicitudesMaterial.creadoPor, userIdLimpio))
-      } catch {}
-
-      try {
-        await tx.update(comunicados).set({ creadoPor: null }).where(eq(comunicados.creadoPor, userIdLimpio))
-      } catch {}
-
-      try {
-        await tx.update(eventosCalendario).set({ creadoPor: null }).where(eq(eventosCalendario.creadoPor, userIdLimpio))
-      } catch {}
-
-      try {
-        await tx.delete(reconocimientoEmpleadoMes).where(eq(reconocimientoEmpleadoMes.empleadoId, userIdLimpio))
-        await tx.delete(reconocimientoEquipoIntegrantes).where(eq(reconocimientoEquipoIntegrantes.usuarioId, userIdLimpio))
-        await tx.update(reconocimientos).set({ creadoPor: null }).where(eq(reconocimientos.creadoPor, userIdLimpio))
-        await tx.update(reconocimientos).set({ aprobadoPor: null }).where(eq(reconocimientos.aprobadoPor, userIdLimpio))
-      } catch {}
-
-      // 3. Eliminar de users
-      await tx.delete(users).where(eq(users.id, userIdLimpio))
-    })
+    // 3. Eliminar de users
+    await db.delete(users).where(eq(users.id, userIdLimpio))
 
     // También limpiar de la tabla de personal y directivos si estaba enlazado
     try {

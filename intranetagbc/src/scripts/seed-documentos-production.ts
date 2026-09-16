@@ -113,26 +113,48 @@ async function syncProductionDocs() {
     catMap[cat.nombre] = found.id
   }
 
-  // 2. Limpiar registros sin archivo físico
+  // 2. Limpiar archivos no institucionales antiguos (archivos sueltos que no sean doc_ ni carpetas)
+  const allFilesOnDisk = fs.readdirSync(DOCS_DIR)
+  for (const f of allFilesOnDisk) {
+    const fullPath = path.join(DOCS_DIR, f)
+    const stat = fs.statSync(fullPath)
+    if (!stat.isDirectory() && !f.startsWith("doc_")) {
+      fs.unlinkSync(fullPath)
+      console.log(`[LIMPIEZA ARCHIVO] Eliminado archivo no institucional: ${f}`)
+    }
+  }
+
+  // Limpiar categorías no estándar (como "REGLAMENTOS MANUALES")
+  const allCatsInDb = await db.select().from(documentoCategorias)
+  for (const c of allCatsInDb) {
+    if (c.nombre.toUpperCase().includes("REGLAMENTOS") && c.nombre.toUpperCase().includes("MANUALES")) {
+      await db.delete(documentoCategorias).where(eq(documentoCategorias.id, c.id))
+      console.log(`[LIMPIEZA CATEGORÍA] Eliminada categoría no estándar: ${c.nombre}`)
+    }
+  }
+
+  // Limpiar registros sin archivo físico o no institucionales
   const existingDocs = await db.select().from(documentos)
   for (const doc of existingDocs) {
     if (doc.archivo) {
       const relPath = doc.archivo.replace(/^\//, "")
       const physical = path.join(process.cwd(), "public", relPath)
-      if (!fs.existsSync(physical)) {
+      if (!fs.existsSync(physical) || !doc.archivo.includes("/documentos/doc_")) {
         await db.delete(documentos).where(eq(documentos.id, doc.id))
-        console.log(`[LIMPIEZA] Eliminado registro sin archivo físico: ${doc.titulo}`)
+        console.log(`[LIMPIEZA REGISTRO] Eliminado registro obsoleto: ${doc.titulo}`)
       }
+    } else {
+      await db.delete(documentos).where(eq(documentos.id, doc.id))
     }
   }
 
   // 3. Registrar / actualizar todos los archivos físicos de public/documentos
   const files = fs.readdirSync(DOCS_DIR).filter((f) => {
     const extMatch = f.match(/\.(pdf|docx|doc|xlsx|xls|csv|txt|png|jpg|jpeg)$/i)
-    return extMatch !== null
+    return extMatch !== null && f.startsWith("doc_")
   })
 
-  console.log(`Archivos físicos encontrados en public/documentos: ${files.length}`)
+  console.log(`Archivos físicos oficiales en public/documentos: ${files.length}`)
 
   let synced = 0
   for (const file of files) {

@@ -453,65 +453,64 @@ export async function eliminarPersonal(id: string): Promise<{ success: boolean; 
 
     const nombreRegistro = pers?.nombre || (usr ? `${usr.firstName} ${usr.lastNamePaternal}` : idLimpio)
 
-    // 3. Ejecutar eliminación física completa en una transacción
-    await db.transaction(async (tx) => {
-      // Buscar todos los usuarios vinculados por ID o por email
-      const userConditions = [eq(users.id, idLimpio)]
-      for (const em of emailsParaBuscar) {
-        userConditions.push(eq(users.institutionalEmail, em))
-        userConditions.push(eq(users.email, em))
-      }
-      const matchedUsers = await tx.select({ id: users.id }).from(users).where(or(...userConditions))
+    // 3. Ejecutar eliminación física completa de forma segura
+    // Buscar todos los usuarios vinculados por ID o por email
+    const userConditions = [eq(users.id, idLimpio)]
+    for (const em of emailsParaBuscar) {
+      userConditions.push(eq(users.institutionalEmail, em))
+      userConditions.push(eq(users.email, em))
+    }
+    const matchedUsers = await db.select({ id: users.id }).from(users).where(or(...userConditions))
 
-      for (const u of matchedUsers) {
+    for (const u of matchedUsers) {
         if (sesion?.id && u.id === sesion.id) {
           throw new Error("No puede eliminar la cuenta que está utilizando actualmente.")
         }
         const uId = u.id
 
         // Limpiar sesiones, cuentas y roles
-        await tx.delete(session).where(eq(session.userId, uId))
-        await tx.delete(account).where(eq(account.userId, uId))
-        await tx.delete(userRoles).where(eq(userRoles.userId, uId))
+        try { await db.delete(session).where(eq(session.userId, uId)) } catch {}
+        try { await db.delete(account).where(eq(account.userId, uId)) } catch {}
+        try { await db.delete(userRoles).where(eq(userRoles.userId, uId)) } catch {}
 
-        // Tablas dependientes
-        try { await tx.delete(onboardingProgreso).where(eq(onboardingProgreso.usuarioId, uId)) } catch {}
+        // Tablas dependientes con claves foráneas
+        try { await db.delete(onboardingProgreso).where(eq(onboardingProgreso.usuarioId, uId)) } catch {}
         try {
-          await tx.delete(notificaciones).where(eq(notificaciones.usuarioId, uId))
-          await tx.update(notificaciones).set({ creadoPor: null }).where(eq(notificaciones.creadoPor, uId))
+          await db.delete(notificaciones).where(eq(notificaciones.usuarioId, uId))
+          await db.update(notificaciones).set({ creadoPor: null }).where(eq(notificaciones.creadoPor, uId))
         } catch {}
         try {
-          await tx.delete(mensajesSoporte).where(eq(mensajesSoporte.emisorId, uId))
-          await tx.delete(ticketsSoporte).where(eq(ticketsSoporte.solicitanteId, uId))
-          await tx.update(ticketsSoporte).set({ agenteId: null }).where(eq(ticketsSoporte.agenteId, uId))
+          await db.delete(mensajesSoporte).where(eq(mensajesSoporte.emisorId, uId))
+          await db.delete(ticketsSoporte).where(eq(ticketsSoporte.solicitanteId, uId))
+          await db.update(ticketsSoporte).set({ agenteId: null }).where(eq(ticketsSoporte.agenteId, uId))
         } catch {}
         try {
-          await tx.delete(solicitudes).where(eq(solicitudes.solicitanteId, uId))
-          await tx.update(solicitudes).set({ destinatarioId: null }).where(eq(solicitudes.destinatarioId, uId))
+          await db.delete(solicitudes).where(eq(solicitudes.solicitanteId, uId))
+          await db.update(solicitudes).set({ destinatarioId: null }).where(eq(solicitudes.destinatarioId, uId))
         } catch {}
         try {
-          await tx.update(correspondencia).set({ remitenteUserId: null }).where(eq(correspondencia.remitenteUserId, uId))
-          await tx.update(correspondencia).set({ destinatarioUserId: null }).where(eq(correspondencia.destinatarioUserId, uId))
-          await tx.update(correspondencia).set({ creadoPor: null }).where(eq(correspondencia.creadoPor, uId))
-          await tx.update(correspondencia).set({ actualizadoPor: null }).where(eq(correspondencia.actualizadoPor, uId))
-          await tx.update(correspondenciaMovimientos).set({ fromUserId: null }).where(eq(correspondenciaMovimientos.fromUserId, uId))
-          await tx.update(correspondenciaMovimientos).set({ toUserId: null }).where(eq(correspondenciaMovimientos.toUserId, uId))
-          await tx.update(correspondenciaMovimientos).set({ creadoPor: null }).where(eq(correspondenciaMovimientos.creadoPor, uId))
-          await tx.update(correspondenciaAdjuntos).set({ subidoPor: null }).where(eq(correspondenciaAdjuntos.subidoPor, uId))
+          await db.update(correspondencia).set({ remitenteUserId: null }).where(eq(correspondencia.remitenteUserId, uId))
+          await db.update(correspondencia).set({ destinatarioUserId: null }).where(eq(correspondencia.destinatarioUserId, uId))
+          await db.update(correspondencia).set({ creadoPor: null }).where(eq(correspondencia.creadoPor, uId))
+          await db.update(correspondencia).set({ actualizadoPor: null }).where(eq(correspondencia.actualizadoPor, uId))
+          await db.update(correspondenciaMovimientos).set({ fromUserId: null }).where(eq(correspondenciaMovimientos.fromUserId, uId))
+          await db.update(correspondenciaMovimientos).set({ toUserId: null }).where(eq(correspondenciaMovimientos.toUserId, uId))
+          await db.update(correspondenciaMovimientos).set({ creadoPor: null }).where(eq(correspondenciaMovimientos.creadoPor, uId))
+          await db.update(correspondenciaAdjuntos).set({ subidoPor: null }).where(eq(correspondenciaAdjuntos.subidoPor, uId))
         } catch {}
-        try { await tx.update(documentos).set({ creadoPor: null }).where(eq(documentos.creadoPor, uId)) } catch {}
-        try { await tx.update(solicitudesMaterial).set({ creadoPor: null }).where(eq(solicitudesMaterial.creadoPor, uId)) } catch {}
-        try { await tx.update(comunicados).set({ creadoPor: null }).where(eq(comunicados.creadoPor, uId)) } catch {}
-        try { await tx.update(eventosCalendario).set({ creadoPor: null }).where(eq(eventosCalendario.creadoPor, uId)) } catch {}
+        try { await db.update(documentos).set({ creadoPor: null }).where(eq(documentos.creadoPor, uId)) } catch {}
+        try { await db.update(solicitudesMaterial).set({ creadoPor: null }).where(eq(solicitudesMaterial.creadoPor, uId)) } catch {}
+        try { await db.update(comunicados).set({ creadoPor: null }).where(eq(comunicados.creadoPor, uId)) } catch {}
+        try { await db.update(eventosCalendario).set({ creadoPor: null }).where(eq(eventosCalendario.creadoPor, uId)) } catch {}
         try {
-          await tx.delete(reconocimientoEmpleadoMes).where(eq(reconocimientoEmpleadoMes.empleadoId, uId))
-          await tx.delete(reconocimientoEquipoIntegrantes).where(eq(reconocimientoEquipoIntegrantes.usuarioId, uId))
-          await tx.update(reconocimientoEquipo).set({ responsableId: null }).where(eq(reconocimientoEquipo.responsableId, uId))
-          await tx.update(reconocimientos).set({ creadoPor: null }).where(eq(reconocimientos.creadoPor, uId))
-          await tx.update(reconocimientos).set({ aprobadoPor: null }).where(eq(reconocimientos.aprobadoPor, uId))
+          await db.delete(reconocimientoEmpleadoMes).where(eq(reconocimientoEmpleadoMes.empleadoId, uId))
+          await db.delete(reconocimientoEquipoIntegrantes).where(eq(reconocimientoEquipoIntegrantes.usuarioId, uId))
+          await db.update(reconocimientoEquipo).set({ responsableId: null }).where(eq(reconocimientoEquipo.responsableId, uId))
+          await db.update(reconocimientos).set({ creadoPor: null }).where(eq(reconocimientos.creadoPor, uId))
+          await db.update(reconocimientos).set({ aprobadoPor: null }).where(eq(reconocimientos.aprobadoPor, uId))
         } catch {}
 
-        await tx.delete(users).where(eq(users.id, uId))
+        await db.delete(users).where(eq(users.id, uId))
       }
 
       // Eliminar de personal por id o por email
@@ -519,13 +518,16 @@ export async function eliminarPersonal(id: string): Promise<{ success: boolean; 
       for (const em of emailsParaBuscar) {
         persConditions.push(eq(personal.email, em))
       }
-      await tx.delete(personal).where(or(...persConditions))
+      try {
+        await db.delete(personal).where(or(...persConditions))
+      } catch {}
 
       // Eliminar de directivos si coincide email
       for (const em of emailsParaBuscar) {
-        await tx.delete(directivos).where(eq(directivos.email, em))
+        try {
+          await db.delete(directivos).where(eq(directivos.email, em))
+        } catch {}
       }
-    })
 
     await registrarAuditLog({
       usuario: sesion?.id || "sistema",

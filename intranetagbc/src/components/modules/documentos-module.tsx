@@ -45,6 +45,7 @@ import {
 import { PERMISOS } from "@/lib/auth/permisos"
 import { crearContextoAcceso, puedeAcceder, type UsuarioRbac } from "@/lib/rbac"
 import Image from "next/image"
+import { DocumentContentViewer } from "@/components/modules/document-content-viewer"
 
 type Tab = "todos" | "archivos" | "categorias"
 
@@ -860,8 +861,19 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                     )
                   }
 
-                  const formatName = isExcel ? "Plantilla / Hoja de Cálculo Excel" : isWord ? "Documento de Texto Word" : "Archivo Institucional"
-                  const formatBadgeColor = isExcel ? "bg-emerald-100 text-emerald-800 border-emerald-300" : isWord ? "bg-blue-100 text-blue-800 border-blue-300" : "bg-slate-100 text-slate-800 border-slate-300"
+                  if (isExcel || isWord) {
+                    return (
+                      <DocumentContentViewer
+                        url={previewDoc.archivo!}
+                        fileName={previewDoc.nombreArchivo ?? previewDoc.titulo}
+                        title={previewDoc.titulo}
+                        tipoArchivo={previewDoc.tipoArchivo}
+                      />
+                    )
+                  }
+
+                  const formatName = "Archivo Institucional"
+                  const formatBadgeColor = "bg-slate-100 text-slate-800 border-slate-300"
                   const Icon = getFileIcon(previewDoc.tipoArchivo)
 
                   return (
