@@ -18,6 +18,8 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { DocumentContentViewer } from "@/components/modules/document-content-viewer"
+import { getDocumentUrl } from "@/components/modules/documentos-module"
 
 type Doc = {
   id: string
@@ -357,78 +359,103 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
             {/* Barra superior con gradiente Amarillo a Azul */}
             <div className="h-2 w-full shrink-0 bg-gradient-to-r from-[#FFCC00] via-[#0077EE] to-[#0E5296]" />
 
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-border/20 bg-white/90 px-4 py-3 dark:bg-zinc-900/90">
-              <div className="min-w-0 flex-1">
-                <h3 className="line-clamp-1 text-sm font-black text-[#002F6C] dark:text-white tracking-tight md:text-base">
-                  {viewingDoc.titulo}
-                </h3>
-                <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground font-medium">
-                  {viewingDoc.createdAt && (
-                    <span className="flex items-center gap-1">
-                      <CalendarDays className="h-3 w-3 text-[#0E5296] dark:text-[#FFCC00]" />
-                      {formatFecha(viewingDoc.createdAt)}
-                    </span>
-                  )}
-                  {viewingDoc.categoria && (
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${getCategoryPalette(viewingDoc.categoria).pill}`}>
-                      {viewingDoc.categoria}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="ml-3 flex shrink-0 items-center gap-2">
-                {viewingDoc.archivo && (
-                  <a href={viewingDoc.archivo} download={viewingDoc.nombreArchivo || viewingDoc.titulo}>
-                    <Button size="sm" className="rounded-xl bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold text-xs shadow-xs">
-                      <Download className="mr-1.5 h-3.5 w-3.5" />
-                      Descargar
-                    </Button>
-                  </a>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setViewingDoc(null)}
-                  className="flex h-8 w-8 items-center justify-center rounded-xl border border-border/50 bg-white transition-colors hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 cursor-pointer text-foreground"
-                >
-                  <XIcon className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
+            {(() => {
+              const fileEffectiveUrl = getDocumentUrl(viewingDoc.archivo)
+              const downloadUrl = `${fileEffectiveUrl}?download=1`
 
-            {/* Contenido / Visualizador */}
-            <div className="relative min-h-0 flex-1 overflow-hidden bg-muted/10">
-              {viewingDoc.archivo && viewingDoc.tipoArchivo?.includes("pdf") ? (
-                <iframe
-                  src={viewingDoc.archivo}
-                  title={viewingDoc.titulo}
-                  className="w-full h-full border-0 rounded-b-3xl"
-                />
-              ) : viewingDoc.archivo && viewingDoc.tipoArchivo && ["jpg", "jpeg", "png", "webp", "gif"].some(ext => viewingDoc.tipoArchivo!.includes(ext)) ? (
-                <div className="h-full flex items-start justify-center overflow-auto rounded-b-3xl border border-border/30 bg-gradient-to-br from-zinc-100 to-zinc-50 dark:from-zinc-900 dark:to-zinc-950 p-3">
-                  <img
-                    src={viewingDoc.archivo}
-                    alt={viewingDoc.titulo}
-                    className="block max-h-[calc(93vh-140px)] w-full max-w-[1180px] object-contain object-top rounded-xl"
-                    draggable={false}
-                  />
-                </div>
-              ) : viewingDoc.archivo ? (
-                <iframe
-                  src={viewingDoc.archivo}
-                  title={viewingDoc.titulo}
-                  className="w-full h-full border-0 rounded-b-3xl"
-                />
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center p-8 text-center">
-                  <FileText className="h-16 w-16 mb-4 text-muted-foreground/30" />
-                  <p className="font-bold text-lg">{viewingDoc.titulo}</p>
-                  {viewingDoc.descripcion && (
-                    <p className="mt-2 text-sm text-muted-foreground max-w-lg font-medium">{viewingDoc.descripcion}</p>
-                  )}
-                </div>
-              )}
-            </div>
+              const t = (viewingDoc.tipoArchivo || "").toLowerCase()
+              const fileUrl = (viewingDoc.archivo || "").toLowerCase()
+              const fileName = (viewingDoc.nombreArchivo || "").toLowerCase()
+
+              const isPdf = t.includes("pdf") || fileUrl.endsWith(".pdf") || fileName.endsWith(".pdf")
+              const isImage = ["jpg", "jpeg", "png", "webp", "gif"].some(ext => t.includes(ext) || fileUrl.endsWith("." + ext) || fileName.endsWith("." + ext))
+              const isExcel = t.includes("xls") || t.includes("sheet") || t.includes("csv") || fileUrl.endsWith(".xlsx") || fileUrl.endsWith(".xls") || fileUrl.endsWith(".csv") || fileName.endsWith(".xlsx") || fileName.endsWith(".xls") || fileName.endsWith(".csv")
+              const isWord = t.includes("doc") || t.includes("word") || fileUrl.endsWith(".docx") || fileUrl.endsWith(".doc") || fileName.endsWith(".docx") || fileName.endsWith(".doc")
+
+              return (
+                <>
+                  {/* Header */}
+                  <div className="flex items-center justify-between border-b border-border/20 bg-white/90 px-4 py-3 dark:bg-zinc-900/90">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="line-clamp-1 text-sm font-black text-[#002F6C] dark:text-white tracking-tight md:text-base">
+                        {viewingDoc.titulo}
+                      </h3>
+                      <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground font-medium">
+                        {viewingDoc.createdAt && (
+                          <span className="flex items-center gap-1">
+                            <CalendarDays className="h-3 w-3 text-[#0E5296] dark:text-[#FFCC00]" />
+                            {formatFecha(viewingDoc.createdAt)}
+                          </span>
+                        )}
+                        {viewingDoc.categoria && (
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${getCategoryPalette(viewingDoc.categoria).pill}`}>
+                            {viewingDoc.categoria}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="ml-3 flex shrink-0 items-center gap-2">
+                      {viewingDoc.archivo && (
+                        <a href={downloadUrl} download={viewingDoc.nombreArchivo || viewingDoc.titulo}>
+                          <Button size="sm" className="rounded-xl bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold text-xs shadow-xs">
+                            <Download className="mr-1.5 h-3.5 w-3.5 text-[#FFCC00]" />
+                            Descargar
+                          </Button>
+                        </a>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setViewingDoc(null)}
+                        className="flex h-8 w-8 items-center justify-center rounded-xl border border-border/50 bg-white transition-colors hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 cursor-pointer text-foreground"
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Contenido / Visualizador */}
+                  <div className="relative min-h-0 flex-1 overflow-hidden bg-muted/10">
+                    {isPdf ? (
+                      <iframe
+                        src={fileEffectiveUrl}
+                        title={viewingDoc.titulo}
+                        className="w-full h-full border-0 rounded-b-3xl"
+                      />
+                    ) : isImage ? (
+                      <div className="h-full flex items-start justify-center overflow-auto rounded-b-3xl border border-border/30 bg-gradient-to-br from-zinc-100 to-zinc-50 dark:from-zinc-900 dark:to-zinc-950 p-3">
+                        <img
+                          src={fileEffectiveUrl}
+                          alt={viewingDoc.titulo}
+                          className="block max-h-[calc(93vh-140px)] w-full max-w-[1180px] object-contain object-top rounded-xl"
+                          draggable={false}
+                        />
+                      </div>
+                    ) : (isExcel || isWord) ? (
+                      <DocumentContentViewer
+                        url={fileEffectiveUrl}
+                        fileName={viewingDoc.nombreArchivo ?? viewingDoc.titulo}
+                        title={viewingDoc.titulo}
+                        tipoArchivo={viewingDoc.tipoArchivo}
+                      />
+                    ) : viewingDoc.archivo ? (
+                      <iframe
+                        src={fileEffectiveUrl}
+                        title={viewingDoc.titulo}
+                        className="w-full h-full border-0 rounded-b-3xl"
+                      />
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center p-8 text-center">
+                        <FileText className="h-16 w-16 mb-4 text-muted-foreground/30" />
+                        <p className="font-bold text-lg">{viewingDoc.titulo}</p>
+                        {viewingDoc.descripcion && (
+                          <p className="mt-2 text-sm text-muted-foreground max-w-lg font-medium">{viewingDoc.descripcion}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )
+            })()}
           </DialogContent>
         </Dialog>
       )}

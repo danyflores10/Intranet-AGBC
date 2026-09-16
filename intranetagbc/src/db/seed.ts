@@ -250,6 +250,7 @@ async function seedDocumentos() {
     { nombre: "Normativas", descripcion: "Resoluciones y marcos regulatorios oficiales" },
     { nombre: "Formularios", descripcion: "Formularios y solicitudes institucionales" },
     { nombre: "Circulares", descripcion: "Circulares institucionales y comunicados oficiales" },
+    { nombre: "Instructivos", descripcion: "Instructivos operativos y guías institucionales" },
   ]
 
   const catMap: Record<string, string> = {}
@@ -270,6 +271,52 @@ async function seedDocumentos() {
       if (!fs.existsSync(physicalPath)) {
         await db.delete(documentos).where(eq(documentos.id, doc.id))
         console.log(`   [LIMPIEZA] Eliminado documento sin archivo físico: ${doc.titulo}`)
+      }
+    }
+  }
+
+  // Sincronizar los 89 documentos institucionales si la BD está vacía o incompleta
+  const docsDir = path.join(process.cwd(), "public", "documentos")
+  if (fs.existsSync(docsDir)) {
+    const files = fs.readdirSync(docsDir).filter((f) => f.startsWith("doc_"))
+    for (const file of files) {
+      const url = `/documentos/${file}`
+      const [existe] = await db.select().from(documentos).where(eq(documentos.archivo, url)).limit(1)
+      if (!existe) {
+        const filePath = path.join(docsDir, file)
+        const stat = fs.statSync(filePath)
+        const ext = file.split(".").pop()?.toLowerCase() || "pdf"
+        
+        let title = file.replace(/^doc_\d+_/i, "").replace(/\.[^/.]+$/, "").replace(/_/g, " ")
+        title = title.replace(/\b\w/g, (l) => l.toUpperCase())
+        title = title.replace(/\b(Agbc|Sigec|Sireco|Gescon|Senca|Felcn|Sigep|Mof|Mapro|Re-Sap|Re-Sabs|Re-Soa|Sap|Sabs|Soa|Ra|Cn-08)\b/gi, (m) => m.toUpperCase())
+
+        let cat = "Normativas"
+        const upper = file.toUpperCase()
+        if (upper.includes("REGLAMENTO")) cat = "Reglamentos"
+        else if (upper.includes("MANUAL") || upper.includes("PROCEDIMIENTO") || upper.includes("GUIA")) cat = "Manuales"
+        else if (upper.includes("INSTRUCTIVO")) cat = "Instructivos"
+        else if (upper.includes("FORMULARIO") || upper.includes("FICHA") || upper.includes("KARDEX") || upper.includes("ACTA") || upper.includes("RECIBO") || upper.includes("MATRIZ") || upper.includes("NOTIFICACION") || upper.includes("REPORTE")) cat = "Formularios"
+        else if (upper.includes("CIRCULAR")) cat = "Circulares"
+
+        function formatSize(bytes: number) {
+          if (bytes < 1024) return `${bytes} B`
+          if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+          return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+        }
+
+        await db.insert(documentos).values({
+          id: createId(),
+          titulo: title,
+          categoriaId: catMap[cat] || catMap["Normativas"],
+          autor: "AGBC Institucional",
+          estado: "publicado",
+          archivo: url,
+          nombreArchivo: file,
+          tipoArchivo: ext,
+          tamano: formatSize(stat.size),
+          descripcion: file,
+        })
       }
     }
   }
