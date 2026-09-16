@@ -124,6 +124,12 @@ export function DocumentosBulkDialog({
   const [isDragging, setIsDragging] = useState(false)
   const [actualizarExistentes, setActualizarExistentes] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<{
+    current: number
+    total: number
+    currentFileName: string
+    percent: number
+  } | null>(null)
   const [importResult, setImportResult] = useState<ResultadoImportacionDocumentos | null>(null)
   const [isPending, startTransition] = useTransition()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -228,6 +234,7 @@ export function DocumentosBulkDialog({
     setFileItems([])
     setImportResult(null)
     setIsUploading(false)
+    setUploadProgress(null)
   }
 
   // Execute bulk upload & import
@@ -245,67 +252,104 @@ export function DocumentosBulkDialog({
     }
 
     setIsUploading(true)
+    const itemsToImport: DocumentoImportItem[] = []
+    const uploadErrors: Array<{ archivo: string; titulo: string; estado: "error"; mensaje: string }> = []
+
     try {
-      // 1. Upload files to physical storage
-      const fd = new FormData()
-      fileItems.forEach((it) => {
-        fd.append("archivos", it.file)
-      })
+      // Subir cada archivo de forma individual y segura para evitar límites de payload o respuestas HTML no válidas
+      for (let i = 0; i < fileItems.length; i++) {
+        const item = fileItems[i]
+        setUploadProgress({
+          current: i + 1,
+          total: fileItems.length,
+          currentFileName: item.nombreOriginal,
+          percent: Math.round(((i + 1) / fileItems.length) * 100),
+        })
 
-      const uploadRes = await fetch("/api/upload/documentos-bulk", {
-        method: "POST",
-        body: fd,
-      })
+        try {
+          const fd = new FormData()
+          fd.append("archivo", item.file)
 
-      const uploadData = await uploadRes.json()
-      if (!uploadRes.ok) {
-        throw new Error(uploadData.error || "Error al subir archivos al almacenamiento")
+          const res = await fetch("/api/upload/documento", {
+            method: "POST",
+            body: fd,
+          })
+
+          const resText = await res.text()
+          let data: any
+          try {
+            data = JSON.parse(resText)
+          } catch {
+            throw new Error(`Respuesta no válida del servidor (${res.status}) al subir ${item.nombreOriginal}`)
+          }
+
+          if (!res.ok || !data.url) {
+            throw new Error(data.error || `Error al procesar ${item.nombreOriginal}`)
+          }
+
+          const catId = item.categoriaNombre ? catNameToId.get(normalizar(item.categoriaNombre)) : undefined
+
+          itemsToImport.push({
+            id: item.docExistenteId,
+            titulo: item.titulo.trim() || item.nombreOriginal,
+            categoriaNombre: item.categoriaNombre,
+            categoriaId: catId,
+            descripcion: item.descripcion.trim() || item.nombreOriginal,
+            estado: item.estado || "publicado",
+            archivo: data.url,
+            nombreArchivo: item.nombreOriginal,
+            tipoArchivo: data.tipo || item.tipoExt,
+            tamano: data.tamano || item.tamanoFormateado,
+            esActualizacion: actualizarExistentes && item.esExistente,
+          })
+        } catch (err: any) {
+          console.error(`Error subiendo archivo ${item.nombreOriginal}:`, err)
+          uploadErrors.push({
+            archivo: item.nombreOriginal,
+            titulo: item.titulo,
+            estado: "error",
+            mensaje: err?.message || "Error al subir archivo",
+          })
+        }
       }
 
-      const uploadedList = uploadData.archivos as Array<{
-        url: string
-        nombre: string
-        tipo: string
-        tamano: string
-        error?: string
-      }>
-
-      // 2. Prepare payload for DB insertion / update
-      const itemsToImport: DocumentoImportItem[] = fileItems.map((item, idx) => {
-        const up = uploadedList[idx] || {}
-        const catId = item.categoriaNombre ? catNameToId.get(normalizar(item.categoriaNombre)) : undefined
-
-        return {
-          id: item.docExistenteId,
-          titulo: item.titulo.trim() || item.nombreOriginal,
-          categoriaNombre: item.categoriaNombre,
-          categoriaId: catId,
-          descripcion: item.descripcion.trim() || item.nombreOriginal,
-          estado: item.estado || "publicado",
-          archivo: up.url || `/documentos/${item.file.name}`,
-          nombreArchivo: item.nombreOriginal,
-          tipoArchivo: item.tipoExt,
-          tamano: item.tamanoFormateado,
-          esActualizacion: actualizarExistentes && item.esExistente,
-        }
-      })
-
-      // 3. Call server action for DB processing
-      startTransition(async () => {
-        try {
-          const res = await importarDocumentosLote(itemsToImport)
-          setImportResult(res)
-          toast.success("Proceso de importación completado.")
-          onSuccess()
-        } catch (err: any) {
-          toast.error(err?.message || "Error al guardar en la base de datos.")
-        } finally {
-          setIsUploading(false)
-        }
-      })
+      if (itemsToImport.length > 0) {
+        startTransition(async () => {
+          try {
+            const dbResult = await importarDocumentosLote(itemsToImport)
+            const finalResult: ResultadoImportacionDocumentos = {
+              nuevos: dbResult.nuevos,
+              existentes: dbResult.existentes,
+              actualizados: dbResult.actualizados,
+              errores: dbResult.errores + uploadErrors.length,
+              detalles: [...dbResult.detalles, ...uploadErrors],
+            }
+            setImportResult(finalResult)
+            toast.success("Proceso de importación completado.")
+            onSuccess()
+          } catch (err: any) {
+            toast.error(err?.message || "Error al registrar documentos en la base de datos.")
+          } finally {
+            setIsUploading(false)
+            setUploadProgress(null)
+          }
+        })
+      } else if (uploadErrors.length > 0) {
+        setImportResult({
+          nuevos: 0,
+          existentes: 0,
+          actualizados: 0,
+          errores: uploadErrors.length,
+          detalles: uploadErrors,
+        })
+        toast.error("No se pudo subir ningún archivo.")
+        setIsUploading(false)
+        setUploadProgress(null)
+      }
     } catch (err: any) {
-      toast.error(err?.message || "Error en el proceso de carga.")
+      toast.error(err?.message || "Error general en la subida.")
       setIsUploading(false)
+      setUploadProgress(null)
     }
   }
 
@@ -397,6 +441,26 @@ export function DocumentosBulkDialog({
           {/* Si hay archivos seleccionados, mostrar tabla de reconocimiento interactiva */}
           {fileItems.length > 0 && !importResult && (
             <div className="space-y-4">
+              {/* Progreso de subida */}
+              {uploadProgress && (
+                <div className="rounded-2xl border-2 border-[#0E5296]/30 bg-blue-50/80 p-4 shadow-sm space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-[#002F6C]">
+                    <div className="flex items-center gap-2">
+                      <Loader2Icon className="h-4 w-4 animate-spin text-[#0E5296]" />
+                      <span>Subiendo archivo {uploadProgress.current} de {uploadProgress.total}:</span>
+                      <span className="font-mono text-slate-600 truncate max-w-sm">{uploadProgress.currentFileName}</span>
+                    </div>
+                    <span className="font-mono font-black text-[#0E5296]">{uploadProgress.percent}%</span>
+                  </div>
+                  <div className="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#0E5296] to-[#FFCC00] transition-all duration-300 rounded-full"
+                      style={{ width: `${uploadProgress.percent}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Barra de estado y acciones rápidas */}
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#002F6C]/15 bg-white p-4 shadow-xs">
                 <div className="flex flex-wrap items-center gap-2">

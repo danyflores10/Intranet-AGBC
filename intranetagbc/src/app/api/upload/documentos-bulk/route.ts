@@ -7,6 +7,9 @@ import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
 import { PERMISOS } from "@/lib/auth/permisos"
 
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
 const ALLOWED_TYPES_BY_MIME: Record<string, string> = {
   "application/pdf": "pdf",
   "application/msword": "doc",
@@ -166,6 +169,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error("Error en subida masiva:", error)
-    return NextResponse.json({ error: "Error al procesar archivos" }, { status: 500 })
+    return NextResponse.json({ error: error?.message || "Error al procesar archivos" }, { status: 500 })
   }
 }

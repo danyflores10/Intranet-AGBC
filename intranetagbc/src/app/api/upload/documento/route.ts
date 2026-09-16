@@ -6,8 +6,11 @@ import { createId } from "@paralleldrive/cuid2"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
 import { PERMISOS } from "@/lib/auth/permisos"
- 
-const ALLOWED_TYPES: Record<string, string> = {
+
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
+const ALLOWED_TYPES_MIME: Record<string, string> = {
   "application/pdf": "pdf",
   "application/msword": "doc",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
@@ -22,6 +25,10 @@ const ALLOWED_TYPES: Record<string, string> = {
   "text/csv": "csv",
 }
 
+const ALLOWED_EXTENSIONS = new Set([
+  "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "jpg", "jpeg", "png", "webp", "txt", "csv"
+])
+
 const ROL_SUPER_ADMIN = "super_admin"
 
 function normalizarTexto(value: string): string {
@@ -30,18 +37,10 @@ function normalizarTexto(value: string): string {
 
 function getLegacyPermissionAlias(permission: string): string | null {
   const tokens = normalizarTexto(permission).split(/\s+/).filter(Boolean)
-
-  if (tokens.length < 2) {
-    return null
-  }
-
+  if (tokens.length < 2) return null
   const [action, ...resourceTokens] = tokens
   const resource = resourceTokens.join("_")
-
-  if (resource.length === 0) {
-    return null
-  }
-
+  if (resource.length === 0) return null
   return `${resource}.${action}`
 }
 
@@ -56,6 +55,24 @@ function tienePermiso(permissions: string[], permisoRequerido: string): boolean 
       || (alias !== null && normalizedPermission === alias)
     )
   })
+}
+
+function formatSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
+}
+
+function obtenerExtension(file: File): string | null {
+  if (file.type && ALLOWED_TYPES_MIME[file.type]) {
+    return ALLOWED_TYPES_MIME[file.type]
+  }
+  const ext = file.name.split(".").pop()?.toLowerCase()
+  if (ext && ALLOWED_EXTENSIONS.has(ext)) {
+    return ext === "jpeg" ? "jpg" : ext
+  }
+  return null
 }
 
 export async function POST(request: NextRequest) {
@@ -93,7 +110,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No se envió archivo" }, { status: 400 })
     }
 
-    const ext = ALLOWED_TYPES[file.type]
+    const ext = obtenerExtension(file)
     if (!ext) {
       return NextResponse.json(
         { error: "Tipo de archivo no permitido. Use PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG, TXT o CSV" },
@@ -101,7 +118,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const fileName = `${createId()}.${ext}`
+    const safeBaseName = file.name
+      .replace(/\.[^/.]+$/, "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "_")
+      .slice(0, 40)
+
+    const fileName = `${createId()}_${safeBaseName}.${ext}`
     const dir = join(process.cwd(), "public", "documentos")
     await mkdir(dir, { recursive: true })
     const filePath = join(dir, fileName)
@@ -111,20 +136,14 @@ export async function POST(request: NextRequest) {
 
     const url = `/documentos/${fileName}`
 
-    function formatSize(bytes: number) {
-      if (bytes < 1024) return `${bytes} B`
-      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-      if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-      return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
-    }
-
     return NextResponse.json({
       url,
       nombre: file.name,
       tipo: ext,
       tamano: formatSize(file.size),
     })
-  } catch {
-    return NextResponse.json({ error: "Error al subir archivo" }, { status: 500 })
+  } catch (error: any) {
+    console.error("Error al subir archivo:", error)
+    return NextResponse.json({ error: error?.message || "Error al subir archivo" }, { status: 500 })
   }
 }
