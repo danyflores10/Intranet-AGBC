@@ -1,4 +1,6 @@
 import "dotenv/config"
+import fs from "fs"
+import path from "path"
 import { createId } from "@paralleldrive/cuid2"
 import { eq, inArray, sql } from "drizzle-orm"
 import { db } from "./index"
@@ -237,16 +239,17 @@ async function seedAccesosDirectos() {
 }
 
 /* ══════════════════════════════════════════════════════════════
- * 4. SEED DE DOCUMENTOS INSTITUCIONALES (12 DOCUMENTOS)
+ * 4. SEED DE DOCUMENTOS INSTITUCIONALES (CATEGORÍAS Y LIMPIEZA)
  * ══════════════════════════════════════════════════════════════ */
 async function seedDocumentos() {
-  console.log("-> 4. Sembrando 12 documentos institucionales...")
+  console.log("-> 4. Verificando categorías y documentos institucionales...")
 
   const categorias = [
     { nombre: "Reglamentos", descripcion: "Reglamentos internos y normativas operativas" },
     { nombre: "Manuales", descripcion: "Manuales de procedimientos y funciones" },
     { nombre: "Normativas", descripcion: "Resoluciones y marcos regulatorios oficiales" },
     { nombre: "Formularios", descripcion: "Formularios y solicitudes institucionales" },
+    { nombre: "Circulares", descripcion: "Circulares institucionales y comunicados oficiales" },
   ]
 
   const catMap: Record<string, string> = {}
@@ -258,120 +261,16 @@ async function seedDocumentos() {
     catMap[c.nombre] = catRow.id
   }
 
-  const docsBase = [
-    {
-      titulo: "Estatuto del Funcionario Postal AGBC",
-      categoria: "Reglamentos",
-      autor: "Dirección de Recursos Humanos",
-      descripcion: "Marco legal sobre derechos, deberes e incompatibilidades del servidor público de Correos.",
-      tamano: "2.4 MB",
-      tipoArchivo: "PDF",
-    },
-    {
-      titulo: "Reglamento Interno de Personal y Asistencia",
-      categoria: "Reglamentos",
-      autor: "Unidad de Talento Humano",
-      descripcion: "Normas sobre control de asistencia, permisos, licencias y régimen disciplinario.",
-      tamano: "1.8 MB",
-      tipoArchivo: "PDF",
-    },
-    {
-      titulo: "Código de Ética y Conducta Institucional",
-      categoria: "Normativas",
-      autor: "Unidad de Transparencia",
-      descripcion: "Principios éticos, integridad pública y transparencia en el ejercicio del servicio postal.",
-      tamano: "950 KB",
-      tipoArchivo: "PDF",
-    },
-    {
-      titulo: "Manual de Organización y Funciones (MOF 2026)",
-      categoria: "Manuales",
-      autor: "Planificación y Desarrollo",
-      descripcion: "Estructura orgánica, atribuciones por gerencias y dependencias de la AGBC.",
-      tamano: "4.1 MB",
-      tipoArchivo: "PDF",
-    },
-    {
-      titulo: "Manual de Procesos y Procedimientos (MAPRO Postal)",
-      categoria: "Manuales",
-      autor: "Gerencia de Operaciones",
-      descripcion: "Flujogramas y protocolos estandarizados para el tratamiento de envíos y paquetería.",
-      tamano: "3.7 MB",
-      tipoArchivo: "PDF",
-    },
-    {
-      titulo: "Tarifario Oficial Postal Nacional e Internacional",
-      categoria: "Normativas",
-      autor: "Gerencia Comercial",
-      descripcion: "Tabla aprobada de tasas por peso, destino y tipo de correspondencia EMS y ordinaria.",
-      tamano: "1.2 MB",
-      tipoArchivo: "PDF",
-    },
-    {
-      titulo: "Política de Seguridad de la Información y TIC",
-      categoria: "Normativas",
-      autor: "Gerencia de Sistemas",
-      descripcion: "Políticas de contraseñas, uso de correos institucionales y custodia de bases de datos.",
-      tamano: "880 KB",
-      tipoArchivo: "PDF",
-    },
-    {
-      titulo: "Guía de Atención y Trato al Usuario en Ventanilla",
-      categoria: "Manuales",
-      autor: "Atención al Cliente",
-      descripcion: "Protocolos de excelencia en servicio, recepción y despacho de paquetes al público.",
-      tamano: "1.5 MB",
-      tipoArchivo: "PDF",
-    },
-    {
-      titulo: "Reglamento de Manejo de Correspondencia SIGEC",
-      categoria: "Reglamentos",
-      autor: "Archivo Central",
-      descripcion: "Directrices para el registro digital, seguimiento y archivo de cartas y notas oficiales.",
-      tamano: "2.0 MB",
-      tipoArchivo: "PDF",
-    },
-    {
-      titulo: "Formulario de Solicitud de Licencia y Vacaciones",
-      categoria: "Formularios",
-      autor: "Recursos Humanos",
-      descripcion: "Plantilla oficial editable para solicitud de permisos laborales y descansos anuales.",
-      tamano: "450 KB",
-      tipoArchivo: "PDF",
-    },
-    {
-      titulo: "Manual de Envíos Express y Comercio Electrónico",
-      categoria: "Manuales",
-      autor: "Logística y Distribución",
-      descripcion: "Guía operativa del servicio Delivery Express para tiendas online y pequeñas empresas.",
-      tamano: "2.8 MB",
-      tipoArchivo: "PDF",
-    },
-    {
-      titulo: "Guía de Prevención y Reporte de Estafas Digitales",
-      categoria: "Normativas",
-      autor: "Unidad Jurídica y TI",
-      descripcion: "Protocolo de denuncia y orientación contra páginas falsas en redes sociales.",
-      tamano: "1.1 MB",
-      tipoArchivo: "PDF",
-    },
-  ]
-
-  for (const doc of docsBase) {
-    const [existe] = await db.select().from(documentos).where(eq(documentos.titulo, doc.titulo)).limit(1)
-    if (!existe) {
-      await db.insert(documentos).values({
-        id: createId(),
-        titulo: doc.titulo,
-        categoriaId: catMap[doc.categoria] || null,
-        autor: doc.autor,
-        descripcion: doc.descripcion,
-        tamano: doc.tamano,
-        tipoArchivo: doc.tipoArchivo,
-        estado: "publicado",
-        archivo: `/documentos/${doc.titulo.toLowerCase().replace(/[^a-z0-9]/g, "-")}.pdf`,
-        nombreArchivo: `${doc.titulo}.pdf`,
-      })
+  // Eliminar documentos huérfanos sin archivo físico en disco
+  const allDocs = await db.select().from(documentos)
+  for (const doc of allDocs) {
+    if (doc.archivo) {
+      const rel = doc.archivo.replace(/^\//, "")
+      const physicalPath = path.join(process.cwd(), "public", rel)
+      if (!fs.existsSync(physicalPath)) {
+        await db.delete(documentos).where(eq(documentos.id, doc.id))
+        console.log(`   [LIMPIEZA] Eliminado documento sin archivo físico: ${doc.titulo}`)
+      }
     }
   }
 }

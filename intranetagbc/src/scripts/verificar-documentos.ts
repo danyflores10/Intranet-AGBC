@@ -27,9 +27,14 @@ async function verify() {
       const rel = doc.archivo.replace(/^\//, "")
       const fullPath = path.join(process.cwd(), "public", rel)
       if (!fs.existsSync(fullPath)) {
-        console.log(`FALTA ARCHIVO: ${doc.id} | ${doc.titulo} | ${doc.archivo}`)
+        console.log(`ELIMINANDO REGISTRO SIN ARCHIVO: ${doc.id} | ${doc.titulo} | ${doc.archivo}`)
+        await db.delete(documentos).where(eq(documentos.id, doc.id))
         missingFiles++
       }
+    } else {
+      console.log(`ELIMINANDO REGISTRO SIN ARCHIVO URL: ${doc.id} | ${doc.titulo}`)
+      await db.delete(documentos).where(eq(documentos.id, doc.id))
+      missingFiles++
     }
   }
 

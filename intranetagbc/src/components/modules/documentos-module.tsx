@@ -819,7 +819,33 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                   const isWord = t.includes("doc") || t.includes("word") || fileUrl.endsWith(".docx") || fileUrl.endsWith(".doc") || fileName.endsWith(".docx") || fileName.endsWith(".doc")
 
                   if (isPdf) {
-                    return <iframe src={previewDoc.archivo!} className="h-full w-full border-0" title={previewDoc.titulo} />
+                    return (
+                      <div className="flex flex-col h-full w-full">
+                        <iframe src={previewDoc.archivo!} className="flex-1 w-full border-0 min-h-[500px]" title={previewDoc.titulo} />
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/40 bg-slate-100/80 px-4 py-2 text-xs">
+                          <span className="font-mono text-slate-500 truncate max-w-sm">{previewDoc.nombreArchivo}</span>
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={previewDoc.archivo!}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3 py-1.5 font-medium text-slate-700 shadow-2xs transition-colors"
+                            >
+                              <EyeIcon className="h-3.5 w-3.5 text-[#0E5296]" />
+                              Abrir en nueva ventana
+                            </a>
+                            <a
+                              href={previewDoc.archivo!}
+                              download={previewDoc.nombreArchivo ?? "documento.pdf"}
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-[#0E5296] hover:bg-[#002F6C] px-3 py-1.5 font-bold text-white shadow-2xs transition-colors"
+                            >
+                              <DownloadIcon className="h-3.5 w-3.5 text-[#FFB800]" />
+                              Descargar PDF
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    )
                   }
 
                   if (isImage) {
