@@ -16,6 +16,14 @@ import {
   BriefcaseIcon,
   SlidersHorizontalIcon,
   LayoutGridIcon,
+  TruckIcon,
+  FileSpreadsheetIcon,
+  CalendarDaysIcon,
+  MailCheckIcon,
+  HelpCircleIcon,
+  BarChart3Icon,
+  AwardIcon,
+  FileCodeIcon,
   type LucideIcon,
 } from "lucide-react"
 
@@ -30,21 +38,29 @@ import {
   type RoleUpsertOutput,
 } from "@/lib/validations/roles"
 
-const ACTION_ORDER = ["ver", "crear", "editar", "eliminar"] as const
+const ACTION_ORDER = ["ver", "crear", "editar", "eliminar", "derivar", "archivar", "reportes", "configurar"] as const
 type ActionKey = (typeof ACTION_ORDER)[number]
 
-const ACTION_LABELS: Record<ActionKey, string> = {
+const ACTION_LABELS: Record<string, string> = {
   ver: "Ver",
   crear: "Crear",
   editar: "Editar",
   eliminar: "Eliminar",
+  derivar: "Derivar",
+  archivar: "Archivar",
+  reportes: "Reportes",
+  configurar: "Configurar",
 }
 
-const ACTION_BADGE_STYLES: Record<ActionKey, string> = {
+const ACTION_BADGE_STYLES: Record<string, string> = {
   ver: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/35 dark:bg-emerald-500/10 dark:text-emerald-300",
   crear: "border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-500/35 dark:bg-cyan-500/10 dark:text-cyan-300",
   editar: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/35 dark:bg-amber-500/10 dark:text-amber-300",
   eliminar: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/35 dark:bg-rose-500/10 dark:text-rose-300",
+  derivar: "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-500/35 dark:bg-indigo-500/10 dark:text-indigo-300",
+  archivar: "border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-500/35 dark:bg-purple-500/10 dark:text-purple-300",
+  reportes: "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/35 dark:bg-blue-500/10 dark:text-blue-300",
+  configurar: "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-500/35 dark:bg-slate-500/10 dark:text-slate-300",
 }
 
 export const ALLOWED_MODULE_KEYS = new Set([
@@ -60,6 +76,13 @@ export const ALLOWED_MODULE_KEYS = new Set([
   "accesos",
   "contenidos",
   "configuracion",
+  "tramites",
+  "logistica",
+  "calendario",
+  "correspondencia",
+  "soporte",
+  "reportes",
+  "reconocimientos",
 ])
 
 const MODULE_LABELS: Record<string, string> = {
@@ -75,6 +98,13 @@ const MODULE_LABELS: Record<string, string> = {
   accesos: "Accesos Directos",
   contenidos: "Gestión de Contenidos",
   configuracion: "Configuración General",
+  tramites: "Trámites Institucionales",
+  logistica: "Logística y Envíos",
+  calendario: "Calendario y Eventos",
+  correspondencia: "Correspondencia y Casilleros",
+  soporte: "Soporte Técnico",
+  reportes: "Reportes y Estadísticas",
+  reconocimientos: "Reconocimientos y Premios",
 }
 
 const MODULE_ICONS: Record<string, LucideIcon> = {
@@ -90,6 +120,13 @@ const MODULE_ICONS: Record<string, LucideIcon> = {
   accesos: FolderKeyIcon,
   contenidos: LayoutGridIcon,
   configuracion: SlidersHorizontalIcon,
+  tramites: FileSpreadsheetIcon,
+  logistica: TruckIcon,
+  calendario: CalendarDaysIcon,
+  correspondencia: MailCheckIcon,
+  soporte: HelpCircleIcon,
+  reportes: BarChart3Icon,
+  reconocimientos: AwardIcon,
 }
 
 type ModuleGroup = {

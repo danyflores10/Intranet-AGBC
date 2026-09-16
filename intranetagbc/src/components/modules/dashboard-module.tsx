@@ -32,6 +32,12 @@ import {
   RotateCwIcon,
   PauseIcon,
   PlayIcon,
+  TableIcon,
+  SearchIcon,
+  PhoneIcon,
+  FileIcon,
+  FileSpreadsheetIcon,
+  ArrowUpRightIcon,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -206,6 +212,7 @@ const TODOS_LOS_ACCESOS = [
 ]
 
 const MAX_TARJETAS_POR_CARRUSEL = 6
+const TABLE_PAGE_SIZE = 10
 
 export function DashboardModule({
   counts,
@@ -238,14 +245,6 @@ export function DashboardModule({
   const puedeVerComunicados = puedeAcceder({ permissions: [PERMISOS.COMUNICADOS.VER] }, accessContext)
   const puedeVerSucursales = puedeAcceder({ permissions: [PERMISOS.SUCURSALES.VER] }, accessContext)
   const puedeVerSecciones = puedeAcceder({ permissions: [PERMISOS.CONTENIDOS.VER] }, accessContext)
-  const esAdmin =
-    accessContext.isAdmin ||
-    (Array.isArray(user.roles) &&
-      user.roles.some((r: any) =>
-        typeof r === "string"
-          ? ["administrador", "super_admin"].includes(r.toLowerCase())
-          : ["administrador", "super_admin"].includes(r.name?.toLowerCase())
-      ))
 
   // Accesos directos permitidos según el rol del usuario
   const allowedAccesos = useMemo(() => {
@@ -259,7 +258,7 @@ export function DashboardModule({
     return allowedAccesos.map((a) => a.id).slice(0, 4)
   }, [allowedAccesos])
 
-  // Pestañas disponibles para el carrusel 3D según permisos
+  // Pestañas disponibles según permisos
   const availableTabs = useMemo(() => {
     const list: Array<{ id: "personal" | "documentos" | "comunicados" | "usuarios"; label: string; count: number; icon: any }> = []
     if (puedeVerPersonal) {
@@ -277,9 +276,12 @@ export function DashboardModule({
     return list
   }, [puedeVerPersonal, puedeVerDocumentos, puedeVerComunicados, puedeVerUsuarios, personal.length, documentos.length, comunicados.length, usuarios.length])
 
-  // Estado pestaña del carrusel (garantizando que esté permitida)
+  // Estado de vista: Tabla (por defecto) o Carrusel
+  const [viewMode, setViewMode] = useState<"table" | "carousel">("table")
+
+  // Estado pestaña activa
   const [activeTab, setActiveTab] = useState<"personal" | "documentos" | "comunicados" | "usuarios">(
-    availableTabs[0]?.id ?? "comunicados"
+    availableTabs[0]?.id ?? "personal"
   )
 
   useEffect(() => {
@@ -287,18 +289,25 @@ export function DashboardModule({
       setActiveTab(availableTabs[0].id)
     }
   }, [availableTabs, activeTab])
-  
-  // Paginación por grupos de máximo 6 tarjetas
-  const [paginaGrupo, setPaginaGrupo] = useState(0)
 
-  // Ángulo de rotación del cilindro 3D (en grados)
+  // Filtro de búsqueda y paginación en Vista Tabla
+  const [tableSearch, setTableSearch] = useState("")
+  const [tablePage, setTablePage] = useState(1)
+
+  // Reset de búsqueda y página al cambiar de pestaña
+  useEffect(() => {
+    setTableSearch("")
+    setTablePage(1)
+  }, [activeTab])
+  
+  // Paginación y ángulo para vista carrusel
+  const [paginaGrupo, setPaginaGrupo] = useState(0)
   const [rotationAngle, setRotationAngle] = useState(0)
 
   // Modo edición de accesos directos
   const [isEditingShortcuts, setIsEditingShortcuts] = useState(false)
   const [selectedShortcuts, setSelectedShortcuts] = useState<string[]>([])
 
-  // Cargar preferencias guardadas en cliente
   useEffect(() => {
     try {
       const saved = localStorage.getItem("agbc_admin_shortcuts")
@@ -317,7 +326,7 @@ export function DashboardModule({
     return valid.length > 0 ? valid : defaultShortcuts
   }, [selectedShortcuts, allowedAccesos, defaultShortcuts])
 
-  // Tarjetas métricas superiores filtradas según permisos RBAC
+  // Tarjetas métricas superiores
   const availableStatCards = useMemo(() => {
     const cards = []
     if (puedeVerPersonal) {
@@ -401,7 +410,76 @@ export function DashboardModule({
     return cards
   }, [counts, puedeVerPersonal, puedeVerDocumentos, puedeVerComunicados, puedeVerUsuarios, puedeVerSucursales, puedeVerAuditoria, sucursales.length])
 
-  // Lista completa de la pestaña seleccionada
+  // ── Filtrado y Paginación para Vista Tabla ──
+  const filteredPersonal = useMemo(() => {
+    const q = tableSearch.toLowerCase().trim()
+    if (!q) return personal
+    return personal.filter((p) => {
+      const nom = `${p.nombre || ""} ${p.nombres || ""} ${p.apellidos || ""}`.toLowerCase()
+      const car = (p.cargo || "").toLowerCase()
+      const are = `${p.area || ""} ${p.unidad || ""} ${p.regional || ""}`.toLowerCase()
+      const em = (p.email || "").toLowerCase()
+      return nom.includes(q) || car.includes(q) || are.includes(q) || em.includes(q)
+    })
+  }, [personal, tableSearch])
+
+  const filteredDocumentos = useMemo(() => {
+    const q = tableSearch.toLowerCase().trim()
+    if (!q) return documentos
+    return documentos.filter((d) => {
+      const tit = (d.titulo || "").toLowerCase()
+      const desc = (d.descripcion || "").toLowerCase()
+      const cat = (d.categoria || "").toLowerCase()
+      const nom = (d.nombreArchivo || "").toLowerCase()
+      return tit.includes(q) || desc.includes(q) || cat.includes(q) || nom.includes(q)
+    })
+  }, [documentos, tableSearch])
+
+  const filteredComunicados = useMemo(() => {
+    const q = tableSearch.toLowerCase().trim()
+    if (!q) return comunicados
+    return comunicados.filter((c) => {
+      const tit = (c.titulo || "").toLowerCase()
+      const res = (c.resumen || "").toLowerCase()
+      const con = (c.contenido || "").toLowerCase()
+      return tit.includes(q) || res.includes(q) || con.includes(q)
+    })
+  }, [comunicados, tableSearch])
+
+  const filteredUsuarios = useMemo(() => {
+    const q = tableSearch.toLowerCase().trim()
+    if (!q) return usuarios
+    return usuarios.filter((u) => {
+      const nom = (u.name || "").toLowerCase()
+      const em = (u.email || "").toLowerCase()
+      const inst = (u.institutionalEmail || "").toLowerCase()
+      return nom.includes(q) || em.includes(q) || inst.includes(q)
+    })
+  }, [usuarios, tableSearch])
+
+  // Items de la pestaña activa en vista tabla
+  const currentTableList = useMemo(() => {
+    switch (activeTab) {
+      case "personal":
+        return filteredPersonal
+      case "documentos":
+        return filteredDocumentos
+      case "comunicados":
+        return filteredComunicados
+      case "usuarios":
+        return filteredUsuarios
+      default:
+        return []
+    }
+  }, [activeTab, filteredPersonal, filteredDocumentos, filteredComunicados, filteredUsuarios])
+
+  const tableTotalPages = Math.max(1, Math.ceil(currentTableList.length / TABLE_PAGE_SIZE))
+  const paginatedTableList = useMemo(() => {
+    const start = (tablePage - 1) * TABLE_PAGE_SIZE
+    return currentTableList.slice(start, start + TABLE_PAGE_SIZE)
+  }, [currentTableList, tablePage])
+
+  // ── Items para el Carrusel 3D ──
   const allCurrentItems = useMemo(() => {
     switch (activeTab) {
       case "personal":
@@ -417,16 +495,12 @@ export function DashboardModule({
     }
   }, [activeTab, personal, documentos, comunicados, usuarios])
 
-  // Total de páginas (cada carrusel tiene como máximo 6 tarjetas)
-  const totalPaginas = Math.max(1, Math.ceil(allCurrentItems.length / MAX_TARJETAS_POR_CARRUSEL))
-
-  // 6 tarjetas activas para el cilindro 3D de la página actual
+  const totalPaginasCarrusel = Math.max(1, Math.ceil(allCurrentItems.length / MAX_TARJETAS_POR_CARRUSEL))
   const current6Items = useMemo(() => {
     const start = paginaGrupo * MAX_TARJETAS_POR_CARRUSEL
     return allCurrentItems.slice(start, start + MAX_TARJETAS_POR_CARRUSEL)
   }, [allCurrentItems, paginaGrupo])
 
-  // Reset de página y ángulo al cambiar pestaña o de carrusel
   useEffect(() => {
     setPaginaGrupo(0)
     setRotationAngle(0)
@@ -436,7 +510,6 @@ export function DashboardModule({
     setRotationAngle(0)
   }, [paginaGrupo])
 
-  // Guardar accesos directos
   const toggleShortcut = (id: string) => {
     setSelectedShortcuts((prev) => {
       const next = prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
@@ -448,105 +521,76 @@ export function DashboardModule({
   }
 
   const moveShortcut = (index: number, direction: "left" | "right") => {
-    const targetIndex = direction === "left" ? index - 1 : index + 1
-    if (targetIndex < 0 || targetIndex >= selectedShortcuts.length) return
-    const next = [...selectedShortcuts]
-    const temp = next[index]
-    next[index] = next[targetIndex]
-    next[targetIndex] = temp
-    setSelectedShortcuts(next)
-    if (typeof window !== "undefined") {
-      localStorage.setItem("agbc_admin_shortcuts", JSON.stringify(next))
-    }
+    setSelectedShortcuts((prev) => {
+      const next = [...prev]
+      const targetIndex = direction === "left" ? index - 1 : index + 1
+      if (targetIndex < 0 || targetIndex >= next.length) return prev
+      const temp = next[index]
+      next[index] = next[targetIndex]
+      next[targetIndex] = temp
+      if (typeof window !== "undefined") {
+        localStorage.setItem("agbc_admin_shortcuts", JSON.stringify(next))
+      }
+      return next
+    })
   }
 
   const notifsNoLeidas = notificaciones.filter((n) => !n.leida)
-
-  const getInitials = (name: string) => {
-    const parts = name.trim().split(" ")
-    if (parts.length >= 2) {
-      return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
-    }
-    return name.slice(0, 2).toUpperCase() || "AG"
-  }
-
   const numItems = current6Items.length
-  const stepAngle = 60
+  const stepAngle = numItems > 0 ? 360 / Math.max(numItems, 6) : 60
 
   return (
-    <div className="relative flex flex-1 flex-col gap-6 p-6 bg-gradient-to-br from-slate-50 via-blue-50/25 to-amber-50/20 min-h-screen">
-      {/* ── OVERLAY OSCURECIDO (MODO EDICIÓN ESTILO WORD CABECERA) ── */}
-      {isEditingShortcuts && (
-        <div
-          onClick={() => setIsEditingShortcuts(false)}
-          className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in"
-        />
-      )}
-
-      {/* ── Banner Superior (Pastel Amarillo & Azul Moderno) ── */}
-      <div className={`relative overflow-hidden rounded-3xl border-2 border-[#002F6C]/15 bg-gradient-to-br from-white via-blue-50/40 to-amber-50/40 p-6 shadow-sm transition-all duration-300 ${
-        isEditingShortcuts ? "opacity-30 blur-[1px] pointer-events-none" : ""
-      }`}>
-        <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-[#FFCC00]/25 blur-3xl pointer-events-none" />
-        <div className="absolute -left-12 -bottom-12 h-48 w-48 rounded-full bg-[#0E5296]/15 blur-3xl pointer-events-none" />
-
-        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0E5296] text-[#FFCC00] shadow-md shadow-[#0E5296]/20 ring-4 ring-white">
-              <LayoutDashboardIcon className="h-8 w-8" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-black tracking-tight text-[#002F6C]">
-                  Panel de Control Institucional
-                </h1>
-                <span className="rounded-full bg-[#FFCC00] text-[#002F6C] px-2.5 py-0.5 text-xs font-black uppercase shadow-xs">
-                  AGBC
-                </span>
-              </div>
-              <p className="text-sm text-slate-600 font-medium mt-0.5">
-                Hola, <span className="text-[#002F6C] font-bold">{user.name}</span>. Sistema centralizado de la Agencia Boliviana de Correos.
-              </p>
-              <div className="flex items-center gap-3 mt-2 text-xs font-semibold text-slate-500">
-                <span className="flex items-center gap-1.5 text-[#0E5296] font-bold">
-                  <MailIcon className="h-3.5 w-3.5" />
-                  {user.email}
-                </span>
-                <span>•</span>
-                <span className="flex items-center gap-1 text-slate-700">
-                  <ShieldCheckIcon className="h-3.5 w-3.5 text-[#FFCC00]" />
-                  {user.roles.length > 0 ? user.roles.join(", ").toUpperCase() : "USUARIO"}
-                </span>
-              </div>
-            </div>
-          </div>
-
+    <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-blue-50/20 to-amber-50/15 min-h-screen">
+      {/* ── Encabezado Institucional ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
           <div className="flex items-center gap-2">
-            <Link
-              href="/perfil"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#0E5296] hover:bg-[#002F6C] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-[#0E5296]/20 transition-all cursor-pointer"
-            >
-              <UserIcon className="h-4 w-4 text-[#FFCC00]" />
-              Mi Perfil
-            </Link>
+            <h1 className="text-2xl font-black tracking-tight text-[#002F6C]">
+              Panel de Control Principal
+            </h1>
+            <span className="rounded-full bg-[#0E5296] text-[#FFCC00] text-[10px] font-black px-2.5 py-0.5 uppercase tracking-wider">
+              AGBC Oficial
+            </span>
           </div>
+          <p className="text-xs text-slate-600 font-medium mt-0.5">
+            Bienvenido al sistema unificado de información, comunicaciones y gestión de la Agencia Boliviana de Correos.
+          </p>
+        </div>
+
+        {/* Interruptor de Vista: Tabla / Carrusel */}
+        <div className="flex items-center gap-1.5 rounded-2xl bg-white border-2 border-[#002F6C]/15 p-1 shadow-xs">
+          <button
+            onClick={() => setViewMode("table")}
+            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+              viewMode === "table"
+                ? "bg-[#0E5296] text-white shadow-xs"
+                : "text-slate-600 hover:text-[#002F6C] hover:bg-slate-100"
+            }`}
+          >
+            <TableIcon className={`h-3.5 w-3.5 ${viewMode === "table" ? "text-[#FFCC00]" : ""}`} />
+            <span>Vista Tabla</span>
+          </button>
+          <button
+            onClick={() => setViewMode("carousel")}
+            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+              viewMode === "carousel"
+                ? "bg-[#0E5296] text-white shadow-xs"
+                : "text-slate-600 hover:text-[#002F6C] hover:bg-slate-100"
+            }`}
+          >
+            <RotateCwIcon className={`h-3.5 w-3.5 ${viewMode === "carousel" ? "text-[#FFCC00]" : ""}`} />
+            <span>Vista Carrusel</span>
+          </button>
         </div>
       </div>
 
-      {/* ── ACCESOS DIRECTOS DE ADMINISTRACIÓN (DIRECTO DEBAJO DEL PANEL) ── */}
-      {esAdmin && (
-        <div
-          className={`relative rounded-3xl border-2 transition-all duration-300 ${
-            isEditingShortcuts
-              ? "z-50 bg-white border-[#FFCC00] shadow-2xl shadow-black/30 ring-8 ring-[#0E5296]/30 p-8 scale-[1.01]"
-              : "border-2 border-[#002F6C]/15 bg-gradient-to-br from-amber-50/80 via-blue-50/40 to-amber-100/40 p-5.5 shadow-sm"
-          }`}
-        >
-          {/* Cabecera con Botón de Edición (Lápiz) */}
-          <div className="flex items-center justify-between pb-3.5 border-b border-[#002F6C]/10">
+      {/* ── Accesos Directos de Administración ── */}
+      {allowedAccesos.length > 0 && (
+        <div className="rounded-3xl border-2 border-[#002F6C]/15 bg-gradient-to-r from-blue-50/70 via-amber-50/40 to-blue-50/60 p-5 shadow-xs">
+          <div className="flex items-center justify-between pb-3 border-b border-[#002F6C]/10">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0E5296] text-[#FFCC00] shadow-xs">
-                <ShieldAlertIcon className="h-4.5 w-4.5" />
+                <SparklesIcon className="h-4.5 w-4.5" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -666,9 +710,11 @@ export function DashboardModule({
                           : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                       }`}
                     >
-                      <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${
-                        isSelected ? "bg-[#0E5296] text-[#FFCC00]" : "bg-slate-100 text-slate-500"
-                      }`}>
+                      <div
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${
+                          isSelected ? "bg-[#0E5296] text-[#FFCC00]" : "bg-slate-100 text-slate-500"
+                        }`}
+                      >
                         <Icon className="h-3 w-3" />
                       </div>
                       <span className="text-[11px] truncate">{item.label}</span>
@@ -681,11 +727,16 @@ export function DashboardModule({
         </div>
       )}
 
-      {/* ── Tarjetas Métricas Superiores (Filtradas según rol y permisos) ── */}
+      {/* ── Tarjetas Métricas Superiores ── */}
       {availableStatCards.length > 0 && (
-        <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-${Math.min(6, Math.max(2, availableStatCards.length))} gap-4 transition-all duration-300 ${
-          isEditingShortcuts ? "opacity-30 blur-[1px] pointer-events-none" : ""
-        }`}>
+        <div
+          className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-${Math.min(
+            6,
+            Math.max(2, availableStatCards.length)
+          )} gap-4 transition-all duration-300 ${
+            isEditingShortcuts ? "opacity-30 blur-[1px] pointer-events-none" : ""
+          }`}
+        >
           {availableStatCards.map((card) => (
             <Link
               key={card.label}
@@ -693,38 +744,40 @@ export function DashboardModule({
               className={`group relative overflow-hidden rounded-2xl border p-4 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer ${card.cardStyle}`}
             >
               <div className="flex items-center justify-between">
-                <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${card.badgeStyle}`}>
+                <span
+                  className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${card.badgeStyle}`}
+                >
                   {card.badge}
                 </span>
-                <div className={`flex h-9 w-9 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110 ${card.iconStyle}`}>
+                <div
+                  className={`flex h-9 w-9 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110 ${card.iconStyle}`}
+                >
                   <card.icon className="h-4.5 w-4.5" />
                 </div>
               </div>
 
               <div className="mt-3">
-                <div className="text-2xl font-black text-[#002F6C]">
-                  {card.count}
-                </div>
-                <p className="text-xs font-bold text-slate-800 mt-0.5 truncate">
-                  {card.label}
-                </p>
-                <p className="text-[10px] font-medium text-slate-500 truncate">
-                  {card.sublabel}
-                </p>
+                <div className="text-2xl font-black text-[#002F6C]">{card.count}</div>
+                <p className="text-xs font-bold text-slate-800 mt-0.5 truncate">{card.label}</p>
+                <p className="text-[10px] font-medium text-slate-500 truncate">{card.sublabel}</p>
               </div>
             </Link>
           ))}
         </div>
       )}
 
-      {/* ── CARRUSEL 3D ESTANDARIZADO CON PESTAÑAS CENTRADAS Y FLECHAS LATERALES ── */}
+      {/* ══════════════════════════════════════════════════════════════════════════ */}
+      {/* SECCIÓN PRINCIPAL: VISTA TABLA (PREDETERMINADA) O VISTA CARRUSEL 3D        */}
+      {/* ══════════════════════════════════════════════════════════════════════════ */}
       {availableTabs.length > 0 && (
-        <div className={`rounded-3xl border-2 border-[#002F6C]/15 bg-gradient-to-b from-blue-50/70 via-amber-50/40 to-blue-100/30 p-6 shadow-sm transition-all duration-300 ${
-          isEditingShortcuts ? "opacity-30 blur-[1px] pointer-events-none" : ""
-        }`}>
-          {/* Pestañas Centradas según permisos del usuario */}
-          <div className="flex justify-center pb-5 border-b border-[#002F6C]/10">
-            <div className="flex flex-wrap items-center justify-center gap-1.5 rounded-2xl bg-white/80 border border-[#002F6C]/15 p-1.5 shadow-xs">
+        <div
+          className={`rounded-3xl border-2 border-[#002F6C]/15 bg-gradient-to-b from-blue-50/70 via-amber-50/40 to-blue-100/30 p-5 sm:p-6 shadow-sm transition-all duration-300 ${
+            isEditingShortcuts ? "opacity-30 blur-[1px] pointer-events-none" : ""
+          }`}
+        >
+          {/* Pestañas de Navegación de Entidades */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-[#002F6C]/10 gap-3">
+            <div className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-white/80 border border-[#002F6C]/15 p-1.5 shadow-xs">
               {availableTabs.map((t) => (
                 <button
                   key={t.id}
@@ -740,350 +793,693 @@ export function DashboardModule({
                 </button>
               ))}
             </div>
+
+            {/* Enlace al módulo completo */}
+            <Link
+              href={
+                activeTab === "personal"
+                  ? "/rrhh"
+                  : activeTab === "documentos"
+                  ? "/documentos"
+                  : activeTab === "comunicados"
+                  ? "/comunicaciones"
+                  : "/usuarios"
+              }
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0E5296] hover:text-[#002F6C] hover:underline"
+            >
+              <span>Ir al módulo completo</span>
+              <ArrowUpRightIcon className="h-3.5 w-3.5" />
+            </Link>
           </div>
 
-        {/* ── ESCENARIO CILÍNDRICO 3D CON GEOMETRÍA FIJA (IGUAL TAMAÑO EN TODAS LAS PESTAÑAS Y PÁGINAS) ── */}
-        <div className="relative mt-2 flex items-center justify-center py-4 w-full">
-          {/* Flecha izquierda lateral */}
-          {numItems > 1 && (
-            <button
-              onClick={() => setRotationAngle((prev) => prev + stepAngle)}
-              className="absolute left-2 md:left-4 z-20 flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white/95 text-[#002F6C] shadow-lg hover:bg-white hover:scale-105 active:scale-95 transition-all cursor-pointer"
-              title="Girar carrusel a la izquierda"
-            >
-              <ChevronLeftIcon className="h-5 w-5" />
-            </button>
-          )}
-
-          <div
-            className="relative h-[400px] w-full flex items-center justify-center"
-            style={{ perspective: "1100px" }}
-          >
-            {numItems === 0 ? (
-              <div className="flex flex-col items-center justify-center text-center">
-                <LayoutDashboardIcon className="h-10 w-10 text-slate-300 mb-2" />
-                <p className="text-sm font-bold text-slate-600">No hay registros disponibles</p>
-              </div>
-            ) : (
-              <div
-                className="relative h-full w-full flex items-center justify-center transition-transform duration-700 ease-out"
-                style={{
-                  transformStyle: "preserve-3d",
-                  transform: `rotateY(${rotationAngle}deg)`,
-                }}
-              >
-                {current6Items.map((item, idx) => {
-                  const FIXED_RADIUS = 270
-                  const faceAngle = numItems === 1 ? 0 : (idx <= numItems / 2 ? idx * 60 : (idx - numItems) * 60)
-                  const visualAngle = numItems === 1 ? 0 : ((faceAngle + rotationAngle) % 360 + 360) % 360
-                  const isFront = numItems === 1 || visualAngle < 35 || visualAngle > 325
-                  const isSide = (visualAngle >= 35 && visualAngle <= 85) || (visualAngle >= 275 && visualAngle <= 325)
-
-                  return (
-                    <div
-                      key={(item as { id: string }).id ?? idx}
+          {/* ─────────────────────────────────────────────────────────────────── */}
+          {/* VISTA 1: TABLAS MODERNAS Y ORDENADAS (PREDETERMINADA)              */}
+          {/* ─────────────────────────────────────────────────────────────────── */}
+          {viewMode === "table" ? (
+            <div className="mt-4 space-y-4">
+              {/* Barra de Búsqueda y Resumen */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/90 p-3.5 rounded-2xl border border-[#002F6C]/10 shadow-2xs">
+                <div className="relative flex-1 max-w-md">
+                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={tableSearch}
+                    onChange={(e) => {
+                      setTableSearch(e.target.value)
+                      setTablePage(1)
+                    }}
+                    placeholder={`Buscar en ${activeTab}...`}
+                    className="w-full pl-9 pr-4 py-2 rounded-xl text-xs font-medium border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0E5296]/30 bg-slate-50/50"
+                  />
+                  {tableSearch && (
+                    <button
                       onClick={() => {
-                        if (numItems > 1) setRotationAngle(-faceAngle)
+                        setTableSearch("")
+                        setTablePage(1)
                       }}
-                      className="absolute w-[245px] h-[320px] rounded-3xl border-2 transition-all duration-500 select-none cursor-pointer flex flex-col justify-between p-4.5"
-                      style={{
-                        transform: `rotateY(${faceAngle}deg) translateZ(${FIXED_RADIUS}px)`,
-                        transformStyle: "preserve-3d",
-                        backgroundColor: "#FFFFFF",
-                        borderColor: isFront ? "#0E5296" : "#CBD5E1",
-                        boxShadow: isFront
-                          ? "0 20px 35px -8px rgba(14, 82, 150, 0.3), 0 0 0 3px rgba(255, 204, 0, 0.55)"
-                          : "0 10px 20px -5px rgba(0, 0, 0, 0.1)",
-                        opacity: isFront ? 1 : isSide ? 0.9 : 0.45,
-                      }}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
                     >
-                      {/* Contenido según la pestaña (ESTILO TARJETA IMAGEN 2) */}
-                      {activeTab === "personal" && (() => {
-                        const p = item as PersonalItem
-                        const nombreCompleto = p.nombre || `${p.nombres ?? ""} ${p.apellidos ?? ""}`.trim() || "Funcionario"
-                        const cargoStr = p.cargo || "Personal"
-                        const areaStr = p.unidad || p.area || "Administración Central"
-                        const regionalStr = p.regional || "CENTRAL"
+                      <XIcon className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
 
-                        return (
-                          <>
-                            {/* Header: Badge azul/oro + Estado Activo con punto verde */}
-                            <div className="flex items-center justify-between">
-                              <span className="rounded-full bg-[#0E5296] text-[#FFCC00] px-3 py-1 text-[9px] font-black uppercase tracking-wider">
-                                {regionalStr}
-                              </span>
-                              <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[9px] font-bold text-emerald-700">
-                                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                                Activo
-                              </span>
-                            </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-600">
+                    Mostrando {paginatedTableList.length} de {currentTableList.length} registros
+                  </span>
+                  <span className="text-xs font-bold text-[#0E5296] bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+                    Página {tablePage} de {tableTotalPages}
+                  </span>
+                </div>
+              </div>
 
-                            {/* Avatar cuadrado redondeado amarillo con iniciales o foto */}
-                            <div className="flex flex-col items-center text-center my-auto">
-                              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#FFCC00] text-[#002F6C] font-black text-2xl shadow-md mx-auto mb-1.5 overflow-hidden">
-                                {p.foto ? (
-                                  <img src={p.foto} alt={nombreCompleto} className="h-full w-full object-cover" />
-                                ) : (
-                                  <span>{getInitials(nombreCompleto)}</span>
+              {/* Contenedor de la Tabla Activa */}
+              <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
+                {activeTab === "personal" && (
+                  <table className="w-full text-left border-collapse min-w-[700px]">
+                    <thead>
+                      <tr className="border-b border-slate-200/80 bg-gradient-to-r from-blue-50/80 via-white to-amber-50/60 text-[10px] font-black uppercase tracking-wider text-[#002F6C]">
+                        <th className="py-3 px-4">Funcionario / Cargo</th>
+                        <th className="py-3 px-4">Área & Regional</th>
+                        <th className="py-3 px-4">Correo Institucional</th>
+                        <th className="py-3 px-4 text-center">Estado</th>
+                        <th className="py-3 px-4 text-right">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-xs">
+                      {paginatedTableList.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-10 text-center text-slate-400 font-medium">
+                            No se encontraron funcionarios que coincidan con la búsqueda.
+                          </td>
+                        </tr>
+                      ) : (
+                        paginatedTableList.map((p: any) => {
+                          const fullName = `${p.nombre || p.nombres || ""} ${p.apellidos || ""}`.trim()
+                          const initials = `${fullName[0] || "P"}`.toUpperCase()
+                          const isActivo = p.estado === "activo"
+                          return (
+                            <tr key={p.id} className="hover:bg-blue-50/40 transition-colors group">
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FFCC00] text-[#002F6C] font-black text-xs shadow-2xs overflow-hidden">
+                                    {p.foto ? (
+                                      <img src={p.foto} alt={fullName} className="h-full w-full object-cover" />
+                                    ) : (
+                                      <span>{initials}</span>
+                                    )}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="font-bold text-[#002F6C] truncate">{fullName || "Sin nombre"}</p>
+                                    <p className="text-[11px] text-slate-500 font-medium truncate">{p.cargo || "Funcionario"}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <p className="font-semibold text-slate-700 truncate">{p.area || p.unidad || "Oficina Central"}</p>
+                                <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1">
+                                  <MapPinIcon className="h-3 w-3 text-[#0E5296]" />
+                                  {p.regional || "Nacional"}
+                                </p>
+                              </td>
+                              <td className="py-3 px-4">
+                                <p className="font-medium text-slate-700 truncate">{p.email || "—"}</p>
+                                {p.telefono && (
+                                  <p className="text-[10px] text-slate-500 flex items-center gap-1">
+                                    <PhoneIcon className="h-3 w-3 text-emerald-600" />
+                                    {p.telefono}
+                                  </p>
                                 )}
-                              </div>
-                              <h3 className="text-xs font-black text-[#002F6C] line-clamp-1">{nombreCompleto}</h3>
-                              <p className="text-[10px] text-slate-500 font-medium line-clamp-1 mt-0.5">{cargoStr}</p>
-                              <div className="mt-0.5 flex items-center justify-center gap-1.5 text-[9px] text-slate-400 font-medium">
-                                <span className="truncate max-w-[150px]">{areaStr}</span>
-                              </div>
-                            </div>
-
-                            {/* Footer: ID/Email + Botón circular */}
-                            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                              <span className="text-[10px] text-slate-400 font-mono truncate max-w-[140px]">
-                                {p.email ? p.email.split("@")[0] : "Personal AGBC"}
-                              </span>
-                              <Link
-                                href="/rrhh"
-                                className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-[#002F6C] hover:bg-[#0E5296] hover:text-white transition-all shadow-xs"
-                                title="Ver en RRHH"
-                              >
-                                <EyeIcon className="h-3.5 w-3.5" />
-                              </Link>
-                            </div>
-                          </>
-                        )
-                      })()}
-
-                      {activeTab === "documentos" && (() => {
-                        const d = item as DocumentoItem
-                        const docInfo = getDocTypeInfo(d)
-                        return (
-                          <>
-                            {/* Header: Badge azul/oro + Tipo según software */}
-                            <div className="flex items-center justify-between">
-                              <span className="rounded-full bg-[#0E5296] text-[#FFCC00] px-3 py-1 text-[9px] font-black uppercase tracking-wider truncate max-w-[120px]" title={d.categoria ?? undefined}>
-                                {d.categoria || "DOCUMENTO"}
-                              </span>
-                              <span className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[9px] font-black border uppercase tracking-wider ${docInfo.badgeClass}`}>
-                                {docInfo.label}
-                              </span>
-                            </div>
-
-                            {/* Icono central dentro de caja con color según formato (PDF rojo, Excel verde, Word azul, etc.) */}
-                            <div className="flex flex-col items-center text-center my-auto">
-                              <div className={`flex h-20 w-20 items-center justify-center rounded-2xl border shadow-md mx-auto mb-1.5 ${docInfo.boxClass}`}>
-                                <FileTextIcon className={`h-9 w-9 ${docInfo.iconClass}`} />
-                              </div>
-                              <h3 className="text-xs font-black text-[#002F6C] line-clamp-1">{d.titulo}</h3>
-                              <p className="text-[10px] text-slate-500 font-medium line-clamp-1 mt-0.5">
-                                {d.descripcion || "Documento oficial institucional"}
-                              </p>
-                              <div className="mt-0.5 flex items-center justify-center gap-1.5 text-[9px] text-slate-400 font-medium">
-                                <span className={`font-bold ${docInfo.iconClass}`}>{docInfo.label}</span>
-                                <span>•</span>
-                                <span>{d.tamano || "Archivo"}</span>
-                              </div>
-                            </div>
-
-                            {/* Footer: Tamaño + Botón circular de descarga */}
-                            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                              <span className="text-[10px] text-slate-400 font-mono truncate max-w-[130px]">
-                                {d.tamano || "Archivo AGBC"}
-                              </span>
-                              {d.archivo ? (
-                                <a
-                                  href={d.archivo}
-                                  download={d.nombreArchivo ?? "documento"}
-                                  className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-[#002F6C] hover:bg-[#0E5296] hover:text-white transition-all shadow-xs"
-                                  title="Descargar archivo"
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                <span
+                                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider border ${
+                                    isActivo
+                                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                      : "bg-slate-100 text-slate-600 border-slate-200"
+                                  }`}
                                 >
-                                  <DownloadIcon className="h-3.5 w-3.5" />
-                                </a>
-                              ) : (
+                                  <span className={`h-1.5 w-1.5 rounded-full ${isActivo ? "bg-emerald-500" : "bg-slate-400"}`} />
+                                  {p.estado || "activo"}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-right">
+                                <Link
+                                  href="/rrhh"
+                                  className="inline-flex items-center gap-1 rounded-lg bg-blue-50 hover:bg-[#0E5296] text-[#0E5296] hover:text-white px-2.5 py-1 text-xs font-bold transition-all"
+                                >
+                                  <span>Ver en RRHH</span>
+                                  <ArrowUpRightIcon className="h-3 w-3" />
+                                </Link>
+                              </td>
+                            </tr>
+                          )
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                )}
+
+                {activeTab === "documentos" && (
+                  <table className="w-full text-left border-collapse min-w-[700px]">
+                    <thead>
+                      <tr className="border-b border-slate-200/80 bg-gradient-to-r from-blue-50/80 via-white to-amber-50/60 text-[10px] font-black uppercase tracking-wider text-[#002F6C]">
+                        <th className="py-3 px-4">Documento & Tipo</th>
+                        <th className="py-3 px-4">Categoría</th>
+                        <th className="py-3 px-4">Tamaño & Fecha</th>
+                        <th className="py-3 px-4 text-center">Estado</th>
+                        <th className="py-3 px-4 text-right">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-xs">
+                      {paginatedTableList.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-10 text-center text-slate-400 font-medium">
+                            No se encontraron documentos que coincidan con la búsqueda.
+                          </td>
+                        </tr>
+                      ) : (
+                        paginatedTableList.map((d: any) => {
+                          const typeInfo = getDocTypeInfo(d)
+                          return (
+                            <tr key={d.id} className="hover:bg-blue-50/40 transition-colors group">
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-3">
+                                  <div
+                                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border font-black text-xs shadow-2xs ${typeInfo.boxClass}`}
+                                  >
+                                    {typeInfo.label}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="font-bold text-[#002F6C] truncate">{d.titulo}</p>
+                                    <p className="text-[11px] text-slate-500 font-medium truncate">
+                                      {d.nombreArchivo || d.descripcion || "Sin descripción"}
+                                    </p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <span className="inline-flex items-center rounded-lg bg-slate-100 text-slate-700 px-2.5 py-0.5 text-xs font-semibold">
+                                  {d.categoria || "General"}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4">
+                                <p className="font-semibold text-slate-700">{d.tamano || "—"}</p>
+                                <p className="text-[10px] text-slate-500 font-medium">
+                                  {d.createdAt ? new Date(d.createdAt).toLocaleDateString("es-BO") : "—"}
+                                </p>
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                <span
+                                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider border ${
+                                    d.estado === "publicado"
+                                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                      : "bg-amber-50 text-amber-700 border-amber-200"
+                                  }`}
+                                >
+                                  {d.estado || "publicado"}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-right">
                                 <Link
                                   href="/documentos"
-                                  className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-[#002F6C] hover:bg-[#0E5296] hover:text-white transition-all shadow-xs"
-                                  title="Ver documentos"
+                                  className="inline-flex items-center gap-1 rounded-lg bg-blue-50 hover:bg-[#0E5296] text-[#0E5296] hover:text-white px-2.5 py-1 text-xs font-bold transition-all"
                                 >
-                                  <EyeIcon className="h-3.5 w-3.5" />
+                                  <span>Ver Documento</span>
+                                  <ArrowUpRightIcon className="h-3 w-3" />
                                 </Link>
-                              )}
-                            </div>
-                          </>
-                        )
-                      })()}
+                              </td>
+                            </tr>
+                          )
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                )}
 
-                      {activeTab === "comunicados" && (() => {
-                        const c = item as ComunicadoItem
-                        const hasImage = Boolean(c.imagen || (c.archivoUrl && (c.archivoUrl.endsWith(".png") || c.archivoUrl.endsWith(".jpg") || c.archivoUrl.endsWith(".jpeg") || c.archivoUrl.endsWith(".webp"))))
-                        const hasPdf = Boolean(c.archivoUrl?.endsWith(".pdf") || c.archivoTipo?.includes("pdf"))
-
-                        return (
-                          <>
-                            {/* Header: Badge azul/oro + Estado */}
-                            <div className="flex items-center justify-between">
-                              <span className="rounded-full bg-[#0E5296] text-[#FFCC00] px-3 py-1 text-[9px] font-black uppercase tracking-wider">
-                                COMUNICADO
-                              </span>
-                              <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[9px] font-bold text-emerald-700">
-                                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                                Publicado
-                              </span>
-                            </div>
-
-                            {/* Vista previa real de imagen o PDF en caja central */}
-                            <div className="flex flex-col items-center text-center my-auto">
-                              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#FFCC00] text-[#002F6C] shadow-md mx-auto mb-1.5 overflow-hidden border border-amber-300">
-                                {hasImage ? (
-                                  <img
-                                    src={(c.imagen || c.archivoUrl)!}
-                                    alt={c.titulo}
-                                    className="h-full w-full object-cover"
-                                  />
-                                ) : hasPdf ? (
-                                  <div className="flex flex-col items-center justify-center bg-red-50 text-red-600 w-full h-full p-1">
-                                    <FileTextIcon className="h-7 w-7 text-red-600 mb-0.5" />
-                                    <span className="text-[8px] font-black uppercase tracking-wider bg-red-600 text-white px-1.5 py-0.2 rounded-xs">PDF</span>
-                                  </div>
-                                ) : (
-                                  <div className="flex flex-col items-center justify-center bg-gradient-to-br from-[#0E5296]/10 to-[#FFCC00] w-full h-full">
-                                    <MegaphoneIcon className="h-8 w-8 text-[#002F6C]" />
-                                  </div>
-                                )}
+                {activeTab === "comunicados" && (
+                  <table className="w-full text-left border-collapse min-w-[700px]">
+                    <thead>
+                      <tr className="border-b border-slate-200/80 bg-gradient-to-r from-blue-50/80 via-white to-amber-50/60 text-[10px] font-black uppercase tracking-wider text-[#002F6C]">
+                        <th className="py-3 px-4">Comunicado / Titular</th>
+                        <th className="py-3 px-4">Resumen</th>
+                        <th className="py-3 px-4">Fecha de Publicación</th>
+                        <th className="py-3 px-4 text-center">Destacado</th>
+                        <th className="py-3 px-4 text-right">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-xs">
+                      {paginatedTableList.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-10 text-center text-slate-400 font-medium">
+                            No se encontraron comunicados que coincidan con la búsqueda.
+                          </td>
+                        </tr>
+                      ) : (
+                        paginatedTableList.map((c: any) => (
+                          <tr key={c.id} className="hover:bg-blue-50/40 transition-colors group">
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#FFCC00] to-amber-400 text-[#002F6C] font-black shadow-2xs overflow-hidden">
+                                  {c.imagen ? (
+                                    <img src={c.imagen} alt={c.titulo} className="h-full w-full object-cover" />
+                                  ) : (
+                                    <MegaphoneIcon className="h-4 w-4" />
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="font-bold text-[#002F6C] truncate">{c.titulo}</p>
+                                  <p className="text-[10px] text-slate-500 font-medium">Oficial AGBC</p>
+                                </div>
                               </div>
-                              <h3 className="text-xs font-black text-[#002F6C] line-clamp-1">{c.titulo}</h3>
-                              <p className="text-[10px] text-slate-500 font-medium line-clamp-1 mt-0.5">
-                                {c.resumen || c.contenido || "Aviso oficial institucional"}
+                            </td>
+                            <td className="py-3 px-4 max-w-xs">
+                              <p className="text-slate-600 line-clamp-1">{c.resumen || c.contenido || "—"}</p>
+                            </td>
+                            <td className="py-3 px-4">
+                              <p className="font-semibold text-slate-700">
+                                {c.createdAt ? new Date(c.createdAt).toLocaleDateString("es-BO") : "—"}
                               </p>
-                              <div className="mt-0.5 flex items-center justify-center gap-1.5 text-[9px] text-slate-400 font-medium">
-                                <span>{c.createdAt ? new Date(c.createdAt).toLocaleDateString("es-BO") : "Reciente"}</span>
-                                <span>•</span>
-                                <span className="text-[#0E5296] font-bold">{hasPdf ? "Adjunto PDF" : hasImage ? "Con Imagen" : "Oficial"}</span>
-                              </div>
-                            </div>
-
-                            {/* Footer: Fecha + Botón circular de lectura */}
-                            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                              <span className="text-[10px] text-slate-400 font-mono truncate max-w-[130px]">
-                                {c.createdAt ? new Date(c.createdAt).toLocaleDateString("es-BO") : "Reciente"}
-                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              {c.destacado ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-0.5 text-[10px] font-black uppercase">
+                                  ★ Destacado
+                                </span>
+                              ) : (
+                                <span className="text-slate-400 text-xs">—</span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4 text-right">
                               <Link
                                 href="/comunicaciones"
-                                className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-[#002F6C] hover:bg-[#0E5296] hover:text-white transition-all shadow-xs"
-                                title="Leer comunicado"
+                                className="inline-flex items-center gap-1 rounded-lg bg-blue-50 hover:bg-[#0E5296] text-[#0E5296] hover:text-white px-2.5 py-1 text-xs font-bold transition-all"
                               >
-                                <EyeIcon className="h-3.5 w-3.5" />
+                                <span>Ver Comunicado</span>
+                                <ArrowUpRightIcon className="h-3 w-3" />
                               </Link>
-                            </div>
-                          </>
-                        )
-                      })()}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                )}
 
-                      {activeTab === "usuarios" && (() => {
-                        const u = item as UsuarioItem
-                        const userDisplayRoles = Array.isArray(u.roles)
-                          ? u.roles.map((r) => (typeof r === "string" ? r : r.name)).join(", ")
-                          : "USUARIO"
-                        return (
-                          <>
-                            {/* Header: Badge azul/oro + Estado */}
-                            <div className="flex items-center justify-between">
-                              <span className="rounded-full bg-[#0E5296] text-[#FFCC00] px-3 py-1 text-[9px] font-black uppercase tracking-wider truncate max-w-[120px]" title={userDisplayRoles}>
-                                {userDisplayRoles}
-                              </span>
-                              <span className={`flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[9px] font-bold ${
-                                u.isActive !== false ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
-                              }`}>
-                                <span className={`h-2 w-2 rounded-full ${u.isActive !== false ? "bg-emerald-500" : "bg-slate-400"}`} />
-                                {u.isActive !== false ? "Activo" : "Inactivo"}
-                              </span>
-                            </div>
-
-                            {/* Avatar cuadrado redondeado amarillo con iniciales */}
-                            <div className="flex flex-col items-center text-center my-auto">
-                              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#FFCC00] text-[#002F6C] font-black text-2xl shadow-md mx-auto mb-1.5">
-                                {getInitials(u.name || "US")}
-                              </div>
-                              <h3 className="text-xs font-black text-[#002F6C] line-clamp-1">{u.name}</h3>
-                              <p className="text-[10px] text-slate-500 font-medium line-clamp-1 mt-0.5">{u.institutionalEmail || u.email}</p>
-                            </div>
-
-                            {/* Footer: ID + Botón circular de gestionar */}
-                            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                              <span className="text-[10px] text-slate-400 font-mono truncate max-w-[110px]">
-                                {u.id.slice(0, 10)}...
-                              </span>
-                              <Link
-                                href="/usuarios"
-                                className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-[#002F6C] hover:bg-[#0E5296] hover:text-white transition-all shadow-xs"
-                                title="Gestionar usuario"
-                              >
-                                <PencilIcon className="h-3.5 w-3.5" />
-                              </Link>
-                            </div>
-                          </>
-                        )
-                      })()}
-                    </div>
-                  )
-                })}
+                {activeTab === "usuarios" && (
+                  <table className="w-full text-left border-collapse min-w-[700px]">
+                    <thead>
+                      <tr className="border-b border-slate-200/80 bg-gradient-to-r from-blue-50/80 via-white to-amber-50/60 text-[10px] font-black uppercase tracking-wider text-[#002F6C]">
+                        <th className="py-3 px-4">Usuario</th>
+                        <th className="py-3 px-4">Correo Institucional</th>
+                        <th className="py-3 px-4">Roles Asignados</th>
+                        <th className="py-3 px-4 text-center">Estado</th>
+                        <th className="py-3 px-4 text-right">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-xs">
+                      {paginatedTableList.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-10 text-center text-slate-400 font-medium">
+                            No se encontraron usuarios que coincidan con la búsqueda.
+                          </td>
+                        </tr>
+                      ) : (
+                        paginatedTableList.map((u: any) => {
+                          const initials = `${u.name?.[0] || "U"}`.toUpperCase()
+                          const rolesList = Array.isArray(u.roles)
+                            ? u.roles.map((r: any) => (typeof r === "string" ? r : r.name))
+                            : []
+                          return (
+                            <tr key={u.id} className="hover:bg-blue-50/40 transition-colors group">
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0E5296] text-[#FFCC00] font-black text-xs shadow-2xs">
+                                    {initials}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="font-bold text-[#002F6C] truncate">{u.name}</p>
+                                    <p className="text-[10px] font-mono text-slate-400 truncate">{u.id}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <p className="font-semibold text-slate-700 truncate">{u.institutionalEmail || u.email}</p>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="flex flex-wrap gap-1">
+                                  {rolesList.length > 0 ? (
+                                    rolesList.map((r: string) => (
+                                      <span
+                                        key={r}
+                                        className="inline-flex items-center rounded-md bg-[#0E5296]/10 px-2 py-0.5 text-[10px] font-bold text-[#0E5296]"
+                                      >
+                                        {r}
+                                      </span>
+                                    ))
+                                  ) : (
+                                    <span className="text-slate-400 text-xs">Sin rol</span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 text-[10px] font-black uppercase">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                  Activo
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-right">
+                                <Link
+                                  href="/usuarios"
+                                  className="inline-flex items-center gap-1 rounded-lg bg-blue-50 hover:bg-[#0E5296] text-[#0E5296] hover:text-white px-2.5 py-1 text-xs font-bold transition-all"
+                                >
+                                  <span>Ver en Usuarios</span>
+                                  <ArrowUpRightIcon className="h-3 w-3" />
+                                </Link>
+                              </td>
+                            </tr>
+                          )
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Flecha derecha lateral */}
-          {numItems > 1 && (
-            <button
-              onClick={() => setRotationAngle((prev) => prev - stepAngle)}
-              className="absolute right-2 md:right-4 z-20 flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white/95 text-[#002F6C] shadow-lg hover:bg-white hover:scale-105 active:scale-95 transition-all cursor-pointer"
-              title="Girar carrusel a la derecha"
-            >
-              <ChevronRightIcon className="h-5 w-5" />
-            </button>
+              {/* Paginador de la Tabla */}
+              {tableTotalPages > 1 && (
+                <div className="flex items-center justify-between pt-2">
+                  <span className="text-xs text-slate-500 font-medium">
+                    Página {tablePage} de {tableTotalPages}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setTablePage((p) => Math.max(1, p - 1))}
+                      disabled={tablePage === 1}
+                      className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 disabled:opacity-40 cursor-pointer"
+                    >
+                      <ChevronLeftIcon className="h-3.5 w-3.5" />
+                      <span>Anterior</span>
+                    </button>
+                    <button
+                      onClick={() => setTablePage((p) => Math.min(tableTotalPages, p + 1))}
+                      disabled={tablePage === tableTotalPages}
+                      className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 disabled:opacity-40 cursor-pointer"
+                    >
+                      <span>Siguiente</span>
+                      <ChevronRightIcon className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* ─────────────────────────────────────────────────────────────────── */
+            /* VISTA 2: CARRUSEL 3D CILÍNDRICO                                    */
+            /* ─────────────────────────────────────────────────────────────────── */
+            <div className="relative mt-2 flex items-center justify-center py-4 w-full">
+              {numItems > 1 && (
+                <button
+                  onClick={() => setRotationAngle((prev) => prev + stepAngle)}
+                  className="absolute left-2 md:left-4 z-20 flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white/95 text-[#002F6C] shadow-lg hover:bg-white hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                  title="Girar carrusel a la izquierda"
+                >
+                  <ChevronLeftIcon className="h-5 w-5" />
+                </button>
+              )}
+
+              <div className="relative h-[400px] w-full flex items-center justify-center" style={{ perspective: "1100px" }}>
+                {numItems === 0 ? (
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <LayoutDashboardIcon className="h-10 w-10 text-slate-300 mb-2" />
+                    <p className="text-sm font-bold text-slate-600">No hay registros disponibles</p>
+                  </div>
+                ) : (
+                  <div
+                    className="relative h-full w-full flex items-center justify-center transition-transform duration-700 ease-out"
+                    style={{
+                      transformStyle: "preserve-3d",
+                      transform: `rotateY(${rotationAngle}deg)`,
+                    }}
+                  >
+                    {current6Items.map((item, idx) => {
+                      const FIXED_RADIUS = 270
+                      const faceAngle = numItems === 1 ? 0 : idx <= numItems / 2 ? idx * 60 : (idx - numItems) * 60
+                      const visualAngle = numItems === 1 ? 0 : (((faceAngle + rotationAngle) % 360) + 360) % 360
+                      const isFront = numItems === 1 || visualAngle < 35 || visualAngle > 325
+                      const isSide = (visualAngle >= 35 && visualAngle <= 85) || (visualAngle >= 275 && visualAngle <= 325)
+
+                      return (
+                        <div
+                          key={(item as { id: string }).id ?? idx}
+                          onClick={() => {
+                            if (numItems > 1) setRotationAngle(-faceAngle)
+                          }}
+                          className="absolute w-[245px] h-[320px] rounded-3xl border-2 transition-all duration-500 select-none cursor-pointer flex flex-col justify-between p-4.5"
+                          style={{
+                            transform: `rotateY(${faceAngle}deg) translateZ(${FIXED_RADIUS}px)`,
+                            backfaceVisibility: "hidden",
+                            zIndex: isFront ? 30 : isSide ? 20 : 10,
+                            opacity: isFront ? 1 : isSide ? 0.75 : 0.35,
+                            transformOrigin: "center center",
+                            background: isFront
+                              ? "linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(240,247,255,0.95) 100%)"
+                              : "linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(240,247,255,0.8) 100%)",
+                            borderColor: isFront ? "#0E5296" : "rgba(0,47,108,0.15)",
+                            boxShadow: isFront
+                              ? "0 20px 35px -10px rgba(0, 47, 108, 0.25), 0 0 0 1px rgba(14, 82, 150, 0.2)"
+                              : "0 10px 20px -5px rgba(0, 0, 0, 0.1)",
+                          }}
+                        >
+                          {/* Render según pestaña activa */}
+                          {activeTab === "personal" && (
+                            <>
+                              <div>
+                                <div className="flex items-center justify-between mb-3">
+                                  <span
+                                    className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                                      (item as PersonalItem).estado === "activo"
+                                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                        : "bg-slate-100 text-slate-600 border-slate-200"
+                                    }`}
+                                  >
+                                    {(item as PersonalItem).estado || "activo"}
+                                  </span>
+                                  <UsersIcon className="h-4 w-4 text-[#0E5296]" />
+                                </div>
+                                <div className="flex flex-col items-center text-center mt-1">
+                                  <div className="h-16 w-16 rounded-2xl bg-[#FFCC00] border-2 border-white shadow-md flex items-center justify-center font-black text-[#002F6C] text-xl overflow-hidden mb-2">
+                                    {(item as PersonalItem).foto ? (
+                                      <img
+                                        src={(item as PersonalItem).foto!}
+                                        alt={(item as PersonalItem).nombre || "Foto"}
+                                        className="h-full w-full object-cover"
+                                      />
+                                    ) : (
+                                      <span>{((item as PersonalItem).nombre || "P")[0]?.toUpperCase()}</span>
+                                    )}
+                                  </div>
+                                  <h4 className="text-xs font-black text-[#002F6C] line-clamp-2">
+                                    {(item as PersonalItem).nombre ||
+                                      `${(item as PersonalItem).nombres || ""} ${(item as PersonalItem).apellidos || ""}`}
+                                  </h4>
+                                  <p className="text-[11px] text-slate-600 font-bold mt-0.5 line-clamp-1">
+                                    {(item as PersonalItem).cargo}
+                                  </p>
+                                  <p className="text-[10px] text-slate-400 font-medium line-clamp-1 mt-0.5">
+                                    {(item as PersonalItem).area || (item as PersonalItem).unidad || "AGBC"}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                                <span className="text-[10px] text-slate-500 font-medium truncate max-w-[140px]">
+                                  {(item as PersonalItem).email || "Sin correo"}
+                                </span>
+                                <Link
+                                  href="/rrhh"
+                                  className="text-[10px] font-black text-[#0E5296] hover:underline"
+                                >
+                                  Ver →
+                                </Link>
+                              </div>
+                            </>
+                          )}
+
+                          {activeTab === "documentos" && (
+                            <>
+                              <div>
+                                <div className="flex items-center justify-between mb-3">
+                                  <span
+                                    className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                                      getDocTypeInfo(item as DocumentoItem).badgeClass
+                                    }`}
+                                  >
+                                    {getDocTypeInfo(item as DocumentoItem).label}
+                                  </span>
+                                  <FileTextIcon className="h-4 w-4 text-[#0E5296]" />
+                                </div>
+                                <div className="mt-1">
+                                  <div
+                                    className={`h-12 w-12 rounded-2xl border flex items-center justify-center font-black text-xs shadow-xs mb-3 ${
+                                      getDocTypeInfo(item as DocumentoItem).boxClass
+                                    }`}
+                                  >
+                                    {getDocTypeInfo(item as DocumentoItem).label}
+                                  </div>
+                                  <h4 className="text-xs font-black text-[#002F6C] line-clamp-2">
+                                    {(item as DocumentoItem).titulo}
+                                  </h4>
+                                  <p className="text-[10px] text-slate-500 font-medium line-clamp-2 mt-1">
+                                    {(item as DocumentoItem).descripcion ||
+                                      (item as DocumentoItem).nombreArchivo ||
+                                      "Documento oficial"}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                                <span className="text-[10px] font-bold text-slate-500">
+                                  {(item as DocumentoItem).tamano || "Archivo"}
+                                </span>
+                                <Link
+                                  href="/documentos"
+                                  className="text-[10px] font-black text-[#0E5296] hover:underline"
+                                >
+                                  Abrir →
+                                </Link>
+                              </div>
+                            </>
+                          )}
+
+                          {activeTab === "comunicados" && (
+                            <>
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-[#002F6C] border border-amber-200">
+                                    Oficial
+                                  </span>
+                                  <MegaphoneIcon className="h-4 w-4 text-[#0E5296]" />
+                                </div>
+                                {(item as ComunicadoItem).imagen ? (
+                                  <div className="h-24 w-full rounded-2xl overflow-hidden border border-slate-200 mb-2 shadow-2xs">
+                                    <img
+                                      src={(item as ComunicadoItem).imagen!}
+                                      alt={(item as ComunicadoItem).titulo}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="h-14 w-full rounded-2xl bg-gradient-to-r from-blue-50 to-amber-50 border border-slate-200 flex items-center justify-center mb-2">
+                                    <MegaphoneIcon className="h-6 w-6 text-[#0E5296]/40" />
+                                  </div>
+                                )}
+                                <h4 className="text-xs font-black text-[#002F6C] line-clamp-2">
+                                  {(item as ComunicadoItem).titulo}
+                                </h4>
+                                <p className="text-[10px] text-slate-500 font-medium line-clamp-2 mt-0.5">
+                                  {(item as ComunicadoItem).resumen || (item as ComunicadoItem).contenido || ""}
+                                </p>
+                              </div>
+                              <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                                <span className="text-[10px] text-slate-400 font-medium">
+                                  {(item as ComunicadoItem).createdAt
+                                    ? new Date((item as ComunicadoItem).createdAt!).toLocaleDateString("es-BO")
+                                    : "AGBC"}
+                                </span>
+                                <Link
+                                  href="/comunicaciones"
+                                  className="text-[10px] font-black text-[#0E5296] hover:underline"
+                                >
+                                  Leer →
+                                </Link>
+                              </div>
+                            </>
+                          )}
+
+                          {activeTab === "usuarios" && (
+                            <>
+                              <div>
+                                <div className="flex items-center justify-between mb-3">
+                                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-[#0E5296] border border-blue-200">
+                                    Cuenta
+                                  </span>
+                                  <UserIcon className="h-4 w-4 text-[#0E5296]" />
+                                </div>
+                                <div className="flex flex-col items-center text-center mt-2">
+                                  <div className="h-16 w-16 rounded-2xl bg-[#0E5296] text-[#FFCC00] border-2 border-white shadow-md flex items-center justify-center font-black text-2xl mb-2">
+                                    {((item as UsuarioItem).name || "U")[0]?.toUpperCase()}
+                                  </div>
+                                  <h4 className="text-xs font-black text-[#002F6C] line-clamp-2">
+                                    {(item as UsuarioItem).name}
+                                  </h4>
+                                  <p className="text-[10px] text-slate-500 font-medium line-clamp-1 mt-0.5">
+                                    {(item as UsuarioItem).institutionalEmail || (item as UsuarioItem).email}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                                <span className="text-[10px] font-bold text-slate-400">Activo</span>
+                                <Link
+                                  href="/usuarios"
+                                  className="text-[10px] font-black text-[#0E5296] hover:underline"
+                                >
+                                  Gestionar →
+                                </Link>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {numItems > 1 && (
+                <button
+                  onClick={() => setRotationAngle((prev) => prev - stepAngle)}
+                  className="absolute right-2 md:right-4 z-20 flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white/95 text-[#002F6C] shadow-lg hover:bg-white hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                  title="Girar carrusel a la derecha"
+                >
+                  <ChevronRightIcon className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Selector de Grupos de Páginas en Carrusel */}
+          {viewMode === "carousel" && totalPaginasCarrusel > 1 && (
+            <div className="flex justify-center items-center gap-2 pt-4 border-t border-[#002F6C]/10 mt-2">
+              <button
+                onClick={() => setPaginaGrupo((prev) => Math.max(0, prev - 1))}
+                disabled={paginaGrupo === 0}
+                className="flex items-center gap-1 rounded-xl bg-white border border-slate-200 px-3 py-1.5 text-xs font-bold text-[#002F6C] shadow-2xs hover:bg-slate-50 disabled:opacity-30 cursor-pointer"
+              >
+                <ChevronLeftIcon className="h-3.5 w-3.5" />
+                <span>Anterior Grupo</span>
+              </button>
+              <span className="text-xs font-bold text-slate-600 px-2">
+                Grupo {paginaGrupo + 1} de {totalPaginasCarrusel}
+              </span>
+              <button
+                onClick={() => setPaginaGrupo((prev) => Math.min(totalPaginasCarrusel - 1, prev + 1))}
+                disabled={paginaGrupo === totalPaginasCarrusel - 1}
+                className="flex items-center gap-1 rounded-xl bg-white border border-slate-200 px-3 py-1.5 text-xs font-bold text-[#002F6C] shadow-2xs hover:bg-slate-50 disabled:opacity-30 cursor-pointer"
+              >
+                <span>Siguiente Grupo</span>
+                <ChevronRightIcon className="h-3.5 w-3.5" />
+              </button>
+            </div>
           )}
         </div>
-
-        {/* ── PAGINADO SENCILLO AL MEDIO ── */}
-        <div className="mt-4 flex items-center justify-center gap-3 border-t border-slate-100 pt-4">
-          <button
-            onClick={() => setPaginaGrupo((prev) => Math.max(0, prev - 1))}
-            disabled={paginaGrupo === 0}
-            className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#002F6C] shadow-xs hover:bg-slate-50 disabled:opacity-30 cursor-pointer"
-            title="Página anterior"
-          >
-            <ChevronLeftIcon className="h-4 w-4" />
-          </button>
-
-          <span className="text-xs font-bold text-slate-700">
-            {paginaGrupo + 1} de {totalPaginas}
-          </span>
-
-          <div className="flex items-center gap-1.5 px-1">
-            {Array.from({ length: totalPaginas }).map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setPaginaGrupo(idx)}
-                className={`h-2 rounded-full transition-all cursor-pointer ${
-                  paginaGrupo === idx ? "w-6 bg-[#0E5296]" : "w-2 bg-slate-200 hover:bg-slate-300"
-                }`}
-                title={`Página ${idx + 1}`}
-              />
-            ))}
-          </div>
-
-          <button
-            onClick={() => setPaginaGrupo((prev) => Math.min(totalPaginas - 1, prev + 1))}
-            disabled={paginaGrupo >= totalPaginas - 1}
-            className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#002F6C] shadow-xs hover:bg-slate-50 disabled:opacity-30 cursor-pointer"
-            title="Siguiente página"
-          >
-            <ChevronRightIcon className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
       )}
 
-      {/* ── Notificaciones y Avisos (Con fondo suave pastel visible) ── */}
-      <div className={`transition-all duration-300 ${
-        isEditingShortcuts ? "opacity-30 blur-[1px] pointer-events-none" : ""
-      }`}>
+      {/* ── Notificaciones y Avisos ── */}
+      <div
+        className={`transition-all duration-300 ${
+          isEditingShortcuts ? "opacity-30 blur-[1px] pointer-events-none" : ""
+        }`}
+      >
         <div className="rounded-3xl border-2 border-[#002F6C]/15 bg-gradient-to-br from-amber-50/80 via-blue-50/40 to-yellow-50/60 p-6 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-[#002F6C]/10">
@@ -1092,12 +1488,8 @@ export function DashboardModule({
                   <BellIcon className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-[#002F6C]">
-                    Notificaciones y Avisos
-                  </h3>
-                  <p className="text-xs text-slate-600 font-medium">
-                    Avisos dirigidos a tu cuenta
-                  </p>
+                  <h3 className="text-base font-black text-[#002F6C]">Notificaciones y Avisos</h3>
+                  <p className="text-xs text-slate-600 font-medium">Avisos dirigidos a tu cuenta</p>
                 </div>
               </div>
               {notifsNoLeidas.length > 0 && (
@@ -1124,23 +1516,21 @@ export function DashboardModule({
                         : "bg-white/85 border-[#002F6C]/10"
                     }`}
                   >
-                    <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-                      !n.leida ? "bg-[#0E5296] text-[#FFCC00]" : "bg-slate-100 text-slate-500"
-                    }`}>
+                    <div
+                      className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                        !n.leida ? "bg-[#0E5296] text-[#FFCC00]" : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
                       <BellIcon className="h-4.5 w-4.5" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-black text-[#002F6C] truncate">
-                          {n.titulo}
-                        </h4>
+                        <h4 className="text-xs font-black text-[#002F6C] truncate">{n.titulo}</h4>
                         <span className="text-[10px] text-slate-400 font-medium ml-2 shrink-0">
                           {new Date(n.createdAt).toLocaleDateString("es-BO")}
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-600 font-medium line-clamp-2 mt-1">
-                        {n.mensaje}
-                      </p>
+                      <p className="text-[11px] text-slate-600 font-medium line-clamp-2 mt-1">{n.mensaje}</p>
                     </div>
                   </div>
                 ))

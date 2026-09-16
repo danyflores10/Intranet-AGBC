@@ -2,7 +2,7 @@
 
 import { db } from "@/db"
 import { documentos, documentoCategorias, archivos } from "@/db/schema"
-import { eq, desc } from "drizzle-orm"
+import { eq, desc, inArray } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { registrarAuditLog } from "@/actions/auditoria"
 import { PERMISOS } from "@/lib/auth/permisos"
@@ -353,6 +353,97 @@ export async function eliminarDocumento(id: string) {
   })
   revalidatePath("/documentos")
   revalidatePath("/archivo")
+}
+
+export async function enviarDocumentosAPapeleraLote(ids: string[]) {
+  if (!ids || ids.length === 0) return { success: true, count: 0 }
+  const sesion = await autorizarAccion(PERMISOS.DOCUMENTOS.ELIMINAR)
+
+  const docs = await db
+    .select({
+      id: documentos.id,
+      titulo: documentos.titulo,
+      categoriaId: documentos.categoriaId,
+      categoria: documentoCategorias.nombre,
+      autor: documentos.autor,
+      estado: documentos.estado,
+      archivo: documentos.archivo,
+      nombreArchivo: documentos.nombreArchivo,
+      tipoArchivo: documentos.tipoArchivo,
+      tamano: documentos.tamano,
+      descripcion: documentos.descripcion,
+      createdAt: documentos.createdAt,
+      updatedAt: documentos.updatedAt,
+    })
+    .from(documentos)
+    .leftJoin(documentoCategorias, eq(documentos.categoriaId, documentoCategorias.id))
+    .where(inArray(documentos.id, ids))
+
+  if (docs.length === 0) return { success: true, count: 0 }
+
+  await db.transaction(async (tx) => {
+    const papeleraRows = docs.map((doc) => ({
+      nombre: doc.titulo,
+      tipo: "papelera_documento",
+      categoria: doc.categoria ?? "Sin categoría",
+      ubicacion: "PAPELERA",
+      descripcion: JSON.stringify({
+        source: "documentos",
+        version: 1,
+        deletedAt: new Date().toISOString(),
+        documento: {
+          id: doc.id,
+          titulo: doc.titulo,
+          categoriaId: doc.categoriaId,
+          categoria: doc.categoria,
+          autor: doc.autor,
+          estado: doc.estado,
+          archivo: doc.archivo,
+          nombreArchivo: doc.nombreArchivo,
+          tipoArchivo: doc.tipoArchivo,
+          tamano: doc.tamano,
+          descripcion: doc.descripcion,
+          createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : new Date(doc.createdAt).toISOString(),
+          updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : new Date(doc.updatedAt).toISOString(),
+        },
+      }),
+      estado: "papelera",
+    }))
+
+    await tx.insert(archivos).values(papeleraRows)
+    await tx.delete(documentos).where(inArray(documentos.id, ids))
+  })
+
+  await registrarAuditLog({
+    usuario: sesion.id,
+    accion: `Movió ${docs.length} documentos a papelera masivamente`,
+    modulo: "Documentos",
+    resultado: "Exitoso",
+  })
+
+  revalidatePath("/documentos")
+  revalidatePath("/archivo")
+  return { success: true, count: docs.length }
+}
+
+export async function eliminarDocumentosPermanenteLote(ids: string[]) {
+  if (!ids || ids.length === 0) return { success: true, count: 0 }
+  const sesion = await autorizarAccion(PERMISOS.DOCUMENTOS.ELIMINAR)
+
+  const deletedDocs = await db
+    .delete(documentos)
+    .where(inArray(documentos.id, ids))
+    .returning({ id: documentos.id, titulo: documentos.titulo })
+
+  await registrarAuditLog({
+    usuario: sesion.id,
+    accion: `Eliminó permanentemente ${deletedDocs.length} documentos`,
+    modulo: "Documentos",
+    resultado: "Exitoso",
+  })
+
+  revalidatePath("/documentos")
+  return { success: true, count: deletedDocs.length }
 }
 
 export async function crearCategoria(data: { nombre: string; descripcion?: string }) {

@@ -57,6 +57,22 @@ const MODULE_LABEL_MAP: Record<string, string> = {
   banners: "Noticias",
   rrhh: "RRHH",
   "secciones landing": "Secciones Landing",
+  documentos: "Documentos",
+  archivo: "Archivo",
+  comunicados: "Comunicados",
+  usuarios: "Usuarios",
+  roles: "Roles",
+  auditoria: "Auditoría",
+  sucursales: "Sucursales",
+  contenidos: "Contenidos",
+  configuracion: "Configuración",
+  tramites: "Trámites",
+  logistica: "Logística",
+  calendario: "Calendario",
+  correspondencia: "Correspondencia",
+  soporte: "Soporte",
+  reportes: "Reportes",
+  reconocimientos: "Reconocimientos",
 }
 
 const MODULE_PILL_STYLES = [
