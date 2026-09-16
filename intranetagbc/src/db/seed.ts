@@ -32,10 +32,20 @@ async function seedRolesYPermisos() {
   const rolesDefinidos = [
     { id: "olgzxmaf5za24m3e3cg3wrls", name: "administrador" },
     { id: "iyjx5sm9xgwictxln8nu0myy", name: "gestor" },
-    { id: "cxvl1aqibg7bwar3e5s7va9i", name: "comunicador" },
-    { id: "nrnnjehxcpo7uspteon0k0k9", name: "recursos humanos" },
     { id: "usr_role_usuario_2025", name: "usuario" },
   ]
+
+  const nombresDefinidos = new Set(rolesDefinidos.map((r) => r.name))
+
+  // Eliminar roles obsoletos
+  const rolesExistentes = await db.select().from(roles)
+  for (const r of rolesExistentes) {
+    if (!nombresDefinidos.has(r.name)) {
+      await db.delete(rolePermissions).where(eq(rolePermissions.roleId, r.id))
+      await db.delete(userRoles).where(eq(userRoles.roleId, r.id))
+      await db.delete(roles).where(eq(roles.id, r.id))
+    }
+  }
 
   for (const r of rolesDefinidos) {
     const [existe] = await db.select().from(roles).where(eq(roles.name, r.name)).limit(1)

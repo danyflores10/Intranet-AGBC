@@ -12,6 +12,55 @@ interface DocumentContentViewerProps {
   tipoArchivo: string | null
 }
 
+function extractDocToHtml(buffer: ArrayBuffer): string {
+  const uint8 = new Uint8Array(buffer)
+  let str = ""
+  for (let i = 0; i < uint8.length; i++) {
+    const code = uint8[i]
+    if ((code >= 32 && code <= 126) || code === 10 || code === 13 || code === 9 || (code >= 160 && code <= 255)) {
+      str += String.fromCharCode(code)
+    } else if (code === 0 && i > 0 && uint8[i - 1] >= 32 && uint8[i - 1] <= 126) {
+      // utf16 zero byte
+    } else {
+      str += "\n"
+    }
+  }
+
+  const rawLines = str.split("\n")
+    .map((l) => l.trim())
+    .filter((l) => {
+      if (l.length < 3) return false
+      if (/[ÿ\x00-\x1F\x7F]/.test(l)) return false
+      if (!/[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9]{3,}/.test(l)) return false
+      if (/^(Root Entry|WordDocument|1Table|0Table|Data|SummaryInformation|DocumentSummaryInformation|CompObj|Normal|Default Paragraph Font|Table Grid|Times New Roman|Calibri|Arial|Courier|Symbol|Wingdings|Heading|Footer|Header|Envelope|bjbj|macintosh)/i.test(l)) return false
+      return true
+    })
+
+  const lines: string[] = []
+  for (const l of rawLines) {
+    if (lines.length === 0 || lines[lines.length - 1] !== l) {
+      lines.push(l)
+    }
+  }
+
+  if (lines.length === 0) {
+    return "<p class='text-slate-400 italic text-center py-6'>No se pudo extraer texto legible del documento.</p>"
+  }
+
+  const htmlParts: string[] = []
+  for (const line of lines) {
+    if (line.length < 90 && (line === line.toUpperCase() || line.startsWith("TÉRMINOS") || line.startsWith("REGLAMENTO") || line.startsWith("FORMULARIO") || line.startsWith("MANUAL") || line.startsWith("ARTÍCULO") || line.startsWith("CAPÍTULO") || line.startsWith("FICHA") || line.endsWith(":"))) {
+      htmlParts.push(`<h3 class="text-base font-bold text-[#002F6C] mt-4 mb-1.5">${line}</h3>`)
+    } else if (line.startsWith("-") || line.startsWith("•") || line.startsWith("*")) {
+      htmlParts.push(`<li class="ml-4 list-disc text-slate-700 my-0.5">${line.replace(/^[-•*]\s*/, "")}</li>`)
+    } else {
+      htmlParts.push(`<p class="text-slate-700 leading-relaxed my-1.5">${line}</p>`)
+    }
+  }
+
+  return htmlParts.join("")
+}
+
 export function DocumentContentViewer({ url, fileName, title, tipoArchivo }: DocumentContentViewerProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -29,6 +78,7 @@ export function DocumentContentViewer({ url, fileName, title, tipoArchivo }: Doc
   const isExcel = ["xlsx", "xls", "csv"].includes(ext)
   const isDocx = ext === "docx"
   const isLegacyDoc = ext === "doc"
+  const isWord = isDocx || isLegacyDoc || ext.includes("doc") || (tipoArchivo || "").toLowerCase().includes("word")
 
   const effectiveUrl = (url.startsWith("/api/documentos/") || url.startsWith("http://") || url.startsWith("https://"))
     ? url
@@ -42,12 +92,6 @@ export function DocumentContentViewer({ url, fileName, title, tipoArchivo }: Doc
 
     async function loadContent() {
       try {
-        if (isLegacyDoc) {
-          // .doc binary legacy format
-          setLoading(false)
-          return
-        }
-
         const res = await fetch(effectiveUrl)
         if (!res.ok) {
           throw new Error(`No se pudo cargar el archivo (${res.status})`)
@@ -68,9 +112,17 @@ export function DocumentContentViewer({ url, fileName, title, tipoArchivo }: Doc
           const sheet = wb.Sheets[firstSheet]
           const data = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1, defval: "" })
           setTableData(data)
-        } else if (isDocx) {
-          const result = await mammoth.convertToHtml({ arrayBuffer: buffer })
-          setWordHtml(result.value)
+        } else if (isWord) {
+          try {
+            const result = await mammoth.convertToHtml({ arrayBuffer: buffer })
+            if (result.value && result.value.trim().length > 0) {
+              setWordHtml(result.value)
+            } else {
+              setWordHtml(extractDocToHtml(buffer))
+            }
+          } catch {
+            setWordHtml(extractDocToHtml(buffer))
+          }
         }
       } catch (err: any) {
         if (!isCancelled) {
@@ -88,7 +140,7 @@ export function DocumentContentViewer({ url, fileName, title, tipoArchivo }: Doc
     return () => {
       isCancelled = true
     }
-  }, [effectiveUrl, isExcel, isDocx, isLegacyDoc])
+  }, [effectiveUrl, isExcel, isWord])
 
   const handleSheetChange = (sheetName: string) => {
     if (!workbook) return
@@ -125,35 +177,6 @@ export function DocumentContentViewer({ url, fileName, title, tipoArchivo }: Doc
           >
             <Download className="h-3.5 w-3.5 text-[#FFB800]" />
             Descargar archivo
-          </a>
-        </div>
-      </div>
-    )
-  }
-
-  if (isLegacyDoc) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full gap-4 p-8 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-500/10 text-blue-600 border border-blue-200">
-          <FileText className="h-8 w-8" />
-        </div>
-        <div className="max-w-md space-y-1.5">
-          <span className="inline-block px-2.5 py-0.5 text-[10px] font-bold text-blue-800 bg-blue-100 rounded-full">
-            Formato Word Clásico (.doc)
-          </span>
-          <h4 className="text-base font-bold text-[#002F6C]">{title}</h4>
-          <p className="text-xs text-slate-500">
-            Los archivos .doc binarios clásicos se abren directamente al descargarlos o en Microsoft Word.
-          </p>
-        </div>
-        <div className="flex gap-2 pt-3">
-          <a
-            href={downloadUrl}
-            download={fileName}
-            className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-[#0E5296] hover:bg-[#002F6C] rounded-xl shadow-md"
-          >
-            <Download className="h-4 w-4 text-[#FFB800]" />
-            Descargar y Abrir Word
           </a>
         </div>
       </div>
@@ -244,7 +267,7 @@ export function DocumentContentViewer({ url, fileName, title, tipoArchivo }: Doc
     )
   }
 
-  if (isDocx) {
+  if (isWord) {
     return (
       <div className="flex flex-col h-full bg-slate-100">
         <div className="flex-1 overflow-auto p-6 sm:p-8">
@@ -263,7 +286,7 @@ export function DocumentContentViewer({ url, fileName, title, tipoArchivo }: Doc
             className="inline-flex items-center gap-1 font-bold text-[#0E5296] hover:underline"
           >
             <Download className="h-3 w-3" />
-            Descargar Word (.docx)
+            Descargar Word ({ext ? `.${ext}` : "Documento"})
           </a>
         </div>
       </div>
