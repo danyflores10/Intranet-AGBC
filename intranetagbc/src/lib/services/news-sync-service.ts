@@ -309,36 +309,42 @@ export async function sincronizarNoticiasAuto(force: boolean = false): Promise<S
       };
     }
 
-    // 2. Insertar / Actualizar las noticias
-    const todosLosBanners = [
-      ...NOTICIAS_INSTITUCIONALES_BASE.map((n, idx) => ({
-        id: n.id,
-        titulo: n.titulo,
-        descripcion: n.descripcion,
-        imagen: n.imagen,
-        imagenes: JSON.stringify([n.imagen]),
-        enlace: n.enlace,
-        activo: true,
-        orden: String(idx + 1),
-        createdAt: new Date(n.fecha),
-        updatedAt: ahora,
-      })),
-      ...NOTICIAS_FACEBOOK_BASE.map((n, idx) => ({
-        id: n.id,
-        titulo: n.titulo,
-        descripcion: n.descripcion,
-        imagen: n.imagen,
-        imagenes: JSON.stringify([n.imagen]),
-        enlace: n.canonicalVideoUrl || n.enlace,
-        activo: true,
-        orden: String(idx + 13),
-        createdAt: new Date(n.fecha),
-        updatedAt: ahora,
-      })),
-    ];
+    // 2. Insertar las noticias por defecto únicamente si no existen
+    for (const n of NOTICIAS_INSTITUCIONALES_BASE) {
+      const [existe] = await db.select().from(banners).where(eq(banners.id, n.id)).limit(1);
+      if (!existe) {
+        await db.insert(banners).values({
+          id: n.id,
+          titulo: n.titulo,
+          descripcion: n.descripcion,
+          imagen: n.imagen,
+          imagenes: JSON.stringify([n.imagen]),
+          enlace: n.enlace,
+          activo: true,
+          orden: "1",
+          createdAt: new Date(n.fecha),
+          updatedAt: ahora,
+        });
+      }
+    }
 
-    await db.delete(banners);
-    await db.insert(banners).values(todosLosBanners);
+    for (const n of NOTICIAS_FACEBOOK_BASE) {
+      const [existe] = await db.select().from(banners).where(eq(banners.id, n.id)).limit(1);
+      if (!existe) {
+        await db.insert(banners).values({
+          id: n.id,
+          titulo: n.titulo,
+          descripcion: n.descripcion,
+          imagen: n.imagen,
+          imagenes: JSON.stringify([n.imagen]),
+          enlace: n.canonicalVideoUrl || n.enlace,
+          activo: true,
+          orden: "13",
+          createdAt: new Date(n.fecha),
+          updatedAt: ahora,
+        });
+      }
+    }
 
     // 3. Guardar timestamp de sincronización
     if (configRow) {
@@ -357,7 +363,7 @@ export async function sincronizarNoticiasAuto(force: boolean = false): Promise<S
 
     return {
       success: true,
-      message: `Sincronización completada (${NOTICIAS_INSTITUCIONALES_BASE.length} institucional de La Razón + ${NOTICIAS_FACEBOOK_BASE.length} Facebook).`,
+      message: `Sincronización segura completada sin sobreescribir registros existentes.`,
       institucionalesCount: NOTICIAS_INSTITUCIONALES_BASE.length,
       facebookCount: NOTICIAS_FACEBOOK_BASE.length,
       timestamp: ahora.toISOString(),
