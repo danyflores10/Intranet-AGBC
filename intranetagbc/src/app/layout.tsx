@@ -19,7 +19,15 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: "Intranet AGBC — Plataforma Interna de Gestión",
-  description: "Sistema integral de gestión documental, correspondencia, trámites y recursos humanos para AGBC.",
+  description: "Sistema integral de gestión institucional para la Agencia Boliviana de Correos.",
+  icons: {
+    icon: [
+      { url: "/image/LogoAmarillo.png", href: "/image/LogoAmarillo.png" },
+      { url: "/icon.png", href: "/icon.png" },
+    ],
+    shortcut: "/image/LogoAmarillo.png",
+    apple: "/image/LogoAmarillo.png",
+  },
 };
 
 export default function RootLayout({

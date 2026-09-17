@@ -46,6 +46,7 @@ import {
   crearDocumento, actualizarDocumento, eliminarDocumento,
   crearCategoria, actualizarCategoria, eliminarCategoria,
   enviarDocumentosAPapeleraLote, eliminarDocumentosPermanenteLote,
+  eliminarCategoriasLote,
 } from "@/actions/documentos"
 import { PERMISOS } from "@/lib/auth/permisos"
 import { crearContextoAcceso, puedeAcceder, type UsuarioRbac } from "@/lib/rbac"
@@ -157,7 +158,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   const docsConArchivo = documentos.filter((d) => d.archivo)
   const docsSinArchivo = documentos.filter((d) => !d.archivo)
 
-  const [selectedDocIds, setSelectedDocIds] = useState<string[]>([])
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [showPermanentDeleteModal, setShowPermanentDeleteModal] = useState(false)
   const [isProcessingBulk, setIsProcessingBulk] = useState(false)
 
@@ -165,29 +166,29 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
     setTab(t)
     setSearchQuery("")
     setCurrentPage(1)
-    setSelectedDocIds([])
+    setSelectedIds([])
   }
 
-  const handleToggleSelectDoc = (id: string) => {
-    setSelectedDocIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]))
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]))
   }
 
-  const handleSelectAllDocs = () => {
-    if (selectedDocIds.length === filteredDocs.length && filteredDocs.length > 0) {
-      setSelectedDocIds([])
+  const handleSelectAll = (itemsToSelect: Array<{ id: string }>) => {
+    if (selectedIds.length === itemsToSelect.length && itemsToSelect.length > 0) {
+      setSelectedIds([])
     } else {
-      setSelectedDocIds(filteredDocs.map((d) => d.id))
+      setSelectedIds(itemsToSelect.map((d) => d.id))
     }
   }
 
   const handleBulkEnviarPapelera = async () => {
-    if (selectedDocIds.length === 0) return
+    if (selectedIds.length === 0) return
     setIsProcessingBulk(true)
     try {
-      const res = await enviarDocumentosAPapeleraLote(selectedDocIds)
+      const res = await enviarDocumentosAPapeleraLote(selectedIds)
       if (res.success) {
         toast.success(`${res.count} documento(s) movido(s) a papelera`)
-        setSelectedDocIds([])
+        setSelectedIds([])
       } else {
         toast.error("Error al mover documentos a papelera")
       }
@@ -199,16 +200,27 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   }
 
   const handleBulkEliminarPermanente = async () => {
-    if (selectedDocIds.length === 0) return
+    if (selectedIds.length === 0) return
     setIsProcessingBulk(true)
     try {
-      const res = await eliminarDocumentosPermanenteLote(selectedDocIds)
-      if (res.success) {
-        toast.success(`${res.count} documento(s) eliminado(s) permanentemente`)
-        setSelectedDocIds([])
-        setShowPermanentDeleteModal(false)
+      if (tab === "categorias") {
+        const res = await eliminarCategoriasLote(selectedIds)
+        if (res.success) {
+          toast.success(`${res.count} categoría(s) eliminada(s) permanentemente`)
+          setSelectedIds([])
+          setShowPermanentDeleteModal(false)
+        } else {
+          toast.error("Error al eliminar categorías")
+        }
       } else {
-        toast.error("Error al eliminar documentos permanentemente")
+        const res = await eliminarDocumentosPermanenteLote(selectedIds)
+        if (res.success) {
+          toast.success(`${res.count} documento(s) eliminado(s) permanentemente`)
+          setSelectedIds([])
+          setShowPermanentDeleteModal(false)
+        } else {
+          toast.error("Error al eliminar documentos permanentemente")
+        }
       }
     } catch {
       toast.error("Error al procesar la eliminación permanente")
@@ -567,16 +579,16 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
       </div>
 
       {/* ── Barra Flotante de Selección Múltiple ── */}
-      {tab === "todos" && selectedDocIds.length > 0 && (
+      {selectedIds.length > 0 && (
         <div className="rounded-2xl border-2 border-[#0E5296]/30 bg-gradient-to-r from-blue-50 via-white to-amber-50 p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-md animate-in fade-in slide-in-from-top-2">
           <div className="flex items-center gap-3">
             <span className="flex h-3 w-3 rounded-full bg-[#0E5296] animate-ping" />
             <div>
               <span className="text-xs font-black text-[#002F6C]">
-                {selectedDocIds.length} documento(s) seleccionado(s)
+                {selectedIds.length} {tab === "categorias" ? "categoría(s) seleccionada(s)" : "documento(s) seleccionado(s)"}
               </span>
               <p className="text-[11px] text-slate-500 font-medium">
-                Acciones masivas sobre los documentos seleccionados
+                Acciones masivas sobre los elementos seleccionados
               </p>
             </div>
           </div>
@@ -585,23 +597,25 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setSelectedDocIds([])}
+              onClick={() => setSelectedIds([])}
               className="h-8 px-3 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
             >
               Deseleccionar todos
             </Button>
             {canDeleteDocumento && (
               <>
-                <Button
-                  type="button"
-                  size="sm"
-                  disabled={isProcessingBulk}
-                  onClick={handleBulkEnviarPapelera}
-                  className="h-8 px-3.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-xs cursor-pointer flex items-center gap-1.5"
-                >
-                  <Trash2Icon className="h-3.5 w-3.5" />
-                  Enviar a papelera ({selectedDocIds.length})
-                </Button>
+                {tab !== "categorias" && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={isProcessingBulk}
+                    onClick={handleBulkEnviarPapelera}
+                    className="h-8 px-3.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-xs cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Trash2Icon className="h-3.5 w-3.5" />
+                    Enviar a papelera ({selectedIds.length})
+                  </Button>
+                )}
                 <Button
                   type="button"
                   size="sm"
@@ -610,7 +624,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                   className="h-8 px-3.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-xs cursor-pointer flex items-center gap-1.5"
                 >
                   <AlertTriangleIcon className="h-3.5 w-3.5" />
-                  Eliminar permanentemente ({selectedDocIds.length})
+                  {tab === "categorias" ? "Eliminar categorías" : "Eliminar permanentemente"} ({selectedIds.length})
                 </Button>
               </>
             )}
@@ -626,22 +640,20 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
           <table className="w-full text-left border-collapse min-w-[700px]">
             <thead>
               <tr className="border-b-2 border-slate-100 bg-gradient-to-r from-sky-50/70 via-blue-50/50 to-amber-50/50 text-[11px] font-black uppercase text-[#002F6C] tracking-wider">
-                {tab === "todos" && (
-                  <th className="py-3 px-3 text-center w-10">
-                    <button
-                      type="button"
-                      onClick={handleSelectAllDocs}
-                      className="text-[#002F6C] hover:text-[#0E5296] transition-colors p-0.5 cursor-pointer"
-                      title={selectedDocIds.length === filteredDocs.length && filteredDocs.length > 0 ? "Deseleccionar todos" : "Seleccionar todos"}
-                    >
-                      {selectedDocIds.length > 0 && selectedDocIds.length === filteredDocs.length ? (
-                        <CheckSquareIcon className="h-4 w-4 text-[#0E5296]" />
-                      ) : (
-                        <SquareIcon className="h-4 w-4 text-slate-400" />
-                      )}
-                    </button>
-                  </th>
-                )}
+                <th className="py-3 px-3 text-center w-10">
+                  <button
+                    type="button"
+                    onClick={() => handleSelectAll(currentList)}
+                    className="text-[#002F6C] hover:text-[#0E5296] transition-colors p-0.5 cursor-pointer"
+                    title={selectedIds.length === currentList.length && currentList.length > 0 ? "Deseleccionar todos" : "Seleccionar todos"}
+                  >
+                    {selectedIds.length > 0 && selectedIds.length === currentList.length ? (
+                      <CheckSquareIcon className="h-4 w-4 text-[#0E5296]" />
+                    ) : (
+                      <SquareIcon className="h-4 w-4 text-slate-400" />
+                    )}
+                  </button>
+                </th>
                 <th className="py-3 px-4">{tab === "categorias" ? "Categoría" : "Documento"}</th>
                 <th className="py-3 px-4">{tab === "categorias" ? "Descripción" : "Categoría / Detalle"}</th>
                 <th className="py-3 px-4">Estado</th>
@@ -652,7 +664,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
             <tbody className="divide-y divide-slate-100 text-xs">
               {currentList.length === 0 ? (
                 <tr>
-                  <td colSpan={tab === "todos" ? 6 : 5} className="py-12 text-center text-slate-400 font-medium">
+                  <td colSpan={6} className="py-12 text-center text-slate-400 font-medium">
                     No hay registros en {tab === "categorias" ? "Categorías" : tab === "archivos" ? "Archivos Adjuntos" : "Todos los Documentos"}.
                   </td>
                 </tr>
@@ -664,21 +676,19 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
 
                   return (
                     <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
-                      {tab === "todos" && (
-                        <td className="py-3 px-3 text-center">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleSelectDoc(item.id)}
-                            className="text-[#0E5296] hover:scale-110 transition-transform p-0.5 cursor-pointer"
-                          >
-                            {selectedDocIds.includes(item.id) ? (
-                              <CheckSquareIcon className="h-4 w-4 text-[#0E5296]" />
-                            ) : (
-                              <SquareIcon className="h-4 w-4 text-slate-300 group-hover:text-slate-400" />
-                            )}
-                          </button>
-                        </td>
-                      )}
+                      <td className="py-3 px-3 text-center">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSelect(item.id)}
+                          className="text-[#0E5296] hover:scale-110 transition-transform p-0.5 cursor-pointer"
+                        >
+                          {selectedIds.includes(item.id) ? (
+                            <CheckSquareIcon className="h-4 w-4 text-[#0E5296]" />
+                          ) : (
+                            <SquareIcon className="h-4 w-4 text-slate-300 group-hover:text-slate-400" />
+                          )}
+                        </button>
+                      </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFCC00] text-[#002F6C] font-black shadow-xs">
@@ -1213,12 +1223,16 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
           <div className="py-4 space-y-3">
             <p className="text-xs text-slate-600 leading-relaxed font-medium">
               ¿Estás seguro de que deseas eliminar permanentemente{" "}
-              <strong className="text-red-600 font-black">{selectedDocIds.length} documento(s)</strong>?
+              <strong className="text-red-600 font-black">
+                {selectedIds.length} {tab === "categorias" ? "categoría(s)" : "documento(s)"}
+              </strong>?
             </p>
             <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-[11px] text-red-800 font-semibold flex items-start gap-2">
               <AlertTriangleIcon className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
               <span>
-                Los documentos seleccionados serán eliminados por completo de la base de datos y no podrán ser recuperados desde la papelera institucional.
+                {tab === "categorias"
+                  ? "Las categorías seleccionadas serán eliminadas permanentemente de la base de datos. Los documentos que pertenecían a estas categorías quedarán sin categoría asignada pero intactos."
+                  : "Los documentos seleccionados serán eliminados por completo de la base de datos y no podrán ser recuperados desde la papelera institucional."}
               </span>
             </div>
           </div>

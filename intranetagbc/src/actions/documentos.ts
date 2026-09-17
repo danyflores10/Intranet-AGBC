@@ -474,6 +474,9 @@ export async function actualizarCategoria(id: string, data: Partial<{ nombre: st
 
 export async function eliminarCategoria(id: string) {
   const sesion = await autorizarAccion(PERMISOS.DOCUMENTOS.ELIMINAR)
+  // Desvincular documentos pertenecientes a esta categoría
+  await db.update(documentos).set({ categoriaId: null }).where(eq(documentos.categoriaId, id))
+
   const [categoriaEliminada] = await db
     .delete(documentoCategorias)
     .where(eq(documentoCategorias.id, id))
@@ -491,3 +494,27 @@ export async function eliminarCategoria(id: string) {
   })
   revalidatePath("/documentos")
 }
+
+export async function eliminarCategoriasLote(ids: string[]) {
+  if (!ids || ids.length === 0) return { success: true, count: 0 }
+  const sesion = await autorizarAccion(PERMISOS.DOCUMENTOS.ELIMINAR)
+
+  // Desvincular documentos pertenecientes a estas categorías
+  await db.update(documentos).set({ categoriaId: null }).where(inArray(documentos.categoriaId, ids))
+
+  const deletedCats = await db
+    .delete(documentoCategorias)
+    .where(inArray(documentoCategorias.id, ids))
+    .returning({ id: documentoCategorias.id, nombre: documentoCategorias.nombre })
+
+  await registrarAuditLog({
+    usuario: sesion.id,
+    accion: `Eliminó permanentemente ${deletedCats.length} categorías de documentos`,
+    modulo: "Documentos",
+    resultado: "Exitoso",
+  })
+
+  revalidatePath("/documentos")
+  return { success: true, count: deletedCats.length }
+}
+

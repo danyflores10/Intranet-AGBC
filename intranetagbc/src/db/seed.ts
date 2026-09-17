@@ -19,7 +19,7 @@ import {
   users,
 } from "./schema"
 import { auth } from "../lib/auth"
-import { PERMISOS } from "../lib/auth/permisos"
+import { PERMISOS_ACTIVOS } from "../lib/auth/permisos"
 import { sincronizarNoticiasAuto } from "../lib/services/news-sync-service"
 import { sincronizarTodoPersonalConUsuarios } from "../lib/services/personal-user-sync"
 
@@ -54,7 +54,7 @@ async function seedRolesYPermisos() {
     }
   }
 
-  // Extraer todos los permisos del objeto PERMISOS
+  // Extraer todos los permisos del objeto PERMISOS_ACTIVOS
   const listaPermisosSet = new Set<string>()
   function extraer(obj: any) {
     for (const val of Object.values(obj)) {
@@ -62,7 +62,7 @@ async function seedRolesYPermisos() {
       else if (typeof val === "object" && val !== null) extraer(val)
     }
   }
-  extraer(PERMISOS)
+  extraer(PERMISOS_ACTIVOS)
   const listaPermisos = [...listaPermisosSet]
 
   // 1. Eliminar permisos obsoletos que ya no existen en la definición actual del sistema
