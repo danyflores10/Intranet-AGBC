@@ -16,7 +16,8 @@
     "db:seed:docs": "tsx --env-file=.env src/scripts/seed-documentos-production.ts",
     "db:studio": "drizzle-kit studio",
     "db:seed:permisos": "pnpm dlx tsx scripts/seed-permisos.ts",
-    "db:bootstrap:rbac": "pnpm dlx tsx scripts/bootstrap-rbac.ts"
+    "db:bootstrap:rbac": "pnpm dlx tsx scripts/bootstrap-rbac.ts",
+    "avatars:assign": "tsx --env-file=.env src/scripts/assign-avatars.ts"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.6.0",
