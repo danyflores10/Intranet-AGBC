@@ -16,6 +16,7 @@ export type User = {
   emailVerified: boolean
   dateOfBirth: string
   isActive: boolean
+  image?: string | null
   roles: UserRole[]
   createdAt: string
   updatedAt: string

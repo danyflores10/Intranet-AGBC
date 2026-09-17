@@ -132,14 +132,18 @@ export async function assignAvatars() {
       await db.update(personal).set({ foto: avatarUrl }).where(eq(personal.id, matchedPerson.id));
       personalUpdatedCount++;
 
-      // Find matching user by email or personalId or name
+      // Find matching user by email or constructed name
       const pEmail = matchedPerson.email?.trim().toLowerCase();
-      const matchedUser = allUsers.find(u => 
-        (u.personalId && u.personalId === matchedPerson!.id) ||
-        (pEmail && u.institutionalEmail && u.institutionalEmail.trim().toLowerCase() === pEmail) ||
-        (pEmail && u.email && u.email.trim().toLowerCase() === pEmail) ||
-        normalizeStr(u.name) === normalizeStr(matchedPerson!.nombre)
-      );
+      const matchedUser = allUsers.find(u => {
+        const uEmailInst = u.institutionalEmail?.trim().toLowerCase();
+        const uEmailPers = u.email?.trim().toLowerCase();
+        const uFullName = [u.firstName, u.lastNamePaternal, u.lastNameMaternal].filter(Boolean).join(' ');
+        return (
+          (pEmail && uEmailInst === pEmail) ||
+          (pEmail && uEmailPers === pEmail) ||
+          normalizeStr(uFullName) === normalizeStr(matchedPerson!.nombre)
+        );
+      });
 
       if (matchedUser) {
         await db.update(users).set({ image: avatarUrl }).where(eq(users.id, matchedUser.id));

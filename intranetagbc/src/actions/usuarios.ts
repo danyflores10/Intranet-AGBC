@@ -58,6 +58,7 @@ export type UsuarioDTO = {
   emailVerified: boolean
   dateOfBirth: string
   isActive: boolean
+  image: string | null
   roles: RolUsuarioDTO[]
   createdAt: string
   updatedAt: string
@@ -110,6 +111,7 @@ type UsuarioFilaConRol = {
   userEmailVerified: boolean
   userDateOfBirth: string | Date
   userIsActive: boolean
+  userImage: string | null
   userCreatedAt: Date
   userUpdatedAt: Date
   roleId: string | null
@@ -377,6 +379,7 @@ function mapRowsToUsuarios(rows: UsuarioFilaConRol[]): UsuarioDTO[] {
         emailVerified: row.userEmailVerified,
         dateOfBirth: formatBirthDate(row.userDateOfBirth),
         isActive: row.userIsActive,
+        image: row.userImage ?? null,
         roles: row.roleId && row.roleName ? [{ id: row.roleId, name: row.roleName }] : [],
         createdAt: formatDateSafe(row.userCreatedAt),
         updatedAt: formatDateSafe(row.userUpdatedAt),
@@ -411,6 +414,7 @@ async function findUserByIdWithRoles(userId: string, runner: QueryRunner = db): 
       userEmailVerified: users.emailVerified,
       userDateOfBirth: users.dateOfBirth,
       userIsActive: users.isActive,
+      userImage: users.image,
       userCreatedAt: users.createdAt,
       userUpdatedAt: users.updatedAt,
       roleId: roles.id,
@@ -541,6 +545,7 @@ export async function obtenerUsuarios(): Promise<ResultadoAccion<UsuarioDTO[]>> 
         userEmailVerified: users.emailVerified,
         userDateOfBirth: users.dateOfBirth,
         userIsActive: users.isActive,
+        userImage: users.image,
         userCreatedAt: users.createdAt,
         userUpdatedAt: users.updatedAt,
         roleId: roles.id,

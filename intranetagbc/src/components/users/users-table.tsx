@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useState } from "react"
 import { PencilIcon, Trash2Icon, ChevronLeftIcon, ChevronRightIcon, UserXIcon, UserCheckIcon } from "lucide-react"
 import type { User } from "@/types/users"
@@ -13,6 +14,11 @@ type UsersTableProps = {
   onEdit: (user: User) => void
   onDelete: (user: User) => void
   onToggleStatus?: (user: User) => void
+}
+
+function cleanImageUrl(url?: string | null): string {
+  if (!url || typeof url !== "string") return ""
+  return url.split("?")[0].trim()
 }
 
 function formatDate(value: string | Date | undefined): string {
@@ -101,11 +107,24 @@ export function UsersTable({ users, canEdit, canDelete, currentUserId, currentUs
 
                 return (
                   <tr key={u.id} className="hover:bg-blue-50/40 transition-colors group">
-                    {/* Funcionario */}
+                    {/* Funcionario / Avatar */}
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#002F6C] text-[#FFCC00] font-black text-xs shadow-xs border border-blue-900/20">
-                          {getInitials(u.name)}
+                        <div className="relative shrink-0">
+                          {u.image ? (
+                            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-amber-300 shadow-xs">
+                              <Image src={cleanImageUrl(u.image)} alt={u.name} fill className="object-cover" unoptimized />
+                            </div>
+                          ) : (
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#002F6C] text-[#FFCC00] font-black text-xs shadow-xs border border-blue-900/20">
+                              {getInitials(u.name)}
+                            </div>
+                          )}
+                          <span
+                            className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${
+                              u.isActive ? "bg-emerald-500" : "bg-slate-400"
+                            }`}
+                          />
                         </div>
                         <div className="min-w-0 space-y-0.5">
                           <div className="flex items-center gap-1.5">
