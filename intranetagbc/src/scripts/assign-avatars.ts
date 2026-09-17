@@ -179,10 +179,20 @@ export async function assignAvatars() {
   console.log('=========================================\n');
 }
 
-assignAvatars()
-  .then(() => pool.end())
-  .catch((err) => {
-    console.error('Error al asignar avatares:', err);
-    pool.end();
-    process.exit(1);
-  });
+import { fileURLToPath } from 'url';
+
+const isDirectRun = process.argv[1] && (
+  process.argv[1].endsWith('assign-avatars.ts') ||
+  process.argv[1].endsWith('assign-avatars.js') ||
+  (import.meta.url && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]))
+);
+
+if (isDirectRun) {
+  assignAvatars()
+    .then(() => pool.end())
+    .catch((err) => {
+      console.error('Error al asignar avatares:', err);
+      pool.end();
+      process.exit(1);
+    });
+}

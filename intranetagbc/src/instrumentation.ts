@@ -1,8 +1,11 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
-    // La inicialización automática de seeders ha sido desactivada para evitar
-    // que datos eliminados o modificados en producción se reescriban en cada despliegue.
-    console.log("⚡ [AGBC Intranet] Servidor iniciado correctamente en modo incremental.")
+    try {
+      const { runAutoMigrations } = await import("@/lib/db/auto-migrate")
+      await runAutoMigrations()
+      console.log("⚡ [AGBC Intranet] Base de datos sincronizada y servidor listo.")
+    } catch (error) {
+      console.error("⚠️ [AGBC Intranet] Error en sincronización de base de datos:", error)
+    }
   }
 }
-
