@@ -21,6 +21,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { UserNavDropdown, type UserNavProfile } from "@/components/user-nav-dropdown"
+import { LandingNotificacionesBell } from "@/components/landing-notificaciones-bell"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -279,7 +280,10 @@ export function LandingNavbar({ estaLogueado, esAdmin, usuario }: LandingNavbarP
             {/* ACCIONES */}
             <div className="flex shrink-0 items-center gap-2">
               {estaLogueado ? (
-                <UserNavDropdown usuario={usuario} esAdmin={esAdmin} />
+                <>
+                  <LandingNotificacionesBell usuarioId={usuario?.id || undefined} esAdmin={esAdmin} />
+                  <UserNavDropdown usuario={usuario} esAdmin={esAdmin} />
+                </>
               ) : (
                 <>
                   <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex text-[#0E5296] hover:bg-[#FFB800]/10 dark:text-[#FFB800]">
