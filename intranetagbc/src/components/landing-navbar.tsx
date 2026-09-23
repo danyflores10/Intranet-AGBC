@@ -20,7 +20,7 @@ import {
   LayoutGrid,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { LogoutButton } from "@/components/logout-button"
+import { UserNavDropdown, type UserNavProfile } from "@/components/user-nav-dropdown"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,8 +36,8 @@ interface NavItem {
 
 interface LandingNavbarProps {
   estaLogueado: boolean
-  esAdmin: boolean
-  usuario: { name: string; image?: string | null } | null
+  esAdmin?: boolean
+  usuario?: UserNavProfile | null
 }
 
 const NAV_ITEMS_PUBLICOS: NavItem[] = [
@@ -72,7 +72,7 @@ const SUBMENU_ITEMS = [
   },
 ]
 
-export function LandingNavbar({ estaLogueado }: LandingNavbarProps) {
+export function LandingNavbar({ estaLogueado, esAdmin, usuario }: LandingNavbarProps) {
   const [scrolled, setScrolled] = useState(false)
   const [showTop, setShowTop] = useState(false)
   const [scrollProgress, setScrollProgress] = useState(0)
@@ -279,7 +279,7 @@ export function LandingNavbar({ estaLogueado }: LandingNavbarProps) {
             {/* ACCIONES */}
             <div className="flex shrink-0 items-center gap-2">
               {estaLogueado ? (
-                <LogoutButton />
+                <UserNavDropdown usuario={usuario} esAdmin={esAdmin} />
               ) : (
                 <>
                   <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex text-[#0E5296] hover:bg-[#FFB800]/10 dark:text-[#FFB800]">
