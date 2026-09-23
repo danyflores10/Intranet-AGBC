@@ -103,12 +103,48 @@ export default async function HomePage() {
       }))
     : defaultSucursales
 
+  // Buscar datos específicos del funcionario (cargo y foto) en personalDb o directivosDb
+  const userEmail = (session.user.email || "").toLowerCase().trim()
+  const userName = (usuarioRbac?.name || session.user.name || "").trim()
+
+  const personalEncontrado = personalDb.find(
+    (p) => (p.email && p.email.toLowerCase().trim() === userEmail) ||
+           (p.nombre && userName && p.nombre.toLowerCase().includes(userName.toLowerCase()))
+  )
+
+  const directivoEncontrado = !personalEncontrado
+    ? directivosDb.find(
+        (d) => (d.email && d.email.toLowerCase().trim() === userEmail) ||
+               (d.nombre && userName && d.nombre.toLowerCase().includes(userName.toLowerCase()))
+      )
+    : null
+
+  // Determinar cargo institucional
+  let cargoInstitucional = personalEncontrado?.cargo || directivoEncontrado?.cargo || ""
+  if (!cargoInstitucional) {
+    const primerRol = (usuarioRbac?.roles?.[0] || "").toLowerCase()
+    if (primerRol.includes("admin")) {
+      cargoInstitucional = "Administrador de Sistemas"
+    } else if (primerRol.includes("gestor")) {
+      cargoInstitucional = "Gestor Institucional"
+    } else if (primerRol.includes("director")) {
+      cargoInstitucional = "Director Ejecutivo"
+    } else {
+      cargoInstitucional = "Funcionario Público"
+    }
+  }
+
+  // Foto de perfil
+  const fotoPerfil = usuarioRbac?.image || session.user.image || personalEncontrado?.foto || directivoEncontrado?.foto || null
+
   // Datos para el navbar
   const usuario = {
-    name: session.user.name || "Usuario",
-    email: session.user.email,
-    image: session.user.image,
-    rol: usuarioRbac?.roles?.[0] || "Funcionario",
+    name: userName || "Funcionario Institucional",
+    email: session.user.email || usuarioRbac?.email || "funcionario@correos.gob.bo",
+    image: fotoPerfil,
+    cargo: cargoInstitucional,
+    rol: cargoInstitucional,
+    esAdmin: esAdmin,
   }
 
   return (

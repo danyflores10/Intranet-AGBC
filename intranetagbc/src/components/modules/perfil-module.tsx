@@ -277,13 +277,25 @@ export function PerfilModule({ perfil }: Props) {
               Gestiona tu información personal, correo institucional y seguridad de cuenta
             </p>
           </div>
-          <Link
-            href="/dashboard"
-            className="group inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-[#0E5296]/40 px-4 py-2 text-xs font-bold text-[#002F6C] shadow-xs hover:shadow-md transition-all cursor-pointer"
-          >
-            <ArrowLeftIcon className="h-3.5 w-3.5 text-[#0E5296] transition-transform group-hover:-translate-x-0.5" />
-            <span>Volver al Dashboard</span>
-          </Link>
+          <div className="flex items-center gap-2">
+            {perfil.roles && perfil.roles.some((r) => /admin|gestor|director/i.test(r)) ? (
+              <Link
+                href="/dashboard"
+                className="group inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-[#0E5296]/40 px-4 py-2 text-xs font-bold text-[#002F6C] shadow-xs hover:shadow-md transition-all cursor-pointer"
+              >
+                <ArrowLeftIcon className="h-3.5 w-3.5 text-[#0E5296] transition-transform group-hover:-translate-x-0.5" />
+                <span>Volver al Dashboard</span>
+              </Link>
+            ) : (
+              <Link
+                href="/"
+                className="group inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-[#0E5296]/40 px-4 py-2 text-xs font-bold text-[#002F6C] shadow-xs hover:shadow-md transition-all cursor-pointer"
+              >
+                <ArrowLeftIcon className="h-3.5 w-3.5 text-[#0E5296] transition-transform group-hover:-translate-x-0.5" />
+                <span>Volver a la Intranet</span>
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* ── Header hero con avatar y datos principales ── */}
