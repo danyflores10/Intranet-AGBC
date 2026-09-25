@@ -46,7 +46,7 @@ import {
   crearDocumento, actualizarDocumento, eliminarDocumento,
   crearCategoria, actualizarCategoria, eliminarCategoria,
   enviarDocumentosAPapeleraLote, eliminarDocumentosPermanenteLote,
-  eliminarCategoriasLote, obtenerEstadisticasLecturasDocumento,
+  eliminarCategoriasLote,
 } from "@/actions/documentos"
 import { PERMISOS } from "@/lib/auth/permisos"
 import { crearContextoAcceso, puedeAcceder, type UsuarioRbac } from "@/lib/rbac"
@@ -70,9 +70,6 @@ interface DocRow {
   categoria: string | null
   categoriaId: string | null
   autor: string
-  direccionEmisora?: string | null
-  esImportante?: boolean
-  requiereLectura?: boolean
   estado: string
   archivo: string | null
   nombreArchivo: string | null
@@ -140,12 +137,6 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   const [uploadedFile, setUploadedFile] = useState<{ url: string; nombre: string; tipo: string; tamano: string } | null>(null)
   const [categoriaId, setCategoriaId] = useState("")
   const [estado, setEstado] = useState("borrador")
-  const [esImportante, setEsImportante] = useState(false)
-  const [requiereLectura, setRequiereLectura] = useState(false)
-  const [direccionEmisora, setDireccionEmisora] = useState("Dirección General Ejecutiva")
-  const [statsDoc, setStatsDoc] = useState<DocRow | null>(null)
-  const [statsList, setStatsList] = useState<Array<{ id: string; usuarioNombre: string; usuarioEmail: string; fechaLectura: Date; confirmado: boolean; tiempoSegundos: number }>>([])
-  const [loadingStats, setLoadingStats] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const accessContext = useMemo(() => crearContextoAcceso(usuario), [usuario])
 
@@ -242,24 +233,8 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
     if (dialogOpen) {
       setCategoriaId(editDoc?.categoriaId ?? "")
       setEstado(editDoc?.estado ?? "borrador")
-      setEsImportante(editDoc?.esImportante ?? false)
-      setRequiereLectura(editDoc?.requiereLectura ?? false)
-      setDireccionEmisora(editDoc?.direccionEmisora ?? "Dirección General Ejecutiva")
     }
   }, [dialogOpen, editDoc])
-
-  async function handleOpenStats(doc: DocRow) {
-    setStatsDoc(doc)
-    setLoadingStats(true)
-    try {
-      const data = await obtenerEstadisticasLecturasDocumento(doc.id)
-      setStatsList(data as any)
-    } catch {
-      toast.error("Error al cargar seguimiento de lecturas")
-    } finally {
-      setLoadingStats(false)
-    }
-  }
 
   async function handleFileUpload(file: File) {
     setUploading(true)
@@ -297,12 +272,9 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
 
     startTransition(async () => {
       try {
-        const payload: Record<string, any> = {
+        const payload: Record<string, string | undefined> = {
           titulo: fd.get("titulo") as string,
           categoriaId: categoriaId || undefined,
-          direccionEmisora: direccionEmisora || "Dirección General Ejecutiva",
-          esImportante,
-          requiereLectura,
           estado,
           descripcion: ((fd.get("descripcion") as string) || "").trim() || undefined,
         }
@@ -723,19 +695,9 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                             <Icon className="h-5 w-5" style={{ color: iconColor }} />
                           </div>
                           <div>
-                            <div className="flex items-center gap-2">
-                              <p className="font-bold text-[#002F6C]">{isCat ? item.nombre : item.titulo}</p>
-                              {!isCat && item.esImportante && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 text-amber-800 border border-amber-300 px-2 py-0.5 text-[9px] font-black">
-                                  <AlertTriangleIcon className="h-2.5 w-2.5 text-amber-600" />
-                                  Emergente
-                                </span>
-                              )}
-                            </div>
-                            {!isCat && (
-                              <p className="text-[10px] text-slate-400 truncate max-w-[280px]">
-                                {item.direccionEmisora || "Dirección General"} {item.nombreArchivo ? `• ${item.nombreArchivo}` : ""}
-                              </p>
+                            <p className="font-bold text-[#002F6C]">{isCat ? item.nombre : item.titulo}</p>
+                            {!isCat && item.nombreArchivo && (
+                              <p className="text-[10px] text-slate-400 truncate max-w-[200px]">{item.nombreArchivo}</p>
                             )}
                           </div>
                         </div>
@@ -758,16 +720,6 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {!isCat && item.esImportante && (
-                            <button
-                              onClick={() => handleOpenStats(item)}
-                              className="flex h-8 px-2.5 items-center gap-1.5 rounded-xl bg-amber-50 text-amber-800 hover:bg-amber-600 hover:text-white transition-colors cursor-pointer text-xs font-bold"
-                              title="Ver seguimiento de lecturas"
-                            >
-                              <CheckCircle2Icon className="h-3.5 w-3.5" />
-                              <span className="hidden xl:inline">Lecturas</span>
-                            </button>
-                          )}
                           {!isCat && item.archivo && (
                             <button
                               onClick={() => setPreviewDoc(item)}
@@ -943,84 +895,18 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                 <Input name="descripcion" defaultValue={editDoc?.descripcion ?? ""} placeholder="Descripción breve del contenido o alcance" className="h-11 w-full rounded-xl border-slate-200 text-sm" />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-[#002F6C]">Dirección o Área Emisora</Label>
-                  <Select value={direccionEmisora} onValueChange={setDireccionEmisora}>
-                    <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 text-sm font-medium">
-                      <SelectValue placeholder="Selecciona el área emisora" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Dirección General Ejecutiva">Dirección General Ejecutiva</SelectItem>
-                      <SelectItem value="Dirección Administrativa Financiera">Dirección Administrativa Financiera</SelectItem>
-                      <SelectItem value="Dirección Comercial">Dirección Comercial</SelectItem>
-                      <SelectItem value="Dirección de Operaciones Postales">Dirección de Operaciones Postales</SelectItem>
-                      <SelectItem value="Unidad de Asesoría Legal">Unidad de Asesoría Legal</SelectItem>
-                      <SelectItem value="Unidad de Planificación & Proyectos">Unidad de Planificación & Proyectos</SelectItem>
-                      <SelectItem value="Unidad de Tecnologías de Información (Sistemas)">Unidad de Tecnologías de Información (Sistemas)</SelectItem>
-                      <SelectItem value="Unidad de Transparencia">Unidad de Transparencia</SelectItem>
-                      <SelectItem value="Dirección Regional / Agencias">Dirección Regional / Agencias</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-[#002F6C]">Estado de publicación</Label>
-                  <Select value={estado} onValueChange={setEstado}>
-                    <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 text-sm">
-                      <SelectValue placeholder="Selecciona un estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="publicado">Publicado (Visible)</SelectItem>
-                      <SelectItem value="borrador">Borrador (Interno)</SelectItem>
-                      <SelectItem value="pendiente">Pendiente de revisión</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Opciones de importancia y ventana obligatoria */}
-              <div className="rounded-2xl bg-amber-50/70 p-4 border border-amber-200 space-y-3">
-                <p className="text-xs font-black uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
-                  <AlertTriangleIcon className="h-4 w-4 text-amber-600" />
-                  Notificación Emergente & Cumplimiento Obligatorio
-                </p>
-
-                <div className="space-y-2">
-                  <label className="flex items-start gap-2.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={esImportante}
-                      onChange={(e) => setEsImportante(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 rounded border-amber-400 text-[#002F6C] focus:ring-[#002F6C]"
-                    />
-                    <div>
-                      <p className="text-xs font-bold text-amber-950">
-                        Mostrar como Ventana Emergente al iniciar sesión (Prioritario)
-                      </p>
-                      <p className="text-[11px] text-amber-800/80">
-                        Aparecerá en pantalla completa para los funcionarios al ingresar a la Intranet.
-                      </p>
-                    </div>
-                  </label>
-
-                  <label className="flex items-start gap-2.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={requiereLectura}
-                      onChange={(e) => setRequiereLectura(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 rounded border-amber-400 text-[#002F6C] focus:ring-[#002F6C]"
-                    />
-                    <div>
-                      <p className="text-xs font-bold text-amber-950">
-                        Exigir confirmación y toma de conocimiento de lectura
-                      </p>
-                      <p className="text-[11px] text-amber-800/80">
-                        Registra fecha y hora en BD para seguimiento y auditoría de cumplimiento.
-                      </p>
-                    </div>
-                  </label>
-                </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-[#002F6C]">Estado de publicación</Label>
+                <Select value={estado} onValueChange={setEstado}>
+                  <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 text-sm">
+                    <SelectValue placeholder="Selecciona un estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="publicado">Publicado (Visible)</SelectItem>
+                    <SelectItem value="borrador">Borrador (Interno)</SelectItem>
+                    <SelectItem value="pendiente">Pendiente de revisión</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -1375,77 +1261,6 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
               ) : (
                 "Sí, eliminar permanentemente"
               )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Modal de Seguimiento de Lecturas y Toma de Conocimiento ── */}
-      <Dialog open={!!statsDoc} onOpenChange={(v) => { if (!v) setStatsDoc(null) }}>
-        <DialogContent className="max-w-2xl w-[95vw] p-0 rounded-3xl overflow-hidden border-2 border-[#002F6C]/20 shadow-2xl bg-white">
-          <div className="bg-gradient-to-r from-[#002F6C] to-[#0E5296] p-5 text-white flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#FFB800] text-[#002F6C] shadow-sm">
-                <CheckCircle2Icon className="h-5 w-5" />
-              </div>
-              <div>
-                <DialogTitle className="text-base font-black text-white">
-                  Seguimiento de Lecturas • {statsDoc?.titulo}
-                </DialogTitle>
-                <p className="text-xs text-blue-100">
-                  Registro de funcionarios que han tomado conocimiento oficial
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
-            {loadingStats ? (
-              <div className="py-12 flex flex-col items-center justify-center text-slate-400 gap-2">
-                <Loader2Icon className="h-6 w-6 animate-spin text-[#0E5296]" />
-                <p className="text-xs font-bold">Cargando registros de lecturas...</p>
-              </div>
-            ) : statsList.length === 0 ? (
-              <div className="py-12 text-center text-slate-400 space-y-2">
-                <CheckCircle2Icon className="h-8 w-8 mx-auto opacity-30 text-amber-500" />
-                <p className="text-xs font-bold">Ningún funcionario ha confirmado la lectura todavía.</p>
-                <p className="text-[11px] text-slate-400">Aparecerá en pantalla emergente a los usuarios al iniciar sesión.</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden">
-                <div className="bg-slate-50 p-3 text-[11px] font-black uppercase text-[#002F6C] flex justify-between">
-                  <span>Funcionario</span>
-                  <span>Fecha de Confirmación</span>
-                </div>
-                {statsList.map((stat) => (
-                  <div key={stat.id} className="p-3 flex items-center justify-between text-xs hover:bg-slate-50/60">
-                    <div>
-                      <p className="font-black text-[#002F6C]">{stat.usuarioNombre || "Funcionario"}</p>
-                      <p className="text-[11px] text-slate-400 font-mono">{stat.usuarioEmail}</p>
-                    </div>
-                    <div className="text-right">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-black text-emerald-700 border border-emerald-200">
-                        <CheckCircle2Icon className="h-3 w-3" />
-                        {stat.fechaLectura ? new Date(stat.fechaLectura).toLocaleString("es-BO") : "Confirmado"}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-xs">
-            <span className="text-slate-500 font-bold">
-              Total confirmados: <strong className="text-[#002F6C]">{statsList.length}</strong>
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setStatsDoc(null)}
-              className="rounded-xl text-xs font-bold"
-            >
-              Cerrar
             </Button>
           </div>
         </DialogContent>

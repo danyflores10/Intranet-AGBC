@@ -280,7 +280,7 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
             )}
           </div>
 
-          {/* Footer: Ver bandeja completa estilo Gmail */}
+          {/* Footer */}
           <div className="p-2.5 bg-white border-t border-slate-200/80 flex items-center justify-between">
             <button
               type="button"
@@ -298,9 +298,9 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
         </div>
       )}
 
-      {/* ── VENTANA GRANDE ESTILO GMAIL / BANDEJA DE MENSAJES (MÁS AMPLIA HACIA LOS LATERALES) ── */}
+      {/* ── VENTANA GRANDE ULTRA-AMPLIA ESTILO GMAIL / BANDEJA DE MENSAJES ── */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-6xl w-[96vw] h-[88vh] max-h-[90vh] p-0 rounded-3xl border-2 border-[#002F6C]/20 shadow-2xl bg-white flex flex-col overflow-hidden">
+        <DialogContent className="max-w-7xl w-[98vw] h-[92vh] max-h-[94vh] p-0 rounded-3xl border-2 border-[#002F6C]/20 shadow-2xl bg-white flex flex-col overflow-hidden">
           {/* Header accesible para Radix UI */}
           <DialogHeader className="sr-only">
             <DialogTitle>Bandeja de Entrada de Comunicados y Alertas - AGBC</DialogTitle>
@@ -309,60 +309,60 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
 
           {/* Header Superior Estilo Correo Institucional */}
           <div className="bg-gradient-to-r from-[#002F6C] via-[#0E5296] to-[#002F6C] p-4 sm:p-5 text-white flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-3.5">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#FFB800] text-[#002F6C] shadow-md">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FFB800] text-[#002F6C] shadow-md">
                 <Inbox className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2.5">
+                <h3 className="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-3">
                   Bandeja de Entrada & Mensajes Institucionales
                   {unreadCount > 0 && (
-                    <span className="rounded-full bg-[#FFCC00] text-[#002F6C] px-2.5 py-0.5 text-xs font-black">
+                    <span className="rounded-full bg-[#FFCC00] text-[#002F6C] px-3 py-0.5 text-xs font-black">
                       {unreadCount} sin leer
                     </span>
                   )}
                 </h3>
-                <p className="text-xs text-blue-100">
+                <p className="text-xs sm:text-sm text-blue-100">
                   Agencia Boliviana de Correos • Comunicados Oficiales, Instructivos y Alertas
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {unreadCount > 0 && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleMarcarTodas}
-                  className="text-xs font-bold text-[#FFCC00] hover:bg-white/10"
+                  className="text-xs sm:text-sm font-bold text-[#FFCC00] hover:bg-white/10 cursor-pointer"
                 >
-                  <Check className="h-4 w-4 mr-1" />
+                  <Check className="h-4 w-4 mr-1.5" />
                   Marcar todo como leído
                 </Button>
               )}
             </div>
           </div>
 
-          {/* Cuerpo Dividido en 2 Columnas (Lista de Mensajes + Vista Detallada de Lectura) */}
+          {/* Cuerpo Dividido en 2 Columnas Súper Espaciosas */}
           <div className="flex flex-1 min-h-0 divide-x divide-slate-200">
             {/* Columna Izquierda: Lista de Mensajes */}
-            <div className="w-full md:w-5/12 lg:w-4/12 flex flex-col bg-slate-50/60 shrink-0">
+            <div className="w-full md:w-4/12 lg:w-3.5/12 flex flex-col bg-slate-50/70 shrink-0">
               {/* Buscador y Filtros */}
-              <div className="p-3.5 border-b border-slate-200 space-y-2.5 bg-white">
+              <div className="p-4 border-b border-slate-200 space-y-3 bg-white">
                 <div className="relative">
-                  <Search className="h-4 w-4 absolute left-3 top-2.5 text-slate-400" />
+                  <Search className="h-4 w-4 absolute left-3.5 top-3 text-slate-400" />
                   <Input
                     value={searchTerm}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-                    placeholder="Buscar comunicados, normativas, alertas..."
-                    className="pl-9 h-9.5 rounded-xl text-xs bg-slate-50 border-slate-200"
+                    placeholder="Buscar comunicados, normativas..."
+                    className="pl-10 h-10 rounded-xl text-xs sm:text-sm bg-slate-50 border-slate-200"
                   />
                 </div>
                 <div className="flex gap-2 text-xs font-bold">
                   <button
                     type="button"
                     onClick={() => setFilterType("todas")}
-                    className={`px-3 py-1.5 rounded-xl transition-colors cursor-pointer ${
+                    className={`px-3.5 py-1.5 rounded-xl transition-colors cursor-pointer ${
                       filterType === "todas" ? "bg-[#002F6C] text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
                     }`}
                   >
@@ -371,7 +371,7 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
                   <button
                     type="button"
                     onClick={() => setFilterType("no_leidas")}
-                    className={`px-3 py-1.5 rounded-xl transition-colors cursor-pointer ${
+                    className={`px-3.5 py-1.5 rounded-xl transition-colors cursor-pointer ${
                       filterType === "no_leidas" ? "bg-[#002F6C] text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
                     }`}
                   >
@@ -381,7 +381,7 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
               </div>
 
               {/* Items de Notificaciones */}
-              <div className="flex-1 overflow-y-auto divide-y divide-slate-200/80 p-2.5 space-y-1.5">
+              <div className="flex-1 overflow-y-auto divide-y divide-slate-200/80 p-3 space-y-2">
                 {notificacionesFiltradas.length === 0 ? (
                   <div className="p-8 text-center text-slate-400">
                     <p className="text-xs font-bold">No se encontraron notificaciones</p>
@@ -403,7 +403,7 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
                             ? "bg-white border-[#002F6C] shadow-md ring-2 ring-[#002F6C]/10"
                             : n.leida
                             ? "bg-white/70 border-transparent hover:bg-white"
-                            : "bg-blue-50/60 border-blue-200 hover:bg-white shadow-2xs"
+                            : "bg-blue-50/70 border-blue-200 hover:bg-white shadow-2xs"
                         }`}
                       >
                         <div className="flex items-start gap-3">
@@ -417,10 +417,10 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
                               </p>
                               <span className="text-[10px] text-slate-400 font-medium shrink-0">{n.fecha}</span>
                             </div>
-                            <p className={`truncate text-xs mt-0.5 ${n.leida ? "font-normal text-slate-600" : "font-bold text-[#002F6C]"}`}>
+                            <p className={`truncate text-xs sm:text-sm mt-0.5 ${n.leida ? "font-medium text-slate-700" : "font-black text-[#002F6C]"}`}>
                               {n.titulo}
                             </p>
-                            <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
+                            <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
                               {n.mensaje}
                             </p>
                           </div>
@@ -432,33 +432,33 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
               </div>
             </div>
 
-            {/* Columna Derecha: Vista de Lectura Estilo Gmail Amplia */}
+            {/* Columna Derecha: Vista de Lectura Súper Amplia y Cómoda */}
             <div className="hidden md:flex flex-1 flex-col bg-white overflow-y-auto">
               {selectedNotif ? (
-                <div className="p-6 sm:p-8 space-y-6 flex-1 flex flex-col">
+                <div className="p-8 sm:p-10 space-y-8 flex-1 flex flex-col">
                   {/* Encabezado del Mensaje */}
-                  <div className="border-b border-slate-100 pb-6 space-y-3.5">
+                  <div className="border-b border-slate-100 pb-6 space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black border ${getTipoBadge(selectedNotif.tipo).bg}`}>
+                      <span className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-black border ${getTipoBadge(selectedNotif.tipo).bg}`}>
                         {getTipoBadge(selectedNotif.tipo).label}
                       </span>
-                      <span className="text-xs text-slate-500 font-medium flex items-center gap-1.5 bg-slate-50 px-3 py-1 rounded-full border border-slate-200">
+                      <span className="text-xs text-slate-500 font-medium flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200">
                         <Clock className="h-3.5 w-3.5 text-slate-400" />
                         {selectedNotif.fecha}
                       </span>
                     </div>
 
-                    <h2 className="text-xl sm:text-2xl font-black text-[#002F6C] leading-snug">
+                    <h2 className="text-2xl sm:text-3xl font-black text-[#002F6C] leading-snug">
                       {selectedNotif.titulo}
                     </h2>
 
                     {/* Fila del Remitente */}
-                    <div className="flex items-center gap-3.5 pt-2">
+                    <div className="flex items-center gap-4 pt-2">
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#002F6C] to-[#0E5296] text-[#FFCC00] font-black shadow-md">
                         <Shield className="h-6 w-6" />
                       </div>
                       <div>
-                        <p className="text-sm font-black text-[#002F6C]">
+                        <p className="text-sm sm:text-base font-black text-[#002F6C]">
                           {selectedNotif.remitente || "Dirección General AGBC"}
                         </p>
                         <p className="text-xs text-slate-500 font-medium">
@@ -468,25 +468,25 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
                     </div>
                   </div>
 
-                  {/* Cuerpo del Mensaje */}
-                  <div className="flex-1 text-sm text-slate-700 font-normal leading-relaxed space-y-4 bg-slate-50/60 p-6 rounded-3xl border border-slate-200/80">
-                    <p className="whitespace-pre-line text-sm sm:text-base leading-relaxed text-slate-800">
+                  {/* Cuerpo del Mensaje Amplio y Cómodo */}
+                  <div className="flex-1 text-base text-slate-800 leading-relaxed space-y-5 bg-slate-50/70 p-8 rounded-3xl border border-slate-200/80">
+                    <p className="whitespace-pre-line leading-relaxed text-slate-800 text-base">
                       {selectedNotif.mensaje}
                     </p>
                     
-                    <div className="pt-5 border-t border-slate-200 text-xs text-slate-500 flex items-center gap-2 font-medium">
-                      <CheckCircle2 className="h-4.5 w-4.5 text-emerald-600 shrink-0" />
+                    <div className="pt-6 border-t border-slate-200 text-xs text-slate-500 flex items-center gap-2.5 font-medium">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
                       <span>Mensaje institucional emitido y verificado por la Intranet Oficial de la Agencia Boliviana de Correos.</span>
                     </div>
                   </div>
 
                   {/* Acciones Rápidas */}
                   <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       {esAdmin && (
-                        <Button variant="outline" size="sm" asChild className="text-xs font-bold text-[#002F6C] rounded-xl border-slate-200">
+                        <Button variant="outline" size="sm" asChild className="text-xs font-bold text-[#002F6C] rounded-xl border-slate-200 h-10 px-4">
                           <Link href="/notificaciones">
-                            <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                            <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                             Administrar Notificaciones
                           </Link>
                         </Button>
@@ -496,7 +496,7 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
                       variant="destructive"
                       size="sm"
                       onClick={() => handleEliminar(selectedNotif.id)}
-                      className="rounded-xl text-xs font-bold gap-1.5 shadow-sm"
+                      className="rounded-xl text-xs font-bold gap-1.5 shadow-sm h-10 px-4 cursor-pointer"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                       Eliminar mensaje

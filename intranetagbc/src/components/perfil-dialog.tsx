@@ -14,18 +14,13 @@ import {
   Mail,
   Briefcase,
   ShieldCheck,
-  Calendar,
   Lock,
   Eye,
   EyeOff,
   Camera,
   Loader2,
-  Save,
-  CheckCircle2,
-  AlertCircle,
   KeyRound,
-  Sparkles,
-  Shield,
+  Building2,
 } from "lucide-react"
 import toast from "react-hot-toast"
 import { Button } from "@/components/ui/button"
@@ -160,14 +155,14 @@ export function PerfilDialog({ open, onOpenChange, usuario, esAdmin }: PerfilDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl w-[94vw] max-h-[90vh] overflow-y-auto p-0 rounded-3xl border-2 border-[#002F6C]/20 shadow-2xl bg-white">
+      <DialogContent className="max-w-6xl w-[96vw] max-h-[92vh] overflow-y-auto p-0 rounded-3xl border-2 border-[#002F6C]/20 shadow-2xl bg-white">
         {/* Header accesible para Radix UI */}
         <DialogHeader className="sr-only">
-          <DialogTitle>Mi Perfil Institucional - AGBC</DialogTitle>
-          <DialogDescription>Consulta y gestiona tu información institucional y seguridad de cuenta</DialogDescription>
+          <DialogTitle>Mi Perfil Institucional</DialogTitle>
+          <DialogDescription>Información institucional y seguridad de cuenta en Correos de Bolivia</DialogDescription>
         </DialogHeader>
 
-        {/* Banner de Cabecera Institucional AGBC Amplio */}
+        {/* Banner de Cabecera Institucional AGBC Súper Amplio */}
         <div className="relative overflow-hidden bg-gradient-to-r from-[#002F6C] via-[#0E5296] to-[#002F6C] p-6 sm:p-8 text-white">
           <div className="h-1.5 w-full absolute top-0 left-0 bg-gradient-to-r from-[#FFB800] via-[#FFCC00] to-[#FFB800]" />
           
@@ -202,11 +197,11 @@ export function PerfilDialog({ open, onOpenChange, usuario, esAdmin }: PerfilDia
 
             {/* Información Principal del Usuario */}
             <div className="text-center sm:text-left flex-1 min-w-0 space-y-1.5">
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
                 <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
                   {usuario?.name || "Funcionario Institucional"}
                 </h2>
-                <span className="rounded-full bg-[#FFB800]/20 px-3 py-1 text-xs font-black text-[#FFCC00] border border-[#FFCC00]/30 shadow-xs">
+                <span className="rounded-full bg-[#FFB800]/20 px-3.5 py-1 text-xs font-black text-[#FFCC00] border border-[#FFCC00]/30 shadow-xs">
                   {usuario?.cargo || usuario?.rol || "Funcionario Público"}
                 </span>
               </div>
@@ -214,8 +209,8 @@ export function PerfilDialog({ open, onOpenChange, usuario, esAdmin }: PerfilDia
                 <Mail className="h-4 w-4 text-[#FFCC00]" />
                 <span>{usuario?.email || "funcionario@correos.gob.bo"}</span>
               </p>
-              <p className="text-xs text-white/70">
-                Agencia Boliviana de Correos • Intranet Institucional
+              <p className="text-xs text-white/80 font-bold">
+                Agencia Boliviana de Correos &ldquo;Correos de Bolivia&rdquo;
               </p>
             </div>
           </div>
@@ -225,19 +220,19 @@ export function PerfilDialog({ open, onOpenChange, usuario, esAdmin }: PerfilDia
             <button
               type="button"
               onClick={() => setActiveTab("general")}
-              className={`pb-3 px-4 text-xs sm:text-sm font-black transition-colors border-b-2 cursor-pointer flex items-center gap-2 ${
+              className={`pb-3 px-5 text-xs sm:text-sm font-black transition-colors border-b-2 cursor-pointer flex items-center gap-2 ${
                 activeTab === "general"
                   ? "border-[#FFCC00] text-[#FFCC00]"
                   : "border-transparent text-white/70 hover:text-white"
               }`}
             >
               <UserCircle2 className="h-4 w-4" />
-              <span>Datos Personales</span>
+              <span>Datos del Funcionario</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("seguridad")}
-              className={`pb-3 px-4 text-xs sm:text-sm font-black transition-colors border-b-2 cursor-pointer flex items-center gap-2 ${
+              className={`pb-3 px-5 text-xs sm:text-sm font-black transition-colors border-b-2 cursor-pointer flex items-center gap-2 ${
                 activeTab === "seguridad"
                   ? "border-[#FFCC00] text-[#FFCC00]"
                   : "border-transparent text-white/70 hover:text-white"
@@ -253,71 +248,33 @@ export function PerfilDialog({ open, onOpenChange, usuario, esAdmin }: PerfilDia
         <div className="p-6 sm:p-8">
           {activeTab === "general" ? (
             <div className="space-y-6">
-              <div className="rounded-2xl bg-blue-50/60 p-4 border border-blue-200/60 flex items-start gap-3">
-                <Shield className="h-5 w-5 text-[#002F6C] shrink-0 mt-0.5" />
-                <p className="text-xs text-[#002F6C] font-medium leading-relaxed">
-                  Tus nombres, apellidos y cargo institucional están vinculados al registro oficial de Recursos Humanos de la AGBC. Para solicitar alguna rectificación, comunícate con la Unidad de RRHH o Administración.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div className="space-y-1.5 sm:col-span-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs font-bold text-[#002F6C]">Nombre y Apellidos Oficiales</Label>
-                    <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
-                      Registro Institucional Verificado
-                    </span>
-                  </div>
-                  <Input
-                    value={usuario?.name || "Funcionario Institucional"}
-                    disabled
-                    className="rounded-xl bg-slate-100/80 border-slate-200 text-slate-800 font-bold"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-2">
                   <Label className="text-xs font-bold text-[#002F6C]">Cargo / Puesto Institucional</Label>
                   <Input
                     value={usuario?.cargo || usuario?.rol || "Funcionario Público"}
                     disabled
-                    className="rounded-xl bg-slate-100/80 border-slate-200 text-slate-800 font-medium"
+                    className="h-11 rounded-xl bg-slate-100/80 border-slate-200 text-slate-800 font-medium"
                   />
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <Label className="text-xs font-bold text-[#002F6C]">Correo Electrónico Institucional</Label>
                   <Input
                     value={usuario?.email || "funcionario@correos.gob.bo"}
                     disabled
-                    className="rounded-xl bg-slate-100/80 border-slate-200 text-slate-800 font-medium"
+                    className="h-11 rounded-xl bg-slate-100/80 border-slate-200 text-slate-800 font-medium"
                   />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-[#002F6C]">Entidad Perteneciente</Label>
-                  <Input
-                    value="Agencia Boliviana de Correos - AGBC"
-                    disabled
-                    className="rounded-xl bg-slate-100/80 border-slate-200 text-slate-800 font-medium"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-[#002F6C]">Estado de Cuenta</Label>
-                  <div className="flex h-10 items-center gap-2 rounded-xl bg-emerald-50 px-3 border border-emerald-200 text-xs font-bold text-emerald-700">
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span>Activo & Habilitado en Sistemas</span>
-                  </div>
                 </div>
               </div>
 
-              <div className="pt-4 flex justify-end gap-3 border-t border-slate-100">
+              <div className="pt-6 flex justify-end gap-3 border-t border-slate-100">
                 <Button
                   type="button"
                   onClick={() => onOpenChange(false)}
-                  className="rounded-xl bg-[#002F6C] hover:bg-[#0E5296] font-bold text-white px-6 shadow-md shadow-[#002F6C]/20"
+                  className="rounded-xl bg-[#002F6C] hover:bg-[#0E5296] font-bold text-white px-8 h-11 shadow-md shadow-[#002F6C]/20 cursor-pointer"
                 >
-                  Entendido / Cerrar
+                  Cerrar
                 </Button>
               </div>
             </div>
@@ -339,19 +296,19 @@ export function PerfilDialog({ open, onOpenChange, usuario, esAdmin }: PerfilDia
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="Ingresa tu contraseña actual"
                     required
-                    className="rounded-xl pr-10 border-slate-200 focus:border-[#0E5296]"
+                    className="h-11 rounded-xl pr-10 border-slate-200 focus:border-[#0E5296]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowCurrent(!showCurrent)}
-                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 cursor-pointer"
                   >
                     {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
                   <Label className="text-xs font-bold text-[#002F6C]">Nueva Contraseña</Label>
                   <div className="relative">
@@ -361,12 +318,12 @@ export function PerfilDialog({ open, onOpenChange, usuario, esAdmin }: PerfilDia
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Nueva contraseña"
                       required
-                      className="rounded-xl pr-10 border-slate-200 focus:border-[#0E5296]"
+                      className="h-11 rounded-xl pr-10 border-slate-200 focus:border-[#0E5296]"
                     />
                     <button
                       type="button"
                       onClick={() => setShowNew(!showNew)}
-                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 cursor-pointer"
                     >
                       {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -382,12 +339,12 @@ export function PerfilDialog({ open, onOpenChange, usuario, esAdmin }: PerfilDia
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Repite la nueva contraseña"
                       required
-                      className="rounded-xl pr-10 border-slate-200 focus:border-[#0E5296]"
+                      className="h-11 rounded-xl pr-10 border-slate-200 focus:border-[#0E5296]"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirm(!showConfirm)}
-                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 cursor-pointer"
                     >
                       {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -411,19 +368,19 @@ export function PerfilDialog({ open, onOpenChange, usuario, esAdmin }: PerfilDia
                 </div>
               )}
 
-              <div className="pt-4 flex justify-end gap-3 border-t border-slate-100">
+              <div className="pt-6 flex justify-end gap-3 border-t border-slate-100">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => onOpenChange(false)}
-                  className="rounded-xl font-bold text-slate-600 hover:bg-slate-100"
+                  className="rounded-xl font-bold text-slate-600 hover:bg-slate-100 h-11 px-6 cursor-pointer"
                 >
                   Cancelar
                 </Button>
                 <Button
                   type="submit"
                   disabled={isChangingPwd || !newPassword || newPassword !== confirmPassword}
-                  className="rounded-xl bg-[#002F6C] hover:bg-[#0E5296] font-bold text-white shadow-md shadow-[#002F6C]/20 gap-2"
+                  className="rounded-xl bg-[#002F6C] hover:bg-[#0E5296] font-bold text-white shadow-md shadow-[#002F6C]/20 gap-2 h-11 px-6 cursor-pointer"
                 >
                   {isChangingPwd ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
                   <span>Actualizar Contraseña</span>

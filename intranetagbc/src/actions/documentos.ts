@@ -1,8 +1,8 @@
 "use server"
 
 import { db } from "@/db"
-import { documentos, documentoCategorias, documentoLecturas, users, archivos } from "@/db/schema"
-import { eq, desc, inArray, and, sql } from "drizzle-orm"
+import { documentos, documentoCategorias, archivos } from "@/db/schema"
+import { eq, desc, inArray } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { registrarAuditLog } from "@/actions/auditoria"
 import { PERMISOS } from "@/lib/auth/permisos"
@@ -77,9 +77,6 @@ export async function obtenerDocumentos() {
     categoriaId: documentos.categoriaId,
     categoria: documentoCategorias.nombre,
     autor: documentos.autor,
-    direccionEmisora: documentos.direccionEmisora,
-    esImportante: documentos.esImportante,
-    requiereLectura: documentos.requiereLectura,
     estado: documentos.estado,
     archivo: documentos.archivo,
     nombreArchivo: documentos.nombreArchivo,
@@ -103,9 +100,6 @@ export async function crearDocumento(data: {
   titulo: string
   categoriaId?: string
   autor?: string
-  direccionEmisora?: string
-  esImportante?: boolean
-  requiereLectura?: boolean
   estado?: string
   archivo?: string
   nombreArchivo?: string
@@ -121,7 +115,6 @@ export async function crearDocumento(data: {
   const [nuevo] = await db.insert(documentos).values(payload).returning()
   await registrarAuditLog({ usuario: sesion.id, accion: `Creó documento: ${data.titulo}`, modulo: "Documentos", resultado: "Exitoso" })
   revalidatePath("/documentos")
-  revalidatePath("/")
   return nuevo
 }
 
@@ -129,9 +122,6 @@ export async function actualizarDocumento(id: string, data: Partial<{
   titulo: string
   categoriaId: string
   autor: string
-  direccionEmisora: string
-  esImportante: boolean
-  requiereLectura: boolean
   estado: string
   archivo: string
   nombreArchivo: string
@@ -143,96 +133,7 @@ export async function actualizarDocumento(id: string, data: Partial<{
   const [actualizado] = await db.update(documentos).set(data).where(eq(documentos.id, id)).returning()
   await registrarAuditLog({ usuario: sesion.id, accion: `Actualizó documento ID: ${id}`, modulo: "Documentos", resultado: "Exitoso" })
   revalidatePath("/documentos")
-  revalidatePath("/")
   return actualizado
-}
-
-export async function obtenerDocumentosImportantesPendientes(usuarioId?: string) {
-  if (!usuarioId) return []
-
-  // Traer documentos publicados que han sido marcados como importantes
-  const docsImportantes = await db.select({
-    id: documentos.id,
-    titulo: documentos.titulo,
-    categoriaId: documentos.categoriaId,
-    categoria: documentoCategorias.nombre,
-    autor: documentos.autor,
-    direccionEmisora: documentos.direccionEmisora,
-    esImportante: documentos.esImportante,
-    requiereLectura: documentos.requiereLectura,
-    estado: documentos.estado,
-    archivo: documentos.archivo,
-    nombreArchivo: documentos.nombreArchivo,
-    tipoArchivo: documentos.tipoArchivo,
-    tamano: documentos.tamano,
-    descripcion: documentos.descripcion,
-    createdAt: documentos.createdAt,
-  }).from(documentos)
-    .leftJoin(documentoCategorias, eq(documentos.categoriaId, documentoCategorias.id))
-    .where(and(eq(documentos.estado, "publicado"), eq(documentos.esImportante, true)))
-    .orderBy(desc(documentos.createdAt))
-
-  if (docsImportantes.length === 0) return []
-
-  // Traer confirmaciones de lectura del usuario
-  const lecturas = await db.select().from(documentoLecturas)
-    .where(and(eq(documentoLecturas.usuarioId, usuarioId), eq(documentoLecturas.confirmado, true)))
-
-  const leidosSet = new Set(lecturas.map((l) => l.documentoId))
-
-  // Retornar los que todavía no han sido leídos/confirmados
-  return docsImportantes.filter((doc) => !leidosSet.has(doc.id))
-}
-
-export async function confirmarLecturaDocumento(documentoId: string, tiempoSegundos = 0) {
-  const sesion = await requerirSesionAutenticada()
-  
-  const [confirmado] = await db.insert(documentoLecturas)
-    .values({
-      documentoId,
-      usuarioId: sesion.id,
-      confirmado: true,
-      tiempoLecturaSegundos: tiempoSegundos,
-    })
-    .onConflictDoUpdate({
-      target: [documentoLecturas.documentoId, documentoLecturas.usuarioId],
-      set: {
-        confirmado: true,
-        fechaLectura: new Date(),
-        tiempoLecturaSegundos: tiempoSegundos,
-      }
-    })
-    .returning()
-
-  await registrarAuditLog({
-    usuario: sesion.id,
-    accion: `Confirmó toma de conocimiento y lectura de documento ID: ${documentoId}`,
-    modulo: "Documentos",
-    resultado: "Exitoso"
-  })
-
-  revalidatePath("/")
-  return confirmado
-}
-
-export async function obtenerEstadisticasLecturasDocumento(documentoId: string) {
-  await requerirSesionAutenticada()
-
-  const lecturas = await db.select({
-    id: documentoLecturas.id,
-    usuarioId: documentoLecturas.usuarioId,
-    usuarioNombre: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastNamePaternal})`,
-    usuarioEmail: users.institutionalEmail,
-    fechaLectura: documentoLecturas.fechaLectura,
-    confirmado: documentoLecturas.confirmado,
-    tiempoSegundos: documentoLecturas.tiempoLecturaSegundos,
-  })
-  .from(documentoLecturas)
-  .innerJoin(users, eq(documentoLecturas.usuarioId, users.id))
-  .where(eq(documentoLecturas.documentoId, documentoId))
-  .orderBy(desc(documentoLecturas.fechaLectura))
-
-  return lecturas
 }
 
 export interface DocumentoImportItem {

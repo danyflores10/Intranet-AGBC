@@ -20,11 +20,13 @@ import {
   CheckCircle2,
   ArrowRight,
   BookOpen,
+  PlayCircle,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { DocumentContentViewer } from "@/components/modules/document-content-viewer"
 import { getDocumentUrl } from "@/components/modules/documentos-module"
+import { DocumentosTourTutorial } from "@/components/documentos-tour-tutorial"
 
 type Doc = {
   id: string
@@ -58,6 +60,29 @@ function buildPagination(current: number, total: number): Array<number | "ellips
   return [1, "ellipsis", current - 1, current, current + 1, "ellipsis", total]
 }
 
+function getDocPriority(titulo?: string | null, categoria?: string | null) {
+  const text = `${titulo || ""} ${categoria || ""}`.toLowerCase()
+  if (/instructivo|induccion|seguridad|normativa|politica|contrasenia/i.test(text)) {
+    return {
+      label: "Prioridad Alta",
+      dot: "🔴",
+      badgeClass: "bg-red-50 text-red-700 border-red-200",
+    }
+  }
+  if (/reglamento|manual|procedimiento|operativo|correspondencia|circular/i.test(text)) {
+    return {
+      label: "Prioridad Media",
+      dot: "🟡",
+      badgeClass: "bg-amber-50 text-amber-800 border-amber-200",
+    }
+  }
+  return {
+    label: "Consulta General",
+    dot: "🟢",
+    badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  }
+}
+
 export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
   const docsPublicados = useMemo(
     () => documentos.filter((d) => d.estado === "publicado"),
@@ -67,11 +92,11 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
   const [busqueda, setBusqueda] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [viewingDoc, setViewingDoc] = useState<Doc | null>(null)
-  const pageSize = 12 // 3 filas de 4 columnas
+  const [tourOpen, setTourOpen] = useState(false)
+  const pageSize = 12
 
   if (docsPublicados.length === 0) return null
 
-  // Obtener categorías únicas
   const categorias = Array.from(
     new Map(
       docsPublicados
@@ -80,7 +105,6 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
     ).values()
   ).sort()
 
-  // Filtrar docs
   const docsFiltrados = docsPublicados.filter((doc) => {
     const coincideCategoria = !categoriaActiva || doc.categoria === categoriaActiva
     const coincideBusqueda =
@@ -123,33 +147,68 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
   }
 
   function getFileColor(tipo: string | null) {
-    if (!tipo) return { bg: "bg-slate-500/10", text: "text-slate-600 dark:text-slate-400", icon: "text-slate-500", label: "Archivo" }
-    if (tipo.includes("pdf")) return { bg: "bg-red-500/10", text: "text-red-700 dark:text-red-400", icon: "text-red-500", label: "PDF" }
-    if (["jpg", "jpeg", "png", "webp", "gif"].some(ext => tipo.includes(ext)) || tipo.startsWith("image/")) return { bg: "bg-emerald-500/10", text: "text-emerald-700 dark:text-emerald-400", icon: "text-emerald-500", label: "Imagen" }
-    if (["doc", "docx"].some(ext => tipo.includes(ext)) || tipo.includes("word")) return { bg: "bg-blue-500/10", text: "text-blue-700 dark:text-blue-400", icon: "text-blue-500", label: "Word" }
-    if (["xls", "xlsx"].some(ext => tipo.includes(ext)) || tipo.includes("excel")) return { bg: "bg-green-500/10", text: "text-green-700 dark:text-green-400", icon: "text-green-500", label: "Excel" }
-    return { bg: "bg-slate-500/10", text: "text-slate-600 dark:text-slate-400", icon: "text-slate-500", label: "Archivo" }
+    if (!tipo) return { label: "DOC", bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-600 dark:text-slate-300" }
+    if (tipo.includes("pdf")) return { label: "PDF", bg: "bg-red-50 dark:bg-red-950/50", text: "text-red-600 dark:text-red-400" }
+    if (["jpg", "jpeg", "png", "webp", "gif"].some(ext => tipo.includes(ext)) || tipo.startsWith("image/")) return { label: "IMG", bg: "bg-emerald-50 dark:bg-emerald-950/50", text: "text-emerald-600 dark:text-emerald-400" }
+    if (tipo.includes("word") || tipo.includes("doc")) return { label: "DOCX", bg: "bg-blue-50 dark:bg-blue-950/50", text: "text-blue-600 dark:text-blue-400" }
+    if (tipo.includes("excel") || tipo.includes("sheet") || tipo.includes("csv")) return { label: "XLSX", bg: "bg-amber-50 dark:bg-amber-950/50", text: "text-amber-600 dark:text-amber-400" }
+    return { label: "FILE", bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-600 dark:text-slate-300" }
   }
 
-  // Colores por categoría
-  const CATEGORY_PALETTES = [
-    { bg: "bg-blue-500/10", text: "text-blue-700 dark:text-blue-400", border: "border-blue-400/30", pill: "bg-blue-500/15 text-blue-700 dark:text-blue-400", icon: "text-blue-500", gradient: "from-blue-500 to-blue-600" },
-    { bg: "bg-emerald-500/10", text: "text-emerald-700 dark:text-emerald-400", border: "border-emerald-400/30", pill: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400", icon: "text-emerald-500", gradient: "from-emerald-500 to-emerald-600" },
-    { bg: "bg-violet-500/10", text: "text-violet-700 dark:text-violet-400", border: "border-violet-400/30", pill: "bg-violet-500/15 text-violet-700 dark:text-violet-400", icon: "text-violet-500", gradient: "from-violet-500 to-violet-600" },
-    { bg: "bg-amber-500/10", text: "text-amber-700 dark:text-amber-400", border: "border-amber-400/30", pill: "bg-amber-500/15 text-amber-700 dark:text-amber-400", icon: "text-amber-500", gradient: "from-amber-500 to-amber-600" },
-    { bg: "bg-rose-500/10", text: "text-rose-700 dark:text-rose-400", border: "border-rose-400/30", pill: "bg-rose-500/15 text-rose-700 dark:text-rose-400", icon: "text-rose-500", gradient: "from-rose-500 to-rose-600" },
-    { bg: "bg-cyan-500/10", text: "text-cyan-700 dark:text-cyan-400", border: "border-cyan-400/30", pill: "bg-cyan-500/15 text-cyan-700 dark:text-cyan-400", icon: "text-cyan-500", gradient: "from-cyan-500 to-cyan-600" },
-    { bg: "bg-indigo-500/10", text: "text-indigo-700 dark:text-indigo-400", border: "border-indigo-400/30", pill: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-400", icon: "text-indigo-500", gradient: "from-indigo-500 to-indigo-600" },
-  ]
-
-  const categoryColorMap = new Map<string, typeof CATEGORY_PALETTES[0]>()
-  categorias.forEach((cat, i) => {
-    categoryColorMap.set(cat, CATEGORY_PALETTES[i % CATEGORY_PALETTES.length])
-  })
-
   function getCategoryPalette(categoria: string | null) {
-    if (!categoria) return CATEGORY_PALETTES[0]
-    return categoryColorMap.get(categoria) ?? CATEGORY_PALETTES[0]
+    const defaultColor = {
+      bg: "bg-[#0E5296]/10 dark:bg-[#0E5296]/20",
+      icon: "text-[#0E5296] dark:text-[#FFCC00]",
+      pill: "bg-[#0E5296]/10 text-[#0E5296] dark:bg-[#0E5296]/25 dark:text-[#FFCC00]",
+    }
+
+    if (!categoria) return defaultColor
+
+    const c = categoria.toLowerCase()
+    if (c.includes("comunicado")) {
+      return {
+        bg: "bg-blue-100 dark:bg-blue-950/40",
+        icon: "text-blue-600 dark:text-blue-400",
+        pill: "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300",
+      }
+    }
+    if (c.includes("resoluc")) {
+      return {
+        bg: "bg-purple-100 dark:bg-purple-950/40",
+        icon: "text-purple-600 dark:text-purple-400",
+        pill: "bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300",
+      }
+    }
+    if (c.includes("manual")) {
+      return {
+        bg: "bg-emerald-100 dark:bg-emerald-950/40",
+        icon: "text-emerald-600 dark:text-emerald-400",
+        pill: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300",
+      }
+    }
+    if (c.includes("reglamento")) {
+      return {
+        bg: "bg-amber-100 dark:bg-amber-950/40",
+        icon: "text-amber-700 dark:text-amber-400",
+        pill: "bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300",
+      }
+    }
+    if (c.includes("formulari")) {
+      return {
+        bg: "bg-cyan-100 dark:bg-cyan-950/40",
+        icon: "text-cyan-600 dark:text-cyan-400",
+        pill: "bg-cyan-100 text-cyan-800 dark:bg-cyan-950/60 dark:text-cyan-300",
+      }
+    }
+    if (c.includes("instructiv")) {
+      return {
+        bg: "bg-red-100 dark:bg-red-950/40",
+        icon: "text-red-600 dark:text-red-400",
+        pill: "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300",
+      }
+    }
+
+    return defaultColor
   }
 
   return (
@@ -189,6 +248,16 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                   </p>
                 </div>
               </div>
+
+              {/* Botón de Lanzamiento de Tutorial Interactivo */}
+              <Button
+                type="button"
+                onClick={() => setTourOpen(true)}
+                className="rounded-2xl bg-[#002F6C] hover:bg-[#0E5296] text-white font-black text-xs gap-2 shadow-md shadow-[#002F6C]/20 hover:scale-105 transition-all cursor-pointer"
+              >
+                <PlayCircle className="h-4 w-4 text-[#FFCC00]" />
+                <span>Ver Tutorial Interactivo</span>
+              </Button>
             </div>
 
             {/* Grid de Pasos */}
@@ -370,7 +439,7 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
             )}
           </div>
 
-          {/* Grid 3 Filas x 4 Columnas (12 Documentos por página) */}
+          {/* Grid 3 Filas x 4 Columnas con Badge de Prioridad en cada Card */}
           {paginatedDocs.length === 0 ? (
             <div className="py-16 text-center text-muted-foreground font-medium bg-card rounded-3xl border border-border/60">
               <FolderOpen className="h-10 w-10 mx-auto mb-2 text-muted-foreground/40" />
@@ -384,15 +453,24 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                 const tamano = formatTamano(doc.tamano)
                 const fecha = formatFecha(doc.createdAt)
                 const catPalette = getCategoryPalette(doc.categoria)
+                const priority = getDocPriority(doc.titulo, doc.categoria)
 
                 return (
                   <div
                     key={doc.id}
                     className="group relative flex flex-col justify-between overflow-hidden rounded-3xl bg-card border-2 border-border/60 shadow-xs hover:shadow-xl hover:shadow-[#0E5296]/10 hover:border-[#0E5296]/40 transition-all duration-300 hover:-translate-y-1"
                   >
+                    {/* Badge de Prioridad en la Esquina Superior Derecha */}
+                    <div className="absolute top-3 right-3 z-10">
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[9.5px] font-black border shadow-2xs ${priority.badgeClass}`}>
+                        <span>{priority.dot}</span>
+                        <span>{priority.label}</span>
+                      </span>
+                    </div>
+
                     <div>
                       {/* Icono de tipo de archivo con badge */}
-                      <div className="flex items-center justify-center pt-6 pb-3">
+                      <div className="flex items-center justify-center pt-8 pb-3">
                         <div className={`relative flex h-16 w-16 items-center justify-center rounded-2xl ${catPalette.bg} transition-transform duration-300 group-hover:scale-110 shadow-xs`}>
                           <IconComponent className={`h-8 w-8 ${catPalette.icon}`} />
                           <span className={`absolute -bottom-1 -right-1 rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase ${color.bg} ${color.text} border border-current/10 shadow-2xs`}>
@@ -458,77 +536,66 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
           {/* Paginación Centrada */}
           {totalPages > 1 && (
             <div className="flex flex-col items-center justify-center gap-2 pt-4 border-t border-border/40 text-center">
-              <div className="flex items-center justify-center gap-2">
-                <button
-                  type="button"
+              <div className="flex items-center justify-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="flex h-8 w-8 items-center justify-center rounded-xl border border-border/60 bg-card text-[#002F6C] dark:text-foreground shadow-xs hover:bg-muted disabled:opacity-30 cursor-pointer transition-colors"
-                  title="Página anterior"
+                  className="rounded-xl px-2 text-xs"
                 >
                   <ChevronLeft className="h-4 w-4" />
-                </button>
+                </Button>
 
-                <div className="flex items-center gap-1">
-                  {buildPagination(currentPage, totalPages).map((item, idx) => {
-                    if (item === "ellipsis") {
-                      return (
-                        <span key={`ellipsis-${idx}`} className="px-1 text-xs font-bold text-muted-foreground/60">
-                          ...
-                        </span>
-                      )
-                    }
+                {buildPagination(currentPage, totalPages).map((p, idx) => {
+                  if (p === "ellipsis") {
                     return (
-                      <button
-                        key={item}
-                        type="button"
-                        onClick={() => setCurrentPage(item)}
-                        className={`h-7 w-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                          currentPage === item
-                            ? "bg-[#0E5296] text-white shadow-xs"
-                            : "bg-card text-muted-foreground hover:bg-muted border border-border/60"
-                        }`}
-                      >
-                        {item}
-                      </button>
+                      <span key={`el-${idx}`} className="px-2 text-xs text-muted-foreground">
+                        ...
+                      </span>
                     )
-                  })}
-                </div>
+                  }
+                  return (
+                    <Button
+                      key={p}
+                      variant={p === currentPage ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(p)}
+                      className={`h-8 w-8 rounded-xl p-0 text-xs font-bold ${
+                        p === currentPage ? "bg-[#0E5296] hover:bg-[#002F6C] text-white" : ""
+                      }`}
+                    >
+                      {p}
+                    </Button>
+                  )
+                })}
 
-                <button
-                  type="button"
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage >= totalPages}
-                  className="flex h-8 w-8 items-center justify-center rounded-xl border border-border/60 bg-card text-[#002F6C] dark:text-foreground shadow-xs hover:bg-muted disabled:opacity-30 cursor-pointer transition-colors"
-                  title="Siguiente página"
+                  disabled={currentPage === totalPages}
+                  className="rounded-xl px-2 text-xs"
                 >
                   <ChevronRight className="h-4 w-4" />
-                </button>
+                </Button>
               </div>
 
-              <span className="text-[11px] font-medium text-muted-foreground">
-                Página {currentPage} de {totalPages} • Mostrando{" "}
-                {Math.min(docsFiltrados.length, (currentPage - 1) * pageSize + 1)} -{" "}
-                {Math.min(docsFiltrados.length, currentPage * pageSize)} de{" "}
-                {docsFiltrados.length} documentos
-              </span>
+              <p className="text-[11px] text-muted-foreground font-medium">
+                Página {currentPage} de {totalPages} ({docsFiltrados.length} documentos en total)
+              </p>
             </div>
           )}
         </div>
       </section>
 
-      {/* ── Modal Visor de Documentos con el Ojito ── */}
+      {/* ── MODAL DEL VISUALIZADOR DE DOCUMENTO CON ACCESIBILIDAD RADIX ── */}
       {viewingDoc && (
-        <Dialog open={!!viewingDoc} onOpenChange={() => setViewingDoc(null)}>
-          <DialogContent className="h-[93vh] !w-[95vw] max-h-[93vh] !max-w-[95vw] sm:!max-w-[94vw] lg:!max-w-[90vw] xl:!max-w-[86vw] 2xl:!max-w-[1500px] !gap-0 !grid !grid-rows-[auto_auto_minmax(0,1fr)] overflow-hidden rounded-3xl border-2 border-[#002F6C]/15 bg-white p-0 shadow-2xl dark:bg-zinc-900 [&>button]:hidden">
-            <DialogTitle className="sr-only">{viewingDoc.titulo}</DialogTitle>
-
-            {/* Barra superior con gradiente Amarillo a Azul */}
-            <div className="h-2 w-full shrink-0 bg-gradient-to-r from-[#FFCC00] via-[#0077EE] to-[#0E5296]" />
-
+        <Dialog open={!!viewingDoc} onOpenChange={(open) => !open && setViewingDoc(null)}>
+          <DialogContent className="max-w-5xl h-[92vh] max-h-[92vh] flex flex-col p-0 overflow-hidden rounded-3xl border border-border/40 shadow-2xl">
             {(() => {
               const fileEffectiveUrl = getDocumentUrl(viewingDoc.archivo)
-              const downloadUrl = `${fileEffectiveUrl}?download=1`
+              const downloadUrl = fileEffectiveUrl
 
               const t = (viewingDoc.tipoArchivo || "").toLowerCase()
               const fileUrl = (viewingDoc.archivo || "").toLowerCase()
@@ -570,7 +637,7 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                     <div className="ml-3 flex shrink-0 items-center gap-2">
                       {viewingDoc.archivo && (
                         <a href={downloadUrl} download={viewingDoc.nombreArchivo || viewingDoc.titulo}>
-                          <Button size="sm" className="rounded-xl bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold text-xs shadow-xs">
+                          <Button size="sm" className="rounded-xl bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold text-xs shadow-xs cursor-pointer">
                             <Download className="mr-1.5 h-3.5 w-3.5 text-[#FFCC00]" />
                             Descargar
                           </Button>
@@ -632,7 +699,16 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* ── TOUR TUTORIAL INTERACTIVO ONBOARDING PASO A PASO ── */}
+      <DocumentosTourTutorial
+        open={tourOpen}
+        onClose={() => setTourOpen(false)}
+        onSelectDoc={(query) => {
+          const doc = docsPublicados.find(d => d.titulo.toLowerCase().includes(query.toLowerCase()) || (d.categoria && d.categoria.toLowerCase().includes(query.toLowerCase()))) || docsPublicados[0]
+          if (doc) setViewingDoc(doc)
+        }}
+      />
     </>
   )
 }
-
