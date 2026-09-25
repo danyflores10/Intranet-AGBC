@@ -31,9 +31,9 @@ import { obtenerUsuarioRbacActual } from "@/lib/auth/session-access"
 import { obtenerSucursalesActivas } from "@/actions/sucursales"
 import { obtenerPersonal, obtenerDirectivos } from "@/actions/rrhh"
 import { obtenerConfigPorGrupo } from "@/actions/configuracion"
-import { obtenerDocumentos, obtenerDocumentosImportantesPendientes } from "@/actions/documentos"
+import { obtenerDocumentos } from "@/actions/documentos"
 import { LoginForm } from "@/components/login-form"
-import { ModalDocumentoImportante } from "@/components/modal-documento-importante"
+import { DocumentoObligatorioModal } from "@/components/documento-obligatorio-modal"
 
 const defaultSucursales = [
   {
@@ -77,7 +77,6 @@ export default async function HomePage() {
     directivosDb,
     personalDb,
     documentosDb,
-    docsImportantesPendientes,
     visibilidadConfig,
   ] = await Promise.all([
     obtenerComunicadosPublicados(),
@@ -87,7 +86,6 @@ export default async function HomePage() {
     obtenerDirectivos(),
     obtenerPersonal(),
     obtenerDocumentos(),
-    obtenerDocumentosImportantesPendientes(session.user.id),
     obtenerConfigPorGrupo("visibilidad_landing"),
   ])
 
@@ -152,8 +150,8 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen bg-background">
-      {/* ── Modal de Instructivos / Documentos Importantes Obligatorios ── */}
-      <ModalDocumentoImportante documentosIniciales={docsImportantesPendientes} />
+      {/* ── Modal de Instructivo Obligatorio con Checkbox de Aceptación ── */}
+      {estaLogueado && <DocumentoObligatorioModal />}
 
       {/* ── Navbar ── */}
       <LandingNavbar
@@ -226,7 +224,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── Noticias Institucionales (solo logueados) ── */}
+      {/* ── 1. Noticias Institucionales (solo logueados) ── */}
       {estaLogueado && seccionVisible("seccion_banners") && bannersDb.length > 0 && (
         <LandingNoticias noticias={bannersDb.map((n) => ({
           id: n.id,
@@ -239,19 +237,7 @@ export default async function HomePage() {
         }))} />
       )}
 
-      {/* ── Aplicaciones (solo para usuarios logueados) ── */}
-      {estaLogueado && seccionVisible("seccion_aplicaciones") && (
-        <LandingAccesos accesos={accesosDirectos.map(a => ({
-          clave: a.clave,
-          titulo: a.titulo,
-          descripcion: a.descripcion,
-          url: a.url,
-          imagen: a.imagen,
-          categoria: a.categoria,
-        }))} />
-      )}
-
-      {/* ── Comunicados ── */}
+      {/* ── 2. Comunicados Oficiales ── */}
       {seccionVisible("seccion_comunicados") && <LandingComunicados estaLogueado={estaLogueado} comunicados={comunicadosDb.map(c => ({
         id: c.id,
         titulo: c.titulo,
@@ -264,29 +250,41 @@ export default async function HomePage() {
         archivoTipo: c.archivoTipo,
       }))} />}
 
-      {/* ── Directorio Institucional – Carrusel 3D (solo logueados) ── */}
+      {/* ── 3. Documentos Institucionales & Normativas (Priorizado) ── */}
+      {estaLogueado && seccionVisible("seccion_documentos") && (
+        <LandingDocumentos documentos={documentosDb} />
+      )}
+
+      {/* ── 4. Aplicaciones y Sistemas (Accesos Directos) ── */}
+      {estaLogueado && seccionVisible("seccion_aplicaciones") && (
+        <LandingAccesos accesos={accesosDirectos.map(a => ({
+          clave: a.clave,
+          titulo: a.titulo,
+          descripcion: a.descripcion,
+          url: a.url,
+          imagen: a.imagen,
+          categoria: a.categoria,
+        }))} />
+      )}
+
+      {/* ── 5. Directorio Institucional – Carrusel 3D (solo logueados) ── */}
       {estaLogueado && seccionVisible("seccion_directorio") && (() => {
         const dirActivos = directivosDb.filter((d) => d.estado === "activo")
         if (dirActivos.length === 0) return null
         return <LandingDirectorio directivos={dirActivos} />
       })()}
 
-      {/* ── Nuestro Equipo – Carrusel 3D (solo logueados) ── */}
+      {/* ── 6. Nuestro Equipo – Carrusel 3D (solo logueados) ── */}
       {estaLogueado && seccionVisible("seccion_equipo") && (() => {
         const equipoActivo = personalDb.filter((p) => p.estado === "activo")
         if (equipoActivo.length === 0) return null
         return <LandingPersonal personal={equipoActivo} />
       })()}
 
-      {/* ── Documentos Institucionales (solo logueados) ── */}
-      {estaLogueado && seccionVisible("seccion_documentos") && (
-        <LandingDocumentos documentos={documentosDb} />
-      )}
-
-      {/* ── Mapa de Oficinas (solo logueados) ── */}
+      {/* ── 7. Mapa de Cobertura y Oficinas (solo logueados) ── */}
       {estaLogueado && seccionVisible("seccion_mapa") && <BoliviaMap sucursalesDb={sucursalesDb} />}
 
-      {/* ── Carrusel de Oficinas debajo del mapa (solo logueados) ── */}
+      {/* ── Carrusel de Sucursales debajo del mapa (solo logueados) ── */}
       {estaLogueado && seccionVisible("seccion_sucursales") && (
       <section id="sucursales" className="bg-muted/30 pb-16 overflow-hidden scroll-mt-20">
         {/* Fila 1 — izquierda a derecha */}

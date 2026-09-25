@@ -15,9 +15,14 @@ import {
   ChevronLeft,
   ChevronRight,
   FolderOpen,
+  Sparkles,
+  ShieldCheck,
+  CheckCircle2,
+  ArrowRight,
+  BookOpen,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { DocumentContentViewer } from "@/components/modules/document-content-viewer"
 import { getDocumentUrl } from "@/components/modules/documentos-module"
 
@@ -161,8 +166,145 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
               Documentos Institucionales
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground font-medium">
-              Normativas, formularios, manuales y reglamentos oficiales disponibles para descarga
+              Normativas, instructivos, manuales y reglamentos oficiales disponibles para consulta y descarga
             </p>
+          </div>
+
+          {/* ── GUÍA PASO A PASO: RUTA DE DOCUMENTOS PRIORITARIOS ── */}
+          <div className="rounded-3xl border-2 border-[#002F6C]/15 bg-gradient-to-br from-white via-blue-50/30 to-amber-50/20 p-5 sm:p-7 shadow-lg space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#002F6C] text-[#FFCC00] shadow-md">
+                  <BookOpen className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-[#002F6C] flex items-center gap-2">
+                    Guía Paso a Paso • Documentos y Normativas Prioritarias
+                    <span className="rounded-full bg-[#FFB800]/20 px-2.5 py-0.5 text-[10px] font-black text-[#002F6C] border border-[#FFB800]/40">
+                      Ruta Oficial
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Secuencia recomendada de lectura para todo el personal de la Agencia Boliviana de Correos
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Grid de Pasos */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Paso 1 */}
+              <div
+                onClick={() => {
+                  const docFound = docsPublicados.find(d => /instructivo|induccion|normativa/i.test(d.titulo)) || docsPublicados[0]
+                  if (docFound) setViewingDoc(docFound)
+                }}
+                className="group p-4 rounded-2xl bg-white border border-slate-200 hover:border-[#0E5296] hover:shadow-md transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-[#002F6C] text-[#FFCC00] text-xs font-black shadow-xs">
+                    1
+                  </span>
+                  <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-[10px] font-black text-red-700 border border-red-200">
+                    Prioridad Alta
+                  </span>
+                </div>
+                <h4 className="text-xs font-black text-[#002F6C] group-hover:text-[#0E5296] line-clamp-2">
+                  Instructivo General de Inducción & Normativa Postal
+                </h4>
+                <p className="text-[11px] text-slate-500 line-clamp-2 leading-tight font-medium">
+                  Directrices obligatorias de conducta, seguridad y deberes institucionales.
+                </p>
+                <div className="pt-2 flex items-center text-[10px] font-black text-[#0E5296] group-hover:translate-x-1 transition-transform">
+                  <span>Consultar documento</span>
+                  <ArrowRight className="h-3 w-3 ml-1" />
+                </div>
+              </div>
+
+              {/* Paso 2 */}
+              <div
+                onClick={() => {
+                  const docFound = docsPublicados.find(d => /seguridad|manual|sistema/i.test(d.titulo)) || docsPublicados[1] || docsPublicados[0]
+                  if (docFound) setViewingDoc(docFound)
+                }}
+                className="group p-4 rounded-2xl bg-white border border-slate-200 hover:border-[#0E5296] hover:shadow-md transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-[#0E5296] text-white text-xs font-black shadow-xs">
+                    2
+                  </span>
+                  <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-[10px] font-black text-red-700 border border-red-200">
+                    Prioridad Alta
+                  </span>
+                </div>
+                <h4 className="text-xs font-black text-[#002F6C] group-hover:text-[#0E5296] line-clamp-2">
+                  Manual de Seguridad de la Información y Credenciales
+                </h4>
+                <p className="text-[11px] text-slate-500 line-clamp-2 leading-tight font-medium">
+                  Políticas de confidencialidad, contraseñas y custodia de datos de usuarios.
+                </p>
+                <div className="pt-2 flex items-center text-[10px] font-black text-[#0E5296] group-hover:translate-x-1 transition-transform">
+                  <span>Consultar documento</span>
+                  <ArrowRight className="h-3 w-3 ml-1" />
+                </div>
+              </div>
+
+              {/* Paso 3 */}
+              <div
+                onClick={() => {
+                  const docFound = docsPublicados.find(d => /correspondencia|reglamento|operativo/i.test(d.titulo)) || docsPublicados[2] || docsPublicados[0]
+                  if (docFound) setViewingDoc(docFound)
+                }}
+                className="group p-4 rounded-2xl bg-white border border-slate-200 hover:border-[#0E5296] hover:shadow-md transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-[#FFB800] text-[#002F6C] text-xs font-black shadow-xs">
+                    3
+                  </span>
+                  <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-black text-amber-800 border border-amber-200">
+                    Prioridad Media
+                  </span>
+                </div>
+                <h4 className="text-xs font-black text-[#002F6C] group-hover:text-[#0E5296] line-clamp-2">
+                  Reglamento Operativo de Correspondencia y Logística
+                </h4>
+                <p className="text-[11px] text-slate-500 line-clamp-2 leading-tight font-medium">
+                  Procedimientos estándar de admisión, clasificación, despacho y entrega postal.
+                </p>
+                <div className="pt-2 flex items-center text-[10px] font-black text-[#0E5296] group-hover:translate-x-1 transition-transform">
+                  <span>Consultar documento</span>
+                  <ArrowRight className="h-3 w-3 ml-1" />
+                </div>
+              </div>
+
+              {/* Paso 4 */}
+              <div
+                onClick={() => {
+                  const docFound = docsPublicados.find(d => /etica|personal|reglamento interno/i.test(d.titulo)) || docsPublicados[3] || docsPublicados[0]
+                  if (docFound) setViewingDoc(docFound)
+                }}
+                className="group p-4 rounded-2xl bg-white border border-slate-200 hover:border-[#0E5296] hover:shadow-md transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-slate-100 text-[#002F6C] text-xs font-black shadow-xs">
+                    4
+                  </span>
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-black text-emerald-700 border border-emerald-200">
+                    Consulta General
+                  </span>
+                </div>
+                <h4 className="text-xs font-black text-[#002F6C] group-hover:text-[#0E5296] line-clamp-2">
+                  Código de Ética y Reglamento Interno de Personal
+                </h4>
+                <p className="text-[11px] text-slate-500 line-clamp-2 leading-tight font-medium">
+                  Principios éticos, deberes, derechos y convivencia institucional de la AGBC.
+                </p>
+                <div className="pt-2 flex items-center text-[10px] font-black text-[#0E5296] group-hover:translate-x-1 transition-transform">
+                  <span>Consultar documento</span>
+                  <ArrowRight className="h-3 w-3 ml-1" />
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Barra de filtros y categorías */}
@@ -399,7 +541,13 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
 
               return (
                 <>
-                  {/* Header */}
+                  {/* Header accesible Radix UI */}
+                  <DialogHeader className="sr-only">
+                    <DialogTitle>{viewingDoc.titulo}</DialogTitle>
+                    <DialogDescription>{viewingDoc.descripcion || "Visualizador oficial de documentos AGBC"}</DialogDescription>
+                  </DialogHeader>
+
+                  {/* Header visual */}
                   <div className="flex items-center justify-between border-b border-border/20 bg-white/90 px-4 py-3 dark:bg-zinc-900/90">
                     <div className="min-w-0 flex-1">
                       <h3 className="line-clamp-1 text-sm font-black text-[#002F6C] dark:text-white tracking-tight md:text-base">

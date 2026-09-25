@@ -42,22 +42,18 @@ interface LandingNavbarProps {
 }
 
 const NAV_ITEMS_PUBLICOS: NavItem[] = [
-  { label: "Documentos & Circulares", href: "#documentos", icon: FileText },
+  { label: "Comunicados", href: "#comunicados", icon: MegaphoneIcon },
 ]
 
 const NAV_ITEMS_MAIN: NavItem[] = [
   { label: "Noticias", href: "#noticias", icon: Newspaper },
-  { label: "Documentos & Instructivos", href: "#documentos", icon: FileText },
+  { label: "Comunicados", href: "#comunicados", icon: MegaphoneIcon },
+  { label: "Documentos", href: "#documentos", icon: FileText },
+  { label: "Accesos", href: "#aplicaciones", icon: Globe },
   { label: "Oficinas", href: "#cobertura", icon: MapPin },
 ]
 
 const SUBMENU_ITEMS = [
-  {
-    label: "Aplicaciones",
-    description: "Acceso rápido a sistemas",
-    href: "#aplicaciones",
-    icon: Globe,
-  },
   {
     label: "Directorio",
     description: "Directorio institucional y teléfonos",
@@ -81,8 +77,8 @@ export function LandingNavbar({ estaLogueado, esAdmin, usuario }: LandingNavbarP
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
   const allSectionHrefs = estaLogueado
-    ? ["#noticias", "#aplicaciones", "#directorio", "#equipo", "#documentos", "#cobertura"]
-    : ["#documentos"]
+    ? ["#noticias", "#comunicados", "#documentos", "#aplicaciones", "#directorio", "#equipo", "#cobertura"]
+    : ["#comunicados"]
 
   useEffect(() => {
     function handleScroll() {

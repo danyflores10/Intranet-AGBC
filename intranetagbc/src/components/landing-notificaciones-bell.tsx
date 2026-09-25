@@ -47,7 +47,7 @@ const NOTIFICACIONES_DEMO: NotificacionItem[] = [
     id: "notif-1",
     titulo: "¡Bienvenido al nuevo portal Intranet AGBC!",
     mensaje:
-      "Te damos la bienvenida al sistema renovado de la Agencia Boliviana de Correos. Ahora puedes consultar instructivos oficiales, circulares, directorio telefónico, nómina y acceder a todas tus herramientas institucionales desde un solo lugar.",
+      "Te damos la bienvenida al sistema renovado de la Agencia Boliviana de Correos. Ahora puedes consultar comunicados oficiales, documentos institucionales, directorio telefónico, nómina y acceder a todas tus herramientas institucionales desde un solo lugar.",
     tipo: "comunicado",
     leida: false,
     fecha: "Hace 10 min",
@@ -65,22 +65,22 @@ const NOTIFICACIONES_DEMO: NotificacionItem[] = [
   },
   {
     id: "notif-3",
-    titulo: "Nuevo Instructivo: Procedimiento de Recepción y Despacho",
+    titulo: "Nuevo Instructivo Institucional Prioritario de Inducción",
     mensaje:
-      "Revisa el nuevo instructivo administrativo emitido para optimizar los tiempos de trazabilidad y entrega de correspondencia a nivel nacional.",
+      "Se encuentra publicado el Instructivo AGBC-DIR-001/2026 de lectura obligatoria y la Guía Paso a Paso de Documentos Prioritarios para el personal.",
     tipo: "correspondencia",
-    leida: true,
-    fecha: "Ayer",
-    remitente: "Dirección de Operaciones Postales",
+    leida: false,
+    fecha: "Hoy",
+    remitente: "Dirección General Ejecutiva",
   },
   {
     id: "notif-4",
-    titulo: "Reconocimiento al Desempeño Destacado",
+    titulo: "Reconocimiento al Desempeño Destacado Postal",
     mensaje:
-      "Felicitamos a los equipos y funcionarios distinguidos en el último periodo por su compromiso y excelencia en el servicio postal.",
+      "Felicitamos a los equipos y funcionarios distinguidos en el último periodo por su compromiso y excelencia en el servicio postal nacional.",
     tipo: "reconocimiento",
     leida: true,
-    fecha: "Hace 3 días",
+    fecha: "Hace 2 días",
     remitente: "Recursos Humanos",
   },
 ]
@@ -173,7 +173,7 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
         type="button"
         onClick={() => setTrayOpen(!trayOpen)}
         aria-label="Notificaciones"
-        className={`relative flex h-9 w-9 sm:h-9 sm:w-9 items-center justify-center rounded-xl border transition-all duration-200 cursor-pointer ${
+        className={`relative flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl border transition-all duration-200 cursor-pointer ${
           trayOpen
             ? "border-[#002F6C] bg-blue-50/80 text-[#002F6C] shadow-md ring-2 ring-[#FFCC00]/50"
             : "border-slate-200/90 bg-white hover:border-[#002F6C]/40 hover:bg-slate-50 text-[#002F6C] shadow-2xs active:scale-95"
@@ -183,7 +183,7 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
 
         {/* Badge contador de no leídas */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-[#FFB800] text-[#002F6C] text-[9px] font-black border-2 border-white shadow-md animate-pulse">
+          <span className="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-[#FFB800] text-[#002F6C] text-[10px] font-black border-2 border-white shadow-md animate-pulse">
             {unreadCount}
           </span>
         )}
@@ -280,7 +280,7 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
             )}
           </div>
 
-          {/* Footer: Ver bandeja completa */}
+          {/* Footer: Ver bandeja completa estilo Gmail */}
           <div className="p-2.5 bg-white border-t border-slate-200/80 flex items-center justify-between">
             <button
               type="button"
@@ -298,26 +298,24 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
         </div>
       )}
 
-      {/* ── VENTANA GRANDE ESTILO GMAIL / BANDEJA DE MENSAJES (AMPLIA Y CÓMODA) ── */}
+      {/* ── VENTANA GRANDE ESTILO GMAIL / BANDEJA DE MENSAJES (MÁS AMPLIA HACIA LOS LATERALES) ── */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-6xl sm:max-w-7xl w-[96vw] h-[88vh] max-h-[90vh] p-0 rounded-3xl border-2 border-[#002F6C]/20 shadow-2xl bg-white flex flex-col overflow-hidden">
-          {/* Accesibilidad Radix UI Dialog Header */}
+        <DialogContent className="max-w-6xl w-[96vw] h-[88vh] max-h-[90vh] p-0 rounded-3xl border-2 border-[#002F6C]/20 shadow-2xl bg-white flex flex-col overflow-hidden">
+          {/* Header accesible para Radix UI */}
           <DialogHeader className="sr-only">
-            <DialogTitle>Bandeja de Comunicados y Notificaciones Institucionales</DialogTitle>
-            <DialogDescription>
-              Centro de lectura oficial de circulares, instructivos y avisos para el personal de la Agencia Boliviana de Correos.
-            </DialogDescription>
+            <DialogTitle>Bandeja de Entrada de Comunicados y Alertas - AGBC</DialogTitle>
+            <DialogDescription>Consulta y administra los avisos oficiales de la Intranet</DialogDescription>
           </DialogHeader>
 
           {/* Header Superior Estilo Correo Institucional */}
-          <div className="bg-gradient-to-r from-[#002F6C] via-[#0E5296] to-[#002F6C] p-5 text-white flex items-center justify-between shrink-0">
+          <div className="bg-gradient-to-r from-[#002F6C] via-[#0E5296] to-[#002F6C] p-4 sm:p-5 text-white flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3.5">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#FFB800] text-[#002F6C] shadow-lg">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#FFB800] text-[#002F6C] shadow-md">
                 <Inbox className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="text-lg font-black tracking-tight text-white flex items-center gap-2">
-                  Bandeja de Entrada & Comunicados Institucionales
+                <h3 className="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2.5">
+                  Bandeja de Entrada & Mensajes Institucionales
                   {unreadCount > 0 && (
                     <span className="rounded-full bg-[#FFCC00] text-[#002F6C] px-2.5 py-0.5 text-xs font-black">
                       {unreadCount} sin leer
@@ -325,7 +323,7 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
                   )}
                 </h3>
                 <p className="text-xs text-blue-100">
-                  Agencia Boliviana de Correos • Difusión Oficial para Funcionarios
+                  Agencia Boliviana de Correos • Comunicados Oficiales, Instructivos y Alertas
                 </p>
               </div>
             </div>
@@ -338,7 +336,7 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
                   onClick={handleMarcarTodas}
                   className="text-xs font-bold text-[#FFCC00] hover:bg-white/10"
                 >
-                  <Check className="h-4 w-4 mr-1.5" />
+                  <Check className="h-4 w-4 mr-1" />
                   Marcar todo como leído
                 </Button>
               )}
@@ -348,7 +346,7 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
           {/* Cuerpo Dividido en 2 Columnas (Lista de Mensajes + Vista Detallada de Lectura) */}
           <div className="flex flex-1 min-h-0 divide-x divide-slate-200">
             {/* Columna Izquierda: Lista de Mensajes */}
-            <div className="w-full md:w-[380px] lg:w-[420px] flex flex-col bg-slate-50/60 shrink-0">
+            <div className="w-full md:w-5/12 lg:w-4/12 flex flex-col bg-slate-50/60 shrink-0">
               {/* Buscador y Filtros */}
               <div className="p-3.5 border-b border-slate-200 space-y-2.5 bg-white">
                 <div className="relative">
@@ -356,15 +354,15 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
                   <Input
                     value={searchTerm}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-                    placeholder="Buscar comunicados, instructivos..."
-                    className="pl-9 h-10 rounded-xl text-xs bg-slate-50 border-slate-200 font-medium"
+                    placeholder="Buscar comunicados, normativas, alertas..."
+                    className="pl-9 h-9.5 rounded-xl text-xs bg-slate-50 border-slate-200"
                   />
                 </div>
                 <div className="flex gap-2 text-xs font-bold">
                   <button
                     type="button"
                     onClick={() => setFilterType("todas")}
-                    className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-xl transition-colors cursor-pointer ${
                       filterType === "todas" ? "bg-[#002F6C] text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
                     }`}
                   >
@@ -373,7 +371,7 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
                   <button
                     type="button"
                     onClick={() => setFilterType("no_leidas")}
-                    className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-xl transition-colors cursor-pointer ${
                       filterType === "no_leidas" ? "bg-[#002F6C] text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
                     }`}
                   >
@@ -405,7 +403,7 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
                             ? "bg-white border-[#002F6C] shadow-md ring-2 ring-[#002F6C]/10"
                             : n.leida
                             ? "bg-white/70 border-transparent hover:bg-white"
-                            : "bg-blue-50/70 border-blue-200 hover:bg-white shadow-2xs"
+                            : "bg-blue-50/60 border-blue-200 hover:bg-white shadow-2xs"
                         }`}
                       >
                         <div className="flex items-start gap-3">
@@ -437,20 +435,20 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
             {/* Columna Derecha: Vista de Lectura Estilo Gmail Amplia */}
             <div className="hidden md:flex flex-1 flex-col bg-white overflow-y-auto">
               {selectedNotif ? (
-                <div className="p-8 space-y-6 flex-1 flex flex-col max-w-4xl">
+                <div className="p-6 sm:p-8 space-y-6 flex-1 flex flex-col">
                   {/* Encabezado del Mensaje */}
-                  <div className="border-b border-slate-100 pb-5 space-y-3.5">
+                  <div className="border-b border-slate-100 pb-6 space-y-3.5">
                     <div className="flex items-center justify-between">
-                      <span className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-black border ${getTipoBadge(selectedNotif.tipo).bg}`}>
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black border ${getTipoBadge(selectedNotif.tipo).bg}`}>
                         {getTipoBadge(selectedNotif.tipo).label}
                       </span>
-                      <span className="text-xs text-slate-400 font-medium flex items-center gap-1.5">
-                        <Clock className="h-4 w-4" />
+                      <span className="text-xs text-slate-500 font-medium flex items-center gap-1.5 bg-slate-50 px-3 py-1 rounded-full border border-slate-200">
+                        <Clock className="h-3.5 w-3.5 text-slate-400" />
                         {selectedNotif.fecha}
                       </span>
                     </div>
 
-                    <h2 className="text-2xl font-black text-[#002F6C] leading-snug">
+                    <h2 className="text-xl sm:text-2xl font-black text-[#002F6C] leading-snug">
                       {selectedNotif.titulo}
                     </h2>
 
@@ -464,19 +462,21 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
                           {selectedNotif.remitente || "Dirección General AGBC"}
                         </p>
                         <p className="text-xs text-slate-500 font-medium">
-                          Para: Todo el personal institucional de Correos de Bolivia
+                          Para: Todo el personal y funcionarios de la Agencia Boliviana de Correos
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Cuerpo del Mensaje con Tipografía Nítida */}
-                  <div className="flex-1 text-sm text-slate-700 font-normal leading-relaxed space-y-4 bg-slate-50/60 p-6 rounded-2xl border border-slate-100 shadow-2xs">
-                    <p className="whitespace-pre-line text-sm sm:text-base leading-relaxed">{selectedNotif.mensaje}</p>
+                  {/* Cuerpo del Mensaje */}
+                  <div className="flex-1 text-sm text-slate-700 font-normal leading-relaxed space-y-4 bg-slate-50/60 p-6 rounded-3xl border border-slate-200/80">
+                    <p className="whitespace-pre-line text-sm sm:text-base leading-relaxed text-slate-800">
+                      {selectedNotif.mensaje}
+                    </p>
                     
-                    <div className="pt-5 border-t border-slate-200/80 text-xs text-slate-500 flex items-center gap-2 font-medium">
+                    <div className="pt-5 border-t border-slate-200 text-xs text-slate-500 flex items-center gap-2 font-medium">
                       <CheckCircle2 className="h-4.5 w-4.5 text-emerald-600 shrink-0" />
-                      <span>Mensaje y comunicado oficial validado y registrado en la Intranet de la Agencia Boliviana de Correos.</span>
+                      <span>Mensaje institucional emitido y verificado por la Intranet Oficial de la Agencia Boliviana de Correos.</span>
                     </div>
                   </div>
 
@@ -484,9 +484,9 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
                   <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                     <div className="flex items-center gap-2">
                       {esAdmin && (
-                        <Button variant="outline" size="sm" asChild className="text-xs font-bold text-[#002F6C] rounded-xl h-9 px-4">
+                        <Button variant="outline" size="sm" asChild className="text-xs font-bold text-[#002F6C] rounded-xl border-slate-200">
                           <Link href="/notificaciones">
-                            <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                            <ExternalLink className="h-3.5 w-3.5 mr-1" />
                             Administrar Notificaciones
                           </Link>
                         </Button>
@@ -496,17 +496,17 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
                       variant="destructive"
                       size="sm"
                       onClick={() => handleEliminar(selectedNotif.id)}
-                      className="rounded-xl text-xs font-bold gap-1.5 h-9 px-4"
+                      className="rounded-xl text-xs font-bold gap-1.5 shadow-sm"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3.5 w-3.5" />
                       Eliminar mensaje
                     </Button>
                   </div>
                 </div>
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8 text-center space-y-3">
+                <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8 text-center space-y-2">
                   <Mail className="h-12 w-12 opacity-30" />
-                  <p className="text-base font-bold">Selecciona una notificación para leer el mensaje completo</p>
+                  <p className="text-sm font-bold">Selecciona una notificación para leer el mensaje completo</p>
                 </div>
               )}
             </div>
