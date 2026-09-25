@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useMemo, useTransition } from "react"
+import { useState, useRef, useMemo } from "react"
 import Image from "next/image"
 import {
   Dialog,
@@ -20,11 +20,10 @@ import {
   EyeOff,
   Camera,
   Loader2,
-  Save,
   CheckCircle2,
-  AlertCircle,
   KeyRound,
   Sparkles,
+  Info,
 } from "lucide-react"
 import toast from "react-hot-toast"
 import { Button } from "@/components/ui/button"
@@ -79,11 +78,7 @@ export function PerfilDialog({ open, onOpenChange, usuario, esAdmin }: PerfilDia
   const [activeTab, setActiveTab] = useState<"general" | "seguridad">("general")
   const [avatarPreview, setAvatarPreview] = useState<string | null>(usuario?.image || null)
   const [isUploading, setIsUploading] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  // Datos personales editables
-  const [fullName, setFullName] = useState(usuario?.name || "")
 
   // Cambio de contraseña
   const [currentPassword, setCurrentPassword] = useState("")
@@ -128,20 +123,6 @@ export function PerfilDialog({ open, onOpenChange, usuario, esAdmin }: PerfilDia
     }
   }
 
-  // Guardar datos
-  const handleSaveData = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSaving(true)
-    try {
-      // Simulación de actualización o llamada a endpoint
-      toast.success("Datos de perfil guardados correctamente")
-    } catch {
-      toast.error("Error al guardar los datos")
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
   // Cambiar contraseña
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -177,25 +158,33 @@ export function PerfilDialog({ open, onOpenChange, usuario, esAdmin }: PerfilDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto p-0 rounded-3xl border-2 border-[#002F6C]/20 shadow-2xl bg-white">
+      <DialogContent className="max-w-4xl sm:max-w-5xl w-[96vw] max-h-[90vh] overflow-y-auto p-0 rounded-3xl border-2 border-[#002F6C]/20 shadow-2xl bg-white">
+        {/* Accesibilidad Radix UI Dialog Header */}
+        <DialogHeader className="sr-only">
+          <DialogTitle>Mi Perfil Institucional - {usuario?.name || "Funcionario"}</DialogTitle>
+          <DialogDescription>
+            Gestión de datos personales, fotografía de perfil y seguridad de cuenta en la Intranet AGBC.
+          </DialogDescription>
+        </DialogHeader>
+
         {/* Banner de Cabecera Institucional AGBC */}
-        <div className="relative overflow-hidden bg-gradient-to-r from-[#002F6C] via-[#0E5296] to-[#002F6C] p-6 text-white">
+        <div className="relative overflow-hidden bg-gradient-to-r from-[#002F6C] via-[#0E5296] to-[#002F6C] p-6 sm:p-8 text-white">
           <div className="h-1.5 w-full absolute top-0 left-0 bg-gradient-to-r from-[#FFB800] via-[#FFCC00] to-[#FFB800]" />
           
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 pt-2">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 pt-2">
             {/* Foto con Botón de Carga Rápida */}
             <div className="relative shrink-0 group">
-              <div className="relative h-20 w-20 sm:h-24 sm:w-24 overflow-hidden rounded-2xl border-3 border-[#FFCC00] shadow-xl bg-[#002F6C]">
+              <div className="relative h-24 w-24 sm:h-28 sm:w-28 overflow-hidden rounded-3xl border-3 border-[#FFCC00] shadow-2xl bg-[#002F6C]">
                 {avatarPreview ? (
                   <Image src={avatarPreview} alt={usuario?.name || "Usuario"} fill className="object-cover" unoptimized />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-2xl font-black text-[#FFCC00]">
+                  <div className="flex h-full w-full items-center justify-center text-3xl font-black text-[#FFCC00]">
                     {(usuario?.name || "US").slice(0, 2).toUpperCase()}
                   </div>
                 )}
                 {isUploading && (
                   <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                    <Loader2 className="h-6 w-6 text-white animate-spin" />
+                    <Loader2 className="h-7 w-7 text-white animate-spin" />
                   </div>
                 )}
               </div>
@@ -203,49 +192,52 @@ export function PerfilDialog({ open, onOpenChange, usuario, esAdmin }: PerfilDia
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-xl bg-[#FFB800] text-[#002F6C] shadow-md border-2 border-white hover:scale-110 active:scale-95 transition-transform cursor-pointer"
+                className="absolute -bottom-1.5 -right-1.5 flex h-9 w-9 items-center justify-center rounded-xl bg-[#FFB800] text-[#002F6C] shadow-lg border-2 border-white hover:scale-110 active:scale-95 transition-transform cursor-pointer"
                 title="Cambiar foto de perfil"
               >
-                <Camera className="h-4 w-4" />
+                <Camera className="h-4.5 w-4.5" />
               </button>
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
             </div>
 
             {/* Información Principal del Usuario */}
             <div className="text-center sm:text-left flex-1 min-w-0">
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">{usuario?.name || "Funcionario Institucional"}</h2>
-                <span className="rounded-full bg-[#FFB800]/20 px-3 py-0.5 text-xs font-black text-[#FFCC00] border border-[#FFCC00]/30 shadow-xs">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+                  {usuario?.name || "Funcionario Institucional"}
+                </h2>
+                <span className="rounded-full bg-[#FFB800]/20 px-3.5 py-1 text-xs font-black text-[#FFCC00] border border-[#FFCC00]/30 shadow-xs">
                   {usuario?.cargo || usuario?.rol || "Funcionario Público"}
                 </span>
               </div>
-              <p className="text-xs text-blue-100/90 mt-1 flex items-center justify-center sm:justify-start gap-1.5 font-medium">
-                <Mail className="h-3.5 w-3.5 text-[#FFCC00]" />
+              <p className="text-sm text-blue-100/90 mt-1.5 flex items-center justify-center sm:justify-start gap-2 font-medium">
+                <Mail className="h-4 w-4 text-[#FFCC00]" />
                 <span>{usuario?.email || "funcionario@correos.gob.bo"}</span>
               </p>
-              <p className="text-[11px] text-white/60 mt-1">
-                Agencia Boliviana de Correos • Sistema Intranet Integrado
+              <p className="text-xs text-white/70 mt-1 flex items-center justify-center sm:justify-start gap-1.5">
+                <Briefcase className="h-3.5 w-3.5 text-[#FFCC00]" />
+                <span>Agencia Boliviana de Correos • Intranet Institucional</span>
               </p>
             </div>
           </div>
 
           {/* Selector de Pestañas */}
-          <div className="flex gap-2 mt-6 border-b border-white/10">
+          <div className="flex gap-4 mt-8 border-b border-white/10">
             <button
               type="button"
               onClick={() => setActiveTab("general")}
-              className={`pb-2.5 px-4 text-xs font-black transition-colors border-b-2 cursor-pointer ${
+              className={`pb-3 px-4 text-xs sm:text-sm font-black transition-colors border-b-2 cursor-pointer ${
                 activeTab === "general"
                   ? "border-[#FFCC00] text-[#FFCC00]"
                   : "border-transparent text-white/70 hover:text-white"
               }`}
             >
-              Datos Personales
+              Datos del Funcionario
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("seguridad")}
-              className={`pb-2.5 px-4 text-xs font-black transition-colors border-b-2 cursor-pointer ${
+              className={`pb-3 px-4 text-xs sm:text-sm font-black transition-colors border-b-2 cursor-pointer ${
                 activeTab === "seguridad"
                   ? "border-[#FFCC00] text-[#FFCC00]"
                   : "border-transparent text-white/70 hover:text-white"
@@ -257,44 +249,54 @@ export function PerfilDialog({ open, onOpenChange, usuario, esAdmin }: PerfilDia
         </div>
 
         {/* Contenido de las Pestañas */}
-        <div className="p-6">
+        <div className="p-6 sm:p-8">
           {activeTab === "general" ? (
-            <form onSubmit={handleSaveData} className="space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-6">
+              <div className="rounded-2xl bg-blue-50/70 p-4 border border-blue-200/80 flex items-start gap-3">
+                <Info className="h-5 w-5 text-[#0E5296] shrink-0 mt-0.5" />
+                <p className="text-xs text-slate-700 leading-relaxed font-medium">
+                  Los datos oficiales de identidad, nombre, cargo y correos son administrados de forma centralizada por la Unidad de Recursos Humanos y Tecnologías de la Información. Si requieres rectificar algún dato, comunícate con el área correspondiente.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-[#002F6C]">Nombre y Apellidos</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider text-[#002F6C]">Nombre y Apellidos Oficiales</Label>
                   <Input
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Ej. Juan Pérez García"
-                    className="rounded-xl border-slate-200 focus:border-[#0E5296] focus:ring-[#0E5296]"
+                    value={usuario?.name || ""}
+                    disabled
+                    className="h-11 rounded-xl bg-slate-100/90 border-slate-200 text-slate-800 font-bold cursor-not-allowed text-sm"
                   />
+                  <p className="text-[11px] text-slate-500 font-medium">Registrado según documento de identidad y nómina</p>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-[#002F6C]">Cargo Institucional</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider text-[#002F6C]">Cargo Institucional Asignado</Label>
                   <Input
                     value={usuario?.cargo || usuario?.rol || "Funcionario Público"}
                     disabled
-                    className="rounded-xl bg-slate-100 border-slate-200 text-slate-700 font-medium"
+                    className="h-11 rounded-xl bg-slate-100/90 border-slate-200 text-slate-800 font-bold cursor-not-allowed text-sm"
                   />
+                  <p className="text-[11px] text-slate-500 font-medium">Posición formal en el organigrama de AGBC</p>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-[#002F6C]">Correo Electrónico Institucional</Label>
+                  <Label className="text-xs font-black uppercase tracking-wider text-[#002F6C]">Correo Electrónico Institucional</Label>
                   <Input
                     value={usuario?.email || "funcionario@correos.gob.bo"}
                     disabled
-                    className="rounded-xl bg-slate-100 border-slate-200 text-slate-700 font-medium"
+                    className="h-11 rounded-xl bg-slate-100/90 border-slate-200 text-slate-800 font-bold cursor-not-allowed text-sm"
                   />
+                  <p className="text-[11px] text-slate-500 font-medium">Canal oficial para notificaciones y accesos</p>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-[#002F6C]">Estado de Cuenta</Label>
-                  <div className="flex h-10 items-center gap-2 rounded-xl bg-emerald-50 px-3 border border-emerald-200 text-xs font-bold text-emerald-700">
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span>Activo & Verificado</span>
+                  <Label className="text-xs font-black uppercase tracking-wider text-[#002F6C]">Estado de Verificación y Acceso</Label>
+                  <div className="flex h-11 items-center gap-2.5 rounded-xl bg-emerald-50 px-4 border border-emerald-200 text-xs font-black text-emerald-700">
+                    <CheckCircle2 className="h-4.5 w-4.5 text-emerald-600" />
+                    <span>Funcionario Activo • Cuenta Verificada</span>
                   </div>
+                  <p className="text-[11px] text-slate-500 font-medium">Sesión institucional activa con permisos vigentes</p>
                 </div>
               </div>
 
@@ -303,26 +305,18 @@ export function PerfilDialog({ open, onOpenChange, usuario, esAdmin }: PerfilDia
                   type="button"
                   variant="outline"
                   onClick={() => onOpenChange(false)}
-                  className="rounded-xl font-bold text-slate-600 hover:bg-slate-100"
+                  className="rounded-xl font-bold text-slate-600 hover:bg-slate-100 h-10 px-5"
                 >
                   Cerrar
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={isSaving}
-                  className="rounded-xl bg-[#002F6C] hover:bg-[#0E5296] font-bold text-white shadow-md shadow-[#002F6C]/20 gap-2"
-                >
-                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  <span>Guardar Datos</span>
-                </Button>
               </div>
-            </form>
+            </div>
           ) : (
-            <form onSubmit={handleChangePassword} className="space-y-4">
-              <div className="rounded-2xl bg-amber-50 p-3.5 border border-amber-200/80 flex items-start gap-3">
+            <form onSubmit={handleChangePassword} className="space-y-5">
+              <div className="rounded-2xl bg-amber-50 p-4 border border-amber-200/80 flex items-start gap-3">
                 <KeyRound className="h-5 w-5 text-amber-700 shrink-0 mt-0.5" />
                 <p className="text-xs text-amber-800 font-medium leading-relaxed">
-                  Por seguridad institucional, utiliza una contraseña de al menos 8 caracteres con combinación de letras mayúsculas, minúsculas, números y símbolos.
+                  Por seguridad institucional de la Agencia Boliviana de Correos, utiliza una contraseña robusta de al menos 8 caracteres que combine letras mayúsculas, minúsculas, números y símbolos.
                 </p>
               </div>
 
@@ -335,19 +329,19 @@ export function PerfilDialog({ open, onOpenChange, usuario, esAdmin }: PerfilDia
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="Ingresa tu contraseña actual"
                     required
-                    className="rounded-xl pr-10 border-slate-200 focus:border-[#0E5296]"
+                    className="h-11 rounded-xl pr-10 border-slate-200 focus:border-[#0E5296] text-sm"
                   />
                   <button
                     type="button"
                     onClick={() => setShowCurrent(!showCurrent)}
-                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 cursor-pointer"
                   >
                     {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
                   <Label className="text-xs font-bold text-[#002F6C]">Nueva Contraseña</Label>
                   <div className="relative">
@@ -357,12 +351,12 @@ export function PerfilDialog({ open, onOpenChange, usuario, esAdmin }: PerfilDia
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Nueva contraseña"
                       required
-                      className="rounded-xl pr-10 border-slate-200 focus:border-[#0E5296]"
+                      className="h-11 rounded-xl pr-10 border-slate-200 focus:border-[#0E5296] text-sm"
                     />
                     <button
                       type="button"
                       onClick={() => setShowNew(!showNew)}
-                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 cursor-pointer"
                     >
                       {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -378,12 +372,12 @@ export function PerfilDialog({ open, onOpenChange, usuario, esAdmin }: PerfilDia
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Repite la nueva contraseña"
                       required
-                      className="rounded-xl pr-10 border-slate-200 focus:border-[#0E5296]"
+                      className="h-11 rounded-xl pr-10 border-slate-200 focus:border-[#0E5296] text-sm"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirm(!showConfirm)}
-                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 cursor-pointer"
                     >
                       {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -393,9 +387,9 @@ export function PerfilDialog({ open, onOpenChange, usuario, esAdmin }: PerfilDia
 
               {/* Medidor de Seguridad */}
               {newPassword.length > 0 && (
-                <div className="rounded-xl bg-slate-50 p-3 border border-slate-200 space-y-1.5">
+                <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200 space-y-2">
                   <div className="flex justify-between text-xs font-bold">
-                    <span className="text-slate-600">Nivel de seguridad:</span>
+                    <span className="text-slate-600">Nivel de seguridad de contraseña:</span>
                     <span className={passwordStrength.textClass}>{passwordStrength.label}</span>
                   </div>
                   <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
@@ -412,14 +406,14 @@ export function PerfilDialog({ open, onOpenChange, usuario, esAdmin }: PerfilDia
                   type="button"
                   variant="outline"
                   onClick={() => onOpenChange(false)}
-                  className="rounded-xl font-bold text-slate-600 hover:bg-slate-100"
+                  className="rounded-xl font-bold text-slate-600 hover:bg-slate-100 h-10 px-5"
                 >
                   Cancelar
                 </Button>
                 <Button
                   type="submit"
                   disabled={isChangingPwd || !newPassword || newPassword !== confirmPassword}
-                  className="rounded-xl bg-[#002F6C] hover:bg-[#0E5296] font-bold text-white shadow-md shadow-[#002F6C]/20 gap-2"
+                  className="rounded-xl bg-[#002F6C] hover:bg-[#0E5296] font-bold text-white shadow-md shadow-[#002F6C]/20 gap-2 h-10 px-5"
                 >
                   {isChangingPwd ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
                   <span>Actualizar Contraseña</span>

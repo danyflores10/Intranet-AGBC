@@ -31,8 +31,9 @@ import { obtenerUsuarioRbacActual } from "@/lib/auth/session-access"
 import { obtenerSucursalesActivas } from "@/actions/sucursales"
 import { obtenerPersonal, obtenerDirectivos } from "@/actions/rrhh"
 import { obtenerConfigPorGrupo } from "@/actions/configuracion"
-import { obtenerDocumentos } from "@/actions/documentos"
+import { obtenerDocumentos, obtenerDocumentosImportantesPendientes } from "@/actions/documentos"
 import { LoginForm } from "@/components/login-form"
+import { ModalDocumentoImportante } from "@/components/modal-documento-importante"
 
 const defaultSucursales = [
   {
@@ -76,6 +77,7 @@ export default async function HomePage() {
     directivosDb,
     personalDb,
     documentosDb,
+    docsImportantesPendientes,
     visibilidadConfig,
   ] = await Promise.all([
     obtenerComunicadosPublicados(),
@@ -85,6 +87,7 @@ export default async function HomePage() {
     obtenerDirectivos(),
     obtenerPersonal(),
     obtenerDocumentos(),
+    obtenerDocumentosImportantesPendientes(session.user.id),
     obtenerConfigPorGrupo("visibilidad_landing"),
   ])
 
@@ -149,6 +152,9 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen bg-background">
+      {/* ── Modal de Instructivos / Documentos Importantes Obligatorios ── */}
+      <ModalDocumentoImportante documentosIniciales={docsImportantesPendientes} />
+
       {/* ── Navbar ── */}
       <LandingNavbar
         estaLogueado={estaLogueado}
