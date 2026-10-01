@@ -36,9 +36,9 @@ export function ComunicadoView({ open, onClose, comunicado }: ComunicadoViewProp
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 gap-0 rounded-2xl border-border/50">
+      <DialogContent className="max-w-4xl lg:max-w-5xl w-[95vw] max-h-[92vh] overflow-y-auto p-0 gap-0 rounded-3xl border-2 border-[#002F6C]/20 shadow-2xl bg-white">
         {/* Top color bars like the Correos de Bolivia style */}
-        <div className="flex h-2 w-full rounded-t-2xl overflow-hidden">
+        <div className="flex h-2 w-full rounded-t-3xl overflow-hidden">
           <div className="flex-1 bg-[#C41E3A]" />
           <div className="flex-1 bg-[#FFB300]" />
           <div className="flex-1 bg-[#2E7D32]" />

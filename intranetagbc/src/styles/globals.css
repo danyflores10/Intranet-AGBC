@@ -50,13 +50,13 @@
 
 /* ── PURE WHITE & INSTITUTIONAL YELLOW-BLUE THEME ── */
 :root {
-  --background: #FFFFFF;
+  --background: #F4F7FB;
   --foreground: #0A192F;
-  --landing-neumo-bg: #F8FAFC;
+  --landing-neumo-bg: #EAEFF5;
   --landing-neumo-soft-bg: #FFFFFF;
-  --landing-neumo-shadow-dark: #E2E8F0;
+  --landing-neumo-shadow-dark: #CBD5E1;
   --landing-neumo-shadow-light: #FFFFFF;
-  --landing-neumo-shadow-deep: #CBD5E1;
+  --landing-neumo-shadow-deep: #94A3B8;
   --landing-neumo-shadow-high: #FFFFFF;
   --landing-neumo-divider: #E2E8F0;
   --card: #FFFFFF;
@@ -520,3 +520,43 @@ html.dark {
 .animate-login-shake-hard {
   animation: login-shake-hard 0.9s cubic-bezier(.36,.07,.19,.97) both;
 }
+
+/* ── TEXTURA Y MOSAICO INSTITUCIONAL ELEGANTE Y VISIBLE (POSTAL TECH) ── */
+.bg-mosaico-institucional {
+  background-color: #EEF3F8;
+  background-image:
+    /* Sutil aura radial dorada en esquina superior derecha */
+    radial-gradient(circle at 92% 10%, rgba(255, 204, 0, 0.16) 0%, transparent 36%),
+    /* Sutil aura radial azul postal a la izquierda */
+    radial-gradient(circle at 8% 38%, rgba(0, 47, 108, 0.10) 0%, transparent 40%),
+    /* Sutil aura radial azul en parte inferior */
+    radial-gradient(circle at 88% 75%, rgba(14, 82, 150, 0.08) 0%, transparent 35%),
+    /* Sutil aura dorada inferior */
+    radial-gradient(circle at 14% 92%, rgba(255, 184, 0, 0.12) 0%, transparent 32%),
+    /* Trama de micro-mosaico geométrico institucional visible y nítido */
+    linear-gradient(to right, rgba(0, 47, 108, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 47, 108, 0.07) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+}
+
+/* ── MARCOS Y CONTENEDORES CON RELIEVE Y ACENTO INSTITUCIONAL ── */
+.marco-institucional {
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 47, 108, 0.16);
+  box-shadow: 0 4px 20px -2px rgba(0, 47, 108, 0.07), 0 2px 6px -1px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.marco-institucional:hover {
+  border-color: rgba(255, 204, 0, 0.8);
+  box-shadow: 0 10px 30px -4px rgba(0, 47, 108, 0.14), 0 0 0 2px rgba(255, 204, 0, 0.35);
+}
+
+/* ── LÍNEA SEPARADORA CON ACENTO DECORATIVO DORADO Y AZUL ── */
+.separador-institucional {
+  position: relative;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(0, 47, 108, 0.18) 20%, rgba(255, 204, 0, 0.7) 50%, rgba(0, 47, 108, 0.18) 80%, transparent 100%);
+}
+

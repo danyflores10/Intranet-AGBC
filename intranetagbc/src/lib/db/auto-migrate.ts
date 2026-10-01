@@ -77,6 +77,13 @@ export async function runAutoMigrations(options?: { silent?: boolean }) {
       }
     }
 
+    // 3.5. Garantizar columna fecha_nacimiento en personal de manera no destructiva
+    try {
+      await client.query(`ALTER TABLE "personal" ADD COLUMN IF NOT EXISTS "fecha_nacimiento" date;`);
+    } catch (colErr) {
+      console.warn('[AGBC Auto-Migrate] Columna fecha_nacimiento ya verificada o no requerida:', colErr);
+    }
+
     client.release();
 
     // 4. Ejecutar migraciones incrementales de Drizzle

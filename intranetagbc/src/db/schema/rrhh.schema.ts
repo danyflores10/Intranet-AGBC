@@ -12,6 +12,7 @@ export const personal = pgTable('personal', {
   telefono: varchar('telefono', { length: 50 }),
   foto: varchar('foto', { length: 500 }),
   fechaIngreso: date('fecha_ingreso').notNull(),
+  fechaNacimiento: date('fecha_nacimiento'),
   estado: varchar('estado', { length: 20 }).notNull().default('activo'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().$onUpdateFn(() => new Date()).notNull(),

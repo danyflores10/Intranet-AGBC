@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer"
+import fs from "node:fs"
 import { db } from "@/db"
 import { emailLogs } from "@/db/schema"
 
@@ -612,3 +613,258 @@ export async function sendTestEmail(to: string): Promise<{ success: boolean; mes
     }
   }
 }
+
+// ── ENVÍO MASIVO DE CORREOS INSTITUCIONALES (MENSAJERÍA AGBC) ──
+export type DestinatarioMensajeriaEmail = {
+  nombre: string
+  email?: string | null
+  institutionalEmail?: string | null
+}
+
+export type AdjuntoMensajeria = {
+  nombre: string
+  url: string
+  filePath?: string | null
+}
+
+export async function sendMensajeriaMasivaEmail({
+  destinatarios,
+  asunto,
+  mensaje,
+  tipo = "comunicado",
+  remitenteNombre = "Dirección General AGBC",
+  adjunto,
+}: {
+  destinatarios: DestinatarioMensajeriaEmail[]
+  asunto: string
+  mensaje: string
+  tipo?: string
+  remitenteNombre?: string
+  adjunto?: AdjuntoMensajeria | null
+}): Promise<{ enviados: number; fallidos: number }> {
+  const config = getEmailConfig()
+  const year = new Date().getFullYear()
+  const loginUrl = `${config.appUrl}/`
+
+  let tipoBadgeColor = "#002F6C"
+  let tipoBadgeTexto = "Comunicado Oficial"
+
+  if (tipo === "alerta") {
+    tipoBadgeColor = "#D97706"
+    tipoBadgeTexto = "Aviso Urgente / Alerta"
+  } else if (tipo === "info") {
+    tipoBadgeColor = "#0E5296"
+    tipoBadgeTexto = "Comunicado Informativo"
+  } else if (tipo === "sistema") {
+    tipoBadgeColor = "#6D28D9"
+    tipoBadgeTexto = "Aviso Técnico de Sistema"
+  }
+
+  const transporter = createTransporter()
+  let enviados = 0
+  let fallidos = 0
+
+  // Preparar adjuntos para nodemailer si existe un archivo físico
+  const mailAttachments: Array<{ filename: string; path: string }> = []
+  if (adjunto?.filePath && fs.existsSync(adjunto.filePath)) {
+    mailAttachments.push({
+      filename: adjunto.nombre,
+      path: adjunto.filePath,
+    })
+  }
+
+  // Enviar a los destinatarios en lotes de 5
+  const batchSize = 5
+  for (let i = 0; i < destinatarios.length; i += batchSize) {
+    const batch = destinatarios.slice(i, i + batchSize)
+
+    await Promise.allSettled(
+      batch.map(async (dest) => {
+        // Resolver direcciones de correo válidas:
+        // Prioriza institutionalEmail (@correos.gob.bo) y personal/gmail (email)
+        const emailsValidos: string[] = []
+        if (dest.institutionalEmail && validarEmail(dest.institutionalEmail)) {
+          emailsValidos.push(dest.institutionalEmail.trim())
+        }
+        if (dest.email && validarEmail(dest.email) && !emailsValidos.includes(dest.email.trim())) {
+          emailsValidos.push(dest.email.trim())
+        }
+
+        if (emailsValidos.length === 0) {
+          fallidos++
+          return
+        }
+
+        const correoPrincipal = emailsValidos[0]
+        const mensajeHtmlFormatted = mensaje
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/\n/g, "<br/>")
+
+        const adjuntoHtml = adjunto
+          ? `
+            <tr>
+              <td style="padding: 10px 28px 18px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 14px 18px;">
+                  <tr>
+                    <td>
+                      <p style="margin: 0 0 6px; font-size: 13px; font-weight: 700; color: #002F6C;">
+                        📎 Documento Oficial Adjunto:
+                      </p>
+                      <p style="margin: 0 0 10px; font-size: 13px; color: #334155; font-family: monospace;">
+                        ${adjunto.nombre}
+                      </p>
+                      <a href="${config.appUrl}${adjunto.url}" target="_blank" style="display: inline-block; background-color: #002F6C; color: #ffffff; text-decoration: none; font-size: 12px; font-weight: 700; padding: 8px 16px; border-radius: 8px;">
+                        Ver / Descargar Documento
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          `
+          : ""
+
+        const html = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9; padding: 30px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="580" cellpadding="0" cellspacing="0" style="max-width: 580px; width: 100%; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid #E2E8F0;">
+
+          <!-- Barra Tricolor de Bolivia -->
+          <tr>
+            <td>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="height: 5px; background-color: #C41E3A; width: 33.33%;"></td>
+                  <td style="height: 5px; background-color: #FFB300; width: 33.34%;"></td>
+                  <td style="height: 5px; background-color: #2E7D32; width: 33.33%;"></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Encabezado Institucional -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #002F6C 0%, #0E5296 50%, #0A192F 100%); padding: 32px 28px; text-align: center;">
+              <h1 style="margin: 0 0 6px; color: #ffffff; font-size: 22px; font-weight: 900; letter-spacing: -0.5px;">
+                Correos de Bolivia
+              </h1>
+              <p style="margin: 0; color: #FFCC00; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">
+                Intranet Institucional • Mensajería Oficial
+              </p>
+            </td>
+          </tr>
+
+          <!-- Badge de Prioridad & Asunto -->
+          <tr>
+            <td style="padding: 24px 28px 12px;">
+              <div style="display: inline-block; background-color: ${tipoBadgeColor}; color: #ffffff; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+                ${tipoBadgeTexto}
+              </div>
+              <h2 style="margin: 0 0 14px; font-size: 20px; font-weight: 800; color: #002F6C; line-height: 1.3;">
+                ${asunto}
+              </h2>
+              <p style="margin: 0 0 16px; font-size: 14px; color: #334155; line-height: 1.6;">
+                Estimado/a <strong>${dest.nombre}</strong>:
+              </p>
+            </td>
+          </tr>
+
+          <!-- Cuerpo del Comunicado -->
+          <tr>
+            <td style="padding: 0 28px 20px;">
+              <div style="background: #F8FAFC; border-left: 4px solid #002F6C; border-radius: 8px; padding: 18px 20px; font-size: 14px; color: #1E293B; line-height: 1.7;">
+                ${mensajeHtmlFormatted}
+              </div>
+            </td>
+          </tr>
+
+          <!-- Documento Adjunto (si existe) -->
+          ${adjuntoHtml}
+
+          <!-- Botón de Ingreso al Portal -->
+          <tr>
+            <td align="center" style="padding: 10px 28px 28px;">
+              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="border-radius: 12px; background: linear-gradient(135deg, #002F6C 0%, #0E5296 100%);">
+                    <a href="${loginUrl}" target="_blank" style="display: inline-block; padding: 12px 28px; font-size: 14px; font-weight: 800; color: #ffffff; text-decoration: none; letter-spacing: 0.3px;">
+                      Acceder a la Intranet AGBC &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Firma Institucional y Pie -->
+          <tr>
+            <td style="background: #F1F5F9; border-top: 1px solid #E2E8F0; padding: 20px 28px; text-align: center;">
+              <p style="margin: 0 0 4px; font-size: 12px; font-weight: 700; color: #002F6C;">
+                Emitido por: ${remitenteNombre}
+              </p>
+              <p style="margin: 0 0 10px; font-size: 11px; color: #64748B;">
+                Agencia Boliviana de Correos • Conectando a Bolivia
+              </p>
+              <p style="margin: 0; font-size: 10px; color: #94A3B8; line-height: 1.4;">
+                Este es un mensaje institucional oficial generado automáticamente desde el panel de administración de la Intranet AGBC.<br/>
+                Para consultas oficiales, comuníquese con su jefatura de unidad correspondiente.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+        `
+
+        try {
+          await transporter.sendMail({
+            from: config.from,
+            to: emailsValidos.join(", "),
+            subject: `${asunto} — Correos de Bolivia`,
+            html,
+            attachments: mailAttachments.length > 0 ? mailAttachments : undefined,
+          })
+
+          enviados++
+
+          await registrarEmailLog({
+            destinatarioNombre: dest.nombre,
+            destinatarioEmail: correoPrincipal,
+            tipo: "envio_masivo",
+            asunto,
+            estado: "enviado",
+          })
+        } catch (err: any) {
+          fallidos++
+          console.error(`Error enviando email a ${correoPrincipal}:`, err)
+          await registrarEmailLog({
+            destinatarioNombre: dest.nombre,
+            destinatarioEmail: correoPrincipal,
+            tipo: "envio_masivo",
+            asunto,
+            estado: "error",
+            errorMensaje: err?.message || "Error al enviar mensaje masivo",
+          })
+        }
+      })
+    )
+  }
+
+  return { enviados, fallidos }
+}
+

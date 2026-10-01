@@ -81,6 +81,15 @@ export async function POST(request: Request) {
       detalles: userRow?.email ? `Email: ${userRow.email}` : undefined,
     })
 
+    const { crearNotificacionUsuario } = await import("@/actions/notificaciones")
+    await crearNotificacionUsuario({
+      usuarioId: sesion.user.id,
+      titulo: "Seguridad: Contraseña Actualizada",
+      mensaje: "Tu contraseña de acceso a la Intranet Institucional AGBC ha sido actualizada correctamente.",
+      tipo: "alerta",
+      enlace: "/#perfil",
+    })
+
     return NextResponse.json({ ok: true })
   } catch (error) {
     const message = error instanceof Error ? error.message : ""

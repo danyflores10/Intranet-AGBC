@@ -311,6 +311,7 @@ export async function crearPersonal(
     telefono?: string
     foto?: string
     fechaIngreso?: string
+    fechaNacimiento?: string
   },
   password?: string
 ) {
@@ -321,6 +322,7 @@ export async function crearPersonal(
     email: emailNorm || null,
     unidad: data.unidad || "General",
     fechaIngreso: data.fechaIngreso || new Date().toISOString().split("T")[0],
+    fechaNacimiento: data.fechaNacimiento && /^\d{4}-\d{2}-\d{2}$/.test(data.fechaNacimiento) ? data.fechaNacimiento : null,
   }
   const [nuevo] = await db.insert(personal).values(payload).returning()
 
@@ -364,6 +366,16 @@ export async function crearPersonal(
     resultado: "Exitoso",
   })
 
+  try {
+    const { crearNotificacionParaTodos } = await import("@/actions/notificaciones")
+    await crearNotificacionParaTodos({
+      titulo: "Directorio Institucional Actualizado",
+      mensaje: `Se incorporó a ${data.nombre} (${data.cargo}) en la nómina y directorio institucional de la AGBC.`,
+      tipo: "sistema",
+      enlace: "/#directorio",
+    })
+  } catch {}
+
   revalidatePath("/rrhh")
   revalidatePath("/usuarios")
   revalidatePath("/")
@@ -387,11 +399,19 @@ export async function actualizarPersonal(
     telefono: string
     foto: string
     fechaIngreso: string
+    fechaNacimiento: string
     estado: string
   }>,
   password?: string
 ) {
-  const [actualizado] = await db.update(personal).set(data).where(eq(personal.id, id)).returning()
+  const updatePayload: any = { ...data }
+  if (data.fechaNacimiento !== undefined) {
+    updatePayload.fechaNacimiento =
+      data.fechaNacimiento && /^\d{4}-\d{2}-\d{2}$/.test(data.fechaNacimiento)
+        ? data.fechaNacimiento
+        : null
+  }
+  const [actualizado] = await db.update(personal).set(updatePayload).where(eq(personal.id, id)).returning()
 
   // Sincronizar automáticamente con la cuenta de usuario (users + account + roles)
   if (actualizado) {
@@ -663,6 +683,7 @@ export type ImportPersonalRecord = {
   email?: string
   telefono?: string
   fechaIngreso?: string
+  fechaNacimiento?: string
   estado?: string
 }
 
@@ -735,6 +756,7 @@ export async function importarPersonalLote(registros: ImportPersonalRecord[]) {
         ? r.telefono.trim()
         : undefined
       const fechaIngresoLimpia = r.fechaIngreso && /^\d{4}-\d{2}-\d{2}$/.test(r.fechaIngreso) ? r.fechaIngreso : hoy
+      const fechaNacimientoLimpia = r.fechaNacimiento && /^\d{4}-\d{2}-\d{2}$/.test(r.fechaNacimiento) ? r.fechaNacimiento : undefined
       const estadoLimpio = r.estado?.toLowerCase() === "inactivo" ? "inactivo" : "activo"
 
       const nombreNorm = normalizarTextoBusqueda(nombreLimpio)
@@ -797,6 +819,9 @@ export async function importarPersonalLote(registros: ImportPersonalRecord[]) {
         if (fechaIngresoLimpia && fechaIngresoLimpia !== hoy) {
           updateData.fechaIngreso = fechaIngresoLimpia
         }
+        if (fechaNacimientoLimpia) {
+          updateData.fechaNacimiento = fechaNacimientoLimpia
+        }
 
         const [actualizado] = await db.update(personal).set(updateData).where(eq(personal.id, existente.id)).returning()
         if (actualizado) {
@@ -817,6 +842,7 @@ export async function importarPersonalLote(registros: ImportPersonalRecord[]) {
           email: emailLimpio || null,
           telefono: telefonoLimpio || null,
           fechaIngreso: fechaIngresoLimpia,
+          fechaNacimiento: fechaNacimientoLimpia || null,
           estado: estadoLimpio,
         }
 

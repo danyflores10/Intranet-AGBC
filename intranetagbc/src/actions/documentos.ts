@@ -114,7 +114,19 @@ export async function crearDocumento(data: {
   }
   const [nuevo] = await db.insert(documentos).values(payload).returning()
   await registrarAuditLog({ usuario: sesion.id, accion: `Creó documento: ${data.titulo}`, modulo: "Documentos", resultado: "Exitoso" })
+  
+  if (data.estado === "publicado" || !data.estado) {
+    const { crearNotificacionParaTodos } = await import("@/actions/notificaciones")
+    await crearNotificacionParaTodos({
+      titulo: `Nuevo Documento: ${data.titulo}`,
+      mensaje: (data.descripcion || "Se ha publicado un nuevo documento oficial en la Biblioteca Digital de la AGBC.").slice(0, 250),
+      tipo: "comunicado",
+      enlace: `/#documentos?docId=${nuevo.id}`,
+    })
+  }
+
   revalidatePath("/documentos")
+  revalidatePath("/")
   return nuevo
 }
 
@@ -345,6 +357,11 @@ export async function eliminarDocumento(id: string) {
     await tx.delete(documentos).where(eq(documentos.id, id))
   })
 
+  try {
+    const { eliminarNotificacionesDeDocumento } = await import("@/actions/notificaciones")
+    await eliminarNotificacionesDeDocumento(doc.titulo, doc.id)
+  } catch {}
+
   await registrarAuditLog({
     usuario: sesion.id,
     accion: `Movió documento a papelera: ${doc.titulo}`,
@@ -353,6 +370,7 @@ export async function eliminarDocumento(id: string) {
   })
   revalidatePath("/documentos")
   revalidatePath("/archivo")
+  revalidatePath("/")
 }
 
 export async function enviarDocumentosAPapeleraLote(ids: string[]) {
@@ -414,6 +432,11 @@ export async function enviarDocumentosAPapeleraLote(ids: string[]) {
     await tx.delete(documentos).where(inArray(documentos.id, ids))
   })
 
+  try {
+    const { eliminarNotificacionesDeDocumentosLote } = await import("@/actions/notificaciones")
+    await eliminarNotificacionesDeDocumentosLote(docs.map((d) => ({ id: d.id, titulo: d.titulo })))
+  } catch {}
+
   await registrarAuditLog({
     usuario: sesion.id,
     accion: `Movió ${docs.length} documentos a papelera masivamente`,
@@ -423,6 +446,7 @@ export async function enviarDocumentosAPapeleraLote(ids: string[]) {
 
   revalidatePath("/documentos")
   revalidatePath("/archivo")
+  revalidatePath("/")
   return { success: true, count: docs.length }
 }
 
@@ -435,6 +459,11 @@ export async function eliminarDocumentosPermanenteLote(ids: string[]) {
     .where(inArray(documentos.id, ids))
     .returning({ id: documentos.id, titulo: documentos.titulo })
 
+  try {
+    const { eliminarNotificacionesDeDocumentosLote } = await import("@/actions/notificaciones")
+    await eliminarNotificacionesDeDocumentosLote(deletedDocs.map((d) => ({ id: d.id, titulo: d.titulo })))
+  } catch {}
+
   await registrarAuditLog({
     usuario: sesion.id,
     accion: `Eliminó permanentemente ${deletedDocs.length} documentos`,
@@ -443,6 +472,7 @@ export async function eliminarDocumentosPermanenteLote(ids: string[]) {
   })
 
   revalidatePath("/documentos")
+  revalidatePath("/")
   return { success: true, count: deletedDocs.length }
 }
 

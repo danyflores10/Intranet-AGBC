@@ -64,6 +64,17 @@ export async function crearComunicado(data: {
 }) {
   const [nuevo] = await db.insert(comunicados).values(data).returning()
   await registrarAuditLog({ usuario: "sistema", accion: `Creó comunicado: ${data.titulo}`, modulo: "Comunicaciones", resultado: "Exitoso" })
+  
+  if (data.estado === "publicado" || !data.estado) {
+    const { crearNotificacionParaTodos } = await import("@/actions/notificaciones")
+    await crearNotificacionParaTodos({
+      titulo: `Nuevo Comunicado: ${data.titulo}`,
+      mensaje: data.contenido.slice(0, 250) + (data.contenido.length > 250 ? "..." : ""),
+      tipo: "comunicado",
+      enlace: "/#comunicados",
+    })
+  }
+
   revalidatePath("/comunicaciones")
   revalidatePath("/")
   return nuevo
@@ -109,6 +120,17 @@ export async function crearBanner(data: {
   activo?: boolean
 }) {
   const [nuevo] = await db.insert(banners).values(data).returning()
+  
+  if (data.activo !== false) {
+    const { crearNotificacionParaTodos } = await import("@/actions/notificaciones")
+    await crearNotificacionParaTodos({
+      titulo: `Nueva Noticia Institucional: ${data.titulo}`,
+      mensaje: (data.descripcion || "Se ha publicado una nueva noticia institucional en la Intranet AGBC.").slice(0, 250),
+      tipo: "sistema",
+      enlace: "/#noticias",
+    })
+  }
+
   revalidatePath("/comunicaciones")
   revalidatePath("/")
   return nuevo
@@ -136,9 +158,34 @@ export async function eliminarBanner(id: string) {
 }
 
 export async function obtenerComunicadosPublicados() {
-  return db.select().from(comunicados)
+  const items = await db.select().from(comunicados)
     .where(eq(comunicados.estado, "publicado"))
     .orderBy(desc(comunicados.createdAt))
+
+  if (items.length === 0) {
+    try {
+      const [nuevo] = await db.insert(comunicados).values({
+        titulo: "Reglamento Interno de Personal (AGBC-RE-001)",
+        contenido:
+          "La Dirección General Ejecutiva de la Agencia Boliviana de Correos recuerda a todo el personal institucional la vigencia y estricto cumplimiento del Reglamento Interno de Personal. Este documento establece los deberes, derechos, régimen disciplinario y normativo aplicable a todos los servidores públicos de la entidad.",
+        tipo: "comunicado",
+        estado: "publicado",
+        destacado: true,
+        fechaPublicacion: new Date().toISOString().split("T")[0],
+        archivoUrl: "/documentos/doc_026_reglamento_interno_de_personal.pdf",
+        archivoNombre: "doc_026_reglamento_interno_de_personal.pdf",
+        archivoTipo: "pdf",
+      }).returning()
+
+      if (nuevo) {
+        return [nuevo]
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  return items
 }
 
 export async function obtenerBannersActivos() {

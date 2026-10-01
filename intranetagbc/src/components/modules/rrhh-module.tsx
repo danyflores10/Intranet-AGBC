@@ -112,6 +112,7 @@ interface PersonalRow {
   email: string | null
   telefono: string | null
   foto: string | null
+  fechaNacimiento?: string | null
   fechaIngreso: string
   estado: string
 }
@@ -142,6 +143,7 @@ interface UsuarioItem {
   institutionalEmail?: string | null
   phoneNumber?: string | null
   avatarUrl?: string | null
+  dateOfBirth?: string | null
 }
 
 interface Props {
@@ -470,6 +472,7 @@ export function RrhhModule({ personal, directivos, usuarios = [], usuarioActual 
           email: email || null,
           telefono: u.phoneNumber || null,
           foto: u.avatarUrl ? cleanImageUrl(u.avatarUrl) : null,
+          fechaNacimiento: u.dateOfBirth ? (u.dateOfBirth.includes("T") ? u.dateOfBirth.split("T")[0] : u.dateOfBirth) : null,
           fechaIngreso: new Date().toISOString().slice(0, 10),
           estado: "activo",
         })
@@ -583,6 +586,7 @@ export function RrhhModule({ personal, directivos, usuarios = [], usuarioActual 
     const fd = new FormData(e.currentTarget)
     startTransition(async () => {
       try {
+        const fechaNacRaw = (fd.get("fechaNacimiento") as string)?.trim()
         const payload = {
           nombre: (fd.get("nombre") as string).trim(),
           cargo: (fd.get("cargo") as string).trim(),
@@ -590,6 +594,7 @@ export function RrhhModule({ personal, directivos, usuarios = [], usuarioActual 
           email: (fd.get("email") as string) ? (fd.get("email") as string).trim() : undefined,
           telefono: (fd.get("telefono") as string) ? (fd.get("telefono") as string).trim() : undefined,
           foto: pFotoUrl || undefined,
+          fechaNacimiento: fechaNacRaw || pEditItem?.fechaNacimiento || undefined,
           fechaIngreso: (fd.get("fechaIngreso") as string) || pEditItem?.fechaIngreso || new Date().toISOString().split("T")[0],
         }
         if (pEditItem) {
@@ -1391,6 +1396,27 @@ export function RrhhModule({ personal, directivos, usuarios = [], usuarioActual 
                 <div className="space-y-1.5">
                   <Label className="text-xs font-bold text-[#002F6C]">Teléfono / Celular</Label>
                   <Input name="telefono" defaultValue={pEditItem?.telefono ?? ""} placeholder="Ej. +591 71234567" className="h-10 text-xs" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-[#002F6C]">Fecha de Nacimiento</Label>
+                  <Input
+                    name="fechaNacimiento"
+                    type="date"
+                    defaultValue={pEditItem?.fechaNacimiento ? (pEditItem.fechaNacimiento.includes("T") ? pEditItem.fechaNacimiento.split("T")[0] : pEditItem.fechaNacimiento) : ""}
+                    className="h-10 text-xs"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-[#002F6C]">Fecha de Ingreso</Label>
+                  <Input
+                    name="fechaIngreso"
+                    type="date"
+                    defaultValue={pEditItem?.fechaIngreso ? (pEditItem.fechaIngreso.includes("T") ? pEditItem.fechaIngreso.split("T")[0] : pEditItem.fechaIngreso) : ""}
+                    className="h-10 text-xs"
+                  />
                 </div>
               </div>
 

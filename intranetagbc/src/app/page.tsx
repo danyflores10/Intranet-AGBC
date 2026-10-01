@@ -2,18 +2,10 @@ import Link from "next/link"
 import Image from "next/image"
 import { headers } from "next/headers"
 import {
-  Shield,
-  Users,
-  Mail,
-  Clock,
   ArrowRight,
   Sparkles,
   MapPin,
   Building2,
-  CalendarDays,
-  Phone,
-  Briefcase,
-  Globe,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -32,8 +24,11 @@ import { obtenerSucursalesActivas } from "@/actions/sucursales"
 import { obtenerPersonal, obtenerDirectivos } from "@/actions/rrhh"
 import { obtenerConfigPorGrupo } from "@/actions/configuracion"
 import { obtenerDocumentos } from "@/actions/documentos"
+import { obtenerCumpleaneros } from "@/actions/cumpleanos"
 import { LoginForm } from "@/components/login-form"
 import { DocumentoObligatorioModal } from "@/components/documento-obligatorio-modal"
+import { NuevoDocumentoModal } from "@/components/nuevo-documento-modal"
+import { CumpleanosDrawer } from "@/components/cumpleanos-drawer"
 
 const defaultSucursales = [
   {
@@ -78,6 +73,7 @@ export default async function HomePage() {
     personalDb,
     documentosDb,
     visibilidadConfig,
+    cumpleanerosData,
   ] = await Promise.all([
     obtenerComunicadosPublicados(),
     obtenerAccesosDirectosActivos(),
@@ -87,6 +83,7 @@ export default async function HomePage() {
     obtenerPersonal(),
     obtenerDocumentos(),
     obtenerConfigPorGrupo("visibilidad_landing"),
+    obtenerCumpleaneros(),
   ])
 
   // Helper para verificar visibilidad de secciones
@@ -140,6 +137,7 @@ export default async function HomePage() {
 
   // Datos para el navbar
   const usuario = {
+    id: session.user.id,
     name: userName || "Funcionario Institucional",
     email: session.user.email || usuarioRbac?.email || "funcionario@correos.gob.bo",
     image: fotoPerfil,
@@ -149,9 +147,17 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-background">
-      {/* ── Modal de Instructivo Obligatorio con Checkbox de Aceptación ── */}
-      {estaLogueado && <DocumentoObligatorioModal />}
+    <main className="min-h-screen bg-mosaico-institucional relative overflow-x-hidden">
+      {/* ── Modal de Instructivo Obligatorio (Primer Ingreso) ── */}
+      {estaLogueado && <DocumentoObligatorioModal usuarioId={session.user.id} />}
+
+      {/* ── Modal de Nuevo Documento Publicado (Activo durante 5 días) ── */}
+      {estaLogueado && (
+        <NuevoDocumentoModal
+          documentos={documentosDb}
+          usuarioId={session.user.id}
+        />
+      )}
 
       {/* ── Navbar ── */}
       <LandingNavbar
@@ -160,61 +166,70 @@ export default async function HomePage() {
         usuario={usuario}
       />
 
-      {/* ── Hero con Personita Mascota 3D de Correos y Textos de Intranet ── */}
-      <section className="relative pt-[80px] bg-gradient-to-b from-white via-slate-50/60 to-white border-b border-slate-100 overflow-hidden">
-        {/* Clean subtle geometric pattern */}
+      {/* ── Módulo Interactivo de Cumpleañeros (Pestaña Lateral Desplegable) ── */}
+      {estaLogueado && (
+        <CumpleanosDrawer
+          cumpleanerosData={cumpleanerosData}
+          usuarioActual={usuario}
+        />
+      )}
+
+      {/* ── Hero Principal Institucional ── */}
+      <section className="relative pt-[84px] pb-12 sm:pb-16 border-b border-slate-200/90 overflow-hidden bg-gradient-to-b from-[#FFFDF0]/90 via-[#F3F7FC]/90 to-[#EAEFF6]/95">
+        {/* Luces y Patrones Geométricos Vivos */}
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(#0E5296_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.035]" />
-          <div className="absolute -top-24 right-1/4 h-[350px] w-[350px] rounded-full bg-[#FFB800]/15 blur-[90px]" />
-          <div className="absolute top-1/2 -left-20 h-[400px] w-[400px] rounded-full bg-[#0E5296]/8 blur-[100px]" />
+          <div className="absolute inset-0 bg-[radial-gradient(#002F6C_1.5px,transparent_1.5px)] [background-size:32px_32px] opacity-[0.08]" />
+          <div className="absolute -top-24 right-1/4 h-[400px] w-[400px] rounded-full bg-gradient-to-br from-[#FFCC00]/30 to-[#FF9E00]/15 blur-[100px]" />
+          <div className="absolute top-1/2 -left-20 h-[450px] w-[450px] rounded-full bg-[#002F6C]/12 blur-[110px]" />
         </div>
 
-        <div className="mx-auto max-w-7xl px-6 pb-16 pt-10 md:pb-24 md:pt-14">
+        <div className="mx-auto max-w-7xl px-6 pt-6 md:pt-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 items-center gap-10 lg:gap-14">
-            {/* Columna Izquierda: Textos y Botón Único (Solo Admin) */}
+            {/* Columna Izquierda: Badge Oficial, Título y Botón Admin */}
             <div className="lg:col-span-7 text-left space-y-6">
-              {/* Badge */}
-              <div className="animate-fade-in-up inline-flex items-center gap-2.5 rounded-full border border-[#FFB800]/40 bg-[#FFB800]/15 px-4 py-1.5 text-xs sm:text-sm font-bold text-[#0E5296] shadow-xs">
+              {/* Badge Oficial */}
+              <div className="inline-flex items-center gap-2.5 rounded-full border-2 border-[#FFCC00] bg-[#FFCC00]/25 px-4 py-1.5 text-xs sm:text-sm font-black text-[#002F6C] shadow-xs backdrop-blur-xs">
                 <Sparkles className="h-4 w-4 text-[#FFB800]" />
-                Intranet AGBC • Agencia Boliviana de Correos
+                <span>Intranet AGBC • Agencia Boliviana de Correos</span>
               </div>
 
-              <h1 className="animate-fade-in-up animation-delay-100 text-3xl font-black tracking-tight sm:text-4xl md:text-5xl lg:text-[3.5rem] leading-[1.1] text-[#0A192F]">
+              {/* Título Principal */}
+              <h1 className="text-3xl font-black tracking-tight sm:text-4xl md:text-5xl lg:text-[3.5rem] leading-[1.12] text-[#002F6C]">
                 El portal digital para todo el equipo postal.
-                <span className="text-[#FFB800] block mt-1.5">
+                <span className="text-[#FFB800] block mt-2 drop-shadow-xs">
                   Conectados en un solo lugar.
                 </span>
               </h1>
 
               {/* Botón: Únicamente para Administrador */}
               {esAdmin && (
-                <div className="animate-fade-in-up animation-delay-300 pt-2">
-                  <Button size="lg" asChild className="h-13 px-8 text-base font-bold bg-[#0E5296] hover:bg-[#003B73] text-white shadow-xl shadow-[#0E5296]/20 border-0 rounded-2xl transition-all hover:scale-[1.02] cursor-pointer">
+                <div className="pt-2">
+                  <Button size="lg" asChild className="h-12 px-8 text-sm font-black bg-[#002F6C] hover:bg-[#0E5296] text-white shadow-xl shadow-[#002F6C]/25 border-0 rounded-2xl transition-all hover:scale-[1.02] cursor-pointer">
                     <Link href="/dashboard">
                       Ir al Panel de Administración
-                      <ArrowRight className="ml-2 h-5 w-5 text-[#FFB800]" />
+                      <ArrowRight className="ml-2 h-4 w-4 text-[#FFCC00]" />
                     </Link>
                   </Button>
                 </div>
               )}
             </div>
 
-            {/* Columna Derecha: Personita Mascota 3D de Correos de Bolivia (Simple, limpia y más grande) */}
+            {/* Columna Derecha: Imagen Mascota 3D de Correos de Bolivia */}
             <div className="lg:col-span-5 flex justify-center lg:justify-end animate-fade-in-up animation-delay-200">
-              <div className="relative w-full max-w-[480px]">
+              <div className="relative w-full max-w-[440px]">
                 {/* Glow decorativo detrás */}
-                <div className="absolute -inset-4 rounded-3xl bg-gradient-to-tr from-[#FFCC00]/25 via-[#0E5296]/15 to-[#0077EE]/15 blur-2xl opacity-70" />
+                <div className="absolute -inset-4 rounded-3xl bg-gradient-to-tr from-[#FFCC00]/35 via-[#002F6C]/15 to-[#0077EE]/20 blur-2xl opacity-80" />
 
-                {/* Imagen limpia de la Mascota */}
-                <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-2.5 shadow-2xl shadow-[#0E5296]/10 group hover:border-[#FFCC00]/80 transition-all duration-500">
-                  <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50/40 via-slate-50 to-blue-50/40">
+                {/* Contenedor con marco institucional de la imagen */}
+                <div className="relative overflow-hidden rounded-3xl border-2 border-[#002F6C]/20 bg-white p-3 shadow-2xl shadow-[#002F6C]/20 group hover:border-[#FFCC00] transition-all duration-500">
+                  <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50/70 via-slate-100 to-blue-50/70">
                     <Image
                       src="/image/mascota_intranet.jpg"
                       alt="Mascota Oficial de Correos de Bolivia - Intranet AGBC"
                       fill
                       priority
-                      className="object-cover transition-transform duration-700 group-hover:scale-103"
-                      sizes="(max-width: 768px) 100vw, 480px"
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, 440px"
                     />
                   </div>
                 </div>
@@ -226,63 +241,92 @@ export default async function HomePage() {
 
       {/* ── 1. Noticias Institucionales (solo logueados) ── */}
       {estaLogueado && seccionVisible("seccion_banners") && bannersDb.length > 0 && (
-        <LandingNoticias noticias={bannersDb.map((n) => ({
-          id: n.id,
-          titulo: n.titulo,
-          descripcion: n.descripcion,
-          imagen: n.imagen,
-          imagenes: n.imagenes,
-          enlace: n.enlace,
-          createdAt: n.createdAt instanceof Date ? n.createdAt.toISOString() : new Date(n.createdAt).toISOString(),
-        }))} />
+        <>
+          <LandingNoticias noticias={bannersDb.map((n) => ({
+            id: n.id,
+            titulo: n.titulo,
+            descripcion: n.descripcion,
+            imagen: n.imagen,
+            imagenes: n.imagenes,
+            enlace: n.enlace,
+            createdAt: n.createdAt instanceof Date ? n.createdAt.toISOString() : new Date(n.createdAt).toISOString(),
+          }))} />
+          <div className="separador-institucional max-w-7xl mx-auto" />
+        </>
       )}
 
       {/* ── 2. Comunicados Oficiales ── */}
-      {seccionVisible("seccion_comunicados") && <LandingComunicados estaLogueado={estaLogueado} comunicados={comunicadosDb.map(c => ({
-        id: c.id,
-        titulo: c.titulo,
-        contenido: c.contenido,
-        fecha: c.createdAt instanceof Date ? c.createdAt.toISOString().split("T")[0] : new Date(c.createdAt).toISOString().split("T")[0],
-        estado: c.estado as "publicado",
-        destacado: c.destacado,
-        archivoUrl: c.archivoUrl,
-        archivoNombre: c.archivoNombre,
-        archivoTipo: c.archivoTipo,
-      }))} />}
+      {seccionVisible("seccion_comunicados") && (
+        <>
+          <LandingComunicados estaLogueado={estaLogueado} comunicados={comunicadosDb.map(c => ({
+            id: c.id,
+            titulo: c.titulo,
+            contenido: c.contenido,
+            fecha: c.createdAt instanceof Date ? c.createdAt.toISOString().split("T")[0] : new Date(c.createdAt).toISOString().split("T")[0],
+            estado: c.estado as "publicado",
+            destacado: c.destacado,
+            archivoUrl: c.archivoUrl,
+            archivoNombre: c.archivoNombre,
+            archivoTipo: c.archivoTipo,
+          }))} />
+          <div className="separador-institucional max-w-7xl mx-auto" />
+        </>
+      )}
 
       {/* ── 3. Documentos Institucionales & Normativas (Priorizado) ── */}
       {estaLogueado && seccionVisible("seccion_documentos") && (
-        <LandingDocumentos documentos={documentosDb} />
+        <>
+          <LandingDocumentos documentos={documentosDb} />
+          <div className="separador-institucional max-w-7xl mx-auto" />
+        </>
       )}
 
       {/* ── 4. Aplicaciones y Sistemas (Accesos Directos) ── */}
       {estaLogueado && seccionVisible("seccion_aplicaciones") && (
-        <LandingAccesos accesos={accesosDirectos.map(a => ({
-          clave: a.clave,
-          titulo: a.titulo,
-          descripcion: a.descripcion,
-          url: a.url,
-          imagen: a.imagen,
-          categoria: a.categoria,
-        }))} />
+        <>
+          <LandingAccesos accesos={accesosDirectos.map(a => ({
+            clave: a.clave,
+            titulo: a.titulo,
+            descripcion: a.descripcion,
+            url: a.url,
+            imagen: a.imagen,
+            categoria: a.categoria,
+          }))} />
+          <div className="separador-institucional max-w-7xl mx-auto" />
+        </>
       )}
 
       {/* ── 5. Directorio Institucional – Carrusel 3D (solo logueados) ── */}
       {estaLogueado && seccionVisible("seccion_directorio") && (() => {
         const dirActivos = directivosDb.filter((d) => d.estado === "activo")
         if (dirActivos.length === 0) return null
-        return <LandingDirectorio directivos={dirActivos} />
+        return (
+          <>
+            <LandingDirectorio directivos={dirActivos} />
+            <div className="separador-institucional max-w-7xl mx-auto" />
+          </>
+        )
       })()}
 
       {/* ── 6. Nuestro Equipo – Carrusel 3D (solo logueados) ── */}
       {estaLogueado && seccionVisible("seccion_equipo") && (() => {
         const equipoActivo = personalDb.filter((p) => p.estado === "activo")
         if (equipoActivo.length === 0) return null
-        return <LandingPersonal personal={equipoActivo} />
+        return (
+          <>
+            <LandingPersonal personal={equipoActivo} />
+            <div className="separador-institucional max-w-7xl mx-auto" />
+          </>
+        )
       })()}
 
       {/* ── 7. Mapa de Cobertura y Oficinas (solo logueados) ── */}
-      {estaLogueado && seccionVisible("seccion_mapa") && <BoliviaMap sucursalesDb={sucursalesDb} />}
+      {estaLogueado && seccionVisible("seccion_mapa") && (
+        <>
+          <BoliviaMap sucursalesDb={sucursalesDb} />
+          <div className="separador-institucional max-w-7xl mx-auto" />
+        </>
+      )}
 
       {/* ── Carrusel de Sucursales debajo del mapa (solo logueados) ── */}
       {estaLogueado && seccionVisible("seccion_sucursales") && (

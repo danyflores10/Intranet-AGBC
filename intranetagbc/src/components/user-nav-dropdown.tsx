@@ -141,11 +141,25 @@ export function UserNavDropdown({ usuario: propUser, esAdmin: propEsAdmin, class
       }
     }
 
+    const handleOpenPerfil = () => {
+      setIsOpen(false)
+      setIsPerfilModalOpen(true)
+    }
+
+    const handleClosePerfil = () => {
+      setIsPerfilModalOpen(false)
+    }
+
     document.addEventListener("mousedown", handleClickOutside)
     document.addEventListener("keydown", handleKeyDown)
+    window.addEventListener("agbc:open-perfil-dialog", handleOpenPerfil)
+    window.addEventListener("agbc:close-perfil-dialog", handleClosePerfil)
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
       document.removeEventListener("keydown", handleKeyDown)
+      window.removeEventListener("agbc:open-perfil-dialog", handleOpenPerfil)
+      window.removeEventListener("agbc:close-perfil-dialog", handleClosePerfil)
     }
   }, [])
 
@@ -167,9 +181,10 @@ export function UserNavDropdown({ usuario: propUser, esAdmin: propEsAdmin, class
   return (
     <>
       <div ref={containerRef} className={`relative inline-block text-left ${className}`}>
-        {/* ── BOTÓN TRIGGER PRINCIPAL (COMPACTO, ELEGANTE, SOLO CLICK) ── */}
+        {/* ── BOTÓN TRIGGER PRINCIPAL (COMPACTO, ELEGANTE, SOLO CLICK, SPOTLIGHT TOUR TARGET) ── */}
         <button
           type="button"
+          data-tour="navbar-user"
           onClick={toggleDropdown}
           aria-expanded={isOpen}
           aria-haspopup="true"

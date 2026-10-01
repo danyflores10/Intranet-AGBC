@@ -88,7 +88,9 @@ export async function sincronizarPersonalConUsuarioIndividual(
       : "Correos2026!"
 
     const hashedPassword = await authContext.password.hash(passwordAEstablecer)
-    const dateOfBirth = p.fechaIngreso && /^\d{4}-\d{2}-\d{2}$/.test(p.fechaIngreso)
+    const dateOfBirth = p.fechaNacimiento && /^\d{4}-\d{2}-\d{2}$/.test(p.fechaNacimiento)
+      ? p.fechaNacimiento
+      : p.fechaIngreso && /^\d{4}-\d{2}-\d{2}$/.test(p.fechaIngreso)
       ? p.fechaIngreso
       : "1995-01-01"
     const isActive = p.estado === "activo"
@@ -102,18 +104,24 @@ export async function sincronizarPersonalConUsuarioIndividual(
 
     if (usrExistente) {
       // Actualizar usuario existente
+      const updateData: any = {
+        firstName,
+        lastNamePaternal,
+        lastNameMaternal,
+        institutionalEmail: emailNorm,
+        email: emailNorm,
+        isActive,
+        image: cleanImageUrl(p.foto) || usrExistente.image,
+        updatedAt: new Date(),
+      }
+
+      if (p.fechaNacimiento && /^\d{4}-\d{2}-\d{2}$/.test(p.fechaNacimiento)) {
+        updateData.dateOfBirth = p.fechaNacimiento
+      }
+
       await db
         .update(users)
-        .set({
-          firstName,
-          lastNamePaternal,
-          lastNameMaternal,
-          institutionalEmail: emailNorm,
-          email: emailNorm,
-          isActive,
-          image: cleanImageUrl(p.foto) || usrExistente.image,
-          updatedAt: new Date(),
-        })
+        .set(updateData)
         .where(eq(users.id, usrExistente.id))
 
       // Actualizar o insertar cuenta de credenciales

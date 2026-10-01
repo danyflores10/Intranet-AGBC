@@ -33,6 +33,7 @@ interface PersonalRow {
   email: string | null
   telefono: string | null
   foto: string | null
+  fechaNacimiento?: string | null
   fechaIngreso?: string
   estado?: string
 }
@@ -74,6 +75,9 @@ export function RrhhExcelDialog({ open, onClose, personal, onImportSuccess }: Pr
       const timestamp = new Date().toISOString().slice(0, 10)
 
       const rowsData = personal.map((p) => {
+        const fechaNacimientoFormateada = p.fechaNacimiento
+          ? (p.fechaNacimiento.includes("T") ? p.fechaNacimiento.split("T")[0] : p.fechaNacimiento)
+          : ""
         const fechaIngresoFormateada = p.fechaIngreso
           ? (p.fechaIngreso.includes("T") ? p.fechaIngreso.split("T")[0] : p.fechaIngreso)
           : ""
@@ -83,6 +87,7 @@ export function RrhhExcelDialog({ open, onClose, personal, onImportSuccess }: Pr
           p.cargo || "Personal",
           p.email || "",
           p.telefono || "",
+          fechaNacimientoFormateada,
           fechaIngresoFormateada,
           (p.estado || "activo").toUpperCase(),
         ]
@@ -94,6 +99,7 @@ export function RrhhExcelDialog({ open, onClose, personal, onImportSuccess }: Pr
           "CARGO / PUESTO",
           "CORREO ELECTRÓNICO",
           "TELÉFONO",
+          "FECHA DE NACIMIENTO (AAAA-MM-DD)",
           "FECHA DE INGRESO (AAAA-MM-DD)",
           "ESTADO",
         ],
@@ -107,7 +113,8 @@ export function RrhhExcelDialog({ open, onClose, personal, onImportSuccess }: Pr
         { wch: 28 }, // Cargo
         { wch: 32 }, // Correo
         { wch: 18 }, // Teléfono
-        { wch: 24 }, // Fecha Ingreso
+        { wch: 26 }, // Fecha Nacimiento
+        { wch: 26 }, // Fecha Ingreso
         { wch: 14 }, // Estado
       ]
 
@@ -202,7 +209,8 @@ export function RrhhExcelDialog({ open, onClose, personal, onImportSuccess }: Pr
         const cargoIdx = findColIndex(/cargo|puesto|item|ocupacion|funcion/)
         const emailIdx = findColIndex(/correo|email|institucional|mail/)
         const telefonoIdx = findColIndex(/telefono|celular|contacto|movil/)
-        const fechaIdx = findColIndex(/fecha|ingreso|alta|incorporaci/)
+        const fechaNacIdx = findColIndex(/nacimiento|natalicio|cumplean|birth/)
+        const fechaIdx = findColIndex(/ingreso|incorporaci|contrataci|\balta\b/)
         const estadoIdx = findColIndex(/estado|situacion|condicion/)
 
         const normalized: ImportPersonalRecord[] = []
@@ -220,6 +228,8 @@ export function RrhhExcelDialog({ open, onClose, personal, onImportSuccess }: Pr
           const cargo = String(getVal(cargoIdx)).trim()
           const email = String(getVal(emailIdx)).trim()
           const telefono = String(getVal(telefonoIdx)).trim()
+          const fechaNacRaw = getVal(fechaNacIdx)
+          const fechaNacimiento = parseDate(fechaNacRaw)
           const fechaRaw = getVal(fechaIdx)
           const fechaIngreso = parseDate(fechaRaw)
           const estado = String(getVal(estadoIdx)).trim()
@@ -246,6 +256,7 @@ export function RrhhExcelDialog({ open, onClose, personal, onImportSuccess }: Pr
             cargo: cargo || undefined,
             email: email && email !== "Sin asignar" && email.includes("@") ? email : undefined,
             telefono: telefono && telefono !== "Sin asignar" ? telefono : undefined,
+            fechaNacimiento: fechaNacimiento || undefined,
             fechaIngreso: fechaIngreso || undefined,
             estado: estado || undefined,
           })

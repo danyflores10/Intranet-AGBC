@@ -704,7 +704,7 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
       <DocumentosTourTutorial
         open={tourOpen}
         onClose={() => setTourOpen(false)}
-        onSelectDoc={(query) => {
+        onSelectDoc={(query: string) => {
           const doc = docsPublicados.find(d => d.titulo.toLowerCase().includes(query.toLowerCase()) || (d.categoria && d.categoria.toLowerCase().includes(query.toLowerCase()))) || docsPublicados[0]
           if (doc) setViewingDoc(doc)
         }}

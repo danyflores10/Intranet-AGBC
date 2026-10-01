@@ -13,6 +13,7 @@ import {
   Home,
   LayoutDashboard,
   LifeBuoy,
+  Mail,
   MapPin,
   Megaphone,
   Settings2,
@@ -129,6 +130,15 @@ export const sidebarData: {
               PERMISOS.ACCESOS.VER,
               PERMISOS.CONTENIDOS.VER,
             ],
+          },
+        },
+        {
+          title: "Mensajería",
+          url: "/mensajeria",
+          icon: Mail,
+          tourKey: "mensajeria",
+          access: {
+            roles: ["administrador", "Administrador"],
           },
         },
         {
