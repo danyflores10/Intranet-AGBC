@@ -1363,7 +1363,7 @@ export function RrhhModule({ personal, directivos, usuarios = [], usuarioActual 
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-600 leading-snug">
-                    📧 Al hacer clic en <strong>Guardar Funcionario</strong>, se enviará automáticamente un correo a su dirección <strong className="text-[#002F6C]">@correos.gob.bo</strong> con su usuario, contraseña (<span className="font-mono text-[#0E5296]">Correos2026!</span>) y el enlace de inicio de sesión: <span className="font-mono font-bold text-[#0E5296]">https://intranet.correos.gob.bo:8122/</span>.
+                    📧 Al hacer clic en <strong>Guardar Funcionario</strong>, se enviará automáticamente un correo a su dirección <strong className="text-[#002F6C]">@correos.gob.bo</strong> con su usuario, contraseña (<span className="font-mono text-[#0E5296]">Correos2026!</span>) y el enlace de inicio de sesión: <span className="font-mono font-bold text-[#0E5296]">https://intranet.correos.gob.bo/</span>.
                   </p>
                 </div>
               )}
@@ -1923,7 +1923,7 @@ export function RrhhModule({ personal, directivos, usuarios = [], usuarioActual 
                   <ul className="list-disc list-inside space-y-1 text-slate-600 text-[11px]">
                     <li>Usuario / Correo institucional</li>
                     <li>Contraseña de acceso inicial/temporal</li>
-                    <li>Botón y enlace directo al sistema: <span className="font-mono text-xs text-blue-800">https://intranet.correos.gob.bo:8122/</span></li>
+                    <li>Botón y enlace directo al sistema: <span className="font-mono text-xs text-blue-800">https://intranet.correos.gob.bo/</span></li>
                     <li>Aviso de recomendación de cambio de contraseña</li>
                   </ul>
                 </div>

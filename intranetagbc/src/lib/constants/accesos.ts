@@ -46,7 +46,7 @@ export const ACCESOS_DIRECTOS_DEFAULT: AccesoDirectoRow[] = [
     clave: "default_intranet",
     titulo: "INTRANET AGBC",
     descripcion: "Portal centralizado de servicios internos, noticias y recursos humanos.",
-    url: "https://intranet.correos.gob.bo:8122/",
+    url: "https://intranet.correos.gob.bo/",
     categoria: "Links Internos",
     activo: true,
     imagen: "/image/accesos/intranet_portal.jpg",

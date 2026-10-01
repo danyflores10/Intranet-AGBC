@@ -43,7 +43,7 @@ const SISTEMAS_UI = [
     headerColor: "#002F6C",
     accentColor: "#FFCC00",
     badge: "PORTAL INTERNO",
-    urlBar: "https://intranet.correos.gob.bo:8122",
+    urlBar: "https://intranet.correos.gob.bo",
     type: "dashboard",
     formTitle: "Panel de Control y Recursos Humanos",
     icon: "🏢",

@@ -25,7 +25,7 @@ export function getEmailConfig() {
   const fromName = process.env.MAIL_FROM_NAME || "Correos de Bolivia"
   const from = `"${fromName}" <${fromAddress}>`
 
-  const appUrl = (process.env.APP_URL || process.env.NEXTAUTH_URL || process.env.BETTER_AUTH_URL || "https://intranet.correos.gob.bo:8122").replace(/\/$/, "")
+  const appUrl = (process.env.APP_URL || process.env.NEXTAUTH_URL || process.env.BETTER_AUTH_URL || "https://intranet.correos.gob.bo").replace(/\/$/, "")
 
   return {
     host,
