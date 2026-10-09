@@ -39,6 +39,7 @@ import {
   CheckSquareIcon,
   SquareIcon,
   CheckIcon,
+  ShieldCheckIcon,
 } from "lucide-react"
 import toast from "react-hot-toast"
 
@@ -50,6 +51,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { RrhhExcelDialog } from "@/components/rrhh/rrhh-excel-dialog"
+import { RrhhAuditoriaDialog } from "@/components/rrhh/rrhh-auditoria-dialog"
 import {
   crearPersonal,
   actualizarPersonal,
@@ -252,6 +254,7 @@ export function RrhhModule({ personal, directivos, usuarios = [], usuarioActual 
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 8
   const [excelDialogOpen, setExcelDialogOpen] = useState(false)
+  const [auditoriaDialogOpen, setAuditoriaDialogOpen] = useState(false)
 
   const [isPending, startTransition] = useTransition()
 
@@ -926,14 +929,24 @@ export function RrhhModule({ personal, directivos, usuarios = [], usuarioActual 
 
           <div className="flex flex-wrap items-center gap-2 w-full md:w-auto shrink-0">
             {tab === "personal" && (
-              <button
-                onClick={() => setExcelDialogOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white px-3.5 py-2 text-xs font-bold shadow-sm shadow-emerald-600/20 transition-all cursor-pointer"
-                title="Importar y Exportar Nómina en Excel (RRHH)"
-              >
-                <FileSpreadsheetIcon className="h-3.5 w-3.5 text-[#FFCC00]" />
-                Excel (Importar / Exportar)
-              </button>
+              <>
+                <button
+                  onClick={() => setExcelDialogOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white px-3.5 py-2 text-xs font-bold shadow-sm shadow-emerald-600/20 transition-all cursor-pointer"
+                  title="Importar y Exportar Nómina en Excel (RRHH)"
+                >
+                  <FileSpreadsheetIcon className="h-3.5 w-3.5 text-[#FFCC00]" />
+                  Excel (Importar / Exportar)
+                </button>
+                <button
+                  onClick={() => setAuditoriaDialogOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#002F6C] to-[#0E5296] hover:from-[#00204d] hover:to-[#002F6C] text-white px-3.5 py-2 text-xs font-bold shadow-sm shadow-blue-900/20 transition-all cursor-pointer border border-[#FFCC00]/30"
+                  title="Auditoría de Lectura Obligatoria y Accesos al Sistema"
+                >
+                  <ShieldCheckIcon className="h-3.5 w-3.5 text-[#FFCC00]" />
+                  Control de Lectura & Accesos
+                </button>
+              </>
             )}
             <span className="text-xs font-bold text-[#0E5296] bg-white/80 border border-[#0E5296]/20 px-3 py-1.5 rounded-xl shadow-2xs">
               {currentList.length} encontrados
@@ -2043,6 +2056,12 @@ export function RrhhModule({ personal, directivos, usuarios = [], usuarioActual 
           setHasImportedSnapshot(true)
           router.refresh()
         }}
+      />
+
+      {/* ── Modal de Auditoría de Lectura Obligatoria y Accesos al Sistema ── */}
+      <RrhhAuditoriaDialog
+        open={auditoriaDialogOpen}
+        onClose={() => setAuditoriaDialogOpen(false)}
       />
     </div>
   )

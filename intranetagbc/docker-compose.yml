@@ -1,0 +1,34 @@
+services:
+  intranetagbc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: intranetagbc_app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: "0.0.0.0"
+      APP_URL: "https://intranet.correos.gob.bo"
+      BETTER_AUTH_URL: "https://intranet.correos.gob.bo"
+      BETTER_AUTH_SECRET: "${BETTER_AUTH_SECRET:-f98a28e3b5d27c6a99268f7b11e2f47c94d6e902b378c2e718d09a25b1f092e4}"
+      DATABASE_URL: "${DATABASE_URL:-postgresql://postgres:postgres@db:5432/intranetagbc}"
+
+      # ── Configuración SMTP Institucional — Zimbra Correos de Bolivia ──
+      MAIL_MAILER: smtp
+      MAIL_HOST: zimbra.correos.gob.bo
+      MAIL_PORT: 587
+      MAIL_USERNAME: "${MAIL_USERNAME:-noreply@correos.gob.bo}"
+      MAIL_PASSWORD: "${MAIL_PASSWORD:-Correos.2026}"
+      MAIL_ENCRYPTION: tls
+      MAIL_FROM_ADDRESS: "noreply@correos.gob.bo"
+      MAIL_FROM_NAME: "Correos de Bolivia"
+
+      # ── Variables de compatibilidad directa SMTP_* ──
+      SMTP_HOST: zimbra.correos.gob.bo
+      SMTP_PORT: 587
+      SMTP_USER: "${SMTP_USER:-noreply@correos.gob.bo}"
+      SMTP_PASS: "${SMTP_PASS:-Correos.2026}"
+      SMTP_FROM: "noreply@correos.gob.bo"

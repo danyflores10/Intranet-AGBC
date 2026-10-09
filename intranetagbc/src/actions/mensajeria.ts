@@ -205,17 +205,24 @@ export async function enviarMensajeMasivo(data: EnviarMensajeMasivoInput): Promi
       }
     })
 
-    // Despacho de correos electrónicos en segundo plano
-    sendMensajeriaMasivaEmail({
-      destinatarios: destinatariosEmail,
-      asunto,
-      mensaje,
-      tipo: data.tipo,
-      remitenteNombre: usuarioActual.name || "Dirección General AGBC",
-      adjunto: data.adjunto,
-    }).catch((err) => {
+    // Despacho de correos electrónicos
+    let emailAviso = ""
+    try {
+      const resEmail = await sendMensajeriaMasivaEmail({
+        destinatarios: destinatariosEmail,
+        asunto,
+        mensaje,
+        tipo: data.tipo,
+        remitenteNombre: usuarioActual.name || "Dirección General AGBC",
+        adjunto: data.adjunto,
+      })
+      if (resEmail?.sinCredenciales) {
+        emailAviso = " (Aviso: Credenciales SMTP de Zimbra no configuradas en el servidor. Configure SMTP_USER y SMTP_PASS para correos externos)."
+      }
+    } catch (err: any) {
       console.error("Error al procesar envío masivo de correos:", err)
-    })
+      emailAviso = " (Aviso: Inconveniente temporal con el servidor SMTP externo)."
+    }
 
     // 3. Auditoría institucional
     await registrarAuditLog({
@@ -240,7 +247,7 @@ export async function enviarMensajeMasivo(data: EnviarMensajeMasivoInput): Promi
 
     return {
       success: true,
-      message: `Mensaje masivo despachado exitosamente a ${targetUsers.length} usuario(s) por notificación interna y correo oficial.`,
+      message: `Mensaje masivo despachado exitosamente a ${targetUsers.length} usuario(s) por notificación interna.${emailAviso}`,
       count: targetUsers.length,
     }
   } catch (error) {

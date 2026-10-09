@@ -27,6 +27,7 @@ import { obtenerDocumentos } from "@/actions/documentos"
 import { obtenerCumpleaneros } from "@/actions/cumpleanos"
 import { LoginForm } from "@/components/login-form"
 import { DocumentoObligatorioModal } from "@/components/documento-obligatorio-modal"
+import { DocumentInteractiveTour } from "@/components/document-interactive-tour"
 import { NuevoDocumentoModal } from "@/components/nuevo-documento-modal"
 import { CumpleanosDrawer } from "@/components/cumpleanos-drawer"
 
@@ -150,6 +151,9 @@ export default async function HomePage() {
     <main className="min-h-screen bg-mosaico-institucional relative overflow-x-hidden">
       {/* ── Modal de Instructivo Obligatorio (Primer Ingreso) ── */}
       {estaLogueado && <DocumentoObligatorioModal usuarioId={session.user.id} />}
+
+      {/* ── Tutorial Interactivo Guiado de Inducción con Foco y Oscurecimiento ── */}
+      {estaLogueado && <DocumentInteractiveTour />}
 
       {/* ── Modal de Nuevo Documento Publicado (Activo durante 5 días) ── */}
       {estaLogueado && (

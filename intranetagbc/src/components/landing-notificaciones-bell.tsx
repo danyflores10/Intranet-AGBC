@@ -38,6 +38,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import toast from "react-hot-toast"
 import Link from "next/link"
+import { getSocket } from "@/lib/socket"
 
 export interface NotificacionItem {
   id: string
@@ -105,6 +106,38 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
 
   useEffect(() => {
     cargarNotificaciones()
+  }, [usuarioId])
+
+  // Realtime Socket Sync con chime
+  useEffect(() => {
+    if (!usuarioId) return
+    const socket = getSocket()
+    const onAny = () => {
+      void cargarNotificaciones()
+    }
+    const onNew = () => {
+      try {
+        const audio = new Audio("/mp3/notificaciones.mp3")
+        audio.play().catch(() => {})
+      } catch {}
+      void cargarNotificaciones()
+    }
+
+    socket.emit("user:join", usuarioId)
+    socket.on("connect", onAny)
+    socket.on("notification:new", onNew)
+    socket.on("notification:read", onAny)
+    socket.on("notification:read-all", onAny)
+    socket.on("notification:delete", onAny)
+
+    return () => {
+      socket.emit("user:leave", usuarioId)
+      socket.off("connect", onAny)
+      socket.off("notification:new", onNew)
+      socket.off("notification:read", onAny)
+      socket.off("notification:read-all", onAny)
+      socket.off("notification:delete", onAny)
+    }
   }, [usuarioId])
 
   // Recargar al abrir la bandeja

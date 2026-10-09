@@ -5,8 +5,7 @@ import { Eye } from "lucide-react"
 import { AppSidebar } from "@/components/sidebar/app-sidebar"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { obtenerUsuarioRbacActual } from "@/lib/auth/session-access"
-import { obtenerNotificacionesUsuario, contarNotificacionesNoLeidas } from "@/actions/notificaciones"
-import { NotificacionesBell } from "@/components/notificaciones-bell"
+import { LandingNotificacionesBell } from "@/components/landing-notificaciones-bell"
 
 type AdminLayoutProps = Readonly<{
   children: React.ReactNode
@@ -18,11 +17,6 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
   if (!usuario) {
     redirect("/")
   }
-
-  const [notificaciones, countNoLeidas] = await Promise.all([
-    obtenerNotificacionesUsuario(usuario.id),
-    contarNotificacionesNoLeidas(usuario.id),
-  ])
 
   return (
     <SidebarProvider>
@@ -44,10 +38,9 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
               <Eye className="h-4 w-4 text-[#FFCC00]" />
               <span className="hidden sm:inline">Ver Intranet Pública</span>
             </Link>
-            <NotificacionesBell
+            <LandingNotificacionesBell
               usuarioId={usuario.id}
-              notificacionesIniciales={notificaciones}
-              countInicial={countNoLeidas}
+              esAdmin={true}
             />
           </div>
         </header>

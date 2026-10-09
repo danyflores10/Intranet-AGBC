@@ -447,7 +447,7 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {paginatedDocs.map((doc) => {
+              {paginatedDocs.map((doc, idx) => {
                 const color = getFileColor(doc.tipoArchivo)
                 const IconComponent = getFileIcon(doc.tipoArchivo)
                 const tamano = formatTamano(doc.tamano)
@@ -458,6 +458,7 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                 return (
                   <div
                     key={doc.id}
+                    data-tour-doc={idx}
                     className="group relative flex flex-col justify-between overflow-hidden rounded-3xl bg-card border-2 border-border/60 shadow-xs hover:shadow-xl hover:shadow-[#0E5296]/10 hover:border-[#0E5296]/40 transition-all duration-300 hover:-translate-y-1"
                   >
                     {/* Badge de Prioridad en la Esquina Superior Derecha */}

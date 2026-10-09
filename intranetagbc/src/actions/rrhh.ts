@@ -976,3 +976,165 @@ export async function confirmarCambiosImportacionRRHH() {
   }
 }
 
+/* ═══════════════════════ AUDITORÍA DE PRIMER INGRESO Y LECTURA OBLIGATORIA ═══════════════════════ */
+
+export type AuditoriaFuncionarioAcceso = {
+  usuarioId: string
+  nombreCompleto: string
+  email: string
+  cargo: string
+  unidad: string
+  foto: string | null
+  haLeidoDocumento: boolean
+  fechaLecturaDocumento: string | null
+  haIniciadoSesion: boolean
+  primerIngreso: string | null
+  ultimaConexion: string | null
+  ipUltimaConexion: string | null
+}
+
+export async function obtenerAuditoriaLecturaYAccesos(): Promise<{
+  success: boolean
+  data: AuditoriaFuncionarioAcceso[]
+  resumen: {
+    total: number
+    lecturaConfirmada: number
+    lecturaPendiente: number
+    conIngreso: number
+    sinIngreso: number
+  }
+}> {
+  try {
+    const [usuariosDb, personalDb, progresoDb, sesionesDb] = await Promise.all([
+      db.select().from(users),
+      db.select().from(personal),
+      db.select().from(onboardingProgreso),
+      db.select().from(session),
+    ])
+
+    // Mapa de personal por email normalizado
+    const personalMap = new Map<string, typeof personalDb[0]>()
+    for (const p of personalDb) {
+      if (p.email) personalMap.set(p.email.toLowerCase().trim(), p)
+    }
+
+    // Mapa de progreso de onboarding por usuarioId
+    const progresoMap = new Map<string, typeof progresoDb[0]>()
+    for (const prog of progresoDb) {
+      progresoMap.set(prog.usuarioId, prog)
+    }
+
+    // Mapa de sesiones por usuarioId para determinar primer ingreso y última conexión
+    type SesionResumen = { primerIngreso: Date; ultimaConexion: Date; ip: string | null }
+    const sesionesMap = new Map<string, SesionResumen>()
+    for (const s of sesionesDb) {
+      const prev = sesionesMap.get(s.userId)
+      const sCreatedAt = new Date(s.createdAt)
+      const sUpdatedAt = s.updatedAt ? new Date(s.updatedAt) : sCreatedAt
+      if (!prev) {
+        sesionesMap.set(s.userId, {
+          primerIngreso: sCreatedAt,
+          ultimaConexion: sUpdatedAt > sCreatedAt ? sUpdatedAt : sCreatedAt,
+          ip: s.ipAddress || null,
+        })
+      } else {
+        if (sCreatedAt < prev.primerIngreso) prev.primerIngreso = sCreatedAt
+        const masReciente = sUpdatedAt > sCreatedAt ? sUpdatedAt : sCreatedAt
+        if (masReciente > prev.ultimaConexion) {
+          prev.ultimaConexion = masReciente
+          if (s.ipAddress) prev.ip = s.ipAddress
+        }
+      }
+    }
+
+    const data: AuditoriaFuncionarioAcceso[] = usuariosDb.map((u) => {
+      const apPaterno = u.lastNamePaternal || ""
+      const apMaterno = u.lastNameMaternal ? ` ${u.lastNameMaternal}` : ""
+      const nombreCompleto = `${u.firstName} ${apPaterno}${apMaterno}`.trim()
+      const email = (u.institutionalEmail || u.email || "").toLowerCase().trim()
+      const infoPersonal = personalMap.get(email)
+
+      const prog = progresoMap.get(u.id)
+      const haLeidoDocumento = prog?.estado === "completado" || Boolean(prog?.completadoEn)
+      const fechaLecturaDocumento = prog?.completadoEn ? new Date(prog.completadoEn).toISOString() : null
+
+      const sesionInfo = sesionesMap.get(u.id)
+      const haIniciadoSesion = Boolean(sesionInfo)
+      const primerIngreso = sesionInfo ? sesionInfo.primerIngreso.toISOString() : null
+      const ultimaConexion = sesionInfo ? sesionInfo.ultimaConexion.toISOString() : null
+
+      return {
+        usuarioId: u.id,
+        nombreCompleto,
+        email,
+        cargo: infoPersonal?.cargo || "Funcionario Institucional",
+        unidad: infoPersonal?.unidad || "Personal General",
+        foto: u.image || infoPersonal?.foto || null,
+        haLeidoDocumento,
+        fechaLecturaDocumento,
+        haIniciadoSesion,
+        primerIngreso,
+        ultimaConexion,
+        ipUltimaConexion: sesionInfo?.ip || null,
+      }
+    })
+
+    // Ordenar: primero pendientes de lectura, luego más recientes
+    data.sort((a, b) => {
+      if (!a.haLeidoDocumento && b.haLeidoDocumento) return -1
+      if (a.haLeidoDocumento && !b.haLeidoDocumento) return 1
+      return (b.ultimaConexion || "").localeCompare(a.ultimaConexion || "")
+    })
+
+    const total = data.length
+    const lecturaConfirmada = data.filter((d) => d.haLeidoDocumento).length
+    const lecturaPendiente = total - lecturaConfirmada
+    const conIngreso = data.filter((d) => d.haIniciadoSesion).length
+    const sinIngreso = total - conIngreso
+
+    return {
+      success: true,
+      data,
+      resumen: {
+        total,
+        lecturaConfirmada,
+        lecturaPendiente,
+        conIngreso,
+        sinIngreso,
+      },
+    }
+  } catch (error) {
+    console.error("Error al obtener auditoría de accesos y lectura:", error)
+    return {
+      success: false,
+      data: [],
+      resumen: { total: 0, lecturaConfirmada: 0, lecturaPendiente: 0, conIngreso: 0, sinIngreso: 0 },
+    }
+  }
+}
+
+export async function reiniciarLecturaUsuarioAction(usuarioId: string) {
+  try {
+    const sesion = await obtenerSesionConAccesoActual()
+    if (!sesion?.id) {
+      return { success: false, message: "No autorizado" }
+    }
+
+    await db
+      .update(onboardingProgreso)
+      .set({ estado: "pendiente", completadoEn: null })
+      .where(eq(onboardingProgreso.usuarioId, usuarioId))
+
+    revalidatePath("/rrhh")
+    revalidatePath("/")
+
+    return {
+      success: true,
+      message: "Se ha reiniciado el requisito de lectura obligatoria para este funcionario.",
+    }
+  } catch (error) {
+    console.error("Error al reiniciar lectura de usuario:", error)
+    return { success: false, message: "Error al reiniciar estado de lectura" }
+  }
+}
+

@@ -44,21 +44,28 @@ export function getEmailConfig() {
 export function createTransporter() {
   const config = getEmailConfig()
 
-  return nodemailer.createTransport({
+  const transportOptions: any = {
     host: config.host,
     port: config.port,
     secure: config.secure,
-    auth: {
-      user: config.user,
-      pass: config.pass,
-    },
     tls: {
       rejectUnauthorized: false, // Permite compatibilidad con certificados institucionales Zimbra
     },
     connectionTimeout: 15000,
     greetingTimeout: 15000,
     socketTimeout: 20000,
-  })
+  }
+
+  // IMPORTANTE: Solo incluir auth si user y pass existen y no están vacíos
+  // Si se pasa auth con strings vacíos, Nodemailer fuerza el mecanismo PLAIN y lanza 'Missing credentials for "PLAIN"'
+  if (config.user && config.user.trim().length > 0 && config.pass && config.pass.trim().length > 0) {
+    transportOptions.auth = {
+      user: config.user.trim(),
+      pass: config.pass.trim(),
+    }
+  }
+
+  return nodemailer.createTransport(transportOptions)
 }
 
 // Registro en base de datos de envíos de correo
@@ -641,7 +648,7 @@ export async function sendMensajeriaMasivaEmail({
   tipo?: string
   remitenteNombre?: string
   adjunto?: AdjuntoMensajeria | null
-}): Promise<{ enviados: number; fallidos: number }> {
+}): Promise<{ enviados: number; fallidos: number; sinCredenciales?: boolean; mensaje?: string }> {
   const config = getEmailConfig()
   const year = new Date().getFullYear()
   const loginUrl = `${config.appUrl}/`
@@ -658,6 +665,16 @@ export async function sendMensajeriaMasivaEmail({
   } else if (tipo === "sistema") {
     tipoBadgeColor = "#6D28D9"
     tipoBadgeTexto = "Aviso Técnico de Sistema"
+  }
+
+  if (!config.user || !config.pass || config.user.trim() === "" || config.pass.trim() === "") {
+    console.warn("[SMTP AGBC] Credenciales de correo no configuradas en el servidor (SMTP_USER / SMTP_PASS vacíos). Notificaciones internas procesadas, envío externo en pausa.")
+    return {
+      enviados: 0,
+      fallidos: destinatarios.length,
+      sinCredenciales: true,
+      mensaje: "Credenciales SMTP no configuradas. Por favor configure SMTP_USER y SMTP_PASS en docker-compose o .env.",
+    }
   }
 
   const transporter = createTransporter()
