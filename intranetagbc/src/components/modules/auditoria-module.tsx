@@ -1011,21 +1011,24 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
   const effectiveCeo: CeoAnalytics = useMemo(() => {
     if (ceoAnalytics) return ceoAnalytics
     return {
-      visitasTotales: 486,
-      usuariosUnicos: 58,
-      totalDescargas: 312,
-      porcentajeLectura: 86,
+      visitasTotales: 342,
+      totalDescargas: 218,
+      porcentajeLectura: 85,
       totalDocumentos: 18,
       totalFuncionarios: 62,
       lecturaConfirmada: 53,
       lecturaPendiente: 9,
       topModulos: [
-        { modulo: "Biblioteca de Documentos", visitas: 215, porcentaje: 36, icono: "BookOpen", descripcion: "Consultas de normativas, manuales y reglamentos", categoria: "Documentos" },
-        { modulo: "Recursos Humanos & Personal", visitas: 148, porcentaje: 25, icono: "Users", descripcion: "Padrón de funcionarios y directorio institucional", categoria: "RRHH" },
-        { modulo: "Comunicados & Noticias", visitas: 104, porcentaje: 18, icono: "Bell", descripcion: "Publicaciones y circulares de la dirección", categoria: "Comunicaciones" },
-        { modulo: "Trámites & Servicios Postales", visitas: 62, porcentaje: 10, icono: "FileText", descripcion: "Gestión de solicitudes y seguimiento", categoria: "Trámites" },
-        { modulo: "Calendario & Cumpleaños", visitas: 38, porcentaje: 6, icono: "Calendar", descripcion: "Agenda y felicitaciones", categoria: "Calendario" },
-        { modulo: "Mesa de Ayuda & Soporte", visitas: 28, porcentaje: 5, icono: "HelpCircle", descripcion: "Atención técnica", categoria: "Soporte" },
+        { modulo: "Documentos Institucionales", visitas: 215, porcentaje: 28, icono: "BookOpen", descripcion: "Consultas, descargas y lecturas de normativas y manuales", categoria: "Documentos" },
+        { modulo: "Noticias Institucionales", visitas: 172, porcentaje: 22, icono: "Newspaper", descripcion: "Boletines de prensa y novedades institucionales", categoria: "Noticias" },
+        { modulo: "Comunicados Oficiales", visitas: 135, porcentaje: 18, icono: "Bell", descripcion: "Circulares y avisos de gerencia general", categoria: "Comunicados" },
+        { modulo: "Personal Institucional (Directorio)", visitas: 94, porcentaje: 12, icono: "Users", descripcion: "Búsqueda de compañeros y directorio interno", categoria: "Directorio" },
+        { modulo: "Accesos Rápidos a Sistemas", visitas: 68, porcentaje: 9, icono: "ExternalLink", descripcion: "Acceso a plataformas corporativas (SIGEP, Correo, ERP)", categoria: "Sistemas" },
+        { modulo: "Redes Sociales Institucionales", visitas: 42, porcentaje: 5, icono: "Share2", descripcion: "Canales oficiales de Facebook, YouTube y redes", categoria: "Redes" },
+        { modulo: "Oficinas & Sucursales Postales", visitas: 31, porcentaje: 4, icono: "MapPin", descripcion: "Directorio de agencias postales zonales", categoria: "Oficinas" },
+        { modulo: "Centro de Notificaciones", visitas: 25, porcentaje: 3, icono: "Inbox", descripcion: "Alertas y avisos personales de funcionarios", categoria: "Notificaciones" },
+        { modulo: "Cumpleaños & Efemérides", visitas: 19, porcentaje: 2, icono: "Cake", descripcion: "Felicitaciones del día y calendario institucional", categoria: "Eventos" },
+        { modulo: "Mi Perfil Institucional", visitas: 14, porcentaje: 2, icono: "UserCheck", descripcion: "Ficha del funcionario y credenciales", categoria: "Perfil" },
       ],
       topDocumentos: [
         { id: "doc-1", titulo: "Reglamento Interno de Personal AGBC", categoria: "Reglamento", descargas: 108, tipoArchivo: "pdf", tamano: "2.4 MB", ultimaDescarga: new Date().toISOString() },
@@ -1034,25 +1037,12 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
         { id: "doc-4", titulo: "Organigrama Institucional y Estructura AGBC", categoria: "Institucional", descargas: 46, tipoArchivo: "pdf", tamano: "1.2 MB", ultimaDescarga: new Date().toISOString() },
         { id: "doc-5", titulo: "Formulario Oficial de Solicitud de Licencia", categoria: "Formulario", descargas: 39, tipoArchivo: "xlsx", tamano: "320 KB", ultimaDescarga: new Date().toISOString() },
       ],
-      dispositivos: { escritorio: 78, movil: 22 },
-      navegadores: [
-        { nombre: "Google Chrome", porcentaje: 68 },
-        { nombre: "Microsoft Edge", porcentaje: 22 },
-        { nombre: "Mozilla Firefox", porcentaje: 7 },
-        { nombre: "Otros", porcentaje: 3 },
-      ],
       horariosPico: [
-        { rango: "08:00 - 10:00 (Inicio de jornada)", actividad: 92, porcentaje: 24 },
-        { rango: "10:00 - 12:00 (Pico matutino)", actividad: 138, porcentaje: 36 },
-        { rango: "12:00 - 14:00 (Receso / Mediodía)", actividad: 48, porcentaje: 12 },
-        { rango: "14:00 - 17:00 (Jornada vespertina)", actividad: 82, porcentaje: 21 },
-        { rango: "17:00 - 20:00 (Cierre de oficina)", actividad: 26, porcentaje: 7 },
-      ],
-      ubicaciones: [
-        { ciudad: "La Paz", actividad: 212 },
-        { ciudad: "Santa Cruz", actividad: 89 },
-        { ciudad: "Cochabamba", actividad: 46 },
-        { ciudad: "Oruro", actividad: 24 },
+        { rango: "08:30 - 12:30", periodo: "Jornada Mañana (Ingreso y Operación Laboral)", actividad: 148, porcentaje: 43 },
+        { rango: "12:30 - 13:00", periodo: "Receso / Almuerzo Institucional", actividad: 26, porcentaje: 8 },
+        { rango: "13:00 - 16:30", periodo: "Jornada Tarde (Operación Laboral y Salida)", actividad: 112, porcentaje: 33 },
+        { rango: "16:30 - 20:00", periodo: "Horas Extra / Salida Tardía", actividad: 42, porcentaje: 12 },
+        { rango: "20:00 - 08:30", periodo: "Guardia / Turno Nocturno", actividad: 14, porcentaje: 4 },
       ],
     }
   }, [ceoAnalytics])
@@ -1091,20 +1081,18 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
         ["Fecha de generación:", new Date().toLocaleString("es-BO")],
         [],
         ["INDICADOR EJECUTIVO (CEO)", "VALOR", "DETALLES INSTITUCIONALES"],
-        ["Visitas Totales a la Intranet", effectiveCeo.visitasTotales, "Accesos e interacciones registradas en el sistema"],
-        ["Usuarios Únicos Activos", effectiveCeo.usuariosUnicos, "Funcionarios con navegación y accesos registrados"],
-        ["Total Descargas de Documentos", effectiveCeo.totalDescargas, "Descargas de normativas, reglamentos y manuales"],
-        ["Cumplimiento de Lectura Obligatoria", `${effectiveCeo.porcentajeLectura}%`, `${effectiveCeo.lecturaConfirmada} de ${effectiveCeo.totalFuncionarios} funcionarios han confirmado`],
-        ["Total Documentos en Biblioteca", effectiveCeo.totalDocumentos, "Archivos oficiales disponibles para consulta"],
+        ["Visitas Totales al Sitio (Inicios de Sesión)", effectiveCeo.visitasTotales, "Conteo de cada vez que los funcionarios ingresan a la plataforma"],
+        ["Total Descargas de Documentos", effectiveCeo.totalDescargas, "Descargas de normativas, reglamentos y manuales oficiales"],
+        ["Cumplimiento de Lectura Obligatoria", `${effectiveCeo.porcentajeLectura}%`, `${effectiveCeo.lecturaConfirmada} de ${effectiveCeo.totalFuncionarios} funcionarios han confirmado lectura`],
+        ["Total Documentos en Biblioteca", effectiveCeo.totalDocumentos, "Normativas y reglamentos oficiales vigentes"],
         ["Lugar / Sección Más Frecuentada", effectiveCeo.topModulos[0]?.modulo || "N/A", `${effectiveCeo.topModulos[0]?.visitas || 0} visitas (${effectiveCeo.topModulos[0]?.porcentaje || 0}%)`],
-        ["Distribución de Dispositivos", `Escritorio ${effectiveCeo.dispositivos.escritorio}% / Móvil ${effectiveCeo.dispositivos.movil}%`, "Tráfico institucional"],
       ]
       const wsResumen = XLSX.utils.aoa_to_sheet(resumenRows)
-      wsResumen["!cols"] = [{ wch: 38 }, { wch: 20 }, { wch: 45 }]
+      wsResumen["!cols"] = [{ wch: 42 }, { wch: 18 }, { wch: 55 }]
       XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen Ejecutivo")
 
       const modulosRows = [
-        ["POSICIÓN", "MÓDULO / SECCIÓN", "VISITAS TOTALES", "PORCENTAJE", "DESCRIPCIÓN"],
+        ["POSICIÓN", "MÓDULO / SECCIÓN (USUARIOS)", "VISITAS TOTALES", "PORCENTAJE", "DESCRIPCIÓN FUNCIONAL"],
         ...filteredTopModulos.map((m, idx) => [
           idx + 1,
           m.modulo,
@@ -1114,7 +1102,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
         ]),
       ]
       const wsModulos = XLSX.utils.aoa_to_sheet(modulosRows)
-      wsModulos["!cols"] = [{ wch: 10 }, { wch: 35 }, { wch: 18 }, { wch: 14 }, { wch: 50 }]
+      wsModulos["!cols"] = [{ wch: 10 }, { wch: 38 }, { wch: 18 }, { wch: 14 }, { wch: 55 }]
       XLSX.utils.book_append_sheet(wb, wsModulos, "Lugares Más Visitados")
 
       const docsRows = [
@@ -1133,18 +1121,12 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
       XLSX.utils.book_append_sheet(wb, wsDocs, "Top Documentos")
 
       const traficoRows = [
-        ["FRANJA HORARIA", "NIVEL DE ACTIVIDAD", "DISTRIBUCIÓN"],
-        ...effectiveCeo.horariosPico.map((h) => [h.rango, h.actividad, `${h.porcentaje}%`]),
-        [],
-        ["NAVEGADOR", "PORCENTAJE DE USO"],
-        ...effectiveCeo.navegadores.map((n) => [n.nombre, `${n.porcentaje}%`]),
-        [],
-        ["CIUDAD / SEDE", "CONCURRENCIA REGISTRADA"],
-        ...effectiveCeo.ubicaciones.map((u) => [u.ciudad, u.actividad]),
+        ["HORARIO OFICIAL AGBC", "PERÍODO / JORNADA", "NIVEL DE ACTIVIDAD", "DISTRIBUCIÓN DEL TRÁFICO"],
+        ...effectiveCeo.horariosPico.map((h) => [h.rango, h.periodo, h.actividad, `${h.porcentaje}%`]),
       ]
       const wsTrafico = XLSX.utils.aoa_to_sheet(traficoRows)
-      wsTrafico["!cols"] = [{ wch: 35 }, { wch: 22 }, { wch: 22 }]
-      XLSX.utils.book_append_sheet(wb, wsTrafico, "Tráfico y Horarios")
+      wsTrafico["!cols"] = [{ wch: 22 }, { wch: 42 }, { wch: 20 }, { wch: 24 }]
+      XLSX.utils.book_append_sheet(wb, wsTrafico, "Horarios Pico Oficiales")
 
       XLSX.writeFile(wb, `Reporte_CEO_Metricas_Intranet_AGBC_${fechaHoy}.xlsx`)
       toast.success("Reporte Ejecutivo CEO exportado a Excel")
@@ -1180,6 +1162,15 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
       </tr>
     `).join("")
 
+    const horariosHtml = effectiveCeo.horariosPico.map((h) => `
+      <tr>
+        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; font-weight: bold;">${escapeHtml(h.rango)}</td>
+        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; font-size: 11px; color: #475569;">${escapeHtml(h.periodo)}</td>
+        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-weight: bold;">${h.actividad}</td>
+        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-weight: bold; color: #0E5296;">${h.porcentaje}%</td>
+      </tr>
+    `).join("")
+
     const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1192,7 +1183,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
     .title { font-size: 18px; font-weight: 900; color: #002F6C; margin: 0; text-transform: uppercase; }
     .subtitle { font-size: 11px; color: #64748b; margin-top: 3px; font-weight: 600; }
     .badge { background: #FFCC00; color: #002F6C; font-weight: 900; font-size: 10px; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; display: inline-block; margin-bottom: 4px; }
-    .kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
     .kpi { border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; background: #f8fafc; text-align: center; }
     .kpi-val { font-size: 20px; font-weight: 900; color: #002F6C; }
     .kpi-lbl { font-size: 10px; font-weight: 700; color: #475569; text-transform: uppercase; margin-top: 2px; }
@@ -1219,11 +1210,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
   <div class="kpis">
     <div class="kpi">
       <div class="kpi-val">${effectiveCeo.visitasTotales}</div>
-      <div class="kpi-lbl">Visitas Totales</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-val">${effectiveCeo.usuariosUnicos}</div>
-      <div class="kpi-lbl">Usuarios Únicos</div>
+      <div class="kpi-lbl">Visitas Totales (Accesos)</div>
     </div>
     <div class="kpi">
       <div class="kpi-val">${effectiveCeo.totalDescargas}</div>
@@ -1239,12 +1226,12 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
     </div>
   </div>
 
-  <div class="section-title">1. ¿Cuál es el lugar donde más entran? (Módulos & Secciones Más Visitadas)</div>
+  <div class="section-title">1. ¿Cuál es el lugar donde más entran? (Secciones Más Visitadas por Funcionarios)</div>
   <table>
     <thead>
       <tr>
         <th style="width: 50px; text-align: center;">Pos.</th>
-        <th style="width: 200px;">Módulo / Sección</th>
+        <th style="width: 220px;">Sección / Módulo</th>
         <th>Descripción Funcional</th>
         <th style="width: 90px; text-align: center;">Visitas</th>
         <th style="width: 80px; text-align: center;">% Tráfico</th>
@@ -1267,24 +1254,17 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
     <tbody>${docsHtml}</tbody>
   </table>
 
-  <div class="section-title">3. Dispositivos, Horarios y Presencia Geográfica</div>
-  <table style="margin-bottom: 8px;">
-    <tr>
-      <td style="vertical-align: top; width: 33%; padding: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
-        <strong style="color: #002F6C; text-transform: uppercase; font-size: 10px;">Dispositivos:</strong><br />
-        • Escritorio (PC/Laptop): ${effectiveCeo.dispositivos.escritorio}%<br />
-        • Móvil / Tablet: ${effectiveCeo.dispositivos.movil}%
-      </td>
-      <td style="vertical-align: top; width: 33%; padding: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
-        <strong style="color: #002F6C; text-transform: uppercase; font-size: 10px;">Navegadores Dominantes:</strong><br />
-        ${effectiveCeo.navegadores.map(n => `• ${n.nombre}: ${n.porcentaje}%`).join("<br />")}
-      </td>
-      <td style="vertical-align: top; width: 33%; padding: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
-        <strong style="color: #002F6C; text-transform: uppercase; font-size: 10px;">Horarios Pico:</strong><br />
-        • 10:00 - 12:00: Pico Matutino (36%)<br />
-        • 14:00 - 17:00: Tarde Laboral (28%)
-      </td>
-    </tr>
+  <div class="section-title">3. Horarios Pico Institucionales de Tráfico (Jornada Oficial AGBC)</div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 130px;">Franja Horaria</th>
+        <th>Período / Jornada Institucional</th>
+        <th style="width: 90px; text-align: center;">Interacciones</th>
+        <th style="width: 80px; text-align: center;">Distribución</th>
+      </tr>
+    </thead>
+    <tbody>${horariosHtml}</tbody>
   </table>
 
   <div class="footer">
@@ -1853,8 +1833,8 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
             </div>
           </div>
 
-          {/* 5 Tarjetas KPI Ejecutivas */}
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 w-full">
+          {/* 4 Tarjetas KPI Ejecutivas */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
             <div className="flex items-center gap-3.5 rounded-2xl border-2 border-sky-200/90 bg-gradient-to-br from-sky-50 via-blue-50/60 to-white p-3.5 sm:p-4 shadow-xs hover:shadow-md transition-all min-w-0">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0E5296] text-[#FFCC00]">
                 <GlobeIcon className="h-5 w-5" />
@@ -1862,16 +1842,6 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
               <div className="min-w-0">
                 <div className="text-2xl font-black text-[#002F6C]">{effectiveCeo.visitasTotales}</div>
                 <div className="text-xs text-slate-600 font-bold truncate">Visitas Totales</div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3.5 rounded-2xl border-2 border-blue-200/90 bg-gradient-to-br from-blue-50 via-sky-50/50 to-white p-3.5 sm:p-4 shadow-xs hover:shadow-md transition-all min-w-0">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0E5296]/15 text-[#0E5296]">
-                <UsersIcon className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-2xl font-black text-[#002F6C]">{effectiveCeo.usuariosUnicos}</div>
-                <div className="text-xs text-slate-600 font-bold truncate">Usuarios Únicos</div>
               </div>
             </div>
 
@@ -1895,13 +1865,13 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
               </div>
             </div>
 
-            <div className="flex items-center gap-3.5 rounded-2xl border-2 border-purple-200/90 bg-gradient-to-br from-purple-50 via-pink-50/40 to-white p-3.5 sm:p-4 shadow-xs hover:shadow-md transition-all min-w-0 col-span-2 md:col-span-1 xl:col-span-1">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-700 text-[#FFCC00]">
-                <AwardIcon className="h-5 w-5" />
+            <div className="flex items-center gap-3.5 rounded-2xl border-2 border-blue-200/90 bg-gradient-to-br from-blue-50 via-indigo-50/40 to-white p-3.5 sm:p-4 shadow-xs hover:shadow-md transition-all min-w-0">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#002F6C] text-[#FFCC00]">
+                <BookOpenIcon className="h-5 w-5" />
               </div>
               <div className="min-w-0">
-                <div className="text-lg font-black text-[#002F6C] truncate">{effectiveCeo.topModulos[0]?.modulo.split(" ")[0]}</div>
-                <div className="text-xs text-slate-600 font-bold truncate">Módulo #1 en Tráfico</div>
+                <div className="text-2xl font-black text-[#002F6C]">{effectiveCeo.totalDocumentos}</div>
+                <div className="text-xs text-slate-600 font-bold truncate">Docs en Biblioteca</div>
               </div>
             </div>
           </div>
@@ -2052,89 +2022,61 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
             </div>
           </div>
 
-          {/* ── FILA INFERIOR: MÉTRICAS AVANZADAS PARA EL CEO ── */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full">
-            {/* Dispositivos y Navegadores */}
-            <div className="p-5 rounded-3xl border-2 border-[#002F6C]/15 bg-white shadow-xs space-y-4">
-              <div className="flex items-center gap-2">
-                <LaptopIcon className="h-4 w-4 text-[#0E5296]" />
-                <h4 className="text-xs font-black text-[#002F6C] uppercase tracking-wide">
-                  Dispositivos & Navegadores
-                </h4>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-center">
-                <div className="p-3 rounded-2xl bg-blue-50/70 border border-blue-200/80">
-                  <LaptopIcon className="h-5 w-5 text-[#0E5296] mx-auto mb-1" />
-                  <p className="text-lg font-black text-[#002F6C]">{effectiveCeo.dispositivos.escritorio}%</p>
-                  <p className="text-[10px] font-bold text-slate-600">Escritorio (PC)</p>
+          {/* ── FILA INFERIOR: HORARIOS PICO INSTITUCIONALES (JORNADA LABORAL AGBC) ── */}
+          <div className="rounded-3xl border-2 border-[#002F6C]/15 bg-white p-5 sm:p-6 shadow-sm space-y-4 w-full">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0E5296] text-[#FFCC00]">
+                  <ClockIcon className="h-5 w-5" />
                 </div>
-                <div className="p-3 rounded-2xl bg-amber-50/70 border border-amber-200/80">
-                  <SmartphoneIcon className="h-5 w-5 text-[#FFB300] mx-auto mb-1" />
-                  <p className="text-lg font-black text-amber-800">{effectiveCeo.dispositivos.movil}%</p>
-                  <p className="text-[10px] font-bold text-slate-600">Móvil / Tablet</p>
+                <div>
+                  <h4 className="text-base font-black text-[#002F6C]">
+                    Horarios Pico de Tráfico Institucional (Jornada Oficial AGBC)
+                  </h4>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    Distribución de concurrencia según la jornada laboral de la empresa: Mañana (08:30 a 12:30), Receso (12:30 a 13:00), Tarde (13:00 a 16:30) y Horas Extra
+                  </p>
                 </div>
               </div>
-
-              <div className="space-y-1.5 pt-1 text-xs">
-                {effectiveCeo.navegadores.map((n) => (
-                  <div key={n.nombre} className="flex items-center justify-between text-[11px]">
-                    <span className="font-semibold text-slate-700">{n.nombre}</span>
-                    <span className="font-bold text-[#002F6C]">{n.porcentaje}%</span>
-                  </div>
-                ))}
-              </div>
+              <span className="text-xs font-black text-[#0E5296] bg-blue-50 border border-blue-200 px-3 py-1 rounded-full self-start sm:self-auto">
+                Jornada Laboral AGBC
+              </span>
             </div>
 
-            {/* Horarios Pico de Tráfico */}
-            <div className="p-5 rounded-3xl border-2 border-[#002F6C]/15 bg-white shadow-xs space-y-4">
-              <div className="flex items-center gap-2">
-                <ClockIcon className="h-4 w-4 text-[#0E5296]" />
-                <h4 className="text-xs font-black text-[#002F6C] uppercase tracking-wide">
-                  Horarios Pico de Tráfico
-                </h4>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 pt-1">
+              {effectiveCeo.horariosPico.map((h, i) => {
+                const styles = [
+                  { bg: "bg-blue-50/70 border-blue-200", bar: "bg-[#002F6C]", text: "text-[#002F6C]" },
+                  { bg: "bg-amber-50/70 border-amber-200", bar: "bg-[#FFCC00]", text: "text-amber-800" },
+                  { bg: "bg-emerald-50/70 border-emerald-200", bar: "bg-emerald-600", text: "text-emerald-800" },
+                  { bg: "bg-purple-50/70 border-purple-200", bar: "bg-purple-600", text: "text-purple-800" },
+                  { bg: "bg-slate-50 border-slate-200", bar: "bg-slate-500", text: "text-slate-700" },
+                ][i % 5]
 
-              <div className="space-y-3 pt-1">
-                {effectiveCeo.horariosPico.map((h) => (
-                  <div key={h.rango} className="space-y-1">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-semibold text-slate-700">{h.rango}</span>
-                      <span className="font-bold text-[#0E5296]">{h.porcentaje}%</span>
+                return (
+                  <div key={h.rango} className={cn("p-4 rounded-2xl border space-y-2.5 transition-all hover:shadow-xs", styles.bg)}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-slate-800 font-mono">{h.rango}</span>
+                      <span className={cn("text-xs font-black", styles.text)}>{h.porcentaje}%</span>
                     </div>
-                    <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+
+                    <p className="text-[10.5px] text-slate-600 font-semibold leading-snug">
+                      {h.periodo}
+                    </p>
+
+                    <div className="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
                       <div
-                        className="h-1.5 rounded-full bg-[#0E5296]"
-                        style={{ width: `${Math.max(5, h.porcentaje)}%` }}
+                        className={cn("h-2 rounded-full transition-all duration-500", styles.bar)}
+                        style={{ width: `${Math.max(6, h.porcentaje)}%` }}
                       />
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
 
-            {/* Sedes y Ubicaciones */}
-            <div className="p-5 rounded-3xl border-2 border-[#002F6C]/15 bg-white shadow-xs space-y-4">
-              <div className="flex items-center gap-2">
-                <GlobeIcon className="h-4 w-4 text-[#0E5296]" />
-                <h4 className="text-xs font-black text-[#002F6C] uppercase tracking-wide">
-                  Concurrencia por Sedes
-                </h4>
-              </div>
-
-              <div className="space-y-2.5 pt-1">
-                {effectiveCeo.ubicaciones.map((u) => (
-                  <div
-                    key={u.ciudad}
-                    className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs"
-                  >
-                    <span className="font-bold text-slate-800">{u.ciudad}</span>
-                    <span className="font-black text-[#002F6C] bg-white px-2.5 py-0.5 rounded-md border border-slate-200 text-[11px]">
-                      {u.actividad} accesos
-                    </span>
+                    <div className="text-[10px] text-slate-500 font-mono">
+                      {h.actividad} interacciones registradas
+                    </div>
                   </div>
-                ))}
-              </div>
+                )
+              })}
             </div>
           </div>
         </div>

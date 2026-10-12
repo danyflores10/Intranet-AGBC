@@ -25,6 +25,7 @@ import {
   reconocimientoEquipo,
   reconocimientoEquipoIntegrantes,
   reconocimientos,
+  auditLogs,
 } from "@/db/schema"
 import { eq, desc, asc, or } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
@@ -993,23 +994,46 @@ export type AuditoriaFuncionarioAcceso = {
   ipUltimaConexion: string | null
 }
 
+export type RegistroAccesoDiario = {
+  id: string
+  usuarioId: string
+  nombreCompleto: string
+  email: string
+  cargo: string
+  unidad: string
+  foto: string | null
+  fecha: string // "YYYY-MM-DD"
+  fechaFormateada: string // "12/10/2026"
+  horaIngreso: string // "08:24 a. m."
+  horaSalida: string // "16:35 p. m." o "En línea (16:35 p. m.)"
+  ip: string | null
+  tiempoPermanencia: string // "8h 11m"
+  sesionActiva: boolean
+  estado: "activo" | "finalizado"
+}
+
 export async function obtenerAuditoriaLecturaYAccesos(): Promise<{
   success: boolean
   data: AuditoriaFuncionarioAcceso[]
+  dataAccesosDiarios: RegistroAccesoDiario[]
+  diasDisponibles: string[]
   resumen: {
     total: number
     lecturaConfirmada: number
     lecturaPendiente: number
     conIngreso: number
     sinIngreso: number
+    ingresosHoy: number
+    sesionesActivasAhora: number
   }
 }> {
   try {
-    const [usuariosDb, personalDb, progresoDb, sesionesDb] = await Promise.all([
+    const [usuariosDb, personalDb, progresoDb, sesionesDb, logsDb] = await Promise.all([
       db.select().from(users),
       db.select().from(personal),
       db.select().from(onboardingProgreso),
       db.select().from(session),
+      db.select().from(auditLogs).orderBy(desc(auditLogs.createdAt)).limit(1000),
     ])
 
     // Mapa de personal por email normalizado
@@ -1092,15 +1116,162 @@ export async function obtenerAuditoriaLecturaYAccesos(): Promise<{
     const conIngreso = data.filter((d) => d.haIniciadoSesion).length
     const sinIngreso = total - conIngreso
 
+    // ── Registro Diario de Accesos & Horarios por Día ──
+    type DayAccesoEntry = {
+      usuarioId: string
+      fecha: string
+      primerTimestamp: Date
+      ultimoTimestamp: Date
+      ip: string | null
+      tieneSesionActiva: boolean
+    }
+
+    const ahora = new Date()
+    const hoyStr = new Intl.DateTimeFormat("en-CA", { timeZone: "America/La_Paz" }).format(ahora)
+    const diasMap = new Map<string, DayAccesoEntry>()
+
+    function registrarEventoAcceso(userId: string, fechaHora: Date, ip?: string | null, esActiva = false) {
+      if (!userId) return
+      const fechaStr = new Intl.DateTimeFormat("en-CA", { timeZone: "America/La_Paz" }).format(fechaHora)
+      const key = `${userId}_${fechaStr}`
+      const prev = diasMap.get(key)
+      if (!prev) {
+        diasMap.set(key, {
+          usuarioId: userId,
+          fecha: fechaStr,
+          primerTimestamp: fechaHora,
+          ultimoTimestamp: fechaHora,
+          ip: ip || null,
+          tieneSesionActiva: esActiva,
+        })
+      } else {
+        if (fechaHora < prev.primerTimestamp) prev.primerTimestamp = fechaHora
+        if (fechaHora > prev.ultimoTimestamp) {
+          prev.ultimoTimestamp = fechaHora
+          if (ip) prev.ip = ip
+        }
+        if (esActiva) prev.tieneSesionActiva = true
+      }
+    }
+
+    // 1. Procesar todas las sesiones
+    for (const s of sesionesDb) {
+      const sCreated = new Date(s.createdAt)
+      const sUpdated = s.updatedAt ? new Date(s.updatedAt) : sCreated
+      const esActiva = new Date(s.expiresAt) > ahora
+      registrarEventoAcceso(s.userId, sCreated, s.ipAddress, esActiva)
+      if (sUpdated.getTime() !== sCreated.getTime()) {
+        registrarEventoAcceso(s.userId, sUpdated, s.ipAddress, esActiva)
+      }
+    }
+
+    // 2. Procesar logs de auditoría por usuario
+    for (const log of logsDb) {
+      const logDate = new Date(log.createdAt)
+      const uId = log.usuario
+      if (usuariosDb.some((u) => u.id === uId)) {
+        registrarEventoAcceso(uId, logDate, log.ip)
+      }
+    }
+
+    const userLookup = new Map<string, typeof usuariosDb[0]>()
+    for (const u of usuariosDb) {
+      userLookup.set(u.id, u)
+    }
+
+    const dataAccesosDiarios: RegistroAccesoDiario[] = []
+    for (const [key, item] of diasMap.entries()) {
+      const u = userLookup.get(item.usuarioId)
+      if (!u) continue
+
+      const apPaterno = u.lastNamePaternal || ""
+      const apMaterno = u.lastNameMaternal ? ` ${u.lastNameMaternal}` : ""
+      const nombreCompleto = `${u.firstName} ${apPaterno}${apMaterno}`.trim()
+      const email = (u.institutionalEmail || u.email || "").toLowerCase().trim()
+      const infoPersonal = personalMap.get(email)
+
+      const fDate = new Date(`${item.fecha}T12:00:00`)
+      const fechaFormateada = new Intl.DateTimeFormat("es-BO", {
+        timeZone: "America/La_Paz",
+        dateStyle: "medium",
+      }).format(fDate)
+
+      const horaIngreso = new Intl.DateTimeFormat("es-BO", {
+        timeZone: "America/La_Paz",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      }).format(item.primerTimestamp)
+
+      const horaSalidaRaw = new Intl.DateTimeFormat("es-BO", {
+        timeZone: "America/La_Paz",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      }).format(item.ultimoTimestamp)
+
+      const diffMs = item.ultimoTimestamp.getTime() - item.primerTimestamp.getTime()
+      const diffMins = Math.round(diffMs / (1000 * 60))
+      let tiempoPermanencia = "—"
+      if (item.tieneSesionActiva) {
+        tiempoPermanencia = diffMins > 0 ? `${Math.floor(diffMins / 60)}h ${diffMins % 60}m (en curso)` : "Sesión activa"
+      } else if (diffMins > 0) {
+        tiempoPermanencia = `${Math.floor(diffMins / 60)}h ${diffMins % 60}m`
+      } else {
+        tiempoPermanencia = "< 5 min"
+      }
+
+      const horaSalida = item.tieneSesionActiva
+        ? `En línea (${horaSalidaRaw})`
+        : horaSalidaRaw
+
+      dataAccesosDiarios.push({
+        id: `acc-${key}`,
+        usuarioId: item.usuarioId,
+        nombreCompleto,
+        email,
+        cargo: infoPersonal?.cargo || "Funcionario Institucional",
+        unidad: infoPersonal?.unidad || "Personal General",
+        foto: u.image || infoPersonal?.foto || null,
+        fecha: item.fecha,
+        fechaFormateada,
+        horaIngreso,
+        horaSalida,
+        ip: item.ip,
+        tiempoPermanencia,
+        sesionActiva: item.tieneSesionActiva,
+        estado: item.tieneSesionActiva ? "activo" : "finalizado",
+      })
+    }
+
+    // Ordenar: primero fechas más recientes, luego hora de ingreso
+    dataAccesosDiarios.sort((a, b) => {
+      const cmpFecha = b.fecha.localeCompare(a.fecha)
+      if (cmpFecha !== 0) return cmpFecha
+      return b.horaIngreso.localeCompare(a.horaIngreso)
+    })
+
+    const diasDisponibles = Array.from(new Set(dataAccesosDiarios.map((d) => d.fecha))).sort((a, b) => b.localeCompare(a))
+    if (!diasDisponibles.includes(hoyStr)) {
+      diasDisponibles.unshift(hoyStr)
+    }
+
+    const ingresosHoy = dataAccesosDiarios.filter((d) => d.fecha === hoyStr).length
+    const sesionesActivasAhora = dataAccesosDiarios.filter((d) => d.sesionActiva).length
+
     return {
       success: true,
       data,
+      dataAccesosDiarios,
+      diasDisponibles,
       resumen: {
         total,
         lecturaConfirmada,
         lecturaPendiente,
         conIngreso,
         sinIngreso,
+        ingresosHoy,
+        sesionesActivasAhora,
       },
     }
   } catch (error) {
@@ -1108,7 +1279,17 @@ export async function obtenerAuditoriaLecturaYAccesos(): Promise<{
     return {
       success: false,
       data: [],
-      resumen: { total: 0, lecturaConfirmada: 0, lecturaPendiente: 0, conIngreso: 0, sinIngreso: 0 },
+      dataAccesosDiarios: [],
+      diasDisponibles: [],
+      resumen: {
+        total: 0,
+        lecturaConfirmada: 0,
+        lecturaPendiente: 0,
+        conIngreso: 0,
+        sinIngreso: 0,
+        ingresosHoy: 0,
+        sesionesActivasAhora: 0,
+      },
     }
   }
 }
