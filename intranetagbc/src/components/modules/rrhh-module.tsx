@@ -938,14 +938,6 @@ export function RrhhModule({ personal, directivos, usuarios = [], usuarioActual 
                   <FileSpreadsheetIcon className="h-3.5 w-3.5 text-[#FFCC00]" />
                   Excel (Importar / Exportar)
                 </button>
-                <button
-                  onClick={() => setAuditoriaDialogOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#002F6C] to-[#0E5296] hover:from-[#00204d] hover:to-[#002F6C] text-white px-3.5 py-2 text-xs font-bold shadow-sm shadow-blue-900/20 transition-all cursor-pointer border border-[#FFCC00]/30"
-                  title="Auditoría de Lectura Obligatoria y Accesos al Sistema"
-                >
-                  <ShieldCheckIcon className="h-3.5 w-3.5 text-[#FFCC00]" />
-                  Control de Lectura & Accesos
-                </button>
               </>
             )}
             <span className="text-xs font-bold text-[#0E5296] bg-white/80 border border-[#0E5296]/20 px-3 py-1.5 rounded-xl shadow-2xs">

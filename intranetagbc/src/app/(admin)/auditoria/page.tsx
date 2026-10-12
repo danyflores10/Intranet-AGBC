@@ -22,6 +22,7 @@ export default async function AuditoriaPage() {
         fallidos: result.fallidos,
         modulos: result.modulos,
       }}
+      ceoAnalytics={result.ceoAnalytics}
     />
   )
 }

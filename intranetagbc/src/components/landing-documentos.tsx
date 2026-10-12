@@ -27,6 +27,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { DocumentContentViewer } from "@/components/modules/document-content-viewer"
 import { getDocumentUrl } from "@/components/modules/documentos-module"
 import { DocumentosTourTutorial } from "@/components/documentos-tour-tutorial"
+import { registrarAccionDocumentoAction } from "@/actions/auditoria"
 
 type Doc = {
   id: string
@@ -521,7 +522,14 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                       </span>
                       <button
                         type="button"
-                        onClick={() => setViewingDoc(doc)}
+                        onClick={() => {
+                          setViewingDoc(doc)
+                          registrarAccionDocumentoAction({
+                            documentoId: doc.id,
+                            titulo: doc.titulo,
+                            accion: "Visualizó documento",
+                          })
+                        }}
                         className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-[#0E5296] dark:text-[#FFCC00] hover:bg-[#0E5296] hover:text-white dark:hover:bg-[#FFCC00] dark:hover:text-[#002F6C] transition-all cursor-pointer shadow-xs border border-blue-200 dark:border-blue-900"
                         title="Ver documento"
                       >
@@ -637,7 +645,17 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                     </div>
                     <div className="ml-3 flex shrink-0 items-center gap-2">
                       {viewingDoc.archivo && (
-                        <a href={downloadUrl} download={viewingDoc.nombreArchivo || viewingDoc.titulo}>
+                        <a
+                          href={downloadUrl}
+                          download={viewingDoc.nombreArchivo || viewingDoc.titulo}
+                          onClick={() => {
+                            registrarAccionDocumentoAction({
+                              documentoId: viewingDoc.id,
+                              titulo: viewingDoc.titulo,
+                              accion: "Descargó documento",
+                            })
+                          }}
+                        >
                           <Button size="sm" className="rounded-xl bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold text-xs shadow-xs cursor-pointer">
                             <Download className="mr-1.5 h-3.5 w-3.5 text-[#FFCC00]" />
                             Descargar

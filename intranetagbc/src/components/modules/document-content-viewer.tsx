@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import * as XLSX from "xlsx"
 import mammoth from "mammoth"
 import { Loader2, Download, AlertCircle, FileSpreadsheet, FileText, ExternalLink } from "lucide-react"
+import { registrarAccionDocumentoAction } from "@/actions/auditoria"
 
 interface DocumentContentViewerProps {
   url: string
@@ -257,6 +258,13 @@ export function DocumentContentViewer({ url, fileName, title, tipoArchivo }: Doc
           <a
             href={downloadUrl}
             download={fileName}
+            onClick={() => {
+              registrarAccionDocumentoAction({
+                documentoId: fileName,
+                titulo: title || fileName,
+                accion: "Descargó documento",
+              })
+            }}
             className="inline-flex items-center gap-1 font-sans font-bold text-[#0E5296] hover:underline"
           >
             <Download className="h-3 w-3" />
