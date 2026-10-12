@@ -2313,6 +2313,12 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Control de Lectura y Accesos (trasladado desde RRHH a Auditoría) */}
+      <RrhhAuditoriaDialog
+        open={auditoriaLecturaOpen}
+        onClose={() => setAuditoriaLecturaOpen(false)}
+      />
     </div>
   )
 }
