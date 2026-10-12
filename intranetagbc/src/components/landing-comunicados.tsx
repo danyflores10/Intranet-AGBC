@@ -56,11 +56,11 @@ export function LandingComunicados({ comunicados, estaLogueado = false }: { comu
 
   const ITEMS_PER_PAGE = 3
 
-  // Auto-mostrar el primer comunicado destacado al entrar (una vez por sesión)
+  // Auto-mostrar el comunicado destacado oficial si existe (una vez por sesión)
   useEffect(() => {
     const key = "agbc_comunicado_mostrado"
     if (typeof window !== "undefined" && !sessionStorage.getItem(key)) {
-      const destacado = comunicados.find((c) => c.destacado) ?? comunicados[0]
+      const destacado = comunicados.find((c) => c.destacado && c.estado === "publicado")
       if (destacado) {
         setViewing(destacado)
         sessionStorage.setItem(key, "1")
@@ -68,9 +68,10 @@ export function LandingComunicados({ comunicados, estaLogueado = false }: { comu
     }
   }, [comunicados])
 
-  if (comunicados.length === 0) return null
+  const publicados = comunicados.filter((c) => c.estado === "publicado")
+  if (publicados.length === 0) return null
 
-  const visibles = estaLogueado ? comunicados : comunicados.slice(0, 6)
+  const visibles = estaLogueado ? publicados : publicados.slice(0, 6)
   const totalPages = Math.ceil(visibles.length / ITEMS_PER_PAGE)
 
   const scrollToPage = useCallback((page: number) => {

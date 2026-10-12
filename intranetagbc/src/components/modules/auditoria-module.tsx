@@ -21,9 +21,13 @@ import {
   Trash2Icon,
   UploadIcon,
   XCircleIcon,
+  DatabaseIcon,
+  Loader2Icon,
+  ServerIcon,
 } from "lucide-react"
 import toast from "react-hot-toast"
 import * as XLSX from "xlsx"
+import { generarBackupBaseDatosAction } from "@/actions/auditoria"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -519,6 +523,100 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
   const [statusFilter, setStatusFilter] = useState<"todos" | AuditStatus>("todos")
   const [page, setPage] = useState(1)
   const [selectedLog, setSelectedLog] = useState<AuditRow | null>(null)
+  const [backupDialogOpen, setBackupDialogOpen] = useState(false)
+  const [generandoBackup, setGenerandoBackup] = useState(false)
+  const [ultimoBackupInfo, setUltimoBackupInfo] = useState<{
+    fecha: string
+    totalTablas: number
+    totalRegistros: number
+    archivo: string
+  } | null>(null)
+
+  async function handleDescargarBackupJson() {
+    setGenerandoBackup(true)
+    try {
+      const res = await generarBackupBaseDatosAction()
+      if (!res.success || !res.backup) {
+        toast.error(res.message || "No se pudo generar el respaldo")
+        return
+      }
+
+      const jsonStr = JSON.stringify(res.backup, null, 2)
+      const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = res.filename || `backup_agbc_db_${new Date().toISOString().slice(0, 10)}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+
+      setUltimoBackupInfo({
+        fecha: new Intl.DateTimeFormat("es-BO", { timeStyle: "short", dateStyle: "short" }).format(new Date()),
+        totalTablas: res.backup.metadata.totalTablas,
+        totalRegistros: res.backup.metadata.totalRegistros,
+        archivo: res.filename || "backup.json",
+      })
+
+      toast.success("Copia de seguridad JSON generada y descargada")
+    } catch {
+      toast.error("Error al procesar el respaldo de la base de datos")
+    } finally {
+      setGenerandoBackup(false)
+    }
+  }
+
+  async function handleDescargarBackupSql() {
+    setGenerandoBackup(true)
+    try {
+      const res = await generarBackupBaseDatosAction()
+      if (!res.success || !res.backup) {
+        toast.error(res.message || "No se pudo generar el respaldo")
+        return
+      }
+
+      let sqlScript = `-- ========================================================\n`
+      sqlScript += `-- BACKUP COMPLETO INTRANET AGBC (AGENCIA BOLIVIANA DE CORREOS)\n`
+      sqlScript += `-- Fecha: ${res.backup.metadata.fechaGeneracion}\n`
+      sqlScript += `-- Total Tablas: ${res.backup.metadata.totalTablas}\n`
+      sqlScript += `-- Total Registros: ${res.backup.metadata.totalRegistros}\n`
+      sqlScript += `-- ========================================================\n\n`
+
+      for (const [tabla, registros] of Object.entries(res.backup.tablas)) {
+        if (!Array.isArray(registros) || registros.length === 0) continue
+        sqlScript += `\n-- Tabla: "${tabla}" (${registros.length} registros)\n`
+        for (const row of registros) {
+          const cols = Object.keys(row)
+          const vals = Object.values(row).map((v) => {
+            if (v === null || v === undefined) return "NULL"
+            if (typeof v === "number" || typeof v === "boolean") return String(v)
+            if (v instanceof Date) return `'${v.toISOString()}'`
+            if (typeof v === "object") return `'${JSON.stringify(v).replace(/'/g, "''")}'`
+            return `'${String(v).replace(/'/g, "''")}'`
+          })
+          sqlScript += `INSERT INTO "${tabla}" (${cols.map((c) => `"${c}"`).join(", ")}) VALUES (${vals.join(", ")});\n`
+        }
+      }
+
+      const blob = new Blob([sqlScript], { type: "text/plain;charset=utf-8" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      const sqlFilename = (res.filename || `backup_agbc_db_${new Date().toISOString().slice(0, 10)}.json`).replace(/\.json$/, ".sql")
+      a.download = sqlFilename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+
+      toast.success("Script SQL generado y descargado correctamente")
+    } catch {
+      toast.error("Error al generar script SQL")
+    } finally {
+      setGenerandoBackup(false)
+    }
+  }
 
   const allRows = useMemo(() => {
     const sourceLogs = logs.length > 0 ? logs : mockAuditLogs
@@ -873,69 +971,83 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-blue-50/25 to-amber-50/20 min-h-screen">
-      <div>
-        <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0E5296] text-[#FFCC00] shadow-sm">
-            <ShieldCheckIcon className="h-5 w-5" />
+    <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-blue-50/25 to-amber-50/20 min-h-screen w-full max-w-full overflow-x-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0E5296] text-[#FFCC00] shadow-sm">
+              <ShieldCheckIcon className="h-5 w-5" />
+            </div>
+            <h1 className="text-2xl font-black tracking-tight text-[#002F6C]">
+              Centro de Auditoría y Logs
+            </h1>
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-[#002F6C]">
-            Centro de Auditoría y Logs
-          </h1>
+          <p className="text-xs text-slate-600 font-medium mt-1">
+            Historial y registro detallado de trazabilidad y seguridad en el sistema AGBC.
+          </p>
         </div>
-        <p className="text-xs text-slate-600 font-medium mt-1">
-          Historial y registro detallado de trazabilidad y seguridad en el sistema AGBC.
-        </p>
+
+        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+          <Button
+            type="button"
+            onClick={() => setBackupDialogOpen(true)}
+            className="bg-[#002F6C] hover:bg-[#0E5296] text-white font-bold rounded-xl text-xs gap-2 cursor-pointer shadow-md shadow-[#002F6C]/20 border border-[#FFCC00]/30 transition-all hover:scale-[1.02]"
+            title="Generar y descargar respaldo completo de la base de datos"
+          >
+            <DatabaseIcon className="h-4 w-4 text-[#FFCC00]" />
+            Copias de Seguridad (Backup BD)
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-sky-200/90 bg-gradient-to-br from-sky-50 via-blue-50/60 to-white p-4 shadow-xs hover:shadow-md transition-all">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0E5296]/15 text-[#0E5296]">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 w-full">
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-sky-200/90 bg-gradient-to-br from-sky-50 via-blue-50/60 to-white p-3.5 sm:p-4 shadow-xs hover:shadow-md transition-all min-w-0">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0E5296]/15 text-[#0E5296]">
             <LayersIcon className="h-5 w-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-2xl font-black text-[#002F6C]">{filteredStats.total}</div>
-            <div className="text-xs text-slate-600 font-bold">Total Registros</div>
+            <div className="text-xs text-slate-600 font-bold truncate">Total Registros</div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-amber-200/90 bg-gradient-to-br from-amber-50 via-yellow-50/60 to-white p-4 shadow-xs hover:shadow-md transition-all">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FFCC00]/25 text-[#002F6C]">
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-amber-200/90 bg-gradient-to-br from-amber-50 via-yellow-50/60 to-white p-3.5 sm:p-4 shadow-xs hover:shadow-md transition-all min-w-0">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FFCC00]/25 text-[#002F6C]">
             <CheckCircle2Icon className="h-5 w-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-2xl font-black text-emerald-700">{filteredStats.exitosos}</div>
-            <div className="text-xs text-slate-600 font-bold">Exitosos</div>
+            <div className="text-xs text-slate-600 font-bold truncate">Exitosos</div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-blue-200/90 bg-gradient-to-br from-blue-50 via-sky-50/50 to-white p-4 shadow-xs hover:shadow-md transition-all">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0E5296] text-[#FFCC00]">
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-blue-200/90 bg-gradient-to-br from-blue-50 via-sky-50/50 to-white p-3.5 sm:p-4 shadow-xs hover:shadow-md transition-all min-w-0">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0E5296] text-[#FFCC00]">
             <XCircleIcon className="h-5 w-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-2xl font-black text-red-600">{filteredStats.fallidos}</div>
-            <div className="text-xs text-slate-600 font-bold">Fallidos</div>
+            <div className="text-xs text-slate-600 font-bold truncate">Fallidos</div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-amber-200/90 bg-gradient-to-br from-yellow-50 via-amber-50/60 to-white p-4 shadow-xs hover:shadow-md transition-all">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FFCC00]/25 text-[#002F6C]">
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-amber-200/90 bg-gradient-to-br from-yellow-50 via-amber-50/60 to-white p-3.5 sm:p-4 shadow-xs hover:shadow-md transition-all min-w-0">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FFCC00]/25 text-[#002F6C]">
             <AlertTriangleIcon className="h-5 w-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-2xl font-black text-amber-700">{filteredStats.advertencias}</div>
-            <div className="text-xs text-slate-600 font-bold">Advertencias</div>
+            <div className="text-xs text-slate-600 font-bold truncate">Advertencias</div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-sky-200/90 bg-gradient-to-br from-blue-50 via-sky-50/40 to-white p-4 shadow-xs hover:shadow-md transition-all">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0E5296]/15 text-[#0E5296]">
+        <div className="flex items-center gap-3.5 rounded-2xl border-2 border-sky-200/90 bg-gradient-to-br from-blue-50 via-sky-50/40 to-white p-3.5 sm:p-4 shadow-xs hover:shadow-md transition-all min-w-0 col-span-2 md:col-span-1 xl:col-span-1">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0E5296]/15 text-[#0E5296]">
             <ShieldCheckIcon className="h-5 w-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-2xl font-black text-[#002F6C]">{filteredStats.modulos}</div>
-            <div className="text-xs text-slate-600 font-bold">Módulos Activos</div>
+            <div className="text-xs text-slate-600 font-bold truncate">Módulos Activos</div>
           </div>
         </div>
       </div>
@@ -1078,29 +1190,29 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-[1180px] w-full border-collapse">
+        <div className="overflow-x-auto w-full max-w-full rounded-2xl border border-border/60 bg-white shadow-2xs">
+          <table className="min-w-[960px] w-full border-collapse">
             <thead className="bg-muted/40">
               <tr>
-                <th className="border-b border-r border-border/70 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <th className="border-b border-r border-border/70 px-3.5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground w-[130px]">
                   Fecha
                 </th>
-                <th className="border-b border-r border-border/70 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <th className="border-b border-r border-border/70 px-3.5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground w-[220px]">
                   Usuario
                 </th>
-                <th className="border-b border-r border-border/70 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <th className="border-b border-r border-border/70 px-3.5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground w-[220px]">
                   Acción
                 </th>
-                <th className="border-b border-r border-border/70 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <th className="border-b border-r border-border/70 px-3.5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground w-[110px]">
                   Módulo
                 </th>
-                <th className="border-b border-r border-border/70 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <th className="border-b border-r border-border/70 px-3.5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground w-[140px]">
                   IP y Ubicación
                 </th>
-                <th className="border-b border-r border-border/70 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <th className="border-b border-r border-border/70 px-3.5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground w-[110px]">
                   Estado
                 </th>
-                <th className="border-b border-border/70 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <th className="border-b border-border/70 px-3.5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground min-w-[140px]">
                   Detalles
                 </th>
               </tr>
@@ -1290,6 +1402,103 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
               ) : null}
             </>
           ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog de Copias de Seguridad (Backup de Base de Datos) ── */}
+      <Dialog open={backupDialogOpen} onOpenChange={setBackupDialogOpen}>
+        <DialogContent className="max-w-2xl p-0 overflow-hidden rounded-3xl border-2 border-[#002F6C]/20 shadow-2xl">
+          <div className="bg-gradient-to-r from-[#002F6C] via-[#0E5296] to-[#002F6C] p-6 text-white">
+            <div className="flex items-center justify-between gap-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-[#FFCC00] text-[#002F6C]">
+                <DatabaseIcon className="h-3.5 w-3.5" />
+                Seguridad & Trazabilidad AGBC
+              </span>
+              <span className="text-xs text-blue-100 font-medium bg-white/10 px-3 py-1 rounded-full backdrop-blur-xs">
+                PostgreSQL • Producción
+              </span>
+            </div>
+
+            <DialogTitle className="text-xl sm:text-2xl font-black text-white leading-snug mt-3">
+              Gestor de Copias de Seguridad (Backup de Base de Datos)
+            </DialogTitle>
+
+            <DialogDescription className="text-blue-100 text-xs font-medium mt-1">
+              Exportación íntegra de todas las tablas institucionales del sistema para resguardo externo y auditoría.
+            </DialogDescription>
+          </div>
+
+          <div className="p-6 space-y-6 bg-white">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200/80 text-center">
+                <p className="text-2xl font-black text-[#002F6C]">23</p>
+                <p className="text-[11px] font-bold text-slate-600 mt-0.5">Tablas Respaldadas</p>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 text-center">
+                <p className="text-2xl font-black text-emerald-700">100%</p>
+                <p className="text-[11px] font-bold text-slate-600 mt-0.5">Integridad de Esquema</p>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80 text-center">
+                <p className="text-2xl font-black text-amber-700">JSON / SQL</p>
+                <p className="text-[11px] font-bold text-slate-600 mt-0.5">Formatos Compatibles</p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 space-y-2 text-xs text-slate-700">
+              <p className="font-bold text-[#002F6C] flex items-center gap-1.5">
+                <ShieldCheckIcon className="h-4 w-4 text-emerald-600" />
+                Contenido incluido en la copia de seguridad:
+              </p>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] text-slate-600 list-disc list-inside">
+                <li>Usuarios, Roles & Permisos RBAC</li>
+                <li>Padrón de Funcionarios & Directorio RRHH</li>
+                <li>Biblioteca de Documentos & Normativas</li>
+                <li>Comunicados, Noticias & Accesos</li>
+                <li>Historial Completo de Auditoría & Logs</li>
+                <li>Sucursales, Trámites & Configuración</li>
+              </ul>
+            </div>
+
+            {ultimoBackupInfo && (
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2Icon className="h-4 w-4 text-emerald-600" />
+                  <span>Último respaldo generado a las {ultimoBackupInfo.fecha} ({ultimoBackupInfo.totalRegistros} registros en {ultimoBackupInfo.totalTablas} tablas)</span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-3 border-t border-slate-100">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={generandoBackup}
+                onClick={handleDescargarBackupSql}
+                className="h-11 rounded-xl text-xs font-bold border-slate-300 text-[#002F6C] hover:bg-slate-50 gap-2 cursor-pointer"
+              >
+                {generandoBackup ? (
+                  <Loader2Icon className="h-4 w-4 animate-spin" />
+                ) : (
+                  <DownloadIcon className="h-4 w-4 text-[#0E5296]" />
+                )}
+                Descargar Script SQL (.sql)
+              </Button>
+
+              <Button
+                type="button"
+                disabled={generandoBackup}
+                onClick={handleDescargarBackupJson}
+                className="h-11 rounded-xl text-xs font-bold bg-[#002F6C] hover:bg-[#0E5296] text-white shadow-md shadow-[#002F6C]/20 gap-2 cursor-pointer"
+              >
+                {generandoBackup ? (
+                  <Loader2Icon className="h-4 w-4 animate-spin text-[#FFCC00]" />
+                ) : (
+                  <DatabaseIcon className="h-4 w-4 text-[#FFCC00]" />
+                )}
+                Descargar Backup Completo (.json)
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

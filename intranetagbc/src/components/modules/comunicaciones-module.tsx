@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition, useRef, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import {
   PlusIcon,
   PencilIcon,
@@ -106,6 +107,7 @@ function isNoticiaFacebook(n: NoticiaRow): boolean {
 }
 
 export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, usuario }: Props) {
+  const router = useRouter()
   const [tab, setTab] = useState<Tab>("comunicados")
   const [noticiaSubTab, setNoticiaSubTab] = useState<NoticiaSubTab>("todas")
   const [accesoCategoria, setAccesoCategoria] = useState<AccesoCategoria>("todas")
@@ -244,6 +246,7 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
         setDialogOpen(false)
         setEditItem(null)
         resetFileState()
+        router.refresh()
       } catch {
         toast.error("Error al guardar")
       }
@@ -283,6 +286,7 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
         setDialogOpen(false)
         setEditItem(null)
         setNoticiaImagenes([])
+        router.refresh()
       } catch {
         toast.error("Error al guardar noticia")
       }
@@ -345,6 +349,7 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
         setAccesoDialogOpen(false)
         setEditAcceso(null)
         setAccesoImagen("")
+        router.refresh()
       } catch {
         toast.error("Error al guardar acceso directo")
       }
@@ -842,6 +847,7 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
                                   else if (tab === "noticias") await eliminarBanner(item.id)
                                   else await eliminarAccesoDirecto(item.clave)
                                   toast.success("Eliminado correctamente")
+                                  router.refresh()
                                 })
                               }}
                               className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-colors cursor-pointer"

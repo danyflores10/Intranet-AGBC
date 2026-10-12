@@ -158,34 +158,11 @@ export async function eliminarBanner(id: string) {
 }
 
 export async function obtenerComunicadosPublicados() {
-  const items = await db.select().from(comunicados)
+  return db
+    .select()
+    .from(comunicados)
     .where(eq(comunicados.estado, "publicado"))
     .orderBy(desc(comunicados.createdAt))
-
-  if (items.length === 0) {
-    try {
-      const [nuevo] = await db.insert(comunicados).values({
-        titulo: "Reglamento Interno de Personal (AGBC-RE-001)",
-        contenido:
-          "La Dirección General Ejecutiva de la Agencia Boliviana de Correos recuerda a todo el personal institucional la vigencia y estricto cumplimiento del Reglamento Interno de Personal. Este documento establece los deberes, derechos, régimen disciplinario y normativo aplicable a todos los servidores públicos de la entidad.",
-        tipo: "comunicado",
-        estado: "publicado",
-        destacado: true,
-        fechaPublicacion: new Date().toISOString().split("T")[0],
-        archivoUrl: "/documentos/doc_026_reglamento_interno_de_personal.pdf",
-        archivoNombre: "doc_026_reglamento_interno_de_personal.pdf",
-        archivoTipo: "pdf",
-      }).returning()
-
-      if (nuevo) {
-        return [nuevo]
-      }
-    } catch {
-      // Fallback
-    }
-  }
-
-  return items
 }
 
 export async function obtenerBannersActivos() {

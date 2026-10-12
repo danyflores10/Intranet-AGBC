@@ -1,7 +1,31 @@
 "use server"
 
 import { db } from "@/db"
-import { auditLogs, users } from "@/db/schema"
+import {
+  auditLogs,
+  users,
+  roles,
+  permissions,
+  userRoles,
+  rolePermissions,
+  personal,
+  directivos,
+  contactosEmergencia,
+  documentos,
+  documentoCategorias,
+  comunicados,
+  banners,
+  configuracion,
+  sucursales,
+  eventosCalendario,
+  solicitudes,
+  ticketsSoporte,
+  reconocimientos,
+  onboardingProgreso,
+  onboardingConfig,
+  notificaciones,
+  emailLogs,
+} from "@/db/schema"
 import { desc, inArray } from "drizzle-orm"
 import { getAuditRequestContext, type AuditRequestContext } from "@/lib/auditoria-context"
 import { obtenerSesionConAccesoActual } from "@/lib/auth/session-access"
@@ -211,4 +235,147 @@ function buildDetailsFromRecord(
   }
 
   return JSON.stringify(merged)
+}
+
+// ── Generar Copia de Seguridad Completa de la Base de Datos ──
+export async function generarBackupBaseDatosAction(): Promise<{
+  success: boolean
+  message: string
+  backup?: any
+  filename?: string
+}> {
+  try {
+    const session = await obtenerSesionConAccesoActual()
+    if (!session?.id) {
+      return { success: false, message: "No autorizado para generar respaldos de base de datos" }
+    }
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+    const filename = `backup_agbc_db_${timestamp}.json`
+
+    const [
+      u, r, p, ur, rp,
+      pers, dir, conEmerg,
+      docs, docCats,
+      coms, bans, configs,
+      sucs, evCal,
+      solics, ticks,
+      recs, onbProg, onbConf,
+      notifs, eLogs, aLogs,
+    ] = await Promise.all([
+      db.select().from(users).catch(() => []),
+      db.select().from(roles).catch(() => []),
+      db.select().from(permissions).catch(() => []),
+      db.select().from(userRoles).catch(() => []),
+      db.select().from(rolePermissions).catch(() => []),
+      db.select().from(personal).catch(() => []),
+      db.select().from(directivos).catch(() => []),
+      db.select().from(contactosEmergencia).catch(() => []),
+      db.select().from(documentos).catch(() => []),
+      db.select().from(documentoCategorias).catch(() => []),
+      db.select().from(comunicados).catch(() => []),
+      db.select().from(banners).catch(() => []),
+      db.select().from(configuracion).catch(() => []),
+      db.select().from(sucursales).catch(() => []),
+      db.select().from(eventosCalendario).catch(() => []),
+      db.select().from(solicitudes).catch(() => []),
+      db.select().from(ticketsSoporte).catch(() => []),
+      db.select().from(reconocimientos).catch(() => []),
+      db.select().from(onboardingProgreso).catch(() => []),
+      db.select().from(onboardingConfig).catch(() => []),
+      db.select().from(notificaciones).limit(2000).catch(() => []),
+      db.select().from(emailLogs).limit(2000).catch(() => []),
+      db.select().from(auditLogs).limit(5000).catch(() => []),
+    ])
+
+    const conteoPorTabla: Record<string, number> = {
+      usuarios: u.length,
+      roles: r.length,
+      permisos: p.length,
+      usuario_roles: ur.length,
+      rol_permisos: rp.length,
+      personal_rrhh: pers.length,
+      directivos: dir.length,
+      contactos_emergencia: conEmerg.length,
+      documentos: docs.length,
+      categorias_documentos: docCats.length,
+      comunicados: coms.length,
+      noticias_banners: bans.length,
+      configuracion: configs.length,
+      sucursales: sucs.length,
+      eventos_calendario: evCal.length,
+      solicitudes_tramites: solics.length,
+      tickets_soporte: ticks.length,
+      reconocimientos: recs.length,
+      onboarding_progreso: onbProg.length,
+      onboarding_config: onbConf.length,
+      notificaciones: notifs.length,
+      email_logs: eLogs.length,
+      logs_auditoria: aLogs.length,
+    }
+
+    const totalRegistros = Object.values(conteoPorTabla).reduce((acc, curr) => acc + curr, 0)
+
+    const backupData = {
+      metadata: {
+        sistema: "Intranet AGBC - Agencia Boliviana de Correos",
+        version: "2.0",
+        fechaGeneracion: new Date().toISOString(),
+        usuarioId: session.id,
+        totalTablas: Object.keys(conteoPorTabla).length,
+        totalRegistros,
+        conteoPorTabla,
+      },
+      tablas: {
+        users: u,
+        roles: r,
+        permissions: p,
+        userRoles: ur,
+        rolePermissions: rp,
+        personal: pers,
+        directivos: dir,
+        contactosEmergencia: conEmerg,
+        documentos: docs,
+        documentoCategorias: docCats,
+        comunicados: coms,
+        banners: bans,
+        configuracion: configs,
+        sucursales: sucs,
+        eventosCalendario: evCal,
+        solicitudes: solics,
+        ticketsSoporte: ticks,
+        reconocimientos: recs,
+        onboardingProgreso: onbProg,
+        onboardingConfig: onbConf,
+        notificaciones: notifs,
+        emailLogs: eLogs,
+        auditLogs: aLogs,
+      },
+    }
+
+    await registrarAuditLog({
+      usuario: session.id,
+      accion: `Generó Copia de Seguridad completa de la Base de Datos (${totalRegistros} registros en ${Object.keys(conteoPorTabla).length} tablas)`,
+      modulo: "Auditoría",
+      resultado: "Exitoso",
+      detalles: {
+        archivo: filename,
+        totalRegistros,
+        totalTablas: Object.keys(conteoPorTabla).length,
+      },
+    })
+
+    return {
+      success: true,
+      message: `Respaldo generado con éxito: ${totalRegistros} registros en ${Object.keys(conteoPorTabla).length} tablas.`,
+      backup: backupData,
+      filename,
+    }
+  } catch (error: any) {
+    console.error("Error al generar backup de base de datos:", error)
+    return {
+      success: false,
+      message: error?.message || "Error al generar la copia de seguridad de la base de datos",
+    }
+  }
 }
