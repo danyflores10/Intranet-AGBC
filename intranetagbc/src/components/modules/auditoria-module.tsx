@@ -317,32 +317,41 @@ function toDate(value: Date | string): Date {
 }
 
 function formatDateTime(date: Date): string {
-  return new Intl.DateTimeFormat("es-BO", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date)
+  try {
+    const d = toDate(date)
+    const pad = (n: number) => n.toString().padStart(2, "0")
+    const day = pad(d.getDate())
+    const month = pad(d.getMonth() + 1)
+    const year = d.getFullYear()
+    let hours = d.getHours()
+    const minutes = pad(d.getMinutes())
+    const period = hours >= 12 ? "p. m." : "a. m."
+    hours = hours % 12 || 12
+    return `${day}/${month}/${year}, ${pad(hours)}:${minutes} ${period}`
+  } catch {
+    return ""
+  }
 }
 
 function formatRelativeDate(date: Date): string {
-  const now = Date.now()
-  const diffMs = now - date.getTime()
-  const diffMin = Math.floor(diffMs / 60000)
-  const diffHr = Math.floor(diffMs / 3600000)
-  const diffDays = Math.floor(diffMs / 86400000)
+  try {
+    const d = toDate(date)
+    const now = Date.now()
+    const diffMs = now - d.getTime()
+    const diffMin = Math.floor(diffMs / 60000)
+    const diffHr = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
 
-  if (diffMin < 1) return "Hace segundos"
-  if (diffMin < 60) return `Hace ${diffMin} min`
-  if (diffHr < 24) return `Hace ${diffHr} h`
-  if (diffDays < 7) return `Hace ${diffDays} día${diffDays > 1 ? "s" : ""}`
+    if (diffMin < 1) return "Hace un momento"
+    if (diffMin < 60) return `Hace ${diffMin} min`
+    if (diffHr < 24) return `Hace ${diffHr} h`
+    if (diffDays < 7) return `Hace ${diffDays} día${diffDays > 1 ? "s" : ""}`
 
-  return new Intl.DateTimeFormat("es-BO", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date)
+    const pad = (n: number) => n.toString().padStart(2, "0")
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`
+  } catch {
+    return ""
+  }
 }
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
@@ -971,7 +980,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-blue-50/25 to-amber-50/20 min-h-screen w-full max-w-full overflow-x-hidden">
+    <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-blue-50/25 to-amber-50/20 min-h-screen w-full min-w-0 max-w-full overflow-x-hidden">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -1052,10 +1061,10 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-3xl border-2 border-[#002F6C]/15 bg-gradient-to-br from-white via-blue-50/20 to-amber-50/20 p-5 shadow-sm">
+      <div className="w-full min-w-0 max-w-full rounded-3xl border-2 border-[#002F6C]/15 bg-gradient-to-br from-white via-blue-50/20 to-amber-50/20 p-4 sm:p-5 shadow-sm">
         <div className="flex flex-col gap-3 pb-4 border-b border-[#002F6C]/10 mb-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="relative w-full lg:max-w-md">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full min-w-0">
+            <div className="relative flex-1 min-w-0 max-w-full sm:max-w-md">
               <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={query}
@@ -1065,7 +1074,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
                   })
                 }
                 placeholder="Buscar por usuario, acción, módulo o IP..."
-                className="h-9 border-border bg-background pl-9 text-sm text-foreground placeholder:text-muted-foreground"
+                className="h-9 border-border bg-background pl-9 text-sm text-foreground placeholder:text-muted-foreground w-full"
               />
             </div>
 
@@ -1074,9 +1083,9 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-9 border-border bg-background text-foreground hover:bg-muted"
+                  className="h-9 border-border bg-background text-foreground hover:bg-muted shrink-0 font-bold self-end sm:self-auto cursor-pointer"
                 >
-                  <DownloadIcon className="mr-2 h-4 w-4" />
+                  <DownloadIcon className="mr-2 h-4 w-4 text-[#002F6C]" />
                   Exportar
                 </Button>
               </DropdownMenuTrigger>
@@ -1103,7 +1112,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
             </DropdownMenu>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1">
               <label htmlFor="date-from" className="text-xs font-semibold text-muted-foreground">
                 Desde
@@ -1191,28 +1200,28 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
         </div>
 
         <div className="overflow-x-auto w-full max-w-full rounded-2xl border border-border/60 bg-white shadow-2xs">
-          <table className="min-w-[960px] w-full border-collapse">
+          <table className="w-full border-collapse text-left">
             <thead className="bg-muted/40">
               <tr>
-                <th className="border-b border-r border-border/70 px-3.5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground w-[130px]">
+                <th className="border-b border-r border-border/70 px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground w-[125px] whitespace-nowrap">
                   Fecha
                 </th>
-                <th className="border-b border-r border-border/70 px-3.5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground w-[220px]">
+                <th className="border-b border-r border-border/70 px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Usuario
                 </th>
-                <th className="border-b border-r border-border/70 px-3.5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground w-[220px]">
+                <th className="border-b border-r border-border/70 px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Acción
                 </th>
-                <th className="border-b border-r border-border/70 px-3.5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground w-[110px]">
+                <th className="border-b border-r border-border/70 px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground w-[100px] whitespace-nowrap">
                   Módulo
                 </th>
-                <th className="border-b border-r border-border/70 px-3.5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground w-[140px]">
+                <th className="border-b border-r border-border/70 px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground w-[120px] whitespace-nowrap">
                   IP y Ubicación
                 </th>
-                <th className="border-b border-r border-border/70 px-3.5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground w-[110px]">
+                <th className="border-b border-r border-border/70 px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground w-[95px] whitespace-nowrap">
                   Estado
                 </th>
-                <th className="border-b border-border/70 px-3.5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground min-w-[140px]">
+                <th className="border-b border-border/70 px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground w-[95px] whitespace-nowrap">
                   Detalles
                 </th>
               </tr>
@@ -1233,49 +1242,48 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
                       key={row.id}
                       className="border-b border-border/60 transition-colors hover:bg-muted/40"
                     >
-                      <td className="border-r border-border/60 px-4 py-3 align-top">
-                        <p className="text-sm font-semibold text-foreground">{row.fechaRelativa}</p>
-                        <p className="text-xs text-muted-foreground">{row.fechaLarga}</p>
+                      <td className="border-r border-border/60 px-3 py-2.5 align-top whitespace-nowrap" suppressHydrationWarning>
+                        <p className="text-xs font-semibold text-foreground" suppressHydrationWarning>{row.fechaRelativa}</p>
+                        <p className="text-[11px] text-muted-foreground" suppressHydrationWarning>{row.fechaLarga}</p>
                       </td>
 
-                      <td className="border-r border-border/60 px-4 py-3 align-top">
-                        <div className="flex items-start gap-2.5">
-                          <Avatar size="sm">
+                      <td className="border-r border-border/60 px-3 py-2.5 align-top">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Avatar className="h-7 w-7 shrink-0">
                             <AvatarImage src={row.usuario.avatar} alt={row.usuario.nombre} />
-                            <AvatarFallback>{getInitials(row.usuario.nombre)}</AvatarFallback>
+                            <AvatarFallback className="text-[10px]">{getInitials(row.usuario.nombre)}</AvatarFallback>
                           </Avatar>
-                          <div className="space-y-0.5 min-w-0">
-                            <p className="text-sm font-semibold text-foreground truncate">{row.usuario.nombre}</p>
-                            <p className="text-xs text-muted-foreground truncate">{row.usuario.email ?? "Sin correo asociado"}</p>
-                            <p className="text-[11px] text-muted-foreground/80 truncate">ID: {row.usuario.idCrudo}</p>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-semibold text-foreground truncate" title={row.usuario.nombre}>{row.usuario.nombre}</p>
+                            <p className="text-[11px] text-muted-foreground truncate" title={row.usuario.email ?? "Sin correo asociado"}>{row.usuario.email ?? "Sin correo"}</p>
                           </div>
                         </div>
                       </td>
 
-                      <td className="border-r border-border/60 px-4 py-3 align-top">
-                        <div className="flex items-start gap-2">
-                          <span className={cn("inline-flex h-7 w-7 items-center justify-center rounded-lg border", getActionStyles(row.accion))}>
+                      <td className="border-r border-border/60 px-3 py-2.5 align-top">
+                        <div className="flex items-start gap-1.5 min-w-0">
+                          <span className={cn("inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border mt-0.5", getActionStyles(row.accion))}>
                             {getActionIcon(row.accion)}
                           </span>
-                          <p className="text-sm text-foreground">{row.accion}</p>
+                          <p className="text-xs text-foreground line-clamp-2 leading-relaxed" title={row.accion}>{row.accion}</p>
                         </div>
                       </td>
 
-                      <td className="border-r border-border/60 px-4 py-3 align-top">
-                        <span className="inline-flex items-center rounded-full border border-[#FFB300]/30 bg-[#FFB300]/10 px-2.5 py-1 text-xs font-semibold text-[#B77000] dark:border-[#FFB300]/45 dark:bg-[#FFB300]/20 dark:text-[#FFD166]">
+                      <td className="border-r border-border/60 px-3 py-2.5 align-top">
+                        <span className="inline-flex items-center rounded-full border border-[#FFB300]/30 bg-[#FFB300]/10 px-2 py-0.5 text-[11px] font-semibold text-[#B77000] dark:border-[#FFB300]/45 dark:bg-[#FFB300]/20 dark:text-[#FFD166] whitespace-nowrap">
                           {row.modulo}
                         </span>
                       </td>
 
-                      <td className="border-r border-border/60 px-4 py-3 align-top">
-                        <p className="font-mono text-xs text-foreground">{row.ip}</p>
-                        <p className="text-xs text-muted-foreground">{row.ubicacion}</p>
+                      <td className="border-r border-border/60 px-3 py-2.5 align-top">
+                        <p className="font-mono text-[11px] font-medium text-foreground whitespace-nowrap">{row.ip}</p>
+                        <p className="text-[10px] text-muted-foreground truncate max-w-[120px]" title={row.ubicacion}>{row.ubicacion}</p>
                       </td>
 
-                      <td className="border-r border-border/60 px-4 py-3 align-top">
+                      <td className="border-r border-border/60 px-3 py-2.5 align-top text-center">
                         <span
                           className={cn(
-                            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold",
+                            "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap",
                             statusStyle.badge,
                             statusStyle.text,
                           )}
@@ -1285,22 +1293,22 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
                         </span>
                       </td>
 
-                      <td className="px-4 py-3 align-top">
-                        {row.tieneCambios ? (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="h-8 rounded-lg border-border text-foreground hover:bg-muted"
-                            onClick={() => setSelectedLog(row)}
-                          >
-                            Ver cambios
-                          </Button>
-                        ) : (
-                          <p className="text-xs text-muted-foreground line-clamp-2 max-w-[260px]">
-                            {row.detallesTexto}
-                          </p>
-                        )}
+                      <td className="px-3 py-2.5 align-top text-center whitespace-nowrap">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className={cn(
+                            "h-7 text-xs px-2.5 rounded-lg border-border hover:bg-muted font-semibold transition-all cursor-pointer",
+                            row.tieneCambios
+                              ? "text-[#002F6C] border-[#002F6C]/30 bg-blue-50/50 hover:bg-blue-100/60"
+                              : "text-slate-700"
+                          )}
+                          onClick={() => setSelectedLog(row)}
+                        >
+                          <EyeIcon className="h-3 w-3 mr-1 shrink-0" />
+                          {row.tieneCambios ? "Cambios" : "Ver detalle"}
+                        </Button>
                       </td>
                     </tr>
                   )
@@ -1364,31 +1372,66 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats }: Props) {
       </div>
 
       <Dialog open={Boolean(selectedLog)} onOpenChange={(open) => !open && setSelectedLog(null)}>
-        <DialogContent className="sm:max-w-4xl max-h-[88vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-3xl max-h-[88vh] overflow-y-auto">
           {selectedLog ? (
             <>
               <DialogHeader>
-                <DialogTitle>Cambios auditados</DialogTitle>
+                <DialogTitle className="text-lg font-black text-[#002F6C] flex items-center gap-2">
+                  <ShieldCheckIcon className="h-5 w-5 text-[#0E5296]" />
+                  Detalle del Registro de Auditoría
+                </DialogTitle>
                 <DialogDescription>
                   {selectedLog.accion} · {selectedLog.modulo} · {selectedLog.fechaLarga}
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Valor Anterior</p>
-                  <pre className="max-h-[360px] overflow-auto rounded-xl border border-border bg-muted/40 p-3 text-xs text-foreground">
-{JSON.stringify(selectedLog.detalles.cambios?.antes ?? {}, null, 2)}
-                  </pre>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+                <div>
+                  <span className="text-muted-foreground font-semibold block text-[11px]">Usuario:</span>
+                  <span className="font-bold text-foreground">{selectedLog.usuario.nombre}</span>
+                  {selectedLog.usuario.email && (
+                    <span className="text-[11px] text-muted-foreground block truncate">{selectedLog.usuario.email}</span>
+                  )}
                 </div>
-
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Valor Nuevo</p>
-                  <pre className="max-h-[360px] overflow-auto rounded-xl border border-border bg-muted/40 p-3 text-xs text-foreground">
-{JSON.stringify(selectedLog.detalles.cambios?.despues ?? {}, null, 2)}
-                  </pre>
+                <div>
+                  <span className="text-muted-foreground font-semibold block text-[11px]">ID de Usuario:</span>
+                  <span className="font-mono text-[11px] text-foreground break-all">{selectedLog.usuario.idCrudo}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground font-semibold block text-[11px]">IP / Ubicación:</span>
+                  <span className="font-mono text-[11px] text-foreground">{selectedLog.ip}</span>
+                  <span className="text-[11px] text-muted-foreground block truncate">{selectedLog.ubicacion}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground font-semibold block text-[11px]">Estado:</span>
+                  <span className="font-bold text-foreground">{selectedLog.estado}</span>
                 </div>
               </div>
+
+              {selectedLog.tieneCambios ? (
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Valor Anterior</p>
+                    <pre className="max-h-[360px] overflow-auto rounded-xl border border-border bg-muted/40 p-3 text-xs text-foreground">
+{JSON.stringify(selectedLog.detalles.cambios?.antes ?? {}, null, 2)}
+                    </pre>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Valor Nuevo</p>
+                    <pre className="max-h-[360px] overflow-auto rounded-xl border border-border bg-muted/40 p-3 text-xs text-foreground">
+{JSON.stringify(selectedLog.detalles.cambios?.despues ?? {}, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Descripción / Detalles del Evento</p>
+                  <div className="rounded-xl border border-border bg-muted/30 p-3.5 text-xs text-foreground whitespace-pre-wrap">
+                    {selectedLog.detallesTexto}
+                  </div>
+                </div>
+              )}
 
               {selectedLog.detalles.metadata ? (
                 <div className="space-y-2">

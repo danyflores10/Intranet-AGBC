@@ -21,7 +21,7 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <SidebarProvider>
       <AppSidebar usuario={usuario} />
-      <SidebarInset className="min-h-screen bg-slate-50">
+      <SidebarInset className="min-h-screen bg-slate-50 min-w-0 w-full max-w-full overflow-x-hidden">
         <header className="flex h-16 shrink-0 items-center justify-between border-b-2 border-[#002F6C]/15 bg-[#FFCC00] px-4 shadow-sm">
           <div className="flex items-center gap-3">
             <SidebarTrigger className="h-10 w-10 rounded-xl bg-[#002F6C]/10 text-[#002F6C] hover:bg-[#002F6C] hover:text-[#FFCC00] transition-all shadow-xs cursor-pointer" />
@@ -44,9 +44,9 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
             />
           </div>
         </header>
-        <main className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden w-full max-w-full">
+        <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden w-full min-w-0 max-w-full">
           {children}
-        </main>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   )
