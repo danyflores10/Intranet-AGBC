@@ -1,6 +1,7 @@
 "use client"
 
-import { useMemo, useState, type ReactNode } from "react"
+import { useMemo, useState, useTransition, type ReactNode } from "react"
+import { useRouter } from "next/navigation"
 import {
   ActivityIcon,
   AlertTriangleIcon,
@@ -38,6 +39,7 @@ import {
   PrinterIcon,
   UsersIcon,
   SparklesIcon,
+  RefreshCwIcon,
 } from "lucide-react"
 import toast from "react-hot-toast"
 import * as XLSX from "xlsx"
@@ -564,6 +566,10 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
     archivo: string
   } | null>(null)
 
+  const router = useRouter()
+  const [isPendingRefresh, startTransition] = useTransition()
+  const [docMetricTab, setDocMetricTab] = useState<"descargas" | "vistas">("descargas")
+
   // Filtros interactivos del reporte CEO
   const [ceoPeriodo, setCeoPeriodo] = useState<"todos" | "hoy" | "7d" | "30d">("todos")
   const [ceoModuloFiltro, setCeoModuloFiltro] = useState<string>("todos")
@@ -1011,44 +1017,28 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
   const effectiveCeo: CeoAnalytics = useMemo(() => {
     if (ceoAnalytics) return ceoAnalytics
     return {
-      visitasTotales: 342,
-      totalDescargas: 218,
-      porcentajeLectura: 85,
-      totalDocumentos: 18,
-      totalFuncionarios: 62,
-      lecturaConfirmada: 53,
-      lecturaPendiente: 9,
-      topModulos: [
-        { modulo: "Documentos Institucionales", visitas: 215, porcentaje: 28, icono: "BookOpen", descripcion: "Consultas, descargas y lecturas de normativas y manuales", categoria: "Documentos" },
-        { modulo: "Noticias Institucionales", visitas: 172, porcentaje: 22, icono: "Newspaper", descripcion: "Boletines de prensa y novedades institucionales", categoria: "Noticias" },
-        { modulo: "Comunicados Oficiales", visitas: 135, porcentaje: 18, icono: "Bell", descripcion: "Circulares y avisos de gerencia general", categoria: "Comunicados" },
-        { modulo: "Personal Institucional (Directorio)", visitas: 94, porcentaje: 12, icono: "Users", descripcion: "Búsqueda de compañeros y directorio interno", categoria: "Directorio" },
-        { modulo: "Accesos Rápidos a Sistemas", visitas: 68, porcentaje: 9, icono: "ExternalLink", descripcion: "Acceso a plataformas corporativas (SIGEP, Correo, ERP)", categoria: "Sistemas" },
-        { modulo: "Redes Sociales Institucionales", visitas: 42, porcentaje: 5, icono: "Share2", descripcion: "Canales oficiales de Facebook, YouTube y redes", categoria: "Redes" },
-        { modulo: "Oficinas & Sucursales Postales", visitas: 31, porcentaje: 4, icono: "MapPin", descripcion: "Directorio de agencias postales zonales", categoria: "Oficinas" },
-        { modulo: "Centro de Notificaciones", visitas: 25, porcentaje: 3, icono: "Inbox", descripcion: "Alertas y avisos personales de funcionarios", categoria: "Notificaciones" },
-        { modulo: "Cumpleaños & Efemérides", visitas: 19, porcentaje: 2, icono: "Cake", descripcion: "Felicitaciones del día y calendario institucional", categoria: "Eventos" },
-        { modulo: "Mi Perfil Institucional", visitas: 14, porcentaje: 2, icono: "UserCheck", descripcion: "Ficha del funcionario y credenciales", categoria: "Perfil" },
-      ],
-      topDocumentos: [
-        { id: "doc-1", titulo: "Reglamento Interno de Personal AGBC", categoria: "Reglamento", descargas: 108, tipoArchivo: "pdf", tamano: "2.4 MB", ultimaDescarga: new Date().toISOString() },
-        { id: "doc-2", titulo: "Código de Ética y Conducta Postal", categoria: "Normativa", descargas: 84, tipoArchivo: "pdf", tamano: "1.8 MB", ultimaDescarga: new Date().toISOString() },
-        { id: "doc-3", titulo: "Manual de Procesos y Admisión Postal", categoria: "Manual", descargas: 61, tipoArchivo: "pdf", tamano: "3.1 MB", ultimaDescarga: new Date().toISOString() },
-        { id: "doc-4", titulo: "Organigrama Institucional y Estructura AGBC", categoria: "Institucional", descargas: 46, tipoArchivo: "pdf", tamano: "1.2 MB", ultimaDescarga: new Date().toISOString() },
-        { id: "doc-5", titulo: "Formulario Oficial de Solicitud de Licencia", categoria: "Formulario", descargas: 39, tipoArchivo: "xlsx", tamano: "320 KB", ultimaDescarga: new Date().toISOString() },
-      ],
+      visitasTotales: 0,
+      totalDescargas: 0,
+      totalVisualizaciones: 0,
+      porcentajeLectura: 0,
+      totalDocumentos: 0,
+      totalFuncionarios: 0,
+      lecturaConfirmada: 0,
+      lecturaPendiente: 0,
+      topModulos: [],
+      topDocumentos: [],
       horariosPico: [
-        { rango: "08:30 - 12:30", periodo: "Jornada Mañana (Ingreso y Operación Laboral)", actividad: 148, porcentaje: 43 },
-        { rango: "12:30 - 13:00", periodo: "Receso / Almuerzo Institucional", actividad: 26, porcentaje: 8 },
-        { rango: "13:00 - 16:30", periodo: "Jornada Tarde (Operación Laboral y Salida)", actividad: 112, porcentaje: 33 },
-        { rango: "16:30 - 20:00", periodo: "Horas Extra / Salida Tardía", actividad: 42, porcentaje: 12 },
-        { rango: "20:00 - 08:30", periodo: "Guardia / Turno Nocturno", actividad: 14, porcentaje: 4 },
+        { rango: "08:30 - 12:30", periodo: "Jornada Mañana (Ingreso y Operación Laboral)", actividad: 0, porcentaje: 0 },
+        { rango: "12:30 - 13:00", periodo: "Receso / Almuerzo Institucional", actividad: 0, porcentaje: 0 },
+        { rango: "13:00 - 16:30", periodo: "Jornada Tarde (Operación Laboral y Salida)", actividad: 0, porcentaje: 0 },
+        { rango: "16:30 - 20:00", periodo: "Horas Extra / Salida Tardía", actividad: 0, porcentaje: 0 },
+        { rango: "20:00 - 08:30", periodo: "Guardia / Turno Nocturno", actividad: 0, porcentaje: 0 },
       ],
     }
   }, [ceoAnalytics])
 
   const filteredTopDocumentos = useMemo(() => {
-    let list = effectiveCeo.topDocumentos
+    let list = [...effectiveCeo.topDocumentos]
     if (ceoCategoriaFiltro !== "todos") {
       list = list.filter((d) => d.categoria.toLowerCase().includes(ceoCategoriaFiltro.toLowerCase()))
     }
@@ -1056,8 +1046,15 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
       const q = ceoSearch.toLowerCase().trim()
       list = list.filter((d) => d.titulo.toLowerCase().includes(q) || d.categoria.toLowerCase().includes(q))
     }
+    // Ordenar dinámicamente según la métrica seleccionada (descargas vs vistas)
+    list.sort((a, b) => {
+      if (docMetricTab === "vistas") {
+        return b.vistas - a.vistas || b.descargas - a.descargas
+      }
+      return b.descargas - a.descargas || b.vistas - a.vistas
+    })
     return list
-  }, [effectiveCeo.topDocumentos, ceoCategoriaFiltro, ceoSearch])
+  }, [effectiveCeo.topDocumentos, ceoCategoriaFiltro, ceoSearch, docMetricTab])
 
   const filteredTopModulos = useMemo(() => {
     let list = effectiveCeo.topModulos
@@ -1083,6 +1080,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
         ["INDICADOR EJECUTIVO (CEO)", "VALOR", "DETALLES INSTITUCIONALES"],
         ["Visitas Totales al Sitio (Inicios de Sesión)", effectiveCeo.visitasTotales, "Conteo de cada vez que los funcionarios ingresan a la plataforma"],
         ["Total Descargas de Documentos", effectiveCeo.totalDescargas, "Descargas de normativas, reglamentos y manuales oficiales"],
+        ["Total Visualizaciones de Documentos", effectiveCeo.totalVisualizaciones ?? 0, "Apertura y lectura de documentos en el visor"],
         ["Cumplimiento de Lectura Obligatoria", `${effectiveCeo.porcentajeLectura}%`, `${effectiveCeo.lecturaConfirmada} de ${effectiveCeo.totalFuncionarios} funcionarios han confirmado lectura`],
         ["Total Documentos en Biblioteca", effectiveCeo.totalDocumentos, "Normativas y reglamentos oficiales vigentes"],
         ["Lugar / Sección Más Frecuentada", effectiveCeo.topModulos[0]?.modulo || "N/A", `${effectiveCeo.topModulos[0]?.visitas || 0} visitas (${effectiveCeo.topModulos[0]?.porcentaje || 0}%)`],
@@ -1106,18 +1104,19 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
       XLSX.utils.book_append_sheet(wb, wsModulos, "Lugares Más Visitados")
 
       const docsRows = [
-        ["RANKING", "DOCUMENTO INSTITUCIONAL", "CATEGORÍA", "TOTAL DESCARGAS", "FORMATO", "ÚLTIMA DESCARGA"],
+        ["RANKING", "DOCUMENTO INSTITUCIONAL", "CATEGORÍA", "TOTAL DESCARGAS", "TOTAL VISTAS", "FORMATO", "ÚLTIMA DESCARGA"],
         ...filteredTopDocumentos.map((d, idx) => [
           idx + 1,
           d.titulo,
           d.categoria,
           d.descargas,
+          d.vistas ?? 0,
           (d.tipoArchivo || "pdf").toUpperCase(),
           d.ultimaDescarga ? new Date(d.ultimaDescarga).toLocaleString("es-BO") : "Sin registro",
         ]),
       ]
       const wsDocs = XLSX.utils.aoa_to_sheet(docsRows)
-      wsDocs["!cols"] = [{ wch: 10 }, { wch: 45 }, { wch: 22 }, { wch: 18 }, { wch: 12 }, { wch: 24 }]
+      wsDocs["!cols"] = [{ wch: 10 }, { wch: 45 }, { wch: 22 }, { wch: 18 }, { wch: 15 }, { wch: 12 }, { wch: 24 }]
       XLSX.utils.book_append_sheet(wb, wsDocs, "Top Documentos")
 
       const traficoRows = [
@@ -1158,6 +1157,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
         <td style="padding: 7px 10px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #002F6C;">${escapeHtml(d.titulo)}</td>
         <td style="padding: 7px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: bold;">${escapeHtml(d.categoria)}</span></td>
         <td style="padding: 7px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-weight: bold; color: #047857;">${d.descargas}</td>
+        <td style="padding: 7px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-weight: bold; color: #7c3aed;">${d.vistas ?? 0}</td>
         <td style="padding: 7px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 11px; color: #64748b;">${d.ultimaDescarga ? new Date(d.ultimaDescarga).toLocaleDateString("es-BO") : "—"}</td>
       </tr>
     `).join("")
@@ -1183,7 +1183,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
     .title { font-size: 18px; font-weight: 900; color: #002F6C; margin: 0; text-transform: uppercase; }
     .subtitle { font-size: 11px; color: #64748b; margin-top: 3px; font-weight: 600; }
     .badge { background: #FFCC00; color: #002F6C; font-weight: 900; font-size: 10px; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; display: inline-block; margin-bottom: 4px; }
-    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+    .kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
     .kpi { border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; background: #f8fafc; text-align: center; }
     .kpi-val { font-size: 20px; font-weight: 900; color: #002F6C; }
     .kpi-lbl { font-size: 10px; font-weight: 700; color: #475569; text-transform: uppercase; margin-top: 2px; }
@@ -1210,14 +1210,18 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
   <div class="kpis">
     <div class="kpi">
       <div class="kpi-val">${effectiveCeo.visitasTotales}</div>
-      <div class="kpi-lbl">Visitas Totales (Accesos)</div>
+      <div class="kpi-lbl">Visitas Totales</div>
     </div>
     <div class="kpi">
-      <div class="kpi-val">${effectiveCeo.totalDescargas}</div>
+      <div class="kpi-val" style="color: #047857;">${effectiveCeo.totalDescargas}</div>
       <div class="kpi-lbl">Total Descargas</div>
     </div>
     <div class="kpi">
-      <div class="kpi-val" style="color: #047857;">${effectiveCeo.porcentajeLectura}%</div>
+      <div class="kpi-val" style="color: #7c3aed;">${effectiveCeo.totalVisualizaciones ?? 0}</div>
+      <div class="kpi-lbl">Visualizaciones</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-val" style="color: #b45309;">${effectiveCeo.porcentajeLectura}%</div>
       <div class="kpi-lbl">Lectura Obligatoria</div>
     </div>
     <div class="kpi">
@@ -1240,14 +1244,15 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
     <tbody>${modulosHtml}</tbody>
   </table>
 
-  <div class="section-title">2. ¿Cuál es el documento que más descargan? (Top Documentos con Mayor Demanda)</div>
+  <div class="section-title">2. ¿Cuál es el documento que más descargan o ven? (Top Documentos con Mayor Demanda)</div>
   <table>
     <thead>
       <tr>
         <th style="width: 50px; text-align: center;">Pos.</th>
         <th>Documento Institucional</th>
         <th style="width: 120px; text-align: center;">Categoría</th>
-        <th style="width: 90px; text-align: center;">Descargas</th>
+        <th style="width: 80px; text-align: center;">Descargas</th>
+        <th style="width: 80px; text-align: center;">Vistas</th>
         <th style="width: 110px; text-align: center;">Última Descarga</th>
       </tr>
     </thead>
@@ -1755,6 +1760,22 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
               <div className="flex flex-wrap items-center gap-2 shrink-0">
                 <Button
                   type="button"
+                  disabled={isPendingRefresh}
+                  onClick={() => {
+                    startTransition(() => {
+                      router.refresh()
+                      toast.success("Métricas actualizadas en tiempo real desde la BD")
+                    })
+                  }}
+                  variant="outline"
+                  className="border-[#002F6C]/30 text-[#002F6C] hover:bg-blue-50 font-bold rounded-xl text-xs gap-1.5 h-9 cursor-pointer"
+                  title="Recargar datos directamente desde la base de datos"
+                >
+                  <RefreshCwIcon className={cn("h-4 w-4 text-[#0E5296]", isPendingRefresh && "animate-spin")} />
+                  {isPendingRefresh ? "Actualizando..." : "Actualizar Datos"}
+                </Button>
+                <Button
+                  type="button"
                   onClick={exportarReporteCeoExcel}
                   className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs gap-1.5 h-9 cursor-pointer shadow-xs"
                 >
@@ -1833,8 +1854,8 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
             </div>
           </div>
 
-          {/* 4 Tarjetas KPI Ejecutivas */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
+          {/* 5 Tarjetas KPI Ejecutivas */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 w-full">
             <div className="flex items-center gap-3.5 rounded-2xl border-2 border-sky-200/90 bg-gradient-to-br from-sky-50 via-blue-50/60 to-white p-3.5 sm:p-4 shadow-xs hover:shadow-md transition-all min-w-0">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0E5296] text-[#FFCC00]">
                 <GlobeIcon className="h-5 w-5" />
@@ -1852,6 +1873,16 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
               <div className="min-w-0">
                 <div className="text-2xl font-black text-emerald-700">{effectiveCeo.totalDescargas}</div>
                 <div className="text-xs text-slate-600 font-bold truncate">Total Descargas</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3.5 rounded-2xl border-2 border-purple-200/90 bg-gradient-to-br from-purple-50 via-indigo-50/60 to-white p-3.5 sm:p-4 shadow-xs hover:shadow-md transition-all min-w-0">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-600 text-white">
+                <EyeIcon className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-2xl font-black text-purple-700">{effectiveCeo.totalVisualizaciones ?? 0}</div>
+                <div className="text-xs text-slate-600 font-bold truncate">Visualizaciones</div>
               </div>
             </div>
 
@@ -1899,125 +1930,222 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
                 </span>
               </div>
 
-              <div className="space-y-3.5 pt-1">
-                {filteredTopModulos.map((m, idx) => {
-                  const nivelTrafico =
-                    m.porcentaje >= 25
-                      ? { label: "Alto Tráfico", bg: "bg-emerald-50 text-emerald-800 border-emerald-200" }
-                      : m.porcentaje >= 12
-                      ? { label: "Tráfico Frecuente", bg: "bg-blue-50 text-blue-800 border-blue-200" }
-                      : { label: "Tráfico Regular", bg: "bg-slate-50 text-slate-700 border-slate-200" }
+              <div className="space-y-3 pt-1 max-h-[480px] overflow-y-auto pr-1">
+                {filteredTopModulos.length === 0 ? (
+                  <div className="py-12 text-center text-slate-400">
+                    <CompassIcon className="h-10 w-10 mx-auto text-slate-300 mb-2" />
+                    <p className="text-xs font-bold text-slate-500">No se encontraron registros de navegación</p>
+                    <p className="text-[11px] text-slate-400">
+                      Las visitas a los 10 módulos institucionales se registran en tiempo real en la base de datos conforme los funcionarios ingresan.
+                    </p>
+                  </div>
+                ) : (
+                  filteredTopModulos.map((m, idx) => {
+                    const nivelTrafico =
+                      m.visitas === 0
+                        ? { label: "Sin Tráfico Aún", bg: "bg-slate-50 text-slate-600 border-slate-200" }
+                        : m.porcentaje >= 25
+                        ? { label: "Alto Tráfico", bg: "bg-emerald-50 text-emerald-800 border-emerald-200" }
+                        : m.porcentaje >= 12
+                        ? { label: "Tráfico Frecuente", bg: "bg-blue-50 text-blue-800 border-blue-200" }
+                        : { label: "Tráfico Regular", bg: "bg-slate-50 text-slate-700 border-slate-200" }
 
-                  return (
-                    <div
-                      key={m.modulo}
-                      className="group p-3 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-[#002F6C]/25 hover:shadow-sm transition-all space-y-2"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#002F6C] text-[#FFCC00] text-xs font-black">
-                            #{idx + 1}
-                          </span>
-                          <div className="min-w-0">
-                            <h4 className="text-xs font-black text-[#002F6C] truncate group-hover:text-[#0E5296]">
-                              {m.modulo}
-                            </h4>
-                            <p className="text-[10.5px] text-slate-500 truncate font-medium">
-                              {m.descripcion}
-                            </p>
+                    return (
+                      <div
+                        key={m.modulo}
+                        className="group p-3 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-[#002F6C]/25 hover:shadow-sm transition-all space-y-2"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#002F6C] text-[#FFCC00] text-xs font-black">
+                              #{idx + 1}
+                            </span>
+                            <div className="min-w-0">
+                              <h4 className="text-xs font-black text-[#002F6C] truncate group-hover:text-[#0E5296]">
+                                {m.modulo}
+                              </h4>
+                              <p className="text-[10.5px] text-slate-500 truncate font-medium">
+                                {m.descripcion}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border", nivelTrafico.bg)}>
+                              {nivelTrafico.label}
+                            </span>
+                            <span className="text-xs font-black text-[#002F6C] min-w-12 text-right">
+                              {m.visitas} <span className="text-[10px] text-slate-400 font-normal">visitas</span>
+                            </span>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border", nivelTrafico.bg)}>
-                            {nivelTrafico.label}
-                          </span>
-                          <span className="text-xs font-black text-[#002F6C] min-w-12 text-right">
-                            {m.visitas} <span className="text-[10px] text-slate-400 font-normal">visitas</span>
-                          </span>
+                        {/* Barra de progreso visual */}
+                        <div className="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="h-2 rounded-full bg-gradient-to-r from-[#002F6C] via-[#0E5296] to-[#FFCC00] transition-all duration-500"
+                            style={{ width: `${Math.max(m.visitas > 0 ? 6 : 0, m.porcentaje)}%` }}
+                          />
                         </div>
                       </div>
-
-                      {/* Barra de progreso visual */}
-                      <div className="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
-                        <div
-                          className="h-2 rounded-full bg-gradient-to-r from-[#002F6C] via-[#0E5296] to-[#FFCC00] transition-all duration-500"
-                          style={{ width: `${Math.max(6, m.porcentaje)}%` }}
-                        />
-                      </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })
+                )}
               </div>
             </div>
 
-            {/* Bloque 2: ¿Cuál es el documento que más descargan? */}
+            {/* Bloque 2: ¿Cuál es el documento que más descargan o ven? */}
             <div className="rounded-3xl border-2 border-[#002F6C]/15 bg-white p-5 sm:p-6 shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-[#FFCC00]">
-                    <FileDownIcon className="h-5 w-5" />
+                  <div className={cn(
+                    "flex h-9 w-9 items-center justify-center rounded-xl",
+                    docMetricTab === "descargas" ? "bg-emerald-600 text-[#FFCC00]" : "bg-purple-600 text-white"
+                  )}>
+                    {docMetricTab === "descargas" ? (
+                      <FileDownIcon className="h-5 w-5" />
+                    ) : (
+                      <EyeIcon className="h-5 w-5" />
+                    )}
                   </div>
                   <div>
                     <h3 className="text-base font-black text-[#002F6C]">
-                      ¿Cuál es el documento que más descargan?
+                      ¿Cuál es el documento {docMetricTab === "descargas" ? "que más descargan?" : "más visto?"}
                     </h3>
                     <p className="text-[11px] text-slate-500 font-medium">
-                      Ranking oficial de normativas, manuales y archivos con mayor demanda
+                      Ranking oficial según {docMetricTab === "descargas" ? "descargas realizadas por funcionarios" : "visualizaciones registradas en el portal"}
                     </p>
                   </div>
                 </div>
-                <span className="text-[11px] font-black text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                  Top {filteredTopDocumentos.length}
-                </span>
+
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  {/* Selector Más Descargados vs Más Vistos */}
+                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setDocMetricTab("descargas")}
+                      className={cn(
+                        "px-2.5 py-1 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer",
+                        docMetricTab === "descargas"
+                          ? "bg-emerald-600 text-white shadow-xs"
+                          : "text-slate-600 hover:text-[#002F6C]"
+                      )}
+                    >
+                      <FileDownIcon className="h-3.5 w-3.5" />
+                      Descargas
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDocMetricTab("vistas")}
+                      className={cn(
+                        "px-2.5 py-1 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer",
+                        docMetricTab === "vistas"
+                          ? "bg-purple-600 text-white shadow-xs"
+                          : "text-slate-600 hover:text-[#002F6C]"
+                      )}
+                    >
+                      <EyeIcon className="h-3.5 w-3.5" />
+                      Más Vistos
+                    </button>
+                  </div>
+
+                  <span className={cn(
+                    "text-[11px] font-black px-2.5 py-1 rounded-full border",
+                    docMetricTab === "descargas"
+                      ? "text-emerald-800 bg-emerald-50 border-emerald-200"
+                      : "text-purple-800 bg-purple-50 border-purple-200"
+                  )}>
+                    Top {filteredTopDocumentos.length}
+                  </span>
+                </div>
               </div>
 
-              <div className="space-y-2.5 pt-1 max-h-[480px] overflow-y-auto pr-1">
-                {filteredTopDocumentos.map((d, idx) => {
-                  const medalIcon =
-                    idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`
+              {effectiveCeo.totalDescargas === 0 && docMetricTab === "descargas" && (
+                <div className="bg-amber-50/80 border border-amber-200/80 text-amber-800 rounded-xl px-3 py-2 text-[11px] font-medium flex items-center gap-2">
+                  <AlertTriangleIcon className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                  <span>
+                    El sistema está recién desplegado en producción: 0 descargas registradas en base de datos. Puedes consultar la pestaña <b>Más Vistos</b>.
+                  </span>
+                </div>
+              )}
 
-                  return (
-                    <div
-                      key={d.id}
-                      className="group p-3 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-emerald-500/30 hover:shadow-sm transition-all flex items-center justify-between gap-3"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="text-base font-black shrink-0 w-7 text-center">
-                          {medalIcon}
-                        </span>
-                        <div className="min-w-0">
-                          <h4 className="text-xs font-black text-[#002F6C] truncate group-hover:text-emerald-700" title={d.titulo}>
-                            {d.titulo}
-                          </h4>
-                          <div className="flex items-center gap-2 text-[10.5px] text-slate-500 font-medium mt-0.5">
-                            <span className="bg-sky-50 text-sky-800 px-2 py-0.2 rounded-full font-bold border border-sky-200 text-[9.5px]">
-                              {d.categoria}
-                            </span>
-                            <span>•</span>
-                            <span>{d.tipoArchivo?.toUpperCase() || "PDF"}</span>
-                            {d.tamano && (
-                              <>
-                                <span>•</span>
-                                <span>{d.tamano}</span>
-                              </>
-                            )}
+              <div className="space-y-2.5 pt-1 max-h-[480px] overflow-y-auto pr-1">
+                {filteredTopDocumentos.length === 0 ? (
+                  <div className="py-12 text-center text-slate-400">
+                    <FileTextIcon className="h-10 w-10 mx-auto text-slate-300 mb-2" />
+                    <p className="text-xs font-bold text-slate-500">No hay documentos registrados</p>
+                    <p className="text-[11px] text-slate-400">Los documentos aparecerán aquí conforme se carguen normativas.</p>
+                  </div>
+                ) : (
+                  filteredTopDocumentos.map((d, idx) => {
+                    const medalIcon =
+                      idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`
+
+                    return (
+                      <div
+                        key={d.id}
+                        className={cn(
+                          "group p-3 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-sm transition-all flex items-center justify-between gap-3",
+                          docMetricTab === "descargas" ? "hover:border-emerald-500/30" : "hover:border-purple-500/30"
+                        )}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="text-base font-black shrink-0 w-7 text-center">
+                            {medalIcon}
+                          </span>
+                          <div className="min-w-0">
+                            <h4
+                              className={cn(
+                                "text-xs font-black text-[#002F6C] truncate",
+                                docMetricTab === "descargas" ? "group-hover:text-emerald-700" : "group-hover:text-purple-700"
+                              )}
+                              title={d.titulo}
+                            >
+                              {d.titulo}
+                            </h4>
+                            <div className="flex items-center gap-2 text-[10.5px] text-slate-500 font-medium mt-0.5">
+                              <span className="bg-sky-50 text-sky-800 px-2 py-0.2 rounded-full font-bold border border-sky-200 text-[9.5px]">
+                                {d.categoria}
+                              </span>
+                              <span>•</span>
+                              <span>{d.tipoArchivo?.toUpperCase() || "PDF"}</span>
+                              {d.tamano && (
+                                <>
+                                  <span>•</span>
+                                  <span>{d.tamano}</span>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="text-right shrink-0">
-                        <div className="text-sm font-black text-emerald-700 flex items-center justify-end gap-1">
-                          <FileDownIcon className="h-3.5 w-3.5" />
-                          <span>{d.descargas}</span>
+                        <div className="text-right shrink-0">
+                          {docMetricTab === "descargas" ? (
+                            <>
+                              <div className="text-sm font-black text-emerald-700 flex items-center justify-end gap-1">
+                                <FileDownIcon className="h-3.5 w-3.5" />
+                                <span>{d.descargas}</span>
+                              </div>
+                              <span className="text-[10px] text-slate-400 font-medium">
+                                {d.vistas > 0 ? `${d.vistas} vistas` : "descargas"}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <div className="text-sm font-black text-purple-700 flex items-center justify-end gap-1">
+                                <EyeIcon className="h-3.5 w-3.5" />
+                                <span>{d.vistas ?? 0}</span>
+                              </div>
+                              <span className="text-[10px] text-slate-400 font-medium">
+                                {d.descargas > 0 ? `${d.descargas} descargas` : "visualizaciones"}
+                              </span>
+                            </>
+                          )}
                         </div>
-                        <span className="text-[10px] text-slate-400 font-medium">
-                          descargas
-                        </span>
                       </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })
+                )}
               </div>
             </div>
           </div>
@@ -2067,7 +2195,7 @@ export function AuditoriaModule({ logs, userDirectory = {}, stats, ceoAnalytics 
                     <div className="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
                       <div
                         className={cn("h-2 rounded-full transition-all duration-500", styles.bar)}
-                        style={{ width: `${Math.max(6, h.porcentaje)}%` }}
+                        style={{ width: `${h.actividad > 0 ? Math.max(6, h.porcentaje) : 0}%` }}
                       />
                     </div>
 

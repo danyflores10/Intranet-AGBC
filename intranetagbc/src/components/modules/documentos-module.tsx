@@ -48,6 +48,7 @@ import {
   enviarDocumentosAPapeleraLote, eliminarDocumentosPermanenteLote,
   eliminarCategoriasLote,
 } from "@/actions/documentos"
+import { registrarAccionDocumentoAction } from "@/actions/auditoria"
 import { PERMISOS } from "@/lib/auth/permisos"
 import { crearContextoAcceso, puedeAcceder, type UsuarioRbac } from "@/lib/rbac"
 import Image from "next/image"
@@ -722,7 +723,14 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                         <div className="flex items-center justify-end gap-1.5">
                           {!isCat && item.archivo && (
                             <button
-                              onClick={() => setPreviewDoc(item)}
+                              onClick={() => {
+                                setPreviewDoc(item)
+                                registrarAccionDocumentoAction({
+                                  documentoId: item.id,
+                                  titulo: item.titulo,
+                                  accion: "Visualizó documento",
+                                }).catch(() => {})
+                              }}
                               className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-50 text-[#002F6C] hover:bg-[#0E5296] hover:text-white transition-colors cursor-pointer"
                               title="Ver archivo"
                             >
@@ -733,6 +741,13 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                             <a
                               href={`${getDocumentUrl(item.archivo)}?download=1`}
                               download={item.nombreArchivo ?? "documento"}
+                              onClick={() => {
+                                registrarAccionDocumentoAction({
+                                  documentoId: item.id,
+                                  titulo: item.titulo,
+                                  accion: "Descargó documento",
+                                }).catch(() => {})
+                              }}
                               className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors cursor-pointer"
                               title="Descargar"
                             >
@@ -1059,6 +1074,13 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                     <a
                       href={downloadUrl}
                       download={previewDoc.nombreArchivo ?? "archivo"}
+                      onClick={() => {
+                        registrarAccionDocumentoAction({
+                          documentoId: previewDoc.id,
+                          titulo: previewDoc.titulo,
+                          accion: "Descargó documento",
+                        }).catch(() => {})
+                      }}
                       className="inline-flex items-center gap-2 rounded-xl bg-[#0E5296] hover:bg-[#002F6C] px-4 py-2 text-xs font-bold text-white shadow-md shadow-[#0E5296]/20 transition-all cursor-pointer"
                     >
                       <DownloadIcon className="h-3.5 w-3.5 text-[#FFB800]" />

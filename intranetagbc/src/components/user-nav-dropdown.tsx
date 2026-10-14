@@ -19,6 +19,7 @@ import {
 import toast from "react-hot-toast"
 import { authClient } from "@/lib/auth-client"
 import { PerfilDialog } from "@/components/perfil-dialog"
+import { registrarVisitaSeccionAction } from "@/actions/auditoria"
 
 export interface UserNavProfile {
   id?: string | null
@@ -125,7 +126,13 @@ export function UserNavDropdown({ usuario: propUser, esAdmin: propEsAdmin, class
   const cleanImg = cleanImageUrl(image)
 
   const toggleDropdown = () => {
-    setIsOpen((prev) => !prev)
+    setIsOpen((prev) => {
+      const next = !prev
+      if (next) {
+        registrarVisitaSeccionAction({ seccion: "Mi Perfil Institucional" }).catch(() => {})
+      }
+      return next
+    })
   }
 
   useEffect(() => {
@@ -144,6 +151,7 @@ export function UserNavDropdown({ usuario: propUser, esAdmin: propEsAdmin, class
     const handleOpenPerfil = () => {
       setIsOpen(false)
       setIsPerfilModalOpen(true)
+      registrarVisitaSeccionAction({ seccion: "Mi Perfil Institucional" }).catch(() => {})
     }
 
     const handleClosePerfil = () => {

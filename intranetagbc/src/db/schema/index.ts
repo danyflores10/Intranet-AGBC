@@ -22,3 +22,4 @@ export * from './reconocimientos.schema';
 export * from './onboarding.schema';
 export * from './logistica.schema';
 export * from './email-logs.schema';
+export * from './visitas-seccion.schema';

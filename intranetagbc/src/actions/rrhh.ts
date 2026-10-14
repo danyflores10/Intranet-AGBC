@@ -1168,9 +1168,15 @@ export async function obtenerAuditoriaLecturaYAccesos(): Promise<{
     // 2. Procesar logs de auditoría por usuario
     for (const log of logsDb) {
       const logDate = new Date(log.createdAt)
-      const uId = log.usuario
-      if (usuariosDb.some((u) => u.id === uId)) {
-        registrarEventoAcceso(uId, logDate, log.ip)
+      const uId = (log.usuario || "").trim()
+      const uMatched = usuariosDb.find(
+        (u) =>
+          u.id === uId ||
+          (u.institutionalEmail && u.institutionalEmail.toLowerCase() === uId.toLowerCase()) ||
+          (u.email && u.email.toLowerCase() === uId.toLowerCase())
+      )
+      if (uMatched) {
+        registrarEventoAcceso(uMatched.id, logDate, log.ip)
       }
     }
 

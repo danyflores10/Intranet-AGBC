@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { registrarVisitaSeccionAction } from "@/actions/auditoria"
 
 interface AccesoDirecto {
   clave: string
@@ -234,7 +235,10 @@ export function LandingAccesos({ accesos }: { accesos: AccesoDirecto[] }) {
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
-                      onClick={() => setSelectedAcceso(acceso)}
+                      onClick={() => {
+                        setSelectedAcceso(acceso)
+                        registrarVisitaSeccionAction({ seccion: "Accesos Rápidos a Sistemas", detalles: acceso.titulo }).catch(() => {})
+                      }}
                       className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-[#0E5296] dark:text-[#FFCC00] hover:bg-[#0E5296] hover:text-white dark:hover:bg-[#FFCC00] dark:hover:text-[#002F6C] transition-all cursor-pointer shadow-xs border border-blue-200 dark:border-blue-900"
                       title="Ver detalles del sistema"
                     >
@@ -244,6 +248,9 @@ export function LandingAccesos({ accesos }: { accesos: AccesoDirecto[] }) {
                       href={acceso.url}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => {
+                        registrarVisitaSeccionAction({ seccion: "Accesos Rápidos a Sistemas", detalles: acceso.titulo }).catch(() => {})
+                      }}
                       className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-[#0E5296] hover:text-white transition-all cursor-pointer shadow-xs border border-border/60"
                       title="Abrir enlace en nueva pestaña"
                     >

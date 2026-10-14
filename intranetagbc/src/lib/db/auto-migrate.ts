@@ -84,6 +84,25 @@ export async function runAutoMigrations(options?: { silent?: boolean }) {
       console.warn('[AGBC Auto-Migrate] Columna fecha_nacimiento ya verificada o no requerida:', colErr);
     }
 
+    // 3.6. Garantizar tabla intranet_visitas_seccion de manera segura y no destructiva
+    try {
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS "intranet_visitas_seccion" (
+          "id" varchar(36) PRIMARY KEY,
+          "usuario_id" varchar(100),
+          "seccion" varchar(120) NOT NULL,
+          "ip" varchar(100),
+          "detalles" text,
+          "created_at" timestamp with time zone DEFAULT now() NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS "idx_visitas_seccion_nombre" ON "intranet_visitas_seccion" ("seccion");
+        CREATE INDEX IF NOT EXISTS "idx_visitas_seccion_created_at" ON "intranet_visitas_seccion" ("created_at");
+      `);
+      log('Tabla intranet_visitas_seccion verificada.');
+    } catch (visitasErr) {
+      console.warn('[AGBC Auto-Migrate] Tabla intranet_visitas_seccion ya verificada:', visitasErr);
+    }
+
     client.release();
 
     // 4. Ejecutar migraciones incrementales de Drizzle

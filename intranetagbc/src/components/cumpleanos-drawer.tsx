@@ -26,6 +26,7 @@ import confetti from "canvas-confetti"
 import type { Cumpleanero } from "@/actions/cumpleanos"
 import { MESES_ES } from "@/lib/validations/reconocimientos"
 import { CumpleaneroFelicitacionModal } from "@/components/cumpleanero-felicitacion-modal"
+import { registrarVisitaSeccionAction } from "@/actions/auditoria"
 
 interface CumpleanosDrawerProps {
   cumpleanerosData: {
@@ -54,6 +55,12 @@ export function CumpleanosDrawer({
 
   const totalHoy = cumpleanerosData?.hoy?.length || 0
   const totalMes = cumpleanerosData?.esteMes?.length || 0
+
+  useEffect(() => {
+    if (isOpen) {
+      registrarVisitaSeccionAction({ seccion: "Cumpleaños & Efemérides" }).catch(() => {})
+    }
+  }, [isOpen])
 
   // Verificar si el usuario actual cumple años hoy
   const usuarioCumpleHoy = cumpleanerosData?.hoy?.some(

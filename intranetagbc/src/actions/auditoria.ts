@@ -1,6 +1,6 @@
 "use server"
 
-import { db } from "@/db"
+import { db, pool } from "@/db"
 import {
   auditLogs,
   users,
@@ -26,7 +26,9 @@ import {
   notificaciones,
   emailLogs,
   session,
+  intranetVisitasSeccion,
 } from "@/db/schema"
+import { createId } from "@paralleldrive/cuid2"
 import { desc, inArray } from "drizzle-orm"
 import { getAuditRequestContext, type AuditRequestContext } from "@/lib/auditoria-context"
 import { obtenerSesionConAccesoActual } from "@/lib/auth/session-access"
@@ -43,9 +45,11 @@ export type TopDocumentoItem = {
   titulo: string
   categoria: string
   descargas: number
+  vistas: number
   tipoArchivo: string | null
   tamano: string | null
   ultimaDescarga: string | null
+  ultimaVista: string | null
 }
 
 export type TopModuloItem = {
@@ -60,6 +64,7 @@ export type TopModuloItem = {
 export type CeoAnalytics = {
   visitasTotales: number
   totalDescargas: number
+  totalVisualizaciones: number
   porcentajeLectura: number
   totalDocumentos: number
   totalFuncionarios: number
@@ -70,20 +75,73 @@ export type CeoAnalytics = {
   horariosPico: { rango: string; periodo: string; actividad: number; porcentaje: number }[]
 }
 
+export async function registrarVisitaSeccionAction(params: {
+  seccion: string
+  detalles?: string
+}) {
+  try {
+    const [sessionUser, requestContext] = await Promise.all([
+      obtenerSesionConAccesoActual().catch(() => null),
+      getAuditRequestContext().catch<AuditRequestContext>(() => ({})),
+    ])
+
+    const ip = cleanText(requestContext.ip) || null
+    const usuarioId = sessionUser?.id || null
+
+    // 1. Guardar en tabla intranet_visitas_seccion
+    try {
+      await db.insert(intranetVisitasSeccion).values({
+        id: createId(),
+        usuarioId,
+        seccion: params.seccion,
+        ip,
+        detalles: params.detalles || null,
+      })
+    } catch {
+      await pool.query(
+        `INSERT INTO "intranet_visitas_seccion" ("id", "usuario_id", "seccion", "ip", "detalles", "created_at")
+         VALUES ($1, $2, $3, $4, $5, NOW())`,
+        [createId(), usuarioId, params.seccion, ip, params.detalles || null]
+      ).catch(() => null)
+    }
+
+    // 2. Registrar en auditoría para trazabilidad institucional
+    await registrarAuditLog({
+      usuario: usuarioId || "sistema",
+      accion: `Visitó sección: ${params.seccion}`,
+      modulo: "Navegación",
+      ip,
+      resultado: "Exitoso",
+      detalles: { seccion: params.seccion, detalle: params.detalles, tipo: "visita_seccion" },
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error al registrar visita de sección:", error)
+    return { success: false }
+  }
+}
+
 export async function registrarAccionDocumentoAction(params: {
   documentoId: string
   titulo: string
   accion?: "Descargó documento" | "Visualizó documento"
+  tipo?: "descarga" | "vista" | "visualizacion"
 }) {
   try {
-    const accionTexto = params.accion ?? "Descargó documento"
+    const isVista =
+      params.tipo === "vista" ||
+      params.tipo === "visualizacion" ||
+      (params.accion ? params.accion.toLowerCase().includes("visualiz") : false)
+    const accionTexto = isVista ? "Visualizó documento" : "Descargó documento"
+
     await registrarAuditLog({
       modulo: "Documentos",
       accion: `${accionTexto}: ${params.titulo}`,
       detalles: {
         documentoId: params.documentoId,
         titulo: params.titulo,
-        tipo: accionTexto.includes("Descargó") ? "descarga" : "visualizacion",
+        tipo: isVista ? "visualizacion" : "descarga",
       },
     })
     return { success: true }
@@ -202,25 +260,38 @@ export async function obtenerStatsAuditoria(): Promise<{
     catMap.set(c.id, c.nombre)
   }
 
-  // 1. Top Documentos más descargados
+  // 1. Conteo exacto y real de Documentos: Descargas y Visualizaciones
   const descargasPorDoc = new Map<string, { count: number; ultimaFecha: Date | null }>()
+  const vistasPorDoc = new Map<string, { count: number; ultimaFecha: Date | null }>()
+
   for (const log of logs) {
-    const esAccionDoc =
-      log.modulo.toLowerCase().includes("doc") ||
-      log.accion.toLowerCase().includes("descargó") ||
-      log.accion.toLowerCase().includes("documento") ||
-      log.accion.toLowerCase().includes("visualizó")
+    const mod = (log.modulo || "").toLowerCase()
+    const acc = (log.accion || "").toLowerCase()
+    const det = (log.detalles || "").toLowerCase()
 
-    if (esAccionDoc) {
-      for (const doc of documentosDb) {
-        const coincide =
-          log.accion.toLowerCase().includes(doc.titulo.toLowerCase().slice(0, 20)) ||
-          (log.detalles && (log.detalles.includes(doc.id) || log.detalles.toLowerCase().includes(doc.titulo.toLowerCase().slice(0, 20))))
+    const esDoc = mod.includes("doc") || acc.includes("documento") || det.includes("documento")
+    if (!esDoc) continue
 
-        if (coincide) {
+    const esDescarga = acc.includes("descarg") || det.includes('"tipo":"descarga"') || det.includes("descargó")
+    const esVista = acc.includes("visualiz") || det.includes('"tipo":"visualizacion"') || acc.includes("leyó") || acc.includes("abrió")
+
+    for (const doc of documentosDb) {
+      const coincide =
+        (log.detalles && log.detalles.includes(doc.id)) ||
+        acc.includes(doc.titulo.toLowerCase().slice(0, 25)) ||
+        (log.detalles && det.includes(doc.titulo.toLowerCase().slice(0, 25)))
+
+      if (coincide) {
+        const f = new Date(log.createdAt)
+        if (esDescarga) {
           const prev = descargasPorDoc.get(doc.id) || { count: 0, ultimaFecha: null }
-          const f = new Date(log.createdAt)
           descargasPorDoc.set(doc.id, {
+            count: prev.count + 1,
+            ultimaFecha: !prev.ultimaFecha || f > prev.ultimaFecha ? f : prev.ultimaFecha,
+          })
+        } else if (esVista) {
+          const prev = vistasPorDoc.get(doc.id) || { count: 0, ultimaFecha: null }
+          vistasPorDoc.set(doc.id, {
             count: prev.count + 1,
             ultimaFecha: !prev.ultimaFecha || f > prev.ultimaFecha ? f : prev.ultimaFecha,
           })
@@ -230,19 +301,11 @@ export async function obtenerStatsAuditoria(): Promise<{
   }
 
   const topDocumentos: TopDocumentoItem[] = documentosDb
-    .map((doc, idx) => {
-      const reg = descargasPorDoc.get(doc.id)
-      const baseline = doc.titulo.toLowerCase().includes("reglamento")
-        ? 84
-        : doc.titulo.toLowerCase().includes("código") || doc.titulo.toLowerCase().includes("codigo")
-        ? 67
-        : doc.titulo.toLowerCase().includes("manual")
-        ? 52
-        : doc.titulo.toLowerCase().includes("organigrama")
-        ? 41
-        : Math.max(12, 35 - idx * 2)
-
-      const descargas = (reg?.count || 0) + baseline
+    .map((doc) => {
+      const regDesc = descargasPorDoc.get(doc.id)
+      const regVista = vistasPorDoc.get(doc.id)
+      const descargas = regDesc?.count || 0
+      const vistas = regVista?.count || 0
       const catNombre = doc.categoriaId ? (catMap.get(doc.categoriaId) || "Normativa") : "Institucional"
 
       return {
@@ -250,18 +313,19 @@ export async function obtenerStatsAuditoria(): Promise<{
         titulo: doc.titulo,
         categoria: catNombre,
         descargas,
+        vistas,
         tipoArchivo: doc.tipoArchivo || "pdf",
         tamano: doc.tamano || null,
-        ultimaDescarga: reg?.ultimaFecha
-          ? reg.ultimaFecha.toISOString()
-          : new Date(Date.now() - 1000 * 60 * 35 * (idx + 1)).toISOString(),
+        ultimaDescarga: regDesc?.ultimaFecha ? regDesc.ultimaFecha.toISOString() : null,
+        ultimaVista: regVista?.ultimaFecha ? regVista.ultimaFecha.toISOString() : null,
       }
     })
-    .sort((a, b) => b.descargas - a.descargas)
+    .sort((a, b) => b.descargas - a.descargas || b.vistas - a.vistas)
 
   const totalDescargas = topDocumentos.reduce((acc, d) => acc + d.descargas, 0)
+  const totalVisualizaciones = topDocumentos.reduce((acc, d) => acc + d.vistas, 0)
 
-  // 2. Lugares donde más entran (Ranking de Módulos)
+  // 2. Lugares donde más entran (Ranking de las 10 Secciones Institucionales de Usuarios)
   const moduloVisitas: Record<string, { visitas: number; icono: string; desc: string; categoria: string }> = {
     "Documentos Institucionales": {
       visitas: 0,
@@ -325,48 +389,42 @@ export async function obtenerStatsAuditoria(): Promise<{
     },
   }
 
+  // A. Conteo desde la tabla dedicada intranet_visitas_seccion
+  let visitasSeccionesDb: { seccion: string; createdAt: Date }[] = []
+  try {
+    const rows = await db
+      .select({
+        seccion: intranetVisitasSeccion.seccion,
+        createdAt: intranetVisitasSeccion.createdAt,
+      })
+      .from(intranetVisitasSeccion)
+    visitasSeccionesDb = rows
+    for (const v of rows) {
+      if (moduloVisitas[v.seccion]) {
+        moduloVisitas[v.seccion].visitas += 1
+      }
+    }
+  } catch {
+    // Si la tabla estuviera recién creándose o sin registros
+  }
+
+  // B. Conteo desde logs de auditoría (para capturar eventos de navegación)
   for (const log of logs) {
     const mod = (log.modulo || "").toLowerCase()
     const acc = (log.accion || "").toLowerCase()
     const det = (log.detalles || "").toLowerCase()
 
-    if (mod.includes("doc") || acc.includes("documento") || acc.includes("normativ") || acc.includes("descarg") || acc.includes("visualiz")) {
-      moduloVisitas["Documentos Institucionales"].visitas += 1
-    } else if (mod.includes("noticia") || acc.includes("noticia") || det.includes("noticia")) {
-      moduloVisitas["Noticias Institucionales"].visitas += 1
-    } else if (mod.includes("comunicad") || acc.includes("comunicad") || det.includes("comunicad")) {
-      moduloVisitas["Comunicados Oficiales"].visitas += 1
-    } else if (mod.includes("personal") || mod.includes("rrhh") || mod.includes("directorio") || acc.includes("personal") || acc.includes("directorio")) {
-      moduloVisitas["Personal Institucional (Directorio)"].visitas += 1
-    } else if (mod.includes("sistema") || acc.includes("sistema") || acc.includes("enlace") || acc.includes("acceso")) {
-      moduloVisitas["Accesos Rápidos a Sistemas"].visitas += 1
-    } else if (mod.includes("red") || acc.includes("red") || acc.includes("social") || det.includes("social")) {
-      moduloVisitas["Redes Sociales Institucionales"].visitas += 1
-    } else if (mod.includes("oficina") || mod.includes("sucursal") || acc.includes("sucursal") || det.includes("sucursal")) {
-      moduloVisitas["Oficinas & Sucursales Postales"].visitas += 1
-    } else if (mod.includes("notificac") || acc.includes("notificac") || det.includes("notificac")) {
-      moduloVisitas["Centro de Notificaciones"].visitas += 1
-    } else if (mod.includes("calendario") || mod.includes("cumple") || acc.includes("cumple") || acc.includes("evento")) {
-      moduloVisitas["Cumpleaños & Efemérides"].visitas += 1
-    } else if (mod.includes("perfil") || acc.includes("perfil") || acc.includes("password") || acc.includes("clave")) {
-      moduloVisitas["Mi Perfil Institucional"].visitas += 1
-    } else {
-      moduloVisitas["Noticias Institucionales"].visitas += 1
+    if (mod.includes("navega") || det.includes("visita_seccion") || acc.includes("visitó sección") || acc.includes("ingresó a:")) {
+      for (const nombreSeccion of Object.keys(moduloVisitas)) {
+        if (acc.includes(nombreSeccion.toLowerCase()) || det.includes(nombreSeccion.toLowerCase())) {
+          // Solo sumamos si la tabla dedicada no tiene ya este log
+          if (visitasSeccionesDb.length === 0) {
+            moduloVisitas[nombreSeccion].visitas += 1
+          }
+        }
+      }
     }
   }
-
-  // Ponderación de clicks y actividad de navegación proporcional
-  const baseFactor = Math.max(1, sesionesDb.length)
-  moduloVisitas["Documentos Institucionales"].visitas += Math.round(baseFactor * 2.8)
-  moduloVisitas["Noticias Institucionales"].visitas += Math.round(baseFactor * 2.4)
-  moduloVisitas["Comunicados Oficiales"].visitas += Math.round(baseFactor * 2.1)
-  moduloVisitas["Personal Institucional (Directorio)"].visitas += Math.round(baseFactor * 1.7)
-  moduloVisitas["Accesos Rápidos a Sistemas"].visitas += Math.round(baseFactor * 1.5)
-  moduloVisitas["Redes Sociales Institucionales"].visitas += Math.round(baseFactor * 1.2)
-  moduloVisitas["Oficinas & Sucursales Postales"].visitas += Math.round(baseFactor * 0.9)
-  moduloVisitas["Centro de Notificaciones"].visitas += Math.round(baseFactor * 0.8)
-  moduloVisitas["Cumpleaños & Efemérides"].visitas += Math.round(baseFactor * 0.7)
-  moduloVisitas["Mi Perfil Institucional"].visitas += Math.round(baseFactor * 0.5)
 
   const totalVisitasModulos = Object.values(moduloVisitas).reduce((a, b) => a + b.visitas, 0)
 
@@ -381,13 +439,13 @@ export async function obtenerStatsAuditoria(): Promise<{
     }))
     .sort((a, b) => b.visitas - a.visitas)
 
-  // 3. Tráfico General y Visitas (cada vez que ingresan al sistema)
+  // 3. Tráfico General y Visitas Totales (cada vez que ingresan al sistema en tiempo real)
   const loginEvents = logs.filter((l) => {
     const acc = l.accion.toLowerCase()
     const mod = l.modulo.toLowerCase()
     return mod.includes("autentica") || acc.includes("inició sesión") || acc.includes("inicio sesion") || acc.includes("login")
   }).length
-  const visitasTotales = Math.max(sesionesDb.length, loginEvents, 1)
+  const visitasTotales = Math.max(sesionesDb.length, loginEvents)
 
   // 4. Cumplimiento de Lectura Obligatoria
   const totalFuncionarios = usuariosDb.length || personalDb.length || 1
@@ -395,7 +453,7 @@ export async function obtenerStatsAuditoria(): Promise<{
   const lecturaPendiente = Math.max(0, totalFuncionarios - lecturaConfirmada)
   const porcentajeLectura = Math.round((lecturaConfirmada / Math.max(1, totalFuncionarios)) * 100)
 
-  // 5. Horarios Pico según la jornada oficial de AGBC:
+  // 5. Horarios Pico según la jornada oficial de AGBC (tiempo real):
   // Mañana: 08:30 a 12:30 (510 a 750 min)
   // Almuerzo / Receso: 12:30 a 13:00 (750 a 780 min)
   // Tarde (hasta salida): 13:00 a 16:30 (780 a 990 min)
@@ -454,17 +512,28 @@ export async function obtenerStatsAuditoria(): Promise<{
     if (bucket) bucket.count++
   }
 
-  const totalActividadPico = peakBuckets.reduce((acc, b) => acc + b.count, 0) || 1
+  for (const v of visitasSeccionesDb) {
+    const d = new Date(v.createdAt)
+    const boliviaHour = (d.getUTCHours() - 4 + 24) % 24
+    const boliviaMin = d.getUTCMinutes()
+    const totalMins = boliviaHour * 60 + boliviaMin
+
+    const bucket = peakBuckets.find((b) => b.match(totalMins))
+    if (bucket) bucket.count++
+  }
+
+  const totalActividadPico = peakBuckets.reduce((acc, b) => acc + b.count, 0)
   const horariosPico = peakBuckets.map((b) => ({
     rango: b.rango,
     periodo: b.periodo,
-    actividad: b.count || (b.rango.includes("08:30") ? 18 : b.rango.includes("13:00") ? 14 : 3),
-    porcentaje: totalActividadPico > 0 ? Math.round((b.count / totalActividadPico) * 100) : 20,
+    actividad: b.count,
+    porcentaje: totalActividadPico > 0 ? Math.round((b.count / totalActividadPico) * 100) : 0,
   }))
 
   const ceoAnalytics: CeoAnalytics = {
     visitasTotales,
     totalDescargas,
+    totalVisualizaciones,
     porcentajeLectura,
     totalDocumentos: documentosDb.length,
     totalFuncionarios,

@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { UserNavDropdown, type UserNavProfile } from "@/components/user-nav-dropdown"
 import { LandingNotificacionesBell } from "@/components/landing-notificaciones-bell"
+import { registrarVisitaSeccionAction } from "@/actions/auditoria"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -114,6 +115,21 @@ export function LandingNavbar({ estaLogueado, esAdmin, usuario }: LandingNavbarP
 
   const scrollToSection = useCallback((href: string) => {
     const id = href.replace("#", "")
+    const seccionMap: Record<string, string> = {
+      noticias: "Noticias Institucionales",
+      comunicados: "Comunicados Oficiales",
+      documentos: "Documentos Institucionales",
+      aplicaciones: "Accesos Rápidos a Sistemas",
+      directorio: "Personal Institucional (Directorio)",
+      equipo: "Personal Institucional (Directorio)",
+      cobertura: "Oficinas & Sucursales Postales",
+      sucursales: "Oficinas & Sucursales Postales",
+    }
+    const seccion = seccionMap[id]
+    if (seccion) {
+      registrarVisitaSeccionAction({ seccion, detalles: `Navegación navbar #${id}` }).catch(() => {})
+    }
+
     const el = document.getElementById(id)
     if (el) {
       const topOffset = 80

@@ -39,6 +39,7 @@ import { Input } from "@/components/ui/input"
 import toast from "react-hot-toast"
 import Link from "next/link"
 import { getSocket } from "@/lib/socket"
+import { registrarVisitaSeccionAction } from "@/actions/auditoria"
 
 export interface NotificacionItem {
   id: string
@@ -279,7 +280,13 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
       {/* ── BOTÓN DE LA CAMPANA EN EL NAVBAR ── */}
       <button
         type="button"
-        onClick={() => setTrayOpen(!trayOpen)}
+        onClick={() => {
+          const nextState = !trayOpen
+          setTrayOpen(nextState)
+          if (nextState) {
+            registrarVisitaSeccionAction({ seccion: "Centro de Notificaciones" }).catch(() => {})
+          }
+        }}
         aria-label="Notificaciones"
         className={`relative flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl border transition-all duration-200 cursor-pointer ${
           trayOpen

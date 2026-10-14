@@ -30,6 +30,7 @@ import { DocumentoObligatorioModal } from "@/components/documento-obligatorio-mo
 import { DocumentInteractiveTour } from "@/components/document-interactive-tour"
 import { NuevoDocumentoModal } from "@/components/nuevo-documento-modal"
 import { CumpleanosDrawer } from "@/components/cumpleanos-drawer"
+import { LandingTracker } from "@/components/landing-tracker"
 
 const defaultSucursales = [
   {
@@ -149,6 +150,9 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen bg-mosaico-institucional relative overflow-x-hidden">
+      {/* ── Tracker en tiempo real de navegación por secciones para métricas CEO ── */}
+      <LandingTracker />
+
       {/* ── Modal de Instructivo Obligatorio (Primer Ingreso) ── */}
       {estaLogueado && <DocumentoObligatorioModal usuarioId={session.user.id} />}
 
