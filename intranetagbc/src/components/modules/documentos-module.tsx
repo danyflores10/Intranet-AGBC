@@ -15,8 +15,6 @@ import {
   ImageIcon,
   XIcon,
   Loader2Icon,
-  LayoutGridIcon,
-  TableIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   CheckCircle2Icon,
@@ -25,13 +23,16 @@ import {
   CheckSquareIcon,
   SquareIcon,
   AlertTriangleIcon,
+  Building2Icon,
+  BriefcaseIcon,
+  PackageIcon,
+  HandshakeIcon,
+  RotateCcwIcon,
+  SlidersHorizontalIcon,
 } from "lucide-react"
 import toast from "react-hot-toast"
 
-import { DataTable } from "@/components/dashboard/data-table"
-import { StatusBadge } from "@/components/dashboard/status-badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -55,6 +56,7 @@ import { DocumentContentViewer } from "@/components/modules/document-content-vie
 import { DocumentosBulkDialog } from "@/components/modules/documentos-bulk-dialog"
 import * as XLSX from "xlsx"
 import { LISTA_DOCUMENTOS_OFICIALES, obtenerFechaOficialDocumento } from "@/lib/documentos-fechas-map"
+import { ESTRUCTURA_JERARQUICA, TIPOS_DOCUMENTALES, clasificarDocumento } from "@/lib/documentos-jerarquia"
 
 export function getDocumentUrl(archivo: string | null): string {
   if (!archivo) return ""
@@ -71,6 +73,11 @@ interface DocRow {
   titulo: string
   categoria: string | null
   categoriaId: string | null
+  direccionId?: string | null
+  direccion?: string | null
+  subcategoriaId?: string | null
+  subcategoria?: string | null
+  tipoDocumental?: string | null
   autor: string
   estado: string
   archivo: string | null
@@ -81,9 +88,19 @@ interface DocRow {
   createdAt: Date
 }
 
+interface CategoriaRow {
+  id: string
+  nombre: string
+  descripcion: string | null
+  parentId?: string | null
+  nivel?: number | null
+  orden?: number | null
+  createdAt: Date
+}
+
 interface Props {
   documentos: DocRow[]
-  categorias: Array<{ id: string; nombre: string; descripcion: string | null; createdAt: Date }>
+  categorias: CategoriaRow[]
   usuario: UsuarioRbac
 }
 
@@ -128,18 +145,33 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 10
 
+  // Filtros jerárquicos de tabla
+  const [direccionFiltro, setDireccionFiltro] = useState<string | null>(null)
+  const [subcategoriaFiltro, setSubcategoriaFiltro] = useState<string | null>(null)
+  const [tipoDocumentalFiltro, setTipoDocumentalFiltro] = useState<string | null>(null)
+  const [nivelCatFiltro, setNivelCatFiltro] = useState<number | null>(null)
+
   const [dialogOpen, setDialogOpen] = useState(false)
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false)
   const [catDialogOpen, setCatDialogOpen] = useState(false)
   const [previewDoc, setPreviewDoc] = useState<DocRow | null>(null)
   const [editDoc, setEditDoc] = useState<DocRow | null>(null)
-  const [editCat, setEditCat] = useState<Props["categorias"][0] | null>(null)
+  const [editCat, setEditCat] = useState<CategoriaRow | null>(null)
   const [isPending, startTransition] = useTransition()
   const [uploading, setUploading] = useState(false)
   const [uploadedFile, setUploadedFile] = useState<{ url: string; nombre: string; tipo: string; tamano: string } | null>(null)
-  const [categoriaId, setCategoriaId] = useState("")
+  
+  // Formulario de documento: selección jerárquica
+  const [docDireccion, setDocDireccion] = useState<string>("")
+  const [docSubcategoria, setDocSubcategoria] = useState<string>("")
+  const [docTipoDocumental, setDocTipoDocumental] = useState<string>("")
   const [estado, setEstado] = useState("borrador")
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Formulario de categoría: selección jerárquica
+  const [catNivel, setCatNivel] = useState<number>(1)
+  const [catParentId, setCatParentId] = useState<string>("")
+
   const accessContext = useMemo(() => crearContextoAcceso(usuario), [usuario])
 
   const canCreateDocumento = useMemo(
@@ -157,8 +189,20 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
     [accessContext],
   )
 
-  const docsConArchivo = documentos.filter((d) => d.archivo)
-  const docsSinArchivo = documentos.filter((d) => !d.archivo)
+  // Enriquecer documentos con jerarquía si viene vacía
+  const docsEnriquecidos = useMemo(() => {
+    return documentos.map((d) => {
+      const j = clasificarDocumento(d.archivo || d.nombreArchivo, d.titulo)
+      return {
+        ...d,
+        direccion: d.direccion || j.direccionNombre,
+        subcategoria: d.subcategoria || j.subcategoriaNombre,
+        tipoDocumental: d.tipoDocumental || j.tipoDocumental,
+      }
+    })
+  }, [documentos])
+
+  const docsConArchivo = useMemo(() => docsEnriquecidos.filter((d) => d.archivo), [docsEnriquecidos])
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [showPermanentDeleteModal, setShowPermanentDeleteModal] = useState(false)
@@ -167,6 +211,10 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   const handleTabChange = (t: Tab) => {
     setTab(t)
     setSearchQuery("")
+    setDireccionFiltro(null)
+    setSubcategoriaFiltro(null)
+    setTipoDocumentalFiltro(null)
+    setNivelCatFiltro(null)
     setCurrentPage(1)
     setSelectedIds([])
   }
@@ -233,10 +281,32 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
 
   useEffect(() => {
     if (dialogOpen) {
-      setCategoriaId(editDoc?.categoriaId ?? "")
-      setEstado(editDoc?.estado ?? "borrador")
+      if (editDoc) {
+        const j = clasificarDocumento(editDoc.archivo || editDoc.nombreArchivo, editDoc.titulo)
+        setDocDireccion(editDoc.direccion || j.direccionNombre)
+        setDocSubcategoria(editDoc.subcategoria || j.subcategoriaNombre)
+        setDocTipoDocumental(editDoc.tipoDocumental || j.tipoDocumental)
+        setEstado(editDoc.estado ?? "borrador")
+      } else {
+        setDocDireccion("")
+        setDocSubcategoria("")
+        setDocTipoDocumental("")
+        setEstado("borrador")
+      }
     }
   }, [dialogOpen, editDoc])
+
+  useEffect(() => {
+    if (catDialogOpen) {
+      if (editCat) {
+        setCatNivel(editCat.nivel ?? 1)
+        setCatParentId(editCat.parentId ?? "")
+      } else {
+        setCatNivel(1)
+        setCatParentId("")
+      }
+    }
+  }, [catDialogOpen, editCat])
 
   async function handleFileUpload(file: File) {
     setUploading(true)
@@ -249,8 +319,13 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         toast.error(data.error || "Error al subir archivo")
         return
       }
-      setUploadedFile(data)
-      toast.success("Archivo subido correctamente")
+      setUploadedFile({
+        url: data.url,
+        nombre: data.nombre,
+        tipo: data.tipo,
+        tamano: data.tamano,
+      })
+      toast.success("Archivo subido con éxito")
     } catch {
       toast.error("Error al subir archivo")
     } finally {
@@ -274,9 +349,28 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
 
     startTransition(async () => {
       try {
-        const payload: Record<string, string | undefined> = {
-          titulo: fd.get("titulo") as string,
-          categoriaId: categoriaId || undefined,
+        const titulo = fd.get("titulo") as string
+        const deduccion = clasificarDocumento(uploadedFile?.nombre || editDoc?.nombreArchivo, titulo)
+        
+        const finalDireccion = docDireccion || deduccion.direccionNombre
+        const finalSubcategoria = docSubcategoria || deduccion.subcategoriaNombre
+        const finalTipoDoc = docTipoDocumental || deduccion.tipoDocumental
+
+        // Encontrar IDs correspondientes en categorías
+        const dirRow = categorias.find((c) => c.nivel === 1 && c.nombre.toLowerCase() === finalDireccion.toLowerCase())
+        const subRow = categorias.find(
+          (c) => c.nivel === 2 && c.nombre.toLowerCase() === finalSubcategoria.toLowerCase()
+        )
+        const tipoRow = categorias.find(
+          (c) => c.nivel === 3 && c.nombre.toLowerCase() === finalTipoDoc.toLowerCase() && (subRow ? c.parentId === subRow.id : true)
+        )
+
+        const payload: Record<string, any> = {
+          titulo,
+          direccionId: dirRow?.id || undefined,
+          subcategoriaId: subRow?.id || undefined,
+          tipoDocumental: finalTipoDoc,
+          categoriaId: tipoRow?.id || subRow?.id || undefined,
           estado,
           descripcion: ((fd.get("descripcion") as string) || "").trim() || undefined,
         }
@@ -299,7 +393,9 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         setDialogOpen(false)
         setEditDoc(null)
         setUploadedFile(null)
-        setCategoriaId("")
+        setDocDireccion("")
+        setDocSubcategoria("")
+        setDocTipoDocumental("")
         setEstado("borrador")
       } catch {
         toast.error("Error al guardar")
@@ -323,59 +419,58 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
 
     startTransition(async () => {
       try {
+        const nombre = (fd.get("nombre") as string).trim()
+        const descripcion = ((fd.get("descripcion") as string) || "").trim() || undefined
+        const orden = parseInt(fd.get("orden") as string) || 0
+        const parentId = catParentId || null
+
         if (editCat) {
           await actualizarCategoria(editCat.id, {
-            nombre: fd.get("nombre") as string,
-            descripcion: (fd.get("descripcion") as string) || undefined,
+            nombre,
+            descripcion,
+            parentId,
+            nivel: catNivel,
+            orden,
           })
           toast.success("Categoría actualizada")
         } else {
           await crearCategoria({
-            nombre: fd.get("nombre") as string,
-            descripcion: (fd.get("descripcion") as string) || undefined,
+            nombre,
+            descripcion,
+            parentId,
+            nivel: catNivel,
+            orden,
           })
           toast.success("Categoría creada")
         }
         setCatDialogOpen(false)
         setEditCat(null)
       } catch {
-        toast.error("Error al guardar")
+        toast.error("Error al guardar categoría")
       }
     })
   }
 
   function openCreateDoc() {
-    if (!canCreateDocumento) {
-      return
-    }
-
+    if (!canCreateDocumento) return
     setEditDoc(null)
     setUploadedFile(null)
-    setCategoriaId("")
+    setDocDireccion("")
+    setDocSubcategoria("")
+    setDocTipoDocumental("")
     setEstado("borrador")
     setDialogOpen(true)
   }
 
   function openEditDoc(doc: DocRow) {
-    if (!canEditDocumento) {
-      return
-    }
-
+    if (!canEditDocumento) return
     setEditDoc(doc)
-    setCategoriaId(doc.categoriaId ?? "")
-    setEstado(doc.estado ?? "borrador")
-
-    if (doc.archivo && doc.nombreArchivo) {
-      setUploadedFile({
-        url: doc.archivo,
-        nombre: doc.nombreArchivo,
-        tipo: doc.tipoArchivo ?? "",
-        tamano: doc.tamano ?? "",
-      })
-    } else {
-      setUploadedFile(null)
-    }
-
+    setUploadedFile(null)
+    const j = clasificarDocumento(doc.archivo || doc.nombreArchivo, doc.titulo)
+    setDocDireccion(doc.direccion || j.direccionNombre)
+    setDocSubcategoria(doc.subcategoria || j.subcategoriaNombre)
+    setDocTipoDocumental(doc.tipoDocumental || j.tipoDocumental)
+    setEstado(doc.estado)
     setDialogOpen(true)
   }
 
@@ -404,39 +499,83 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
     startTransition(async () => {
       try {
         await eliminarCategoria(categoryId)
-        toast.success("Eliminada")
+        toast.success("Categoría eliminada")
       } catch {
-        toast.error("Error al eliminar")
+        toast.error("Error al eliminar categoría")
       }
     })
   }
 
+  // Filtrado de documentos con filtros jerárquicos
   const filteredDocs = useMemo(() => {
-    return documentos.filter((d) =>
-      d.titulo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (d.descripcion && d.descripcion.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (d.categoria && d.categoria.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (d.nombreArchivo && d.nombreArchivo.toLowerCase().includes(searchQuery.toLowerCase()))
-    )
-  }, [documentos, searchQuery])
+    return docsEnriquecidos.filter((d) => {
+      const matchSearch =
+        !searchQuery ||
+        d.titulo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (d.descripcion && d.descripcion.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (d.categoria && d.categoria.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (d.direccion && d.direccion.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (d.subcategoria && d.subcategoria.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (d.tipoDocumental && d.tipoDocumental.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (d.nombreArchivo && d.nombreArchivo.toLowerCase().includes(searchQuery.toLowerCase()))
+
+      const matchDir = !direccionFiltro || d.direccion === direccionFiltro
+      const matchSub = !subcategoriaFiltro || d.subcategoria === subcategoriaFiltro
+      const matchTipo = !tipoDocumentalFiltro || d.tipoDocumental === tipoDocumentalFiltro
+
+      return matchSearch && matchDir && matchSub && matchTipo
+    })
+  }, [docsEnriquecidos, searchQuery, direccionFiltro, subcategoriaFiltro, tipoDocumentalFiltro])
 
   const filteredArchivos = useMemo(() => {
-    return docsConArchivo.filter((d) =>
-      d.titulo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (d.nombreArchivo && d.nombreArchivo.toLowerCase().includes(searchQuery.toLowerCase()))
-    )
-  }, [docsConArchivo, searchQuery])
+    return docsConArchivo.filter((d) => {
+      const matchSearch =
+        !searchQuery ||
+        d.titulo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (d.nombreArchivo && d.nombreArchivo.toLowerCase().includes(searchQuery.toLowerCase()))
+      const matchDir = !direccionFiltro || d.direccion === direccionFiltro
+      const matchSub = !subcategoriaFiltro || d.subcategoria === subcategoriaFiltro
+      const matchTipo = !tipoDocumentalFiltro || d.tipoDocumental === tipoDocumentalFiltro
+      return matchSearch && matchDir && matchSub && matchTipo
+    })
+  }, [docsConArchivo, searchQuery, direccionFiltro, subcategoriaFiltro, tipoDocumentalFiltro])
 
   const filteredCategorias = useMemo(() => {
-    return categorias.filter((c) =>
-      c.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.descripcion && c.descripcion.toLowerCase().includes(searchQuery.toLowerCase()))
-    )
-  }, [categorias, searchQuery])
+    return categorias.filter((c) => {
+      const matchSearch =
+        !searchQuery ||
+        c.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (c.descripcion && c.descripcion.toLowerCase().includes(searchQuery.toLowerCase()))
+      const matchNivel = !nivelCatFiltro || c.nivel === nivelCatFiltro
+      return matchSearch && matchNivel
+    })
+  }, [categorias, searchQuery, nivelCatFiltro])
 
   const currentList = tab === "todos" ? filteredDocs : tab === "archivos" ? filteredArchivos : filteredCategorias
   const totalPages = Math.max(1, Math.ceil(currentList.length / pageSize))
   const paginatedList = currentList.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+
+  // Subcategorías disponibles en el modal según dirección seleccionada
+  const subcategoriasDialogDisponibles = useMemo(() => {
+    if (!docDireccion) {
+      return ESTRUCTURA_JERARQUICA.flatMap((d) => d.subcategorias)
+    }
+    const dir = ESTRUCTURA_JERARQUICA.find((d) => d.nombre === docDireccion)
+    return dir ? dir.subcategorias : []
+  }, [docDireccion])
+
+  // Subcategorías disponibles para el filtro superior
+  const subcategoriasFiltroDisponibles = useMemo(() => {
+    if (!direccionFiltro) {
+      return ESTRUCTURA_JERARQUICA.flatMap((d) => d.subcategorias)
+    }
+    const dir = ESTRUCTURA_JERARQUICA.find((d) => d.nombre === direccionFiltro)
+    return dir ? dir.subcategorias : []
+  }, [direccionFiltro])
+
+  // ══════════════════════════════════════════════════════════════
+  // EXPORTACIÓN A EXCEL: CATÁLOGO OFICIAL CON ENLACES CLIQUEABLES
+  // ══════════════════════════════════════════════════════════════
   function handleExportarExcelDocumentos() {
     try {
       const wb = XLSX.utils.book_new()
@@ -445,74 +584,79 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
       if (tab === "categorias") {
         const rowsCat = [
           ["AGENCIA BOLIVIANA DE CORREOS - CORREOS DE BOLIVIA (AGBC)"],
-          ["REPORTE OFICIAL DE CATEGORÍAS DOCUMENTALES"],
+          ["REPORTE OFICIAL DE CATEGORÍAS DOCUMENTALES JERÁRQUICAS"],
           ["Fecha de emisión:", new Date().toLocaleDateString("es-BO", { day: "2-digit", month: "long", year: "numeric" })],
           ["Total Categorías:", categorias.length],
           [],
-          ["Nº", "NOMBRE DE CATEGORÍA", "DESCRIPCIÓN", "FECHA DE CREACIÓN"]
+          ["Nº", "NIVEL", "NOMBRE DE CATEGORÍA", "CATEGORÍA PADRE", "DESCRIPCIÓN", "FECHA DE CREACIÓN"]
         ]
-        categorias.forEach((c, idx) => {
+        categorias.forEach((c: any, idx: number) => {
+          const nivelLabel = c.nivel === 1 ? "1 - Dirección" : c.nivel === 2 ? "2 - Subcategoría / Área" : "3 - Tipo Documental"
+          const parentCat = categorias.find((p) => p.id === c.parentId)
           rowsCat.push([
             idx + 1,
+            nivelLabel,
             c.nombre,
+            parentCat ? parentCat.nombre : "— (Principal)",
             c.descripcion || "—",
             c.createdAt ? new Date(c.createdAt).toLocaleDateString("es-BO") : "—"
           ])
         })
         const ws = XLSX.utils.aoa_to_sheet(rowsCat)
-        ws["!cols"] = [{ wch: 6 }, { wch: 35 }, { wch: 55 }, { wch: 20 }]
+        ws["!cols"] = [{ wch: 6 }, { wch: 22 }, { wch: 35 }, { wch: 35 }, { wch: 45 }, { wch: 18 }]
         XLSX.utils.book_append_sheet(wb, ws, "Categorías AGBC")
         XLSX.writeFile(wb, `Categorias_Documentales_AGBC_${fechaHoy}.xlsx`)
         toast.success("Excel de categorías exportado con éxito")
         return
       }
 
-      // Catálogo Oficial completo de los 89 documentos con sus fechas
+      // Catálogo General de Documentos:
+      // Excluye "TIPO DE FECHA", "RESOLUCIÓN ADMINISTRATIVA", "NOMBRE DEL ARCHIVO", "ESTADO"
+      // Incluye hipervínculos cliqueables en el Excel para ver/descargar directamente
+      const docsToExport = docsEnriquecidos.length > 0 ? docsEnriquecidos : (LISTA_DOCUMENTOS_OFICIALES as any[])
       const rows = [
         ["AGENCIA BOLIVIANA DE CORREOS - CORREOS DE BOLIVIA (AGBC)"],
         ["CATÁLOGO GENERAL DE DOCUMENTOS, NORMATIVAS Y REGLAMENTOS OFICIALES"],
         ["Fecha de generación del reporte:", new Date().toLocaleDateString("es-BO", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })],
-        ["Total Documentos Registrados:", LISTA_DOCUMENTOS_OFICIALES.length],
+        ["Total Documentos Registrados:", docsToExport.length],
         [],
         [
           "Nº",
           "TÍTULO DEL DOCUMENTO",
-          "CATEGORÍA",
+          "DIRECCIÓN",
+          "SUB-ÁREA",
+          "CATEGORÍA / TIPO",
           "FECHA DE EMISIÓN / OFICIAL",
-          "TIPO DE FECHA",
-          "RESOLUCIÓN ADMINISTRATIVA",
           "FORMATO",
           "TAMAÑO",
-          "NOMBRE DEL ARCHIVO",
-          "ESTADO",
-          "ENLACE"
+          "ENLACE AL ARCHIVO"
         ]
       ]
 
-      LISTA_DOCUMENTOS_OFICIALES.forEach((d) => {
-        const tipoFechaLabel =
-          d.tipoFecha === "fecha_completa"
-            ? "Fecha Completa (Día, Mes y Año)"
-            : d.tipoFecha === "anio"
-            ? "Año de Emisión"
-            : d.tipoFecha === "catalogo_operativo"
-            ? "Catálogo Técnico Operativo"
-            : d.tipoFecha === "guia_tutorial"
-            ? "Guía Técnica / Tutorial"
-            : "Formato / Plantilla (Sin fecha fija)"
+      const origin = typeof window !== "undefined" ? window.location.origin : ""
+
+      docsToExport.forEach((d: any, idx: number) => {
+        const fechaOficial = obtenerFechaOficialDocumento(d.nombreArchivo || d.archivo, d.titulo)
+        const relPath = d.archivo?.startsWith("/") ? d.archivo : `/documentos/${d.archivo}`
+        const fullUrl = d.archivo ? (d.archivo.startsWith("http") ? d.archivo : `${origin}${relPath}`) : ""
+
+        const jerarquia = clasificarDocumento(d.nombreArchivo || d.archivo, d.titulo)
+        const direccion = d.direccion || jerarquia.direccionNombre
+        const subcategoria = d.subcategoria || jerarquia.subcategoriaNombre
+        const tipoDoc = d.tipoDocumental || d.categoria || jerarquia.tipoDocumental
+
+        const ext = d.tipoArchivo ? d.tipoArchivo.toUpperCase() : (d.archivo?.split(".").pop()?.toUpperCase() || "PDF")
 
         rows.push([
-          d.numero,
+          idx + 1,
           d.titulo,
-          d.categoria,
-          d.fechaOficial,
-          tipoFechaLabel,
-          d.resolucion || "—",
-          d.extension,
-          d.tamano,
-          d.archivo,
-          "Vigente / Publicado",
-          `/documentos/${d.archivo}`
+          direccion,
+          subcategoria,
+          tipoDoc,
+          fechaOficial || "Sin fecha fija",
+          ext,
+          d.tamano || "—",
+          fullUrl ? "Ver / Descargar Documento" : "—"
         ])
       })
 
@@ -520,20 +664,36 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
       ws["!cols"] = [
         { wch: 6 },   // Nº
         { wch: 55 },  // Título
-        { wch: 18 },  // Categoría
-        { wch: 30 },  // Fecha Oficial
-        { wch: 32 },  // Tipo de Fecha
-        { wch: 28 },  // Resolución
+        { wch: 34 },  // Dirección
+        { wch: 32 },  // Sub-área
+        { wch: 22 },  // Tipo / Categoría
+        { wch: 28 },  // Fecha Oficial
         { wch: 10 },  // Formato
         { wch: 12 },  // Tamaño
-        { wch: 45 },  // Nombre Archivo
-        { wch: 20 },  // Estado
-        { wch: 45 },  // Enlace
+        { wch: 32 },  // Enlace
       ]
 
-      XLSX.utils.book_append_sheet(wb, ws, "Documentos y Normativas AGBC")
-      XLSX.writeFile(wb, `Reporte_89_Documentos_AGBC_Fechas_${fechaHoy}.xlsx`)
-      toast.success("Excel con los 89 documentos y sus fechas exportado exitosamente")
+      // Enriquecer cada celda de enlace con hipervínculo nativo cliqueable en Excel
+      docsToExport.forEach((d: any, idx: number) => {
+        if (d.archivo) {
+          const relPath = d.archivo?.startsWith("/") ? d.archivo : `/documentos/${d.archivo}`
+          const fullUrl = d.archivo.startsWith("http") ? d.archivo : `${origin}${relPath}`
+          const cellAddress = XLSX.utils.encode_cell({ r: 6 + idx, c: 8 })
+          ws[cellAddress] = {
+            t: "s",
+            f: `HYPERLINK("${fullUrl}", "Ver / Descargar Documento")`,
+            v: "Ver / Descargar Documento",
+            l: {
+              Target: fullUrl,
+              Tooltip: "Haga clic para abrir o descargar el documento oficial de la AGBC"
+            }
+          }
+        }
+      })
+
+      XLSX.utils.book_append_sheet(wb, ws, "Catálogo AGBC")
+      XLSX.writeFile(wb, `Catalogo_Documentos_Normativas_AGBC_${fechaHoy}.xlsx`)
+      toast.success("Catálogo oficial exportado exitosamente a Excel con enlaces interactivos")
     } catch (error) {
       console.error("Error al exportar a Excel:", error)
       toast.error("Ocurrió un error al generar el archivo Excel")
@@ -558,7 +718,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
               </span>
             </div>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Repositorio centralizado de manuales, normativas, circulares y formularios oficiales
+              Estructura jerárquica por Direcciones, Subcategorías y Tipos Documentales
             </p>
           </div>
         </div>
@@ -580,6 +740,8 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
               onClick={() => {
                 if (tab === "categorias") {
                   setEditCat(null)
+                  setCatNivel(1)
+                  setCatParentId("")
                   setCatDialogOpen(true)
                 } else {
                   openCreateDoc()
@@ -596,9 +758,9 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
       {/* ── Tabs de Navegación ── */}
       <div className="flex items-center gap-2 rounded-2xl bg-slate-100/80 p-1.5 border border-[#002F6C]/10 w-fit">
         {([
-          { key: "todos" as Tab, label: "Todos los Documentos", icon: FileTextIcon, count: documentos.length },
+          { key: "todos" as Tab, label: "Todos los Documentos", icon: FileTextIcon, count: docsEnriquecidos.length },
           { key: "archivos" as Tab, label: "Archivos Adjuntos", icon: UploadIcon, count: docsConArchivo.length },
-          { key: "categorias" as Tab, label: "Categorías", icon: FolderIcon, count: categorias.length },
+          { key: "categorias" as Tab, label: "Categorías Jerárquicas", icon: FolderIcon, count: categorias.length },
         ]).map((t) => (
           <button
             key={t.key}
@@ -620,7 +782,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         ))}
       </div>
 
-      {/* ── Tarjetas Métricas en Pastel Amarillo y Azul ── */}
+      {/* ── Tarjetas Métricas ── */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="flex items-center gap-3.5 rounded-2xl border-2 border-sky-200/90 bg-gradient-to-br from-sky-50 via-blue-50/60 to-white p-4 shadow-xs">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0E5296] text-[#FFCC00]">
@@ -628,10 +790,10 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
           </div>
           <div>
             <div className="text-2xl font-black text-[#002F6C]">
-              {tab === "categorias" ? categorias.length : documentos.length}
+              {tab === "categorias" ? categorias.length : docsEnriquecidos.length}
             </div>
             <div className="text-xs text-slate-600 font-bold">
-              {tab === "categorias" ? "Total Categorías" : "Total Documentos"}
+              {tab === "categorias" ? "Total Categorías Registradas" : "Total Documentos Registrados"}
             </div>
           </div>
         </div>
@@ -642,7 +804,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
           </div>
           <div>
             <div className="text-2xl font-black text-[#002F6C]">
-              {documentos.filter((d) => d.estado === "publicado").length}
+              {docsEnriquecidos.filter((d) => d.estado === "publicado").length}
             </div>
             <div className="text-xs text-slate-600 font-bold">Publicados / Vigentes</div>
           </div>
@@ -661,36 +823,163 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         </div>
       </div>
 
-      {/* ── Buscador y Exportación ── */}
-      <div className="rounded-2xl border-2 border-[#002F6C]/15 bg-gradient-to-r from-white via-blue-50/20 to-amber-50/20 p-4 shadow-xs">
+      {/* ── Buscador y Filtros Jerárquicos ── */}
+      <div className="rounded-2xl border-2 border-[#002F6C]/15 bg-white p-4 shadow-xs space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="relative w-full sm:w-80">
             <Input
               type="text"
-              placeholder={`Buscar en ${tab}...`}
+              placeholder={`Buscar en ${tab === "categorias" ? "categorías" : "documentos"}...`}
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value)
                 setCurrentPage(1)
               }}
-              className="bg-white/90 border-[#002F6C]/20 text-xs font-medium focus:border-[#0E5296]"
+              className="bg-slate-50 border-slate-200 text-xs font-medium focus:border-[#0E5296] focus:bg-white"
             />
           </div>
+
           <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
+            {/* BOTÓN: "Exportar Catálogo" - tal como solicitó el usuario */}
             <Button
               type="button"
               onClick={handleExportarExcelDocumentos}
               className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs gap-1.5 h-9 cursor-pointer shadow-xs flex items-center px-3.5 transition-all"
-              title="Exportar listado oficial de documentos y normativas a Excel con sus fechas de emisión"
+              title="Exportar catálogo oficial con hipervínculos interactivos a Excel"
             >
               <FileSpreadsheetIcon className="h-4 w-4 text-[#FFCC00]" />
-              <span>Exportar a Excel ({tab === "categorias" ? categorias.length : LISTA_DOCUMENTOS_OFICIALES.length})</span>
+              <span>Exportar Catálogo</span>
             </Button>
-            <span className="text-xs font-bold text-[#0E5296] bg-white/80 border border-[#0E5296]/20 px-3 py-1.5 rounded-xl shadow-2xs">
+
+            <span className="text-xs font-bold text-[#0E5296] bg-blue-50/80 border border-[#0E5296]/20 px-3 py-1.5 rounded-xl shadow-2xs">
               {currentList.length} encontrados
             </span>
           </div>
         </div>
+
+        {/* Filtros Jerárquicos para Documentos */}
+        {tab !== "categorias" && (
+          <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2 text-xs">
+            {/* Dirección */}
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-[#002F6C] text-[11px]">Dirección:</span>
+              <Select
+                value={direccionFiltro || "__all__"}
+                onValueChange={(val) => {
+                  setDireccionFiltro(val === "__all__" ? null : val)
+                  setSubcategoriaFiltro(null)
+                  setCurrentPage(1)
+                }}
+              >
+                <SelectTrigger className="h-8 w-44 rounded-lg border-slate-200 text-xs bg-slate-50">
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">Todas las Direcciones</SelectItem>
+                  {ESTRUCTURA_JERARQUICA.map((dir) => (
+                    <SelectItem key={dir.codigo} value={dir.nombre}>
+                      {dir.codigo} - {dir.nombre.replace("Dirección ", "")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Subcategoría */}
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-[#002F6C] text-[11px]">Subcategoría:</span>
+              <Select
+                value={subcategoriaFiltro || "__all__"}
+                onValueChange={(val) => {
+                  setSubcategoriaFiltro(val === "__all__" ? null : val)
+                  setCurrentPage(1)
+                }}
+              >
+                <SelectTrigger className="h-8 w-48 rounded-lg border-slate-200 text-xs bg-slate-50">
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">Todas las Áreas</SelectItem>
+                  {subcategoriasFiltroDisponibles.map((sub) => (
+                    <SelectItem key={sub.codigo} value={sub.nombre}>
+                      {sub.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Tipo Documental */}
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-[#002F6C] text-[11px]">Tipo:</span>
+              <Select
+                value={tipoDocumentalFiltro || "__all__"}
+                onValueChange={(val) => {
+                  setTipoDocumentalFiltro(val === "__all__" ? null : val)
+                  setCurrentPage(1)
+                }}
+              >
+                <SelectTrigger className="h-8 w-36 rounded-lg border-slate-200 text-xs bg-slate-50">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">Todos los Tipos</SelectItem>
+                  {TIPOS_DOCUMENTALES.map((tipo) => (
+                    <SelectItem key={tipo} value={tipo}>
+                      {tipo}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {(direccionFiltro || subcategoriaFiltro || tipoDocumentalFiltro || searchQuery) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setDireccionFiltro(null)
+                  setSubcategoriaFiltro(null)
+                  setTipoDocumentalFiltro(null)
+                  setSearchQuery("")
+                  setCurrentPage(1)
+                }}
+                className="ml-auto inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 hover:underline cursor-pointer"
+              >
+                <RotateCcwIcon className="h-3 w-3" />
+                Limpiar filtros
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Filtros para Tab Categorías */}
+        {tab === "categorias" && (
+          <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2 text-xs">
+            <span className="font-bold text-[#002F6C] text-[11px]">Nivel Jerárquico:</span>
+            {[
+              { val: null, label: "Todos los Niveles" },
+              { val: 1, label: "Nivel 1 • Direcciones" },
+              { val: 2, label: "Nivel 2 • Subcategorías" },
+              { val: 3, label: "Nivel 3 • Tipos Documentales" },
+            ].map((n) => (
+              <button
+                key={String(n.val)}
+                type="button"
+                onClick={() => {
+                  setNivelCatFiltro(n.val)
+                  setCurrentPage(1)
+                }}
+                className={`px-3 py-1 rounded-full text-xs font-bold border transition-all cursor-pointer ${
+                  nivelCatFiltro === n.val
+                    ? "bg-[#0E5296] text-[#FFCC00] border-[#0E5296] shadow-xs"
+                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                }`}
+              >
+                {n.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Barra Flotante de Selección Múltiple ── */}
@@ -752,7 +1041,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
       {/* ══════════════════════════════════════════════════════════════ */}
       <div className="rounded-3xl border-2 border-[#002F6C]/15 bg-white p-4 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[700px]">
+          <table className="w-full text-left border-collapse min-w-[750px]">
             <thead>
               <tr className="border-b-2 border-slate-100 bg-gradient-to-r from-sky-50/70 via-blue-50/50 to-amber-50/50 text-[11px] font-black uppercase text-[#002F6C] tracking-wider">
                 <th className="py-3 px-3 text-center w-10">
@@ -769,10 +1058,10 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                     )}
                   </button>
                 </th>
-                <th className="py-3 px-4">{tab === "categorias" ? "Categoría" : "Documento"}</th>
-                <th className="py-3 px-4">{tab === "categorias" ? "Descripción" : "Categoría / Detalle"}</th>
-                <th className="py-3 px-4">Estado</th>
-                <th className="py-3 px-4">Fecha</th>
+                <th className="py-3 px-4">{tab === "categorias" ? "Categoría / Nivel" : "Documento"}</th>
+                <th className="py-3 px-4">{tab === "categorias" ? "Pertenece a (Padre)" : "Dirección / Área"}</th>
+                <th className="py-3 px-4">{tab === "categorias" ? "Descripción" : "Tipo Documental"}</th>
+                <th className="py-3 px-4">{tab === "categorias" ? "Fecha" : "Fecha Oficial"}</th>
                 <th className="py-3 px-4 text-right">Acciones</th>
               </tr>
             </thead>
@@ -788,6 +1077,99 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                   const isCat = tab === "categorias"
                   const Icon = isCat ? FolderIcon : getFileIcon(item.tipoArchivo)
                   const iconColor = isCat ? "#FF8800" : getFileColor(item.tipoArchivo)
+
+                  if (isCat) {
+                    const parentCat = categorias.find((p) => p.id === item.parentId)
+                    const nivel = item.nivel || 1
+                    const nivelBadge =
+                      nivel === 1
+                        ? { label: "Nivel 1 • Dirección", bg: "bg-blue-50 text-[#002F6C] border-blue-200" }
+                        : nivel === 2
+                        ? { label: "Nivel 2 • Subcategoría", bg: "bg-purple-50 text-purple-700 border-purple-200" }
+                        : { label: "Nivel 3 • Tipo Documental", bg: "bg-amber-50 text-amber-800 border-amber-200" }
+
+                    return (
+                      <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
+                        <td className="py-3 px-3 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleSelect(item.id)}
+                            className="text-[#0E5296] hover:scale-110 transition-transform p-0.5 cursor-pointer"
+                          >
+                            {selectedIds.includes(item.id) ? (
+                              <CheckSquareIcon className="h-4 w-4 text-[#0E5296]" />
+                            ) : (
+                              <SquareIcon className="h-4 w-4 text-slate-300 group-hover:text-slate-400" />
+                            )}
+                          </button>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 font-black shadow-xs border border-amber-200">
+                              <Icon className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <p className="font-bold text-[#002F6C] text-sm">{item.nombre}</p>
+                              <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[9.5px] font-bold border mt-0.5 ${nivelBadge.bg}`}>
+                                {nivelBadge.label}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          {parentCat ? (
+                            <span className="font-bold text-[#0E5296] text-xs">
+                              {parentCat.nombre}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 text-xs italic">
+                              — Raíz Institucional
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 max-w-[280px]">
+                          <p className="text-slate-600 truncate text-xs">
+                            {item.descripcion || "—"}
+                          </p>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="text-slate-500 text-xs">
+                            {item.createdAt ? new Date(item.createdAt).toLocaleDateString("es-BO") : "—"}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {canEditDocumento && (
+                              <button
+                                onClick={() => {
+                                  setEditCat(item)
+                                  setCatNivel(item.nivel || 1)
+                                  setCatParentId(item.parentId || "")
+                                  setCatDialogOpen(true)
+                                }}
+                                className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-[#002F6C] hover:bg-[#0E5296] hover:text-white transition-colors cursor-pointer"
+                                title="Editar categoría"
+                              >
+                                <PencilIcon className="h-4 w-4" />
+                              </button>
+                            )}
+                            {canDeleteDocumento && (
+                              <button
+                                onClick={() => handleDeleteCategory(item.id)}
+                                className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
+                                title="Eliminar categoría"
+                              >
+                                <Trash2Icon className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  }
+
+                  // Vista de Fila de Documento
+                  const fechaOficial = obtenerFechaOficialDocumento(item.nombreArchivo || item.archivo, item.titulo)
 
                   return (
                     <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
@@ -810,47 +1192,43 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                             <Icon className="h-5 w-5" style={{ color: iconColor }} />
                           </div>
                           <div>
-                            <p className="font-bold text-[#002F6C]">{isCat ? item.nombre : item.titulo}</p>
-                            {!isCat && item.nombreArchivo && (
-                              <p className="text-[10px] text-slate-400 truncate max-w-[200px]">{item.nombreArchivo}</p>
+                            <p className="font-bold text-[#002F6C] line-clamp-1">{item.titulo}</p>
+                            {item.nombreArchivo && (
+                              <p className="text-[10px] text-slate-400 truncate max-w-[240px] font-mono">{item.nombreArchivo}</p>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="py-3 px-4 max-w-[280px]">
-                        <p className="text-slate-600 truncate">
-                          {isCat ? (item.descripcion || "—") : (item.categoria || "Sin categoría")}
-                        </p>
+                      <td className="py-3 px-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-black text-[#002F6C] text-[11px]">
+                            {item.direccion ? item.direccion.replace("Dirección ", "") : "AGBC"}
+                          </span>
+                          <span className="text-[10.5px] text-slate-500 font-medium">
+                            {item.subcategoria || "Área General"}
+                          </span>
+                        </div>
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                          (isCat || item.estado === "publicado") ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
-                        }`}>
-                          <span className={`h-1.5 w-1.5 rounded-full ${(isCat || item.estado === "publicado") ? "bg-emerald-500" : "bg-slate-400"}`} />
-                          {isCat ? "Activo" : item.estado === "publicado" ? "Vigente" : "Borrador"}
+                        <span className="inline-flex items-center rounded-md bg-blue-50 border border-blue-200 px-2 py-0.5 text-[10px] font-black text-[#0E5296]">
+                          {item.tipoDocumental || item.categoria || "Normativa"}
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        {isCat ? (
-                          <span className="text-slate-500 text-xs">
-                            {item.createdAt ? new Date(item.createdAt).toLocaleDateString("es-BO") : "—"}
+                        <div className="flex flex-col">
+                          <span className="font-bold text-xs text-[#002F6C]">
+                            {fechaOficial}
                           </span>
-                        ) : (
-                          <div className="flex flex-col">
-                            <span className="font-bold text-xs text-[#002F6C]">
-                              {obtenerFechaOficialDocumento(item.nombreArchivo || item.archivo, item.titulo)}
+                          {item.tamano && (
+                            <span className="text-[10px] text-slate-400">
+                              {item.tamano}
                             </span>
-                            {item.createdAt && (
-                              <span className="text-[10px] text-slate-400">
-                                Registro: {new Date(item.createdAt).toLocaleDateString("es-BO")}
-                              </span>
-                            )}
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {!isCat && item.archivo && (
+                          {item.archivo && (
                             <button
                               onClick={() => {
                                 setPreviewDoc(item)
@@ -866,7 +1244,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                               <EyeIcon className="h-4 w-4" />
                             </button>
                           )}
-                          {!isCat && item.archivo && (
+                          {item.archivo && (
                             <a
                               href={`${getDocumentUrl(item.archivo)}?download=1`}
                               download={item.nombreArchivo ?? "documento"}
@@ -885,14 +1263,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                           )}
                           {canEditDocumento && (
                             <button
-                              onClick={() => {
-                                if (isCat) {
-                                  setEditCat(item)
-                                  setCatDialogOpen(true)
-                                } else {
-                                  openEditDoc(item)
-                                }
-                              }}
+                              onClick={() => openEditDoc(item)}
                               className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-[#002F6C] hover:bg-[#0E5296] hover:text-white transition-colors cursor-pointer"
                               title="Editar"
                             >
@@ -901,10 +1272,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                           )}
                           {canDeleteDocumento && (
                             <button
-                              onClick={() => {
-                                if (isCat) handleDeleteCategory(item.id)
-                                else handleDeleteDoc(item.id)
-                              }}
+                              onClick={() => handleDeleteDoc(item.id)}
                               className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
                               title="Eliminar"
                             >
@@ -979,6 +1347,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         )}
       </div>
 
+      {/* ── MODAL NUEVO / EDITAR DOCUMENTO CON JERARQUÍA ── */}
       {canCreateDocumento || canEditDocumento ? (
         <Dialog
           open={dialogOpen}
@@ -987,12 +1356,14 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
               setDialogOpen(false)
               setEditDoc(null)
               setUploadedFile(null)
-              setCategoriaId("")
+              setDocDireccion("")
+              setDocSubcategoria("")
+              setDocTipoDocumental("")
               setEstado("borrador")
             }
           }}
         >
-          <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-150 max-h-[92vh] overflow-y-auto p-0 gap-0 rounded-2xl border-border/50">
+          <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-160 max-h-[92vh] overflow-y-auto p-0 gap-0 rounded-2xl border-border/50">
             <div className="flex h-1.5 w-full rounded-t-2xl overflow-hidden">
               <div className="flex-1 bg-[#C41E3A]" />
               <div className="flex-1 bg-[#FFB300]" />
@@ -1000,43 +1371,110 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
             </div>
 
             <DialogHeader className="px-6 pt-5 pb-0">
-              <DialogTitle className="text-xl font-bold tracking-tight">
-                {editDoc ? "Editar documento" : "Nuevo documento"}
+              <DialogTitle className="text-xl font-bold tracking-tight text-[#002F6C]">
+                {editDoc ? "Editar documento" : "Subir nuevo documento"}
               </DialogTitle>
-              <p className="text-sm text-muted-foreground">
-                {editDoc ? "Modifica los datos del documento" : "Crea un documento y adjunta un archivo"}
+              <p className="text-xs text-muted-foreground">
+                Asigna la Dirección, Subcategoría y Tipo Documental institucional correspondiente
               </p>
             </DialogHeader>
 
             <form onSubmit={handleDocSubmit} className="space-y-4 px-6 pb-6 pt-4">
               <div className="space-y-1.5">
                 <Label className="text-xs font-bold text-[#002F6C]">Título del documento *</Label>
-                <Input name="titulo" required defaultValue={editDoc?.titulo} placeholder="Ej. Resolución Administrativa N° 045/2026" className="h-11 w-full rounded-xl border-slate-200 focus:border-[#0E5296] text-sm" />
+                <Input
+                  name="titulo"
+                  required
+                  defaultValue={editDoc?.titulo}
+                  placeholder="Ej. Reglamento Específico del Sistema de Personal"
+                  className="h-11 w-full rounded-xl border-slate-200 focus:border-[#0E5296] text-sm"
+                />
+              </div>
+
+              {/* Cascada de selección jerárquica en 3 niveles */}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3.5 space-y-3">
+                <span className="text-xs font-black text-[#002F6C] uppercase tracking-wider block">
+                  Clasificación Institucional (3 Niveles)
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* 1. Dirección */}
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-bold text-slate-700">1. Dirección *</Label>
+                    <Select
+                      value={docDireccion || "__none__"}
+                      onValueChange={(val) => {
+                        const v = val === "__none__" ? "" : val
+                        setDocDireccion(v)
+                        setDocSubcategoria("")
+                      }}
+                    >
+                      <SelectTrigger className="h-9 rounded-xl text-xs bg-white">
+                        <SelectValue placeholder="Dirección" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Sin Dirección fija</SelectItem>
+                        {ESTRUCTURA_JERARQUICA.map((dir) => (
+                          <SelectItem key={dir.codigo} value={dir.nombre}>
+                            {dir.codigo} - {dir.nombre.replace("Dirección ", "")}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* 2. Subcategoría */}
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-bold text-slate-700">2. Subcategoría *</Label>
+                    <Select
+                      value={docSubcategoria || "__none__"}
+                      onValueChange={(val) => setDocSubcategoria(val === "__none__" ? "" : val)}
+                    >
+                      <SelectTrigger className="h-9 rounded-xl text-xs bg-white">
+                        <SelectValue placeholder="Área" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Área General</SelectItem>
+                        {subcategoriasDialogDisponibles.map((sub) => (
+                          <SelectItem key={sub.codigo} value={sub.nombre}>
+                            {sub.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* 3. Tipo Documental */}
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-bold text-slate-700">3. Tipo *</Label>
+                    <Select
+                      value={docTipoDocumental || "__none__"}
+                      onValueChange={(val) => setDocTipoDocumental(val === "__none__" ? "" : val)}
+                    >
+                      <SelectTrigger className="h-9 rounded-xl text-xs bg-white">
+                        <SelectValue placeholder="Tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Normativa</SelectItem>
+                        {TIPOS_DOCUMENTALES.map((tipo) => (
+                          <SelectItem key={tipo} value={tipo}>
+                            {tipo}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-[#002F6C]">Categoría</Label>
-                <Select
-                  value={categoriaId || "__none__"}
-                  onValueChange={(value) => setCategoriaId(value === "__none__" ? "" : value)}
-                >
-                  <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 text-sm">
-                    <SelectValue placeholder="Sin categoría" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">Sin categoría</SelectItem>
-                    {categorias.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-[#002F6C]">Descripción</Label>
-                <Input name="descripcion" defaultValue={editDoc?.descripcion ?? ""} placeholder="Descripción breve del contenido o alcance" className="h-11 w-full rounded-xl border-slate-200 text-sm" />
+                <Label className="text-xs font-bold text-[#002F6C]">Descripción o alcance</Label>
+                <Input
+                  name="descripcion"
+                  defaultValue={editDoc?.descripcion ?? ""}
+                  placeholder="Descripción breve del contenido o alcance de este documento"
+                  className="h-11 w-full rounded-xl border-slate-200 text-sm"
+                />
               </div>
 
               <div className="space-y-1.5">
@@ -1046,76 +1484,67 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                     <SelectValue placeholder="Selecciona un estado" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="publicado">Publicado (Visible)</SelectItem>
-                    <SelectItem value="borrador">Borrador (Interno)</SelectItem>
-                    <SelectItem value="pendiente">Pendiente de revisión</SelectItem>
+                    <SelectItem value="publicado">Publicado (Visible en Intranet)</SelectItem>
+                    <SelectItem value="borrador">Borrador (Solo Administradores)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
+              {/* Archivo adjunto */}
               <div className="space-y-2">
-                <Label className="text-sm font-semibold">Archivo adjunto</Label>
+                <Label className="text-xs font-bold text-[#002F6C]">Archivo oficial</Label>
                 {uploadedFile ? (
-                  <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-muted/30 p-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: getFileColor(uploadedFile.tipo) + "15" }}>
-                      {(() => {
-                        const Icon = getFileIcon(uploadedFile.tipo)
-                        return <Icon className="h-5 w-5" style={{ color: getFileColor(uploadedFile.tipo) }} />
-                      })()}
+                  <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50/50 p-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                      <FileIcon className="h-5 w-5" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{uploadedFile.nombre}</p>
-                      <p className="text-[10px] text-muted-foreground">{uploadedFile.tamano} — {uploadedFile.tipo.toUpperCase()}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold truncate text-emerald-900">{uploadedFile.nombre}</p>
+                      <p className="text-[10px] text-emerald-700">{uploadedFile.tamano}</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setUploadedFile(null)}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 transition-colors"
+                      className="text-slate-400 hover:text-red-500 cursor-pointer p-1"
                     >
                       <XIcon className="h-4 w-4" />
                     </button>
                   </div>
+                ) : editDoc?.archivo ? (
+                  <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs">
+                    <span className="font-mono text-slate-600 truncate max-w-xs">{editDoc.nombreArchivo || editDoc.archivo}</span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="rounded-lg text-xs"
+                    >
+                      Reemplazar
+                    </Button>
+                  </div>
                 ) : (
                   <div
-                    className={`relative flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed py-8 transition-all cursor-pointer ${uploading ? "border-[#FFB300]/50 bg-[#FFB300]/5" : "border-border/50 hover:border-[#FFB300]/40 hover:bg-[#FFB300]/5"
-                      }`}
-                    onClick={() => !uploading && fileInputRef.current?.click()}
-                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation() }}
-                    onDrop={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      const file = e.dataTransfer.files[0]
-                      if (file) handleFileUpload(file)
-                    }}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-300 rounded-2xl hover:border-[#0E5296] hover:bg-blue-50/20 transition-all cursor-pointer text-center"
                   >
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      className="hidden"
-                      accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.webp,.txt,.csv"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0]
-                        if (file) handleFileUpload(file)
-                        e.target.value = ""
-                      }}
-                    />
-                    {uploading ? (
-                      <>
-                        <Loader2Icon className="h-8 w-8 text-[#FFB300] animate-spin" />
-                        <p className="text-sm font-medium text-[#FF8800]">Subiendo archivo...</p>
-                      </>
-                    ) : (
-                      <>
-                        <UploadIcon className="h-8 w-8 text-muted-foreground/30" />
-                        <p className="text-sm font-medium text-muted-foreground">Arrastra un archivo o haz clic para seleccionar</p>
-                        <p className="text-[10px] text-muted-foreground/60">PDF, DOC, DOCX, XLS, XLSX, PPT, JPG, PNG — Sin límite de tamaño</p>
-                      </>
-                    )}
+                    <UploadIcon className="h-7 w-7 text-slate-400 mb-2" />
+                    <span className="text-xs font-bold text-[#002F6C]">Haz clic para seleccionar archivo</span>
+                    <span className="text-[10px] text-slate-400">PDF, Word, Excel o Imágenes oficiales</span>
                   </div>
                 )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0]
+                    if (f) handleFileUpload(f)
+                  }}
+                />
               </div>
 
-              <div className="flex justify-end gap-3 border-t border-border/40 pt-4">
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                 <Button
                   type="button"
                   variant="outline"
@@ -1124,8 +1553,6 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                     setDialogOpen(false)
                     setEditDoc(null)
                     setUploadedFile(null)
-                    setCategoriaId("")
-                    setEstado("borrador")
                   }}
                 >
                   Cancelar
@@ -1135,7 +1562,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                   disabled={isPending || uploading}
                   className="rounded-xl border-0 bg-[#0E5296] hover:bg-[#002F6C] font-bold text-white shadow-md shadow-[#0E5296]/20 cursor-pointer"
                 >
-                  {isPending ? "Guardando..." : "Guardar"}
+                  {isPending ? "Guardando..." : "Guardar documento"}
                 </Button>
               </div>
             </form>
@@ -1143,27 +1570,133 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         </Dialog>
       ) : null}
 
+      {/* ── MODAL NUEVA / EDITAR CATEGORÍA JERÁRQUICA ── */}
       {canCreateDocumento || canEditDocumento ? (
         <Dialog open={catDialogOpen} onOpenChange={setCatDialogOpen}>
-          <DialogContent className="p-0 gap-0 overflow-hidden rounded-2xl">
+          <DialogContent className="p-0 gap-0 overflow-hidden rounded-2xl max-w-md">
             <div className="h-1.5 w-full bg-[#0E5296]" />
             <div className="p-6">
               <DialogHeader>
-                <DialogTitle>{editCat ? "Editar categoría" : "Nueva categoría"}</DialogTitle>
+                <DialogTitle className="text-lg font-black text-[#002F6C]">
+                  {editCat ? "Editar Categoría Jerárquica" : "Nueva Categoría Institucional"}
+                </DialogTitle>
+                <p className="text-xs text-slate-500 font-medium">
+                  Configura la categoría dentro de la jerarquía de Direcciones y Áreas
+                </p>
               </DialogHeader>
-              <form onSubmit={handleCatSubmit} className="space-y-4 pt-2">
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Nombre *</Label>
-                  <Input name="nombre" required defaultValue={editCat?.nombre} className="h-11 rounded-xl" />
+
+              <form onSubmit={handleCatSubmit} className="space-y-4 pt-4">
+                {/* Nivel Jerárquico */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-[#002F6C]">Nivel Jerárquico *</Label>
+                  <Select
+                    value={String(catNivel)}
+                    onValueChange={(val) => {
+                      setCatNivel(Number(val))
+                      setCatParentId("")
+                    }}
+                  >
+                    <SelectTrigger className="h-10 rounded-xl text-xs bg-slate-50">
+                      <SelectValue placeholder="Seleccionar Nivel" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Nivel 1 • Dirección Principal</SelectItem>
+                      <SelectItem value="2">Nivel 2 • Subcategoría / Área</SelectItem>
+                      <SelectItem value="3">Nivel 3 • Tipo Documental</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Descripción</Label>
-                  <Input name="descripcion" defaultValue={editCat?.descripcion ?? ""} className="h-11 rounded-xl" />
+
+                {/* Si es Nivel 2: Selección de Dirección Padre */}
+                {catNivel === 2 && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-[#002F6C]">Dirección a la que pertenece *</Label>
+                    <Select
+                      value={catParentId || "__none__"}
+                      onValueChange={(val) => setCatParentId(val === "__none__" ? "" : val)}
+                    >
+                      <SelectTrigger className="h-10 rounded-xl text-xs bg-slate-50">
+                        <SelectValue placeholder="Seleccionar Dirección" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Sin Dirección padre fija</SelectItem>
+                        {categorias.filter((c) => c.nivel === 1).map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Si es Nivel 3: Selección de Subcategoría Padre */}
+                {catNivel === 3 && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-[#002F6C]">Subcategoría / Área a la que pertenece *</Label>
+                    <Select
+                      value={catParentId || "__none__"}
+                      onValueChange={(val) => setCatParentId(val === "__none__" ? "" : val)}
+                    >
+                      <SelectTrigger className="h-10 rounded-xl text-xs bg-slate-50">
+                        <SelectValue placeholder="Seleccionar Subcategoría" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Sin Subcategoría fija</SelectItem>
+                        {categorias.filter((c) => c.nivel === 2).map((c) => {
+                          const parentDir = categorias.find((p) => p.id === c.parentId)
+                          return (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.nombre} {parentDir ? `(${parentDir.nombre.replace("Dirección ", "")})` : ""}
+                            </SelectItem>
+                          )
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-[#002F6C]">Nombre de la Categoría *</Label>
+                  <Input
+                    name="nombre"
+                    required
+                    defaultValue={editCat?.nombre}
+                    placeholder="Ej. Planificación, Recursos Humanos, Reglamentos..."
+                    className="h-11 rounded-xl text-sm"
+                  />
                 </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <Button type="button" variant="outline" className="rounded-xl" onClick={() => setCatDialogOpen(false)}>Cancelar</Button>
-                  <Button type="submit" disabled={isPending} className="rounded-xl bg-[#0E5296] hover:bg-[#002F6C] text-white border-0 font-bold shadow-md shadow-[#0E5296]/20 cursor-pointer">
-                    {isPending ? "Guardando..." : "Guardar"}
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-[#002F6C]">Descripción</Label>
+                  <Input
+                    name="descripcion"
+                    defaultValue={editCat?.descripcion ?? ""}
+                    placeholder="Breve detalle del alcance de esta categoría"
+                    className="h-11 rounded-xl text-sm"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-[#002F6C]">Orden numérico</Label>
+                  <Input
+                    name="orden"
+                    type="number"
+                    defaultValue={editCat?.orden ?? 1}
+                    className="h-10 rounded-xl text-sm"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                  <Button type="button" variant="outline" className="rounded-xl" onClick={() => setCatDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isPending}
+                    className="rounded-xl bg-[#0E5296] hover:bg-[#002F6C] text-white border-0 font-bold shadow-md shadow-[#0E5296]/20 cursor-pointer"
+                  >
+                    {isPending ? "Guardando..." : "Guardar categoría"}
                   </Button>
                 </div>
               </form>
@@ -1172,6 +1705,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         </Dialog>
       ) : null}
 
+      {/* ── VISUALIZADOR PREVIEW DOCUMENTO ── */}
       <Dialog open={!!previewDoc} onOpenChange={(v) => { if (!v) setPreviewDoc(null) }}>
         <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-225 max-h-[92vh] overflow-hidden p-0 gap-0 rounded-2xl border-border/50">
           <DialogHeader className="sr-only">
@@ -1184,6 +1718,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
             (() => {
               const fileEffectiveUrl = getDocumentUrl(previewDoc.archivo)
               const downloadUrl = `${fileEffectiveUrl}?download=1`
+              const fechaOficial = obtenerFechaOficialDocumento(previewDoc.nombreArchivo || previewDoc.archivo, previewDoc.titulo)
 
               return (
                 <>
@@ -1196,14 +1731,14 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                         })()}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-bold truncate">{previewDoc.titulo}</p>
+                        <p className="text-sm font-bold truncate text-[#002F6C]">{previewDoc.titulo}</p>
                         <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
                           <span>{previewDoc.nombreArchivo}</span>
                           <span>•</span>
                           <span>{previewDoc.tamano}</span>
                           <span>•</span>
                           <span className="font-bold text-[#002F6C] bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">
-                            Fecha Oficial: {obtenerFechaOficialDocumento(previewDoc.nombreArchivo || previewDoc.archivo, previewDoc.titulo)}
+                            Fecha Oficial: {fechaOficial}
                           </span>
                         </p>
                       </div>
@@ -1240,40 +1775,14 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                         return (
                           <div className="flex flex-col h-full w-full">
                             <iframe src={fileEffectiveUrl} className="flex-1 w-full border-0 min-h-[500px]" title={previewDoc.titulo} />
-                            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/40 bg-slate-100/80 px-4 py-2 text-xs">
-                              <span className="font-mono text-slate-500 truncate max-w-sm">{previewDoc.nombreArchivo}</span>
-                              <div className="flex items-center gap-2">
-                                <a
-                                  href={fileEffectiveUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3 py-1.5 font-medium text-slate-700 shadow-2xs transition-colors"
-                                >
-                                  <EyeIcon className="h-3.5 w-3.5 text-[#0E5296]" />
-                                  Abrir en nueva ventana
-                                </a>
-                                <a
-                                  href={downloadUrl}
-                                  download={previewDoc.nombreArchivo ?? "documento.pdf"}
-                                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#0E5296] hover:bg-[#002F6C] px-3 py-1.5 font-bold text-white shadow-2xs transition-colors"
-                                >
-                                  <DownloadIcon className="h-3.5 w-3.5 text-[#FFB800]" />
-                                  Descargar PDF
-                                </a>
-                              </div>
-                            </div>
                           </div>
                         )
                       }
 
                       if (isImage) {
                         return (
-                          <div className="flex h-full items-center justify-center p-6">
-                            <img
-                              src={fileEffectiveUrl}
-                              alt={previewDoc.titulo}
-                              className="max-h-full max-w-full object-contain rounded-xl shadow-lg"
-                            />
+                          <div className="flex items-center justify-center p-6 h-full">
+                            <img src={fileEffectiveUrl} alt={previewDoc.titulo} className="max-h-[60vh] max-w-full object-contain rounded-xl shadow-md" />
                           </div>
                         )
                       }
@@ -1289,58 +1798,11 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                         )
                       }
 
-                      const formatName = "Archivo Institucional"
-                      const formatBadgeColor = "bg-slate-100 text-slate-800 border-slate-300"
-                      const Icon = getFileIcon(previewDoc.tipoArchivo)
-
                       return (
-                        <div className="flex flex-col items-center justify-center gap-5 h-full px-6 py-8">
-                          <div className="flex h-24 w-24 items-center justify-center rounded-3xl shadow-sm border" style={{ backgroundColor: getFileColor(previewDoc.tipoArchivo) + "12", borderColor: getFileColor(previewDoc.tipoArchivo) + "30" }}>
-                            <Icon className="h-12 w-12" style={{ color: getFileColor(previewDoc.tipoArchivo) }} />
-                          </div>
-
-                          <div className="text-center max-w-md space-y-1.5">
-                            <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full border shadow-2xs ${formatBadgeColor}`}>
-                              {formatName}
-                            </span>
-                            <h4 className="text-base font-bold text-[#002F6C] line-clamp-2">{previewDoc.titulo}</h4>
-                            <p className="text-xs text-slate-500 font-mono">{previewDoc.nombreArchivo}</p>
-                          </div>
-
-                          <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 max-w-md w-full shadow-xs text-xs space-y-2 text-slate-600">
-                            <div className="flex justify-between">
-                              <span className="font-semibold text-slate-400">Categoría:</span>
-                              <span className="font-bold text-[#0E5296]">{previewDoc.categoria || "General"}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="font-semibold text-slate-400">Tamaño:</span>
-                              <span className="font-medium text-slate-700">{previewDoc.tamano || "—"}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="font-semibold text-slate-400">Estado:</span>
-                              <span className="font-medium text-emerald-600 font-bold capitalize">{previewDoc.estado}</span>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap items-center justify-center gap-3">
-                            <a
-                              href={downloadUrl}
-                              download={previewDoc.nombreArchivo ?? "documento"}
-                              className="inline-flex items-center gap-2 rounded-xl bg-[#0E5296] hover:bg-[#002F6C] px-6 py-3 text-xs font-bold text-white shadow-md shadow-[#0E5296]/20 transition-all cursor-pointer hover:scale-105"
-                            >
-                              <DownloadIcon className="h-4 w-4 text-[#FFB800]" />
-                              Descargar / Abrir Archivo
-                            </a>
-                            <a
-                              href={fileEffectiveUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-5 py-3 text-xs font-bold text-[#002F6C] shadow-xs transition-all cursor-pointer"
-                            >
-                              <EyeIcon className="h-4 w-4 text-[#0E5296]" />
-                              Abrir en nueva pestaña
-                            </a>
-                          </div>
+                        <div className="flex flex-col items-center justify-center p-8 text-center h-full">
+                          <FileTextIcon className="h-14 w-14 text-slate-300 mb-3" />
+                          <h4 className="font-bold text-[#002F6C]">{previewDoc.titulo}</h4>
+                          <p className="text-xs text-slate-500 max-w-md mt-1">{previewDoc.descripcion}</p>
                         </div>
                       )
                     })()}
@@ -1356,7 +1818,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         open={bulkDialogOpen}
         onClose={() => setBulkDialogOpen(false)}
         existingDocs={documentos}
-        categorias={categorias}
+        categorias={categorias as any}
         onSuccess={() => {}}
       />
 
@@ -1390,8 +1852,8 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
               <AlertTriangleIcon className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
               <span>
                 {tab === "categorias"
-                  ? "Las categorías seleccionadas serán eliminadas permanentemente de la base de datos. Los documentos que pertenecían a estas categorías quedarán sin categoría asignada pero intactos."
-                  : "Los documentos seleccionados serán eliminados por completo de la base de datos y no podrán ser recuperados desde la papelera institucional."}
+                  ? "Las categorías seleccionadas serán eliminadas permanentemente de la base de datos."
+                  : "Los documentos seleccionados serán eliminados por completo de la base de datos."}
               </span>
             </div>
           </div>

@@ -3,10 +3,12 @@
 import { db } from "@/db"
 import { documentos, documentoCategorias, archivos } from "@/db/schema"
 import { eq, desc, inArray } from "drizzle-orm"
+import { alias } from "drizzle-orm/pg-core"
 import { revalidatePath } from "next/cache"
 import { registrarAuditLog } from "@/actions/auditoria"
 import { PERMISOS } from "@/lib/auth/permisos"
 import { obtenerSesionConAccesoActual, type SesionConAcceso } from "@/lib/auth/session-access"
+import { clasificarDocumento } from "@/lib/documentos-jerarquia"
 
 const ROL_SUPER_ADMIN = "super_admin"
 
@@ -71,34 +73,74 @@ async function autorizarAccion(permisoRequerido: string): Promise<SesionConAcces
 export async function obtenerDocumentos() {
   await requerirSesionAutenticada()
 
-  return db.select({
-    id: documentos.id,
-    titulo: documentos.titulo,
-    categoriaId: documentos.categoriaId,
-    categoria: documentoCategorias.nombre,
-    autor: documentos.autor,
-    estado: documentos.estado,
-    archivo: documentos.archivo,
-    nombreArchivo: documentos.nombreArchivo,
-    tipoArchivo: documentos.tipoArchivo,
-    tamano: documentos.tamano,
-    descripcion: documentos.descripcion,
-    createdAt: documentos.createdAt,
-    updatedAt: documentos.updatedAt,
-  }).from(documentos)
+  const dirCat = alias(documentoCategorias, "dirCat")
+  const subCat = alias(documentoCategorias, "subCat")
+
+  const rows = await db
+    .select({
+      id: documentos.id,
+      titulo: documentos.titulo,
+      categoriaId: documentos.categoriaId,
+      categoria: documentoCategorias.nombre,
+      direccionId: documentos.direccionId,
+      direccion: dirCat.nombre,
+      subcategoriaId: documentos.subcategoriaId,
+      subcategoria: subCat.nombre,
+      tipoDocumental: documentos.tipoDocumental,
+      autor: documentos.autor,
+      estado: documentos.estado,
+      archivo: documentos.archivo,
+      nombreArchivo: documentos.nombreArchivo,
+      tipoArchivo: documentos.tipoArchivo,
+      tamano: documentos.tamano,
+      descripcion: documentos.descripcion,
+      createdAt: documentos.createdAt,
+      updatedAt: documentos.updatedAt,
+    })
+    .from(documentos)
     .leftJoin(documentoCategorias, eq(documentos.categoriaId, documentoCategorias.id))
+    .leftJoin(dirCat, eq(documentos.direccionId, dirCat.id))
+    .leftJoin(subCat, eq(documentos.subcategoriaId, subCat.id))
     .orderBy(desc(documentos.createdAt))
+
+  return rows.map((r) => {
+    if (!r.direccion || !r.subcategoria || !r.tipoDocumental) {
+      const fallback = clasificarDocumento(r.archivo || r.nombreArchivo, r.titulo)
+      return {
+        ...r,
+        direccion: r.direccion || fallback.direccionNombre,
+        subcategoria: r.subcategoria || fallback.subcategoriaNombre,
+        tipoDocumental: r.tipoDocumental || fallback.tipoDocumental,
+      }
+    }
+    return r
+  })
 }
 
 export async function obtenerCategorias() {
   await requerirSesionAutenticada()
 
-  return db.select().from(documentoCategorias).orderBy(documentoCategorias.nombre)
+  return db
+    .select({
+      id: documentoCategorias.id,
+      nombre: documentoCategorias.nombre,
+      descripcion: documentoCategorias.descripcion,
+      parentId: documentoCategorias.parentId,
+      nivel: documentoCategorias.nivel,
+      orden: documentoCategorias.orden,
+      createdAt: documentoCategorias.createdAt,
+      updatedAt: documentoCategorias.updatedAt,
+    })
+    .from(documentoCategorias)
+    .orderBy(documentoCategorias.nivel, documentoCategorias.orden, documentoCategorias.nombre)
 }
 
 export async function crearDocumento(data: {
   titulo: string
-  categoriaId?: string
+  categoriaId?: string | null
+  direccionId?: string | null
+  subcategoriaId?: string | null
+  tipoDocumental?: string | null
   autor?: string
   estado?: string
   archivo?: string
@@ -108,8 +150,21 @@ export async function crearDocumento(data: {
   descripcion?: string
 }) {
   const sesion = await autorizarAccion(PERMISOS.DOCUMENTOS.CREAR)
+
+  let dirId = data.direccionId
+  let subId = data.subcategoriaId
+  let tipoDoc = data.tipoDocumental
+
+  if (!dirId || !subId || !tipoDoc) {
+    const deduced = clasificarDocumento(data.archivo || data.nombreArchivo, data.titulo)
+    if (!tipoDoc) tipoDoc = deduced.tipoDocumental
+  }
+
   const payload = {
     ...data,
+    direccionId: dirId || undefined,
+    subcategoriaId: subId || undefined,
+    tipoDocumental: tipoDoc || undefined,
     autor: (data.autor || "").trim() || "AGBC Institucional",
   }
   const [nuevo] = await db.insert(documentos).values(payload).returning()
@@ -132,7 +187,10 @@ export async function crearDocumento(data: {
 
 export async function actualizarDocumento(id: string, data: Partial<{
   titulo: string
-  categoriaId: string
+  categoriaId: string | null
+  direccionId: string | null
+  subcategoriaId: string | null
+  tipoDocumental: string | null
   autor: string
   estado: string
   archivo: string
@@ -476,7 +534,13 @@ export async function eliminarDocumentosPermanenteLote(ids: string[]) {
   return { success: true, count: deletedDocs.length }
 }
 
-export async function crearCategoria(data: { nombre: string; descripcion?: string }) {
+export async function crearCategoria(data: {
+  nombre: string
+  descripcion?: string
+  parentId?: string | null
+  nivel?: number
+  orden?: number
+}) {
   const sesion = await autorizarAccion(PERMISOS.DOCUMENTOS.CREAR)
   const [nueva] = await db.insert(documentoCategorias).values(data).returning()
   await registrarAuditLog({
@@ -489,7 +553,16 @@ export async function crearCategoria(data: { nombre: string; descripcion?: strin
   return nueva
 }
 
-export async function actualizarCategoria(id: string, data: Partial<{ nombre: string; descripcion: string }>) {
+export async function actualizarCategoria(
+  id: string,
+  data: Partial<{
+    nombre: string
+    descripcion: string
+    parentId: string | null
+    nivel: number
+    orden: number
+  }>
+) {
   const sesion = await autorizarAccion(PERMISOS.DOCUMENTOS.EDITAR)
   const [actualizada] = await db.update(documentoCategorias).set(data).where(eq(documentoCategorias.id, id)).returning()
   await registrarAuditLog({

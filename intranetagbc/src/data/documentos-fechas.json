@@ -9,7 +9,10 @@
     "tipoFecha": "catalogo_operativo",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 1
+    "numero": 1,
+    "direccion": "Dirección de Operaciones",
+    "subcategoria": "Desarrollo de Calidad",
+    "tipoDocumental": "Normativas"
   },
   {
     "archivo": "doc_002_ficha_tecnica_de_unidad_yo_area.xlsx",
@@ -21,7 +24,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 2
+    "numero": 2,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_003_formulario_de_solicitud_de_mantenimiento_y_reparacion_vehicu.xlsx",
@@ -33,7 +39,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 3
+    "numero": 3,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_004_ficha_tecnica_vehicular.xlsx",
@@ -45,7 +54,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 4
+    "numero": 4,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_005_reporte_individual_de_recaudacion_diaria.xlsx",
@@ -57,7 +69,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 5
+    "numero": 5,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_006_formulario_para_la_ejecucion_de_recursos_del_fondo_rotativo.xlsx",
@@ -69,7 +84,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 6
+    "numero": 6,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_007_reporte_consolidado_de_recaudacion_diaria_regional.xlsx",
@@ -81,7 +99,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 7
+    "numero": 7,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_008_formulario_de_rendicion_de_cuentas_fondo_rotativo.xlsx",
@@ -93,7 +114,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 8
+    "numero": 8,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_009_t_y_c_de_alquiler_de_casillas_ficha_de_asignacion.doc",
@@ -105,7 +129,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 9
+    "numero": 9,
+    "direccion": "Dirección de Operaciones",
+    "subcategoria": "Desarrollo de Calidad",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_010_notificacion_de_evento_en_casilla_postal.xlsx",
@@ -117,7 +144,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 10
+    "numero": 10,
+    "direccion": "Dirección de Operaciones",
+    "subcategoria": "Desarrollo de Calidad",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_011_gestion_de_cambio_de_chapas.xlsx",
@@ -129,7 +159,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 11
+    "numero": 11,
+    "direccion": "Dirección de Operaciones",
+    "subcategoria": "Desarrollo de Calidad",
+    "tipoDocumental": "Normativas"
   },
   {
     "archivo": "doc_012_kardex_llaves_blancas.xlsx",
@@ -141,7 +174,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 12
+    "numero": 12,
+    "direccion": "Dirección de Operaciones",
+    "subcategoria": "Desarrollo de Calidad",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_013_ficha_de_solicitud_de_servicio_adicional_en_casillas.xlsx",
@@ -153,7 +189,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 13
+    "numero": 13,
+    "direccion": "Dirección de Operaciones",
+    "subcategoria": "Desarrollo de Calidad",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_014_acta_de_informacion_en_caso_de_incautacion_de_envio_postal.xlsx",
@@ -165,7 +204,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 14
+    "numero": 14,
+    "direccion": "Dirección de Operaciones",
+    "subcategoria": "Desarrollo de Calidad",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_015_formulario_de_quejas.xlsx",
@@ -177,7 +219,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 15
+    "numero": 15,
+    "direccion": "Dirección Comercial",
+    "subcategoria": "Relaciones I. M. C.",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_016_formulario_de_reclamacion_directa.xlsx",
@@ -189,7 +234,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 16
+    "numero": 16,
+    "direccion": "Dirección Comercial",
+    "subcategoria": "Relaciones I. M. C.",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_017_formulario_de_solicitud_de_reclamacion_postal_internacional.xlsx",
@@ -201,7 +249,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 17
+    "numero": 17,
+    "direccion": "Dirección Comercial",
+    "subcategoria": "Relaciones I. M. C.",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_018_formulario_para_la_revision_de_documentos_normativos.xlsx",
@@ -213,7 +264,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 18
+    "numero": 18,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_019_matriz_de_diagnostico_organizacional_retrospectivo.xlsx",
@@ -225,7 +279,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 19
+    "numero": 19,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Planificación",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_020_matriz_de_diagnostico_organizacional_prospectivo.xlsx",
@@ -237,7 +294,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 20
+    "numero": 20,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Planificación",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_021_acta_de_reuniones.docx",
@@ -249,7 +309,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 21
+    "numero": 21,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_022_formulario_solicitud_de_vehiculo.xlsx",
@@ -261,7 +324,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 22
+    "numero": 22,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_023_recibo_de_retencion_tributaria.xlsx",
@@ -273,7 +339,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 23
+    "numero": 23,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_024_formulario_de_denuncia_por_negativa_injustificada_de_acceso_.xlsx",
@@ -285,7 +354,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 24
+    "numero": 24,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Transparencia",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_025_formulario_de_denuncia_por_presuntos_actos_de_corrupcion.xlsx",
@@ -297,7 +369,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 25
+    "numero": 25,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Transparencia",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_026_reglamento_interno_de_personal.pdf",
@@ -315,7 +390,10 @@
       "16 de agosto de 2019",
       "06 de septiembre de 2019"
     ],
-    "numero": 26
+    "numero": 26,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Recursos Humanos",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_027_reglamento_especifico_del_sistema_de_administracion_de_perso.pdf",
@@ -334,7 +412,10 @@
       "20 de julio de 1990",
       "16 de marzo de 2001"
     ],
-    "numero": 27
+    "numero": 27,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Recursos Humanos",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_028_procedimiento_para_el_control_de_vehiculos.pdf",
@@ -350,7 +431,10 @@
       "28 de febrero de 2018",
       "18 de septiembre de 2019"
     ],
-    "numero": 28
+    "numero": 28,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_029_procedimiento_para_la_asignacion_y_control_de_uso_de_telefon.pdf",
@@ -366,7 +450,10 @@
       "28 de febrero de 2018",
       "15 de agosto de 2019"
     ],
-    "numero": 29
+    "numero": 29,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_030_procedimiento_para_el_control_de_casillas_postales.pdf",
@@ -382,7 +469,10 @@
       "28 de febrero de 2018",
       "02 de septiembre de 2019"
     ],
-    "numero": 30
+    "numero": 30,
+    "direccion": "Dirección de Operaciones",
+    "subcategoria": "Desarrollo de Calidad",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_031_procedimiento_para_el_tratamiento_de_denuncias_a_transparenc.pdf",
@@ -398,7 +488,10 @@
       "28 de febrero de 2018",
       "29 de octubre de 2019"
     ],
-    "numero": 31
+    "numero": 31,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Transparencia",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_032_politica_de_calidad.pdf",
@@ -414,7 +507,10 @@
       "28 de febrero de 2018",
       "23 de abril de 2019"
     ],
-    "numero": 32
+    "numero": 32,
+    "direccion": "Dirección de Operaciones",
+    "subcategoria": "Desarrollo de Calidad",
+    "tipoDocumental": "Normativas"
   },
   {
     "archivo": "doc_033_politica_organizacional_y_de_gestion_por_procesos.pdf",
@@ -430,7 +526,10 @@
       "28 de febrero de 2018",
       "23 de abril de 2019"
     ],
-    "numero": 33
+    "numero": 33,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Planificación",
+    "tipoDocumental": "Normativas"
   },
   {
     "archivo": "doc_034_guia_de_usuario_sigec.pdf",
@@ -442,7 +541,10 @@
     "tipoFecha": "anio",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 34
+    "numero": 34,
+    "direccion": "Dirección Comercial",
+    "subcategoria": "Relaciones I. M. C.",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_035_politica_para_la_seguridad_de_la_informacion_y_las_comunicac.pdf",
@@ -458,7 +560,10 @@
       "28 de febrero de 2018",
       "23 de julio de 2019"
     ],
-    "numero": 35
+    "numero": 35,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Planificación",
+    "tipoDocumental": "Normativas"
   },
   {
     "archivo": "doc_036_procedimiento_de_comunicacion_interna_manejo_de_la_correspon.pdf",
@@ -474,7 +579,10 @@
       "28 de febrero de 2018",
       "23 de julio de 2019"
     ],
-    "numero": 36
+    "numero": 36,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_037_instructivo_operativo_para_la_emision_de_resoluciones_admini.pdf",
@@ -490,7 +598,10 @@
       "28 de febrero de 2018",
       "23 de abril de 2019"
     ],
-    "numero": 37
+    "numero": 37,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Legal",
+    "tipoDocumental": "Instructivos"
   },
   {
     "archivo": "doc_038_procedimiento_para_el_diagnostico_diseno_y_rediseno_organiza.pdf",
@@ -506,7 +617,10 @@
       "05 de diciembre de 2019",
       "29 de noviembre de 2019"
     ],
-    "numero": 38
+    "numero": 38,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Planificación",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_039_manual_de_funciones_profesional_de_planificacion.pdf",
@@ -518,7 +632,10 @@
     "tipoFecha": "anio",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 39
+    "numero": 39,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Planificación",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_040_procedimiento_para_el_uso_mantenimiento_y_reparacion_de_los_.pdf",
@@ -534,7 +651,10 @@
       "28 de febrero de 2018",
       "28 de octubre de 2019"
     ],
-    "numero": 40
+    "numero": 40,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_041_procedimiento_para_la_atencion_y_tratamiento_de_quejas_y_rec.pdf",
@@ -551,7 +671,10 @@
       "06 de diciembre de 2019",
       "29 de noviembre de 2019"
     ],
-    "numero": 41
+    "numero": 41,
+    "direccion": "Dirección Comercial",
+    "subcategoria": "Relaciones I. M. C.",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_042_reglamento_interno_del_comite_de_reclamaciones.pdf",
@@ -568,7 +691,10 @@
       "06 de diciembre de 2019",
       "29 de noviembre de 2019"
     ],
-    "numero": 42
+    "numero": 42,
+    "direccion": "Dirección Comercial",
+    "subcategoria": "Relaciones I. M. C.",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_043_procedimiento_para_el_control_y_dotacion_de_sellos_postales_.pdf",
@@ -584,7 +710,10 @@
       "28 de febrero de 2018",
       "16 de octubre de 2019"
     ],
-    "numero": 43
+    "numero": 43,
+    "direccion": "Dirección de Operaciones",
+    "subcategoria": "Desarrollo de Calidad",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_044_procedimiento_para_el_control_de_inspecciones_de_la_felcn_y_.pdf",
@@ -601,7 +730,10 @@
       "06 de diciembre de 2019",
       "29 de noviembre de 2019"
     ],
-    "numero": 44
+    "numero": 44,
+    "direccion": "Dirección de Operaciones",
+    "subcategoria": "Desarrollo de Calidad",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_045_manual_de_procesos_y_procedimientos_de_pagos_con_orden_de_pa.pdf",
@@ -619,7 +751,10 @@
       "30 de diciembre de 2015",
       "05 de febrero de 2020"
     ],
-    "numero": 45
+    "numero": 45,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_046_procedimiento_para_el_manejo_y_control_de_la_recaudacion.pdf",
@@ -635,7 +770,10 @@
       "28 de febrero de 2018",
       "10 de octubre de 2019"
     ],
-    "numero": 46
+    "numero": 46,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_047_procedimiento_para_la_administracion_del_fondo_rotativo.pdf",
@@ -652,7 +790,10 @@
       "14 de mayo de 2018",
       "04 de octubre de 2019"
     ],
-    "numero": 47
+    "numero": 47,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_048_codigo_de_etica.pdf",
@@ -674,7 +815,10 @@
       "06 de enero de 2023",
       "24 de diciembre de 2025"
     ],
-    "numero": 48
+    "numero": 48,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Transparencia",
+    "tipoDocumental": "Normativas"
   },
   {
     "archivo": "doc_049_codigo_de_etica_r_a_n_11_18.pdf",
@@ -693,7 +837,10 @@
       "21 de marzo de 2019",
       "02 de abril de 2019"
     ],
-    "numero": 49
+    "numero": 49,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Transparencia",
+    "tipoDocumental": "Normativas"
   },
   {
     "archivo": "doc_050_formulario_unico_de_reclamos_cn_08.doc",
@@ -705,7 +852,10 @@
     "tipoFecha": "formato_plantilla",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 50
+    "numero": 50,
+    "direccion": "Dirección Comercial",
+    "subcategoria": "Relaciones I. M. C.",
+    "tipoDocumental": "Formularios"
   },
   {
     "archivo": "doc_051_manual_de_usuario_de_sistema_contratos_gescon.pdf",
@@ -717,7 +867,10 @@
     "tipoFecha": "anio",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 51
+    "numero": 51,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Legal",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_052_manual_de_usuario_de_sistema_de_casillas_senca.pdf",
@@ -729,7 +882,10 @@
     "tipoFecha": "anio",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 52
+    "numero": 52,
+    "direccion": "Dirección de Operaciones",
+    "subcategoria": "Desarrollo de Calidad",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_053_manual_de_usuario_de_sistema_de_seguimiento_de_paqueteria_po.pdf",
@@ -741,7 +897,10 @@
     "tipoFecha": "anio",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 53
+    "numero": 53,
+    "direccion": "Dirección de Operaciones",
+    "subcategoria": "Desarrollo de Calidad",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_054_manual_de_usuario_de_sistema_sireco.pdf",
@@ -753,7 +912,10 @@
     "tipoFecha": "anio",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 54
+    "numero": 54,
+    "direccion": "Dirección Comercial",
+    "subcategoria": "Relaciones I. M. C.",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_055_manual_organizacional_administrativa_financiera.pdf",
@@ -771,7 +933,10 @@
       "22 de mayo de 2019",
       "27 de mayo de 2019"
     ],
-    "numero": 55
+    "numero": 55,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Planificación",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_056_manual_organizacional_direccion_comercial.pdf",
@@ -783,7 +948,10 @@
     "tipoFecha": "fecha_completa",
     "resolucion": "Resolución Administrativa Nº 040/2018",
     "todasFechas": [],
-    "numero": 56
+    "numero": 56,
+    "direccion": "Dirección Comercial",
+    "subcategoria": "Relaciones I. M. C.",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_057_manual_organizacional_direccion_de_operaciones.pdf",
@@ -795,7 +963,10 @@
     "tipoFecha": "fecha_completa",
     "resolucion": "Resolución Administrativa Nº 040/2018",
     "todasFechas": [],
-    "numero": 57
+    "numero": 57,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_058_manual_organizacional_unidad_de_auditoria_interna.pdf",
@@ -809,7 +980,10 @@
     "todasFechas": [
       "15 de septiembre de 2000"
     ],
-    "numero": 58
+    "numero": 58,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Auditoría",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_059_manual_organizacional_unidad_de_planificacion.pdf",
@@ -821,7 +995,10 @@
     "tipoFecha": "fecha_completa",
     "resolucion": "Resolución Administrativa Nº 040/2018",
     "todasFechas": [],
-    "numero": 59
+    "numero": 59,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Planificación",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_060_manual_organizacional_unidad_de_transparencia_y_lucha_contra.pdf",
@@ -835,7 +1012,10 @@
     "todasFechas": [
       "4 de septiembre de 2017"
     ],
-    "numero": 60
+    "numero": 60,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Transparencia",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_061_manual_organizacional_unidad_legal.pdf",
@@ -847,7 +1027,10 @@
     "tipoFecha": "fecha_completa",
     "resolucion": "Resolución Administrativa Nº 040/2018",
     "todasFechas": [],
-    "numero": 61
+    "numero": 61,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Legal",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_062_manual_para_generar_plantilla_en_sigec.pdf",
@@ -859,7 +1042,10 @@
     "tipoFecha": "guia_tutorial",
     "resolucion": null,
     "todasFechas": [],
-    "numero": 62
+    "numero": 62,
+    "direccion": "Dirección Comercial",
+    "subcategoria": "Relaciones I. M. C.",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_063_organigrama_institucional.pdf",
@@ -879,7 +1065,10 @@
       "08 de noviembre de 2018",
       "21 de noviembre de 2018"
     ],
-    "numero": 63
+    "numero": 63,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Planificación",
+    "tipoDocumental": "Normativas"
   },
   {
     "archivo": "doc_064_procedimiento_de_cobranza_r_a_30_18.pdf",
@@ -901,7 +1090,10 @@
       "11 de octubre de 2018",
       "30 de julio de 2018"
     ],
-    "numero": 64
+    "numero": 64,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_065_procedimiento_de_contratacion_por_excepcion_r_a_17_18.pdf",
@@ -921,7 +1113,10 @@
       "16 de agosto de 2016",
       "24 de agosto de 2018"
     ],
-    "numero": 65
+    "numero": 65,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_066_procedimiento_de_recaudacion_de_recursos_por_venta_de_servic.pdf",
@@ -941,7 +1136,10 @@
       "4 de marzo de 2005",
       "30 de julio de 1997"
     ],
-    "numero": 66
+    "numero": 66,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_067_ra_40_aprobacion_de_manuales_organizacionales.pdf",
@@ -956,7 +1154,10 @@
       "28 de febrero de 2018",
       "30 de julio de 2019"
     ],
-    "numero": 67
+    "numero": 67,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Planificación",
+    "tipoDocumental": "Manuales"
   },
   {
     "archivo": "doc_068_reglamento_de_administracion_de_recursos_del_fondo_social.pdf",
@@ -979,7 +1180,10 @@
       "13 de noviembre de 2018",
       "23 de noviembre de 2018"
     ],
-    "numero": 68
+    "numero": 68,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Recursos Humanos",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_069_reglamento_de_fondo_rotativo_agbc.pdf",
@@ -1002,7 +1206,10 @@
       "10 de mayo de 2018",
       "14 de mayo de 2018"
     ],
-    "numero": 69
+    "numero": 69,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_070_reglamento_de_la_unidad_de_transparencia_y_lucha_contra_la_c.pdf",
@@ -1025,7 +1232,10 @@
       "19 de enero de 2015",
       "9 de marzo de 2016"
     ],
-    "numero": 70
+    "numero": 70,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Transparencia",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_071_reglamento_de_pasajes_y_viaticos.pdf",
@@ -1044,7 +1254,10 @@
       "11 de octubre de 2021",
       "22 de Noviembre de 2021"
     ],
-    "numero": 71
+    "numero": 71,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Recursos Humanos",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_072_reglamento_de_rezagos_r_a_n_33_19.pdf",
@@ -1062,7 +1275,10 @@
       "24 de mayo de 2019",
       "4 de julio de 2019"
     ],
-    "numero": 72
+    "numero": 72,
+    "direccion": "Dirección de Operaciones",
+    "subcategoria": "Desarrollo de Calidad",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_073_reglamento_del_procedimiento_operativo_de_control_aduanero_d.pdf",
@@ -1080,7 +1296,10 @@
       "20 de junio de 2018",
       "16 de agosto de 2018"
     ],
-    "numero": 73
+    "numero": 73,
+    "direccion": "Dirección de Operaciones",
+    "subcategoria": "Desarrollo de Calidad",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_074_reglamento_especifico_de_proceso_sumario_agencia_boliviana_d.pdf",
@@ -1097,7 +1316,10 @@
       "28 de febrero de 2018",
       "14 de enero de 2022"
     ],
-    "numero": 74
+    "numero": 74,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Legal",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_075_reglamento_especifico_del_sistema_de_administracion_de_biene.pdf",
@@ -1119,7 +1341,10 @@
       "16 de junio de 2021",
       "4 de enero de 2021"
     ],
-    "numero": 75
+    "numero": 75,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_076_reglamento_especifico_del_sistema_de_administracion_de_biene.pdf",
@@ -1137,7 +1362,10 @@
       "16 de abril de 2019",
       "22 de abril de 2019"
     ],
-    "numero": 76
+    "numero": 76,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_077_reglamento_especifico_del_sistema_de_administracion_de_perso.pdf",
@@ -1161,7 +1389,10 @@
       "13 de enero de 2020",
       "13 de enero de 2020"
     ],
-    "numero": 77
+    "numero": 77,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Recursos Humanos",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_078_reglamento_especifico_del_sistema_de_contabilidad_integrada_.pdf",
@@ -1180,7 +1411,10 @@
       "21 de diciembre de 2018",
       "04 de marzo de 2005"
     ],
-    "numero": 78
+    "numero": 78,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_079_reglamento_especifico_del_sistema_de_organizacion_administra.pdf",
@@ -1199,7 +1433,10 @@
       "22 de mayo de 2019",
       "20 de mayo de 1997"
     ],
-    "numero": 79
+    "numero": 79,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Planificación",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_080_reglamento_especifico_del_sistema_de_presupuestos_r_a_n_41_2.pdf",
@@ -1219,7 +1456,10 @@
       "23 de noviembre de 2018",
       "01 de diciembre de 2005"
     ],
-    "numero": 80
+    "numero": 80,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_081_reglamento_especifico_del_sistema_de_programacion_de_operaci.pdf",
@@ -1240,7 +1480,10 @@
       "5 de julio de 2017",
       "7 de noviembre de 2018"
     ],
-    "numero": 81
+    "numero": 81,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Planificación",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_082_reglamento_especifico_del_sistema_de_tesoreria_r_a_n_047_201.pdf",
@@ -1259,7 +1502,10 @@
       "20 de diciembre de 2018",
       "30 de julio de 1997"
     ],
-    "numero": 82
+    "numero": 82,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_083_reglamento_especifico_para_cumplimiento_oportuno_de_la_decla.pdf",
@@ -1276,7 +1522,10 @@
       "04 de noviembre de 2021",
       "17 de Noviembre de 2021"
     ],
-    "numero": 83
+    "numero": 83,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_084_reglamento_especifico_del_sistema_de_administracion_de_biene.pdf",
@@ -1305,7 +1554,10 @@
       "05 de agosto de 2026",
       "7 de septiembre de 2021"
     ],
-    "numero": 84
+    "numero": 84,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_085_reglamento_especifico_del_sistema_de_organizacion_administra.pdf",
@@ -1336,7 +1588,10 @@
       "0 de abril de 2026",
       "11 de junio de 2019"
     ],
-    "numero": 85
+    "numero": 85,
+    "direccion": "Dirección General Ejecutiva",
+    "subcategoria": "Planificación",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_086_reglamento_interno_de_cargos_de_cuenta.pdf",
@@ -1356,7 +1611,10 @@
       "27 de septiembre de 2018",
       "22 de octubre de 2018"
     ],
-    "numero": 86
+    "numero": 86,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_087_reglamento_interno_de_pasantia_agbc.pdf",
@@ -1376,7 +1634,10 @@
       "29 de junio de 2018",
       "29 de junio de 2018"
     ],
-    "numero": 87
+    "numero": 87,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Recursos Humanos",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_088_reglamento_interno_para_el_pago_de_refrigerios_r_a_n_23_19.pdf",
@@ -1395,7 +1656,10 @@
       "28 de mayo de 2019",
       "05 de junio de 2019"
     ],
-    "numero": 88
+    "numero": 88,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Recursos Humanos",
+    "tipoDocumental": "Reglamentos"
   },
   {
     "archivo": "doc_089_reglamento_interno_para_la_adquisicion_dotacion_y_uso_de_rop.pdf",
@@ -1417,6 +1681,9 @@
       "10 de mayo de 2009",
       "3 de octubre de 2018"
     ],
-    "numero": 89
+    "numero": 89,
+    "direccion": "Dirección Administrativa Financiera",
+    "subcategoria": "Contabilidad Nacional e Internacional",
+    "tipoDocumental": "Reglamentos"
   }
 ]

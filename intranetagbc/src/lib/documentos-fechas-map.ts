@@ -5,6 +5,9 @@ export interface DocumentoFechaInfo {
   archivo: string
   titulo: string
   categoria: string
+  direccion?: string
+  subcategoria?: string
+  tipoDocumental?: string
   extension: string
   tamano: string
   fechaOficial: string

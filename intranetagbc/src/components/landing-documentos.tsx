@@ -5,7 +5,6 @@ import {
   FileText,
   Download,
   Eye,
-  Filter,
   Search,
   FileIcon,
   FileImage,
@@ -15,12 +14,16 @@ import {
   ChevronLeft,
   ChevronRight,
   FolderOpen,
-  Sparkles,
-  ShieldCheck,
-  CheckCircle2,
   ArrowRight,
   BookOpen,
   PlayCircle,
+  Building2,
+  Briefcase,
+  Package,
+  Handshake,
+  Layers,
+  RotateCcw,
+  Sparkles,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
@@ -28,12 +31,19 @@ import { DocumentContentViewer } from "@/components/modules/document-content-vie
 import { getDocumentUrl } from "@/components/modules/documentos-module"
 import { DocumentosTourTutorial } from "@/components/documentos-tour-tutorial"
 import { registrarAccionDocumentoAction } from "@/actions/auditoria"
+import { obtenerFechaOficialDocumento } from "@/lib/documentos-fechas-map"
+import { ESTRUCTURA_JERARQUICA, TIPOS_DOCUMENTALES, clasificarDocumento } from "@/lib/documentos-jerarquia"
 
 type Doc = {
   id: string
   titulo: string
   categoriaId: string | null
   categoria: string | null
+  direccionId?: string | null
+  direccion?: string | null
+  subcategoriaId?: string | null
+  subcategoria?: string | null
+  tipoDocumental?: string | null
   autor: string | null
   estado: string
   archivo: string | null
@@ -84,37 +94,82 @@ function getDocPriority(titulo?: string | null, categoria?: string | null) {
   }
 }
 
+const ICONOS_DIRECCION: Record<string, any> = {
+  "Dirección General Ejecutiva": Building2,
+  "Dirección Administrativa Financiera": Briefcase,
+  "Dirección de Operaciones": Package,
+  "Dirección Comercial": Handshake,
+}
+
 export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
   const docsPublicados = useMemo(
     () => documentos.filter((d) => d.estado === "publicado"),
     [documentos]
   )
-  const [categoriaActiva, setCategoriaActiva] = useState<string | null>(null)
+
+  const [direccionActiva, setDireccionActiva] = useState<string | null>(null)
+  const [subcategoriaActiva, setSubcategoriaActiva] = useState<string | null>(null)
+  const [tipoDocumentalActivo, setTipoDocumentalActivo] = useState<string | null>(null)
   const [busqueda, setBusqueda] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [viewingDoc, setViewingDoc] = useState<Doc | null>(null)
   const [tourOpen, setTourOpen] = useState(false)
   const pageSize = 12
 
+  // Lista de documentos enriquecida con jerarquía si viniera vacía
+  const docsEnriquecidos = useMemo(() => {
+    return docsPublicados.map((d) => {
+      const j = clasificarDocumento(d.archivo || d.nombreArchivo, d.titulo)
+      return {
+        ...d,
+        direccion: d.direccion || j.direccionNombre,
+        subcategoria: d.subcategoria || j.subcategoriaNombre,
+        tipoDocumental: d.tipoDocumental || j.tipoDocumental,
+      }
+    })
+  }, [docsPublicados])
+
   if (docsPublicados.length === 0) return null
 
-  const categorias = Array.from(
-    new Map(
-      docsPublicados
-        .filter((d) => d.categoria)
-        .map((d) => [d.categoria!, d.categoria!])
-    ).values()
-  ).sort()
+  // Subcategorías disponibles según la Dirección seleccionada
+  const subcategoriasDisponibles = useMemo(() => {
+    if (!direccionActiva) {
+      // Todas las subcategorías de la estructura
+      return ESTRUCTURA_JERARQUICA.flatMap((d) => d.subcategorias.map((s) => ({ ...s, dirNombre: d.nombre })))
+    }
+    const dir = ESTRUCTURA_JERARQUICA.find((d) => d.nombre === direccionActiva)
+    return dir ? dir.subcategorias.map((s) => ({ ...s, dirNombre: dir.nombre })) : []
+  }, [direccionActiva])
 
-  const docsFiltrados = docsPublicados.filter((doc) => {
-    const coincideCategoria = !categoriaActiva || doc.categoria === categoriaActiva
+  // Filtrado de documentos
+  const docsFiltrados = docsEnriquecidos.filter((doc) => {
+    const coincideDireccion = !direccionActiva || doc.direccion === direccionActiva
+    const coincideSubcategoria = !subcategoriaActiva || doc.subcategoria === subcategoriaActiva
+    const coincideTipo = !tipoDocumentalActivo || doc.tipoDocumental === tipoDocumentalActivo
+    
+    const searchLower = busqueda.toLowerCase().trim()
     const coincideBusqueda =
-      !busqueda ||
-      doc.titulo.toLowerCase().includes(busqueda.toLowerCase()) ||
-      doc.descripcion?.toLowerCase().includes(busqueda.toLowerCase()) ||
-      doc.categoria?.toLowerCase().includes(busqueda.toLowerCase())
-    return coincideCategoria && coincideBusqueda
+      !searchLower ||
+      doc.titulo.toLowerCase().includes(searchLower) ||
+      doc.descripcion?.toLowerCase().includes(searchLower) ||
+      doc.direccion?.toLowerCase().includes(searchLower) ||
+      doc.subcategoria?.toLowerCase().includes(searchLower) ||
+      doc.tipoDocumental?.toLowerCase().includes(searchLower) ||
+      doc.categoria?.toLowerCase().includes(searchLower) ||
+      (doc.nombreArchivo && doc.nombreArchivo.toLowerCase().includes(searchLower))
+
+    return coincideDireccion && coincideSubcategoria && coincideTipo && coincideBusqueda
   })
+
+  const hayFiltrosActivos = !!(direccionActiva || subcategoriaActiva || tipoDocumentalActivo || busqueda)
+
+  function limpiarFiltros() {
+    setDireccionActiva(null)
+    setSubcategoriaActiva(null)
+    setTipoDocumentalActivo(null)
+    setBusqueda("")
+    setCurrentPage(1)
+  }
 
   const totalPages = Math.max(1, Math.ceil(docsFiltrados.length / pageSize))
   const paginatedDocs = docsFiltrados.slice(
@@ -223,10 +278,10 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
               Biblioteca Digital
             </div>
             <h2 className="text-3xl font-black tracking-tight sm:text-4xl text-[#002F6C] dark:text-foreground">
-              Documentos Institucionales
+              Catálogo Oficial de Documentos y Normativas
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground font-medium">
-              Normativas, instructivos, manuales y reglamentos oficiales disponibles para consulta y descarga
+              Estructura organizada por Direcciones, Áreas Operativas y Tipos Documentales Oficiales de la AGBC
             </p>
           </div>
 
@@ -266,7 +321,7 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
               {/* Paso 1 */}
               <div
                 onClick={() => {
-                  const docFound = docsPublicados.find(d => /instructivo|induccion|normativa/i.test(d.titulo)) || docsPublicados[0]
+                  const docFound = docsEnriquecidos.find(d => /personal|induccion|normativa/i.test(d.titulo)) || docsEnriquecidos[0]
                   if (docFound) setViewingDoc(docFound)
                 }}
                 className="group p-4 rounded-2xl bg-white border border-slate-200 hover:border-[#0E5296] hover:shadow-md transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
@@ -280,10 +335,10 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                   </span>
                 </div>
                 <h4 className="text-xs font-black text-[#002F6C] group-hover:text-[#0E5296] line-clamp-2">
-                  Instructivo General de Inducción & Normativa Postal
+                  Reglamento Interno de Personal AGBC
                 </h4>
                 <p className="text-[11px] text-slate-500 line-clamp-2 leading-tight font-medium">
-                  Directrices obligatorias de conducta, seguridad y deberes institucionales.
+                  Directrices obligatorias de conducta, régimen laboral, derechos y deberes institucionales.
                 </p>
                 <div className="pt-2 flex items-center text-[10px] font-black text-[#0E5296] group-hover:translate-x-1 transition-transform">
                   <span>Consultar documento</span>
@@ -294,7 +349,7 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
               {/* Paso 2 */}
               <div
                 onClick={() => {
-                  const docFound = docsPublicados.find(d => /seguridad|manual|sistema/i.test(d.titulo)) || docsPublicados[1] || docsPublicados[0]
+                  const docFound = docsEnriquecidos.find(d => /seguridad.*informacion/i.test(d.titulo)) || docsEnriquecidos[1] || docsEnriquecidos[0]
                   if (docFound) setViewingDoc(docFound)
                 }}
                 className="group p-4 rounded-2xl bg-white border border-slate-200 hover:border-[#0E5296] hover:shadow-md transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
@@ -308,10 +363,10 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                   </span>
                 </div>
                 <h4 className="text-xs font-black text-[#002F6C] group-hover:text-[#0E5296] line-clamp-2">
-                  Manual de Seguridad de la Información y Credenciales
+                  Política de Seguridad de la Información
                 </h4>
                 <p className="text-[11px] text-slate-500 line-clamp-2 leading-tight font-medium">
-                  Políticas de confidencialidad, contraseñas y custodia de datos de usuarios.
+                  Políticas de confidencialidad, contraseñas y custodia de datos oficiales de la AGBC.
                 </p>
                 <div className="pt-2 flex items-center text-[10px] font-black text-[#0E5296] group-hover:translate-x-1 transition-transform">
                   <span>Consultar documento</span>
@@ -322,24 +377,24 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
               {/* Paso 3 */}
               <div
                 onClick={() => {
-                  const docFound = docsPublicados.find(d => /correspondencia|reglamento|operativo/i.test(d.titulo)) || docsPublicados[2] || docsPublicados[0]
+                  const docFound = docsEnriquecidos.find(d => /organigrama|manual.*organizacional/i.test(d.titulo)) || docsEnriquecidos[2] || docsEnriquecidos[0]
                   if (docFound) setViewingDoc(docFound)
                 }}
                 className="group p-4 rounded-2xl bg-white border border-slate-200 hover:border-[#0E5296] hover:shadow-md transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
               >
                 <div className="flex items-center justify-between">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-[#FFB800] text-[#002F6C] text-xs font-black shadow-xs">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-[#002F6C] text-[#FFCC00] text-xs font-black shadow-xs">
                     3
                   </span>
                   <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-black text-amber-800 border border-amber-200">
-                    Prioridad Media
+                    Estructura
                   </span>
                 </div>
                 <h4 className="text-xs font-black text-[#002F6C] group-hover:text-[#0E5296] line-clamp-2">
-                  Reglamento Operativo de Correspondencia y Logística
+                  Organigrama y Estructura Institucional
                 </h4>
                 <p className="text-[11px] text-slate-500 line-clamp-2 leading-tight font-medium">
-                  Procedimientos estándar de admisión, clasificación, despacho y entrega postal.
+                  Conoce las dependencias, líneas de mando y funciones operativas institucionales.
                 </p>
                 <div className="pt-2 flex items-center text-[10px] font-black text-[#0E5296] group-hover:translate-x-1 transition-transform">
                   <span>Consultar documento</span>
@@ -350,7 +405,7 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
               {/* Paso 4 */}
               <div
                 onClick={() => {
-                  const docFound = docsPublicados.find(d => /etica|personal|reglamento interno/i.test(d.titulo)) || docsPublicados[3] || docsPublicados[0]
+                  const docFound = docsEnriquecidos.find(d => /etica/i.test(d.titulo)) || docsEnriquecidos[3] || docsEnriquecidos[0]
                   if (docFound) setViewingDoc(docFound)
                 }}
                 className="group p-4 rounded-2xl bg-white border border-slate-200 hover:border-[#0E5296] hover:shadow-md transition-all cursor-pointer space-y-2.5 relative overflow-hidden"
@@ -360,14 +415,14 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                     4
                   </span>
                   <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-black text-emerald-700 border border-emerald-200">
-                    Consulta General
+                    Ética
                   </span>
                 </div>
                 <h4 className="text-xs font-black text-[#002F6C] group-hover:text-[#0E5296] line-clamp-2">
-                  Código de Ética y Reglamento Interno de Personal
+                  Código de Ética y Transparencia Institucional
                 </h4>
                 <p className="text-[11px] text-slate-500 line-clamp-2 leading-tight font-medium">
-                  Principios éticos, deberes, derechos y convivencia institucional de la AGBC.
+                  Principios éticos, deberes, derechos y transparencia activa en la AGBC.
                 </p>
                 <div className="pt-2 flex items-center text-[10px] font-black text-[#0E5296] group-hover:translate-x-1 transition-transform">
                   <span>Consultar documento</span>
@@ -377,74 +432,259 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
             </div>
           </div>
 
-          {/* Barra de filtros y categorías */}
-          <div className="space-y-4">
+          {/* ══════════════════════════════════════════════════════════════ */}
+          {/* NAVEGACIÓN Y FILTROS JERÁRQUICOS EN 3 NIVELES                 */}
+          {/* ══════════════════════════════════════════════════════════════ */}
+          <div className="rounded-3xl border-2 border-[#002F6C]/15 bg-white p-5 sm:p-6 shadow-sm space-y-5">
+            {/* Barra superior con Buscador y Contador */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div className="relative w-full sm:w-80">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <div className="relative w-full sm:w-96">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Buscar documento..."
+                  placeholder="Buscar por título, área, normativa o palabra clave..."
                   value={busqueda}
                   onChange={(e) => {
                     setBusqueda(e.target.value)
                     setCurrentPage(1)
                   }}
-                  className="w-full pl-9 pr-4 py-2.5 bg-card border border-border/60 rounded-2xl text-xs font-medium text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-[#0E5296] focus:ring-2 focus:ring-[#0E5296]/10 shadow-xs transition-all"
+                  className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-medium text-slate-800 placeholder:text-slate-400 outline-none focus:border-[#0E5296] focus:bg-white focus:ring-2 focus:ring-[#0E5296]/10 shadow-xs transition-all"
                 />
               </div>
 
-              <span className="text-xs font-bold text-[#0E5296] dark:text-[#FFCC00] bg-[#0E5296]/10 px-3.5 py-1.5 rounded-full border border-[#0E5296]/20 shadow-xs">
-                {docsFiltrados.length} Documentos publicados
-              </span>
+              <div className="flex items-center gap-2 self-end sm:self-auto">
+                {hayFiltrosActivos && (
+                  <button
+                    type="button"
+                    onClick={limpiarFiltros}
+                    className="flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100 transition-colors cursor-pointer shadow-2xs"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    Limpiar filtros
+                  </button>
+                )}
+                <span className="text-xs font-black text-[#002F6C] bg-gradient-to-r from-amber-50 to-blue-50 px-3.5 py-1.5 rounded-xl border border-[#002F6C]/15 shadow-2xs">
+                  {docsFiltrados.length} documentos encontrados
+                </span>
+              </div>
             </div>
 
-            {/* Categorías */}
-            {categorias.length > 0 && (
-              <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+            {/* NIVEL 1: DIRECCIONES INSTITUCIONALES */}
+            <div className="space-y-2 pt-1 border-t border-slate-100">
+              <div className="flex items-center gap-2 text-xs font-black text-[#002F6C] uppercase tracking-wider">
+                <Building2 className="h-4 w-4 text-[#0E5296]" />
+                <span>Nivel 1 • Direcciones Institucionales</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                 <button
                   type="button"
                   onClick={() => {
-                    setCategoriaActiva(null)
+                    setDireccionActiva(null)
+                    setSubcategoriaActiva(null)
                     setCurrentPage(1)
                   }}
-                  className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all duration-200 cursor-pointer ${
-                    !categoriaActiva
-                      ? "bg-[#0E5296] text-white shadow-md shadow-[#0E5296]/20"
-                      : "bg-card text-muted-foreground hover:bg-[#FFCC00]/20 hover:text-[#002F6C] border border-border/60"
+                  className={`flex items-center justify-between gap-2 p-2.5 rounded-2xl text-xs font-black border transition-all cursor-pointer ${
+                    !direccionActiva
+                      ? "bg-[#0E5296] text-[#FFCC00] border-[#0E5296] shadow-md shadow-[#0E5296]/20"
+                      : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-blue-50/50 hover:text-[#002F6C]"
                   }`}
                 >
-                  Todos ({docsPublicados.length})
+                  <div className="flex items-center gap-2 truncate">
+                    <Layers className="h-4 w-4 shrink-0" />
+                    <span className="truncate">Todas</span>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    !direccionActiva ? "bg-white/20 text-white" : "bg-slate-200 text-slate-600"
+                  }`}>
+                    {docsEnriquecidos.length}
+                  </span>
                 </button>
-                {categorias.map((cat) => {
-                  const count = docsPublicados.filter((d) => d.categoria === cat).length
+
+                {ESTRUCTURA_JERARQUICA.map((dir) => {
+                  const Icon = ICONOS_DIRECCION[dir.nombre] || Building2
+                  const count = docsEnriquecidos.filter((d) => d.direccion === dir.nombre).length
+                  const isSelected = direccionActiva === dir.nombre
+
                   return (
                     <button
-                      key={cat}
+                      key={dir.codigo}
                       type="button"
                       onClick={() => {
-                        setCategoriaActiva(categoriaActiva === cat ? null : cat)
+                        setDireccionActiva(isSelected ? null : dir.nombre)
+                        setSubcategoriaActiva(null)
                         setCurrentPage(1)
                       }}
-                      className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all duration-200 cursor-pointer ${
-                        categoriaActiva === cat
-                          ? "bg-[#0E5296] text-white shadow-md shadow-[#0E5296]/20"
-                          : "bg-card text-muted-foreground hover:bg-[#FFCC00]/20 hover:text-[#002F6C] border border-border/60"
+                      className={`flex items-center justify-between gap-2 p-2.5 rounded-2xl text-xs font-black border transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-[#0E5296] text-[#FFCC00] border-[#0E5296] shadow-md shadow-[#0E5296]/20"
+                          : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-blue-50/50 hover:text-[#002F6C]"
                       }`}
+                      title={dir.descripcion}
                     >
-                      {cat} ({count})
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Icon className="h-4 w-4 shrink-0" />
+                        <span className="truncate">{dir.codigo} - {dir.nombre.replace("Dirección ", "")}</span>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                        isSelected ? "bg-white/20 text-white" : "bg-slate-200 text-slate-600"
+                      }`}>
+                        {count}
+                      </span>
                     </button>
                   )
                 })}
               </div>
-            )}
+            </div>
+
+            {/* NIVEL 2: SUBCATEGORÍAS / ÁREAS OPERATIVAS */}
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-between text-xs font-black text-[#002F6C] uppercase tracking-wider">
+                <div className="flex items-center gap-2">
+                  <Briefcase className="h-4 w-4 text-[#0E5296]" />
+                  <span>Nivel 2 • Subcategorías {direccionActiva ? `(${direccionActiva})` : "por Dirección"}</span>
+                </div>
+                {subcategoriaActiva && (
+                  <button
+                    type="button"
+                    onClick={() => { setSubcategoriaActiva(null); setCurrentPage(1); }}
+                    className="text-[11px] text-slate-400 hover:text-[#0E5296] cursor-pointer font-bold lowercase"
+                  >
+                    (quitar filtro de subcategoría)
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubcategoriaActiva(null)
+                    setCurrentPage(1)
+                  }}
+                  className={`rounded-full px-3 py-1 text-xs font-bold border transition-all cursor-pointer ${
+                    !subcategoriaActiva
+                      ? "bg-[#002F6C] text-white border-[#002F6C] shadow-xs"
+                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
+                  }`}
+                >
+                  Todas las Áreas
+                </button>
+
+                {subcategoriasDisponibles.map((sub) => {
+                  const isSelected = subcategoriaActiva === sub.nombre
+                  const count = docsEnriquecidos.filter((d) => 
+                    (!direccionActiva || d.direccion === direccionActiva) && d.subcategoria === sub.nombre
+                  ).length
+
+                  return (
+                    <button
+                      key={sub.codigo}
+                      type="button"
+                      onClick={() => {
+                        setSubcategoriaActiva(isSelected ? null : sub.nombre)
+                        setCurrentPage(1)
+                      }}
+                      className={`rounded-full px-3 py-1 text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+                        isSelected
+                          ? "bg-[#002F6C] text-white border-[#002F6C] shadow-xs"
+                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300"
+                      }`}
+                      title={sub.descripcion}
+                    >
+                      <span>{sub.nombre}</span>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                        isSelected ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
+                      }`}>
+                        {count}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* NIVEL 3: TIPOS DOCUMENTALES */}
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-between text-xs font-black text-[#002F6C] uppercase tracking-wider">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-[#0E5296]" />
+                  <span>Nivel 3 • Tipo Documental</span>
+                </div>
+                {tipoDocumentalActivo && (
+                  <button
+                    type="button"
+                    onClick={() => { setTipoDocumentalActivo(null); setCurrentPage(1); }}
+                    className="text-[11px] text-slate-400 hover:text-[#0E5296] cursor-pointer font-bold lowercase"
+                  >
+                    (quitar filtro de tipo)
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTipoDocumentalActivo(null)
+                    setCurrentPage(1)
+                  }}
+                  className={`rounded-full px-3 py-1 text-xs font-bold border transition-all cursor-pointer ${
+                    !tipoDocumentalActivo
+                      ? "bg-[#FFCC00] text-[#002F6C] border-[#FFCC00] shadow-xs font-black"
+                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
+                  }`}
+                >
+                  Todos los Tipos
+                </button>
+
+                {TIPOS_DOCUMENTALES.map((tipo) => {
+                  const isSelected = tipoDocumentalActivo === tipo
+                  const count = docsEnriquecidos.filter((d) => {
+                    const matchDir = !direccionActiva || d.direccion === direccionActiva
+                    const matchSub = !subcategoriaActiva || d.subcategoria === subcategoriaActiva
+                    return matchDir && matchSub && d.tipoDocumental === tipo
+                  }).length
+
+                  return (
+                    <button
+                      key={tipo}
+                      type="button"
+                      onClick={() => {
+                        setTipoDocumentalActivo(isSelected ? null : tipo)
+                        setCurrentPage(1)
+                      }}
+                      className={`rounded-full px-3 py-1 text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+                        isSelected
+                          ? "bg-[#FFCC00] text-[#002F6C] border-[#FFCC00] shadow-xs font-black"
+                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
+                      }`}
+                    >
+                      <span>{tipo}</span>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                        isSelected ? "bg-[#002F6C]/20 text-[#002F6C]" : "bg-slate-100 text-slate-500"
+                      }`}>
+                        {count}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           </div>
 
-          {/* Grid 3 Filas x 4 Columnas con Badge de Prioridad en cada Card */}
+          {/* Grid de Documentos */}
           {paginatedDocs.length === 0 ? (
-            <div className="py-16 text-center text-muted-foreground font-medium bg-card rounded-3xl border border-border/60">
-              <FolderOpen className="h-10 w-10 mx-auto mb-2 text-muted-foreground/40" />
-              No se encontraron documentos que coincidan con la búsqueda.
+            <div className="py-16 text-center text-slate-500 font-medium bg-card rounded-3xl border border-border/60">
+              <FolderOpen className="h-10 w-10 mx-auto mb-2 text-slate-300" />
+              <p className="font-bold text-slate-700">No se encontraron documentos para esta combinación de filtros.</p>
+              <button
+                type="button"
+                onClick={limpiarFiltros}
+                className="mt-3 inline-flex items-center gap-1.5 text-xs text-[#0E5296] font-bold hover:underline cursor-pointer"
+              >
+                <RotateCcw className="h-3 w-3" />
+                Restablecer todos los filtros
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -452,9 +692,9 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                 const color = getFileColor(doc.tipoArchivo)
                 const IconComponent = getFileIcon(doc.tipoArchivo)
                 const tamano = formatTamano(doc.tamano)
-                const fecha = formatFecha(doc.createdAt)
-                const catPalette = getCategoryPalette(doc.categoria)
-                const priority = getDocPriority(doc.titulo, doc.categoria)
+                const catPalette = getCategoryPalette(doc.tipoDocumental || doc.categoria)
+                const priority = getDocPriority(doc.titulo, doc.tipoDocumental || doc.categoria)
+                const fechaOficial = obtenerFechaOficialDocumento(doc.nombreArchivo || doc.archivo, doc.titulo)
 
                 return (
                   <div
@@ -483,17 +723,15 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
 
                       {/* Info del Documento */}
                       <div className="px-4 pb-2 space-y-2 text-center">
-                        {/* Fecha y tamaño */}
-                        <div className="flex items-center justify-center gap-2.5 text-[11px] text-muted-foreground font-medium">
-                          {fecha && (
-                            <span className="inline-flex items-center gap-1">
-                              <CalendarDays className="h-3 w-3 text-[#0E5296] dark:text-[#FFCC00]" />
-                              {fecha}
-                            </span>
-                          )}
+                        {/* Fecha Oficial y tamaño */}
+                        <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground font-medium flex-wrap">
+                          <span className="inline-flex items-center gap-1 text-[#002F6C] dark:text-[#FFCC00] font-bold bg-blue-50/80 px-2 py-0.5 rounded-md border border-blue-100">
+                            <CalendarDays className="h-3 w-3 text-[#0E5296]" />
+                            {fechaOficial}
+                          </span>
                           {tamano && (
-                            <span className="inline-flex items-center gap-1">
-                              <HardDrive className="h-3 w-3 text-muted-foreground" />
+                            <span className="inline-flex items-center gap-1 text-slate-500">
+                              <HardDrive className="h-3 w-3" />
                               {tamano}
                             </span>
                           )}
@@ -504,37 +742,47 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                           {doc.titulo}
                         </h3>
 
-                        {/* Categoría */}
-                        {doc.categoria && (
-                          <div className="pt-1">
-                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold ${catPalette.pill}`}>
-                              {doc.categoria}
+                        {/* Jerarquía en Badges: Dirección / Sub-área / Tipo */}
+                        <div className="pt-1 flex flex-wrap items-center justify-center gap-1">
+                          {doc.direccion && (
+                            <span className="inline-flex items-center rounded-md bg-[#002F6C]/10 text-[#002F6C] px-2 py-0.5 text-[9.5px] font-black">
+                              {doc.direccion.replace("Dirección ", "")}
                             </span>
-                          </div>
-                        )}
+                          )}
+                          {doc.subcategoria && (
+                            <span className="inline-flex items-center rounded-md bg-slate-100 text-slate-700 px-2 py-0.5 text-[9.5px] font-bold border border-slate-200">
+                              {doc.subcategoria}
+                            </span>
+                          )}
+                          <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[9.5px] font-black ${catPalette.pill}`}>
+                            {doc.tipoDocumental || doc.categoria || "Normativa"}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
                     {/* Footer con el Ojito */}
-                    <div className="p-4 pt-2 flex items-center justify-between border-t border-border/40">
-                      <span className="text-[10px] font-bold text-muted-foreground/80 uppercase tracking-wider">
-                        Documento
+                    <div className="p-4 pt-2 flex items-center justify-between border-t border-border/40 bg-slate-50/50">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        Documento Oficial
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setViewingDoc(doc)
-                          registrarAccionDocumentoAction({
-                            documentoId: doc.id,
-                            titulo: doc.titulo,
-                            accion: "Visualizó documento",
-                          })
-                        }}
-                        className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-[#0E5296] dark:text-[#FFCC00] hover:bg-[#0E5296] hover:text-white dark:hover:bg-[#FFCC00] dark:hover:text-[#002F6C] transition-all cursor-pointer shadow-xs border border-blue-200 dark:border-blue-900"
-                        title="Ver documento"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setViewingDoc(doc)
+                            registrarAccionDocumentoAction({
+                              documentoId: doc.id,
+                              titulo: doc.titulo,
+                              accion: "Visualizó documento",
+                            })
+                          }}
+                          className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-[#0E5296] dark:text-[#FFCC00] hover:bg-[#0E5296] hover:text-white dark:hover:bg-[#FFCC00] dark:hover:text-[#002F6C] transition-all cursor-pointer shadow-xs border border-blue-200 dark:border-blue-900"
+                          title="Ver documento"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )
@@ -591,7 +839,7 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
               </div>
 
               <p className="text-[11px] text-muted-foreground font-medium">
-                Página {currentPage} de {totalPages} ({docsFiltrados.length} documentos en total)
+                Página {currentPage} de {totalPages} ({docsFiltrados.length} documentos encontrados)
               </p>
             </div>
           )}
@@ -614,6 +862,7 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
               const isImage = ["jpg", "jpeg", "png", "webp", "gif"].some(ext => t.includes(ext) || fileUrl.endsWith("." + ext) || fileName.endsWith("." + ext))
               const isExcel = t.includes("xls") || t.includes("sheet") || t.includes("csv") || fileUrl.endsWith(".xlsx") || fileUrl.endsWith(".xls") || fileUrl.endsWith(".csv") || fileName.endsWith(".xlsx") || fileName.endsWith(".xls") || fileName.endsWith(".csv")
               const isWord = t.includes("doc") || t.includes("word") || fileUrl.endsWith(".docx") || fileUrl.endsWith(".doc") || fileName.endsWith(".docx") || fileName.endsWith(".doc")
+              const fechaOficial = obtenerFechaOficialDocumento(viewingDoc.nombreArchivo || viewingDoc.archivo, viewingDoc.titulo)
 
               return (
                 <>
@@ -629,18 +878,24 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                       <h3 className="line-clamp-1 text-sm font-black text-[#002F6C] dark:text-white tracking-tight md:text-base">
                         {viewingDoc.titulo}
                       </h3>
-                      <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground font-medium">
-                        {viewingDoc.createdAt && (
-                          <span className="flex items-center gap-1">
-                            <CalendarDays className="h-3 w-3 text-[#0E5296] dark:text-[#FFCC00]" />
-                            {formatFecha(viewingDoc.createdAt)}
+                      <div className="mt-0.5 flex items-center gap-2.5 text-xs text-muted-foreground font-medium flex-wrap">
+                        <span className="flex items-center gap-1 font-bold text-[#002F6C] dark:text-[#FFCC00]">
+                          <CalendarDays className="h-3 w-3 text-[#0E5296]" />
+                          {fechaOficial}
+                        </span>
+                        {viewingDoc.direccion && (
+                          <span className="rounded-md bg-[#002F6C]/10 text-[#002F6C] px-2 py-0.5 text-[10px] font-black">
+                            {viewingDoc.direccion}
                           </span>
                         )}
-                        {viewingDoc.categoria && (
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${getCategoryPalette(viewingDoc.categoria).pill}`}>
-                            {viewingDoc.categoria}
+                        {viewingDoc.subcategoria && (
+                          <span className="rounded-md bg-slate-100 text-slate-700 px-2 py-0.5 text-[10px] font-bold">
+                            {viewingDoc.subcategoria}
                           </span>
                         )}
+                        <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${getCategoryPalette(viewingDoc.tipoDocumental || viewingDoc.categoria).pill}`}>
+                          {viewingDoc.tipoDocumental || viewingDoc.categoria}
+                        </span>
                       </div>
                     </div>
                     <div className="ml-3 flex shrink-0 items-center gap-2">
@@ -724,7 +979,7 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
         open={tourOpen}
         onClose={() => setTourOpen(false)}
         onSelectDoc={(query: string) => {
-          const doc = docsPublicados.find(d => d.titulo.toLowerCase().includes(query.toLowerCase()) || (d.categoria && d.categoria.toLowerCase().includes(query.toLowerCase()))) || docsPublicados[0]
+          const doc = docsEnriquecidos.find(d => d.titulo.toLowerCase().includes(query.toLowerCase()) || (d.categoria && d.categoria.toLowerCase().includes(query.toLowerCase()))) || docsEnriquecidos[0]
           if (doc) setViewingDoc(doc)
         }}
       />
