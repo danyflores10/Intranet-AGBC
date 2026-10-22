@@ -51,9 +51,10 @@ import {
 import { registrarAccionDocumentoAction } from "@/actions/auditoria"
 import { PERMISOS } from "@/lib/auth/permisos"
 import { crearContextoAcceso, puedeAcceder, type UsuarioRbac } from "@/lib/rbac"
-import Image from "next/image"
 import { DocumentContentViewer } from "@/components/modules/document-content-viewer"
 import { DocumentosBulkDialog } from "@/components/modules/documentos-bulk-dialog"
+import * as XLSX from "xlsx"
+import { LISTA_DOCUMENTOS_OFICIALES, obtenerFechaOficialDocumento } from "@/lib/documentos-fechas-map"
 
 export function getDocumentUrl(archivo: string | null): string {
   if (!archivo) return ""
@@ -436,6 +437,108 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   const currentList = tab === "todos" ? filteredDocs : tab === "archivos" ? filteredArchivos : filteredCategorias
   const totalPages = Math.max(1, Math.ceil(currentList.length / pageSize))
   const paginatedList = currentList.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  function handleExportarExcelDocumentos() {
+    try {
+      const wb = XLSX.utils.book_new()
+      const fechaHoy = new Date().toISOString().slice(0, 10)
+
+      if (tab === "categorias") {
+        const rowsCat = [
+          ["AGENCIA BOLIVIANA DE CORREOS - CORREOS DE BOLIVIA (AGBC)"],
+          ["REPORTE OFICIAL DE CATEGORÍAS DOCUMENTALES"],
+          ["Fecha de emisión:", new Date().toLocaleDateString("es-BO", { day: "2-digit", month: "long", year: "numeric" })],
+          ["Total Categorías:", categorias.length],
+          [],
+          ["Nº", "NOMBRE DE CATEGORÍA", "DESCRIPCIÓN", "FECHA DE CREACIÓN"]
+        ]
+        categorias.forEach((c, idx) => {
+          rowsCat.push([
+            idx + 1,
+            c.nombre,
+            c.descripcion || "—",
+            c.createdAt ? new Date(c.createdAt).toLocaleDateString("es-BO") : "—"
+          ])
+        })
+        const ws = XLSX.utils.aoa_to_sheet(rowsCat)
+        ws["!cols"] = [{ wch: 6 }, { wch: 35 }, { wch: 55 }, { wch: 20 }]
+        XLSX.utils.book_append_sheet(wb, ws, "Categorías AGBC")
+        XLSX.writeFile(wb, `Categorias_Documentales_AGBC_${fechaHoy}.xlsx`)
+        toast.success("Excel de categorías exportado con éxito")
+        return
+      }
+
+      // Catálogo Oficial completo de los 89 documentos con sus fechas
+      const rows = [
+        ["AGENCIA BOLIVIANA DE CORREOS - CORREOS DE BOLIVIA (AGBC)"],
+        ["CATÁLOGO GENERAL DE DOCUMENTOS, NORMATIVAS Y REGLAMENTOS OFICIALES"],
+        ["Fecha de generación del reporte:", new Date().toLocaleDateString("es-BO", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })],
+        ["Total Documentos Registrados:", LISTA_DOCUMENTOS_OFICIALES.length],
+        [],
+        [
+          "Nº",
+          "TÍTULO DEL DOCUMENTO",
+          "CATEGORÍA",
+          "FECHA DE EMISIÓN / OFICIAL",
+          "TIPO DE FECHA",
+          "RESOLUCIÓN ADMINISTRATIVA",
+          "FORMATO",
+          "TAMAÑO",
+          "NOMBRE DEL ARCHIVO",
+          "ESTADO",
+          "ENLACE"
+        ]
+      ]
+
+      LISTA_DOCUMENTOS_OFICIALES.forEach((d) => {
+        const tipoFechaLabel =
+          d.tipoFecha === "fecha_completa"
+            ? "Fecha Completa (Día, Mes y Año)"
+            : d.tipoFecha === "anio"
+            ? "Año de Emisión"
+            : d.tipoFecha === "catalogo_operativo"
+            ? "Catálogo Técnico Operativo"
+            : d.tipoFecha === "guia_tutorial"
+            ? "Guía Técnica / Tutorial"
+            : "Formato / Plantilla (Sin fecha fija)"
+
+        rows.push([
+          d.numero,
+          d.titulo,
+          d.categoria,
+          d.fechaOficial,
+          tipoFechaLabel,
+          d.resolucion || "—",
+          d.extension,
+          d.tamano,
+          d.archivo,
+          "Vigente / Publicado",
+          `/documentos/${d.archivo}`
+        ])
+      })
+
+      const ws = XLSX.utils.aoa_to_sheet(rows)
+      ws["!cols"] = [
+        { wch: 6 },   // Nº
+        { wch: 55 },  // Título
+        { wch: 18 },  // Categoría
+        { wch: 30 },  // Fecha Oficial
+        { wch: 32 },  // Tipo de Fecha
+        { wch: 28 },  // Resolución
+        { wch: 10 },  // Formato
+        { wch: 12 },  // Tamaño
+        { wch: 45 },  // Nombre Archivo
+        { wch: 20 },  // Estado
+        { wch: 45 },  // Enlace
+      ]
+
+      XLSX.utils.book_append_sheet(wb, ws, "Documentos y Normativas AGBC")
+      XLSX.writeFile(wb, `Reporte_89_Documentos_AGBC_Fechas_${fechaHoy}.xlsx`)
+      toast.success("Excel con los 89 documentos y sus fechas exportado exitosamente")
+    } catch (error) {
+      console.error("Error al exportar a Excel:", error)
+      toast.error("Ocurrió un error al generar el archivo Excel")
+    }
+  }
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-blue-50/25 to-amber-50/20 min-h-screen">
@@ -558,10 +661,10 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         </div>
       </div>
 
-      {/* ── Buscador ── */}
+      {/* ── Buscador y Exportación ── */}
       <div className="rounded-2xl border-2 border-[#002F6C]/15 bg-gradient-to-r from-white via-blue-50/20 to-amber-50/20 p-4 shadow-xs">
-        <div className="flex items-center justify-between gap-3">
-          <div className="relative w-full md:w-80">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="relative w-full sm:w-80">
             <Input
               type="text"
               placeholder={`Buscar en ${tab}...`}
@@ -573,9 +676,20 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
               className="bg-white/90 border-[#002F6C]/20 text-xs font-medium focus:border-[#0E5296]"
             />
           </div>
-          <span className="text-xs font-bold text-[#0E5296] bg-white/80 border border-[#0E5296]/20 px-3 py-1.5 rounded-xl shadow-2xs">
-            {currentList.length} encontrados
-          </span>
+          <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
+            <Button
+              type="button"
+              onClick={handleExportarExcelDocumentos}
+              className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs gap-1.5 h-9 cursor-pointer shadow-xs flex items-center px-3.5 transition-all"
+              title="Exportar listado oficial de documentos y normativas a Excel con sus fechas de emisión"
+            >
+              <FileSpreadsheetIcon className="h-4 w-4 text-[#FFCC00]" />
+              <span>Exportar a Excel ({tab === "categorias" ? categorias.length : LISTA_DOCUMENTOS_OFICIALES.length})</span>
+            </Button>
+            <span className="text-xs font-bold text-[#0E5296] bg-white/80 border border-[#0E5296]/20 px-3 py-1.5 rounded-xl shadow-2xs">
+              {currentList.length} encontrados
+            </span>
+          </div>
         </div>
       </div>
 
@@ -716,8 +830,23 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                           {isCat ? "Activo" : item.estado === "publicado" ? "Vigente" : "Borrador"}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-slate-500">
-                        {item.createdAt ? new Date(item.createdAt).toLocaleDateString("es-BO") : "—"}
+                      <td className="py-3 px-4">
+                        {isCat ? (
+                          <span className="text-slate-500 text-xs">
+                            {item.createdAt ? new Date(item.createdAt).toLocaleDateString("es-BO") : "—"}
+                          </span>
+                        ) : (
+                          <div className="flex flex-col">
+                            <span className="font-bold text-xs text-[#002F6C]">
+                              {obtenerFechaOficialDocumento(item.nombreArchivo || item.archivo, item.titulo)}
+                            </span>
+                            {item.createdAt && (
+                              <span className="text-[10px] text-slate-400">
+                                Registro: {new Date(item.createdAt).toLocaleDateString("es-BO")}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
@@ -1068,7 +1197,15 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-bold truncate">{previewDoc.titulo}</p>
-                        <p className="text-[11px] text-muted-foreground">{previewDoc.nombreArchivo} — {previewDoc.tamano}</p>
+                        <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
+                          <span>{previewDoc.nombreArchivo}</span>
+                          <span>•</span>
+                          <span>{previewDoc.tamano}</span>
+                          <span>•</span>
+                          <span className="font-bold text-[#002F6C] bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">
+                            Fecha Oficial: {obtenerFechaOficialDocumento(previewDoc.nombreArchivo || previewDoc.archivo, previewDoc.titulo)}
+                          </span>
+                        </p>
                       </div>
                     </div>
                     <a

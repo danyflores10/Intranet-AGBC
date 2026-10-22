@@ -126,13 +126,13 @@ export function UserNavDropdown({ usuario: propUser, esAdmin: propEsAdmin, class
   const cleanImg = cleanImageUrl(image)
 
   const toggleDropdown = () => {
-    setIsOpen((prev) => {
-      const next = !prev
-      if (next) {
+    const next = !isOpen
+    setIsOpen(next)
+    if (next) {
+      setTimeout(() => {
         registrarVisitaSeccionAction({ seccion: "Mi Perfil Institucional" }).catch(() => {})
-      }
-      return next
-    })
+      }, 0)
+    }
   }
 
   useEffect(() => {
@@ -151,7 +151,9 @@ export function UserNavDropdown({ usuario: propUser, esAdmin: propEsAdmin, class
     const handleOpenPerfil = () => {
       setIsOpen(false)
       setIsPerfilModalOpen(true)
-      registrarVisitaSeccionAction({ seccion: "Mi Perfil Institucional" }).catch(() => {})
+      setTimeout(() => {
+        registrarVisitaSeccionAction({ seccion: "Mi Perfil Institucional" }).catch(() => {})
+      }, 0)
     }
 
     const handleClosePerfil = () => {

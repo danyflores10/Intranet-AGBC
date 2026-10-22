@@ -1,0 +1,1422 @@
+[
+  {
+    "archivo": "doc_001_catalogo_de_articulos_peligrosos_y_prohibidos.pdf",
+    "titulo": "Catalogo De Articulos Peligrosos Y Prohibidos",
+    "categoria": "Normativas",
+    "extension": "PDF",
+    "tamano": "134.3 KB",
+    "fechaOficial": "Sin fecha (Catálogo Operativo)",
+    "tipoFecha": "catalogo_operativo",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 1
+  },
+  {
+    "archivo": "doc_002_ficha_tecnica_de_unidad_yo_area.xlsx",
+    "titulo": "Ficha Tecnica De Unidad Yo Area",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "33.1 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 2
+  },
+  {
+    "archivo": "doc_003_formulario_de_solicitud_de_mantenimiento_y_reparacion_vehicu.xlsx",
+    "titulo": "Formulario De Solicitud De Mantenimiento Y Reparacion Vehicu",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "44.7 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 3
+  },
+  {
+    "archivo": "doc_004_ficha_tecnica_vehicular.xlsx",
+    "titulo": "Ficha Tecnica Vehicular",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "28.5 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 4
+  },
+  {
+    "archivo": "doc_005_reporte_individual_de_recaudacion_diaria.xlsx",
+    "titulo": "Reporte Individual De Recaudacion Diaria",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "49.9 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 5
+  },
+  {
+    "archivo": "doc_006_formulario_para_la_ejecucion_de_recursos_del_fondo_rotativo.xlsx",
+    "titulo": "Formulario Para La Ejecucion De Recursos Del Fondo Rotativo",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "31.0 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 6
+  },
+  {
+    "archivo": "doc_007_reporte_consolidado_de_recaudacion_diaria_regional.xlsx",
+    "titulo": "Reporte Consolidado De Recaudacion Diaria Regional",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "28.8 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 7
+  },
+  {
+    "archivo": "doc_008_formulario_de_rendicion_de_cuentas_fondo_rotativo.xlsx",
+    "titulo": "Formulario De Rendicion De Cuentas Fondo Rotativo",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "44.6 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 8
+  },
+  {
+    "archivo": "doc_009_t_y_c_de_alquiler_de_casillas_ficha_de_asignacion.doc",
+    "titulo": "T Y C De Alquiler De Casillas Ficha De Asignacion",
+    "categoria": "Formularios",
+    "extension": "DOC",
+    "tamano": "158.5 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 9
+  },
+  {
+    "archivo": "doc_010_notificacion_de_evento_en_casilla_postal.xlsx",
+    "titulo": "Notificacion De Evento En Casilla Postal",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "24.3 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 10
+  },
+  {
+    "archivo": "doc_011_gestion_de_cambio_de_chapas.xlsx",
+    "titulo": "Gestion De Cambio De Chapas",
+    "categoria": "Normativas",
+    "extension": "XLSX",
+    "tamano": "30.2 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 11
+  },
+  {
+    "archivo": "doc_012_kardex_llaves_blancas.xlsx",
+    "titulo": "Kardex Llaves Blancas",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "27.5 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 12
+  },
+  {
+    "archivo": "doc_013_ficha_de_solicitud_de_servicio_adicional_en_casillas.xlsx",
+    "titulo": "Ficha De Solicitud De Servicio Adicional En Casillas",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "23.5 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 13
+  },
+  {
+    "archivo": "doc_014_acta_de_informacion_en_caso_de_incautacion_de_envio_postal.xlsx",
+    "titulo": "Acta De Informacion En Caso De Incautacion De Envio Postal",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "34.4 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 14
+  },
+  {
+    "archivo": "doc_015_formulario_de_quejas.xlsx",
+    "titulo": "Formulario De Quejas",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "31.5 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 15
+  },
+  {
+    "archivo": "doc_016_formulario_de_reclamacion_directa.xlsx",
+    "titulo": "Formulario De Reclamacion Directa",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "32.6 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 16
+  },
+  {
+    "archivo": "doc_017_formulario_de_solicitud_de_reclamacion_postal_internacional.xlsx",
+    "titulo": "Formulario De Solicitud De Reclamacion Postal Internacional",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "32.7 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 17
+  },
+  {
+    "archivo": "doc_018_formulario_para_la_revision_de_documentos_normativos.xlsx",
+    "titulo": "Formulario Para La Revision De Documentos Normativos",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "36.4 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 18
+  },
+  {
+    "archivo": "doc_019_matriz_de_diagnostico_organizacional_retrospectivo.xlsx",
+    "titulo": "Matriz De Diagnostico Organizacional Retrospectivo",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "34.8 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 19
+  },
+  {
+    "archivo": "doc_020_matriz_de_diagnostico_organizacional_prospectivo.xlsx",
+    "titulo": "Matriz De Diagnostico Organizacional Prospectivo",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "29.6 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 20
+  },
+  {
+    "archivo": "doc_021_acta_de_reuniones.docx",
+    "titulo": "Acta De Reuniones",
+    "categoria": "Formularios",
+    "extension": "DOCX",
+    "tamano": "74.9 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 21
+  },
+  {
+    "archivo": "doc_022_formulario_solicitud_de_vehiculo.xlsx",
+    "titulo": "Formulario Solicitud De Vehiculo",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "97.3 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 22
+  },
+  {
+    "archivo": "doc_023_recibo_de_retencion_tributaria.xlsx",
+    "titulo": "Recibo De Retencion Tributaria",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "25.5 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 23
+  },
+  {
+    "archivo": "doc_024_formulario_de_denuncia_por_negativa_injustificada_de_acceso_.xlsx",
+    "titulo": "Formulario De Denuncia Por Negativa Injustificada De Acceso ",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "33.2 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 24
+  },
+  {
+    "archivo": "doc_025_formulario_de_denuncia_por_presuntos_actos_de_corrupcion.xlsx",
+    "titulo": "Formulario De Denuncia Por Presuntos Actos De Corrupcion",
+    "categoria": "Formularios",
+    "extension": "XLSX",
+    "tamano": "33.1 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 25
+  },
+  {
+    "archivo": "doc_026_reglamento_interno_de_personal.pdf",
+    "titulo": "Reglamento Interno De Personal",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "10791.8 KB",
+    "fechaOficial": "16 de septiembre de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "16 de septiembre de 2019",
+      "8 de agosto de 2011",
+      "28 de febrero de 2018",
+      "16 de agosto de 2019",
+      "06 de septiembre de 2019"
+    ],
+    "numero": 26
+  },
+  {
+    "archivo": "doc_027_reglamento_especifico_del_sistema_de_administracion_de_perso.pdf",
+    "titulo": "Reglamento Especifico Del Sistema De Administracion De Perso",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "15832.8 KB",
+    "fechaOficial": "13 de enero de 2020",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "13 de enero de 2020",
+      "20 de julio de 1990",
+      "20 de diciembre de 2019",
+      "16 de marzo de 2001",
+      "20 de julio de 1990",
+      "16 de marzo de 2001"
+    ],
+    "numero": 27
+  },
+  {
+    "archivo": "doc_028_procedimiento_para_el_control_de_vehiculos.pdf",
+    "titulo": "Procedimiento Para El Control De Vehiculos",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "5717.8 KB",
+    "fechaOficial": "20 de septiembre de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "20 de septiembre de 2019",
+      "28 de febrero de 2018",
+      "18 de septiembre de 2019"
+    ],
+    "numero": 28
+  },
+  {
+    "archivo": "doc_029_procedimiento_para_la_asignacion_y_control_de_uso_de_telefon.pdf",
+    "titulo": "Procedimiento Para La Asignacion Y Control De Uso De Telefon",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "18461.0 KB",
+    "fechaOficial": "09 de septiembre de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "09 de septiembre de 2019",
+      "28 de febrero de 2018",
+      "15 de agosto de 2019"
+    ],
+    "numero": 29
+  },
+  {
+    "archivo": "doc_030_procedimiento_para_el_control_de_casillas_postales.pdf",
+    "titulo": "Procedimiento Para El Control De Casillas Postales",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "15160.3 KB",
+    "fechaOficial": "04 de septiembre de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "04 de septiembre de 2019",
+      "28 de febrero de 2018",
+      "02 de septiembre de 2019"
+    ],
+    "numero": 30
+  },
+  {
+    "archivo": "doc_031_procedimiento_para_el_tratamiento_de_denuncias_a_transparenc.pdf",
+    "titulo": "Procedimiento Para El Tratamiento De Denuncias A Transparenc",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "8824.9 KB",
+    "fechaOficial": "02 de diciembre de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "02 de diciembre de 2019",
+      "28 de febrero de 2018",
+      "29 de octubre de 2019"
+    ],
+    "numero": 31
+  },
+  {
+    "archivo": "doc_032_politica_de_calidad.pdf",
+    "titulo": "Politica De Calidad",
+    "categoria": "Normativas",
+    "extension": "PDF",
+    "tamano": "870.2 KB",
+    "fechaOficial": "13 de junio de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "13 de junio de 2019",
+      "28 de febrero de 2018",
+      "23 de abril de 2019"
+    ],
+    "numero": 32
+  },
+  {
+    "archivo": "doc_033_politica_organizacional_y_de_gestion_por_procesos.pdf",
+    "titulo": "Politica Organizacional Y De Gestion Por Procesos",
+    "categoria": "Normativas",
+    "extension": "PDF",
+    "tamano": "1252.7 KB",
+    "fechaOficial": "13 de junio de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "13 de junio de 2019",
+      "28 de febrero de 2018",
+      "23 de abril de 2019"
+    ],
+    "numero": 33
+  },
+  {
+    "archivo": "doc_034_guia_de_usuario_sigec.pdf",
+    "titulo": "Guia De Usuario SIGEC",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "9815.9 KB",
+    "fechaOficial": "2019",
+    "tipoFecha": "anio",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 34
+  },
+  {
+    "archivo": "doc_035_politica_para_la_seguridad_de_la_informacion_y_las_comunicac.pdf",
+    "titulo": "Politica Para La Seguridad De La Informacion Y Las Comunicac",
+    "categoria": "Normativas",
+    "extension": "PDF",
+    "tamano": "4645.8 KB",
+    "fechaOficial": "21 de agosto de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "21 de agosto de 2019",
+      "28 de febrero de 2018",
+      "23 de julio de 2019"
+    ],
+    "numero": 35
+  },
+  {
+    "archivo": "doc_036_procedimiento_de_comunicacion_interna_manejo_de_la_correspon.pdf",
+    "titulo": "Procedimiento De Comunicacion Interna Manejo De La Correspon",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "16935.8 KB",
+    "fechaOficial": "21 de agosto de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "21 de agosto de 2019",
+      "28 de febrero de 2018",
+      "23 de julio de 2019"
+    ],
+    "numero": 36
+  },
+  {
+    "archivo": "doc_037_instructivo_operativo_para_la_emision_de_resoluciones_admini.pdf",
+    "titulo": "Instructivo Operativo Para La Emision De Resoluciones Admini",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "1051.4 KB",
+    "fechaOficial": "13 de junio de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "13 de junio de 2019",
+      "28 de febrero de 2018",
+      "23 de abril de 2019"
+    ],
+    "numero": 37
+  },
+  {
+    "archivo": "doc_038_procedimiento_para_el_diagnostico_diseno_y_rediseno_organiza.pdf",
+    "titulo": "Procedimiento Para El Diagnostico Diseno Y Rediseno Organiza",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "15481.5 KB",
+    "fechaOficial": "28 de febrero de 2018",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "28 de febrero de 2018",
+      "05 de diciembre de 2019",
+      "29 de noviembre de 2019"
+    ],
+    "numero": 38
+  },
+  {
+    "archivo": "doc_039_manual_de_funciones_profesional_de_planificacion.pdf",
+    "titulo": "Manual De Funciones Profesional De Planificacion",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "120.3 KB",
+    "fechaOficial": "2018",
+    "tipoFecha": "anio",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 39
+  },
+  {
+    "archivo": "doc_040_procedimiento_para_el_uso_mantenimiento_y_reparacion_de_los_.pdf",
+    "titulo": "Procedimiento Para El Uso Mantenimiento Y Reparacion De Los ",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "12312.2 KB",
+    "fechaOficial": "30 de Octubre de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "30 de Octubre de 2019",
+      "28 de febrero de 2018",
+      "28 de octubre de 2019"
+    ],
+    "numero": 40
+  },
+  {
+    "archivo": "doc_041_procedimiento_para_la_atencion_y_tratamiento_de_quejas_y_rec.pdf",
+    "titulo": "Procedimiento Para La Atencion Y Tratamiento De Quejas Y Rec",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "9793.2 KB",
+    "fechaOficial": "06 de diciembre de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "06 de diciembre de 2019",
+      "28 de febrero de 2018",
+      "06 de diciembre de 2019",
+      "29 de noviembre de 2019"
+    ],
+    "numero": 41
+  },
+  {
+    "archivo": "doc_042_reglamento_interno_del_comite_de_reclamaciones.pdf",
+    "titulo": "Reglamento Interno Del Comite De Reclamaciones",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "1640.2 KB",
+    "fechaOficial": "06 de diciembre de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "06 de diciembre de 2019",
+      "28 de febrero de 2018",
+      "06 de diciembre de 2019",
+      "29 de noviembre de 2019"
+    ],
+    "numero": 42
+  },
+  {
+    "archivo": "doc_043_procedimiento_para_el_control_y_dotacion_de_sellos_postales_.pdf",
+    "titulo": "Procedimiento Para El Control Y Dotacion De Sellos Postales ",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "11220.1 KB",
+    "fechaOficial": "18 de octubre de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "18 de octubre de 2019",
+      "28 de febrero de 2018",
+      "16 de octubre de 2019"
+    ],
+    "numero": 43
+  },
+  {
+    "archivo": "doc_044_procedimiento_para_el_control_de_inspecciones_de_la_felcn_y_.pdf",
+    "titulo": "Procedimiento Para El Control De Inspecciones De La FELCN Y ",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "2571.4 KB",
+    "fechaOficial": "06 de diciembre de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "06 de diciembre de 2019",
+      "28 de febrero de 2018",
+      "06 de diciembre de 2019",
+      "29 de noviembre de 2019"
+    ],
+    "numero": 44
+  },
+  {
+    "archivo": "doc_045_manual_de_procesos_y_procedimientos_de_pagos_con_orden_de_pa.pdf",
+    "titulo": "Manual De Procesos Y Procedimientos De Pagos Con Orden De Pa",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "2805.6 KB",
+    "fechaOficial": "13 de febrero de 2020",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "13 de febrero de 2020",
+      "11 de diciembre de 2019",
+      "21 de diciembre de 1999",
+      "30 de diciembre de 2015",
+      "05 de febrero de 2020"
+    ],
+    "numero": 45
+  },
+  {
+    "archivo": "doc_046_procedimiento_para_el_manejo_y_control_de_la_recaudacion.pdf",
+    "titulo": "Procedimiento Para El Manejo Y Control De La Recaudacion",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "6136.1 KB",
+    "fechaOficial": "14 de octubre de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "14 de octubre de 2019",
+      "28 de febrero de 2018",
+      "10 de octubre de 2019"
+    ],
+    "numero": 46
+  },
+  {
+    "archivo": "doc_047_procedimiento_para_la_administracion_del_fondo_rotativo.pdf",
+    "titulo": "Procedimiento Para La Administracion Del Fondo Rotativo",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "15471.1 KB",
+    "fechaOficial": "08 de octubre de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "08 de octubre de 2019",
+      "28 de febrero de 2018",
+      "14 de mayo de 2018",
+      "04 de octubre de 2019"
+    ],
+    "numero": 47
+  },
+  {
+    "archivo": "doc_048_codigo_de_etica.pdf",
+    "titulo": "Codigo De Etica",
+    "categoria": "Normativas",
+    "extension": "PDF",
+    "tamano": "12066.6 KB",
+    "fechaOficial": "05 DE FEBRERO DE 2026",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "05 DE FEBRERO DE 2026",
+      "24 de diciembre de 2025",
+      "29 de diciembre de 2025",
+      "09 de enero de 2026",
+      "09 de enero de 2020",
+      "26 de enero de 2026",
+      "7 de octubre de 1999",
+      "06 de enero de 2023",
+      "24 de diciembre de 2025"
+    ],
+    "numero": 48
+  },
+  {
+    "archivo": "doc_049_codigo_de_etica_r_a_n_11_18.pdf",
+    "titulo": "Codigo De Etica R A N 11 18",
+    "categoria": "Normativas",
+    "extension": "PDF",
+    "tamano": "4017.4 KB",
+    "fechaOficial": "02 de abril de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "02 de abril de 2019",
+      "8 de agosto de 2011",
+      "28 de febrero de 2018",
+      "18 de enero de 2019",
+      "21 de marzo de 2019",
+      "02 de abril de 2019"
+    ],
+    "numero": 49
+  },
+  {
+    "archivo": "doc_050_formulario_unico_de_reclamos_cn_08.doc",
+    "titulo": "Formulario Unico De Reclamos Cn 08",
+    "categoria": "Formularios",
+    "extension": "DOC",
+    "tamano": "113.0 KB",
+    "fechaOficial": "Sin fecha (Formato / Plantilla)",
+    "tipoFecha": "formato_plantilla",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 50
+  },
+  {
+    "archivo": "doc_051_manual_de_usuario_de_sistema_contratos_gescon.pdf",
+    "titulo": "Manual De Usuario De Sistema Contratos GESCON",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "1518.5 KB",
+    "fechaOficial": "2024",
+    "tipoFecha": "anio",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 51
+  },
+  {
+    "archivo": "doc_052_manual_de_usuario_de_sistema_de_casillas_senca.pdf",
+    "titulo": "Manual De Usuario De Sistema De Casillas SENCA",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "961.2 KB",
+    "fechaOficial": "2024",
+    "tipoFecha": "anio",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 52
+  },
+  {
+    "archivo": "doc_053_manual_de_usuario_de_sistema_de_seguimiento_de_paqueteria_po.pdf",
+    "titulo": "Manual De Usuario De Sistema De Seguimiento De Paqueteria Po",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "1328.4 KB",
+    "fechaOficial": "2024",
+    "tipoFecha": "anio",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 53
+  },
+  {
+    "archivo": "doc_054_manual_de_usuario_de_sistema_sireco.pdf",
+    "titulo": "Manual De Usuario De Sistema SIRECO",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "1999.5 KB",
+    "fechaOficial": "2024",
+    "tipoFecha": "anio",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 54
+  },
+  {
+    "archivo": "doc_055_manual_organizacional_administrativa_financiera.pdf",
+    "titulo": "Manual Organizacional Administrativa Financiera",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "6909.7 KB",
+    "fechaOficial": "27 de mayo de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "27 de mayo de 2019",
+      "28 de febrero de 2018",
+      "20 de julio de 1990",
+      "22 de mayo de 2019",
+      "27 de mayo de 2019"
+    ],
+    "numero": 55
+  },
+  {
+    "archivo": "doc_056_manual_organizacional_direccion_comercial.pdf",
+    "titulo": "Manual Organizacional Direccion Comercial",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "3602.1 KB",
+    "fechaOficial": "28 de febrero de 2018",
+    "tipoFecha": "fecha_completa",
+    "resolucion": "Resolución Administrativa Nº 040/2018",
+    "todasFechas": [],
+    "numero": 56
+  },
+  {
+    "archivo": "doc_057_manual_organizacional_direccion_de_operaciones.pdf",
+    "titulo": "Manual Organizacional Direccion De Operaciones",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "7295.0 KB",
+    "fechaOficial": "28 de febrero de 2018",
+    "tipoFecha": "fecha_completa",
+    "resolucion": "Resolución Administrativa Nº 040/2018",
+    "todasFechas": [],
+    "numero": 57
+  },
+  {
+    "archivo": "doc_058_manual_organizacional_unidad_de_auditoria_interna.pdf",
+    "titulo": "Manual Organizacional Unidad De Auditoria Interna",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "3180.4 KB",
+    "fechaOficial": "15 de septiembre de 2000",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "15 de septiembre de 2000"
+    ],
+    "numero": 58
+  },
+  {
+    "archivo": "doc_059_manual_organizacional_unidad_de_planificacion.pdf",
+    "titulo": "Manual Organizacional Unidad De Planificacion",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "2940.4 KB",
+    "fechaOficial": "28 de febrero de 2018",
+    "tipoFecha": "fecha_completa",
+    "resolucion": "Resolución Administrativa Nº 040/2018",
+    "todasFechas": [],
+    "numero": 59
+  },
+  {
+    "archivo": "doc_060_manual_organizacional_unidad_de_transparencia_y_lucha_contra.pdf",
+    "titulo": "Manual Organizacional Unidad De Transparencia Y Lucha Contra",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "3339.9 KB",
+    "fechaOficial": "4 de septiembre de 2017",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "4 de septiembre de 2017"
+    ],
+    "numero": 60
+  },
+  {
+    "archivo": "doc_061_manual_organizacional_unidad_legal.pdf",
+    "titulo": "Manual Organizacional Unidad Legal",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "2383.9 KB",
+    "fechaOficial": "28 de febrero de 2018",
+    "tipoFecha": "fecha_completa",
+    "resolucion": "Resolución Administrativa Nº 040/2018",
+    "todasFechas": [],
+    "numero": 61
+  },
+  {
+    "archivo": "doc_062_manual_para_generar_plantilla_en_sigec.pdf",
+    "titulo": "Manual Para Generar Plantilla En SIGEC",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "700.1 KB",
+    "fechaOficial": "Sin fecha (Guía Técnica / Tutorial)",
+    "tipoFecha": "guia_tutorial",
+    "resolucion": null,
+    "todasFechas": [],
+    "numero": 62
+  },
+  {
+    "archivo": "doc_063_organigrama_institucional.pdf",
+    "titulo": "Organigrama Institucional",
+    "categoria": "Normativas",
+    "extension": "PDF",
+    "tamano": "1282.0 KB",
+    "fechaOficial": "21 de noviembre de 2018",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "21 de noviembre de 2018",
+      "28 de febrero de 2018",
+      "20 de julio de 1990",
+      "08 de noviembre de 2018",
+      "21 de noviembre de 2018",
+      "08 de noviembre de 2018",
+      "21 de noviembre de 2018"
+    ],
+    "numero": 63
+  },
+  {
+    "archivo": "doc_064_procedimiento_de_cobranza_r_a_30_18.pdf",
+    "titulo": "Procedimiento De Cobranza R A 30 18",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "2538.7 KB",
+    "fechaOficial": "8 de agosto de 2011",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "8 de agosto de 2011",
+      "28 de febrero de 2018",
+      "24 de julio de 2018",
+      "30 de julio de 2018",
+      "30 de julio de 2018",
+      "2 de octubre de 2018",
+      "24 de septiembre de 2018",
+      "11 de octubre de 2018",
+      "30 de julio de 2018"
+    ],
+    "numero": 64
+  },
+  {
+    "archivo": "doc_065_procedimiento_de_contratacion_por_excepcion_r_a_17_18.pdf",
+    "titulo": "Procedimiento De Contratacion Por Excepcion R A 17 18",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "1276.5 KB",
+    "fechaOficial": "24 de agosto de 2018",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "24 de agosto de 2018",
+      "8 de agosto de 2011",
+      "28 de febrero de 2018",
+      "28 de junio de 2009",
+      "7 de agosto de 2018",
+      "16 de agosto de 2016",
+      "24 de agosto de 2018"
+    ],
+    "numero": 65
+  },
+  {
+    "archivo": "doc_066_procedimiento_de_recaudacion_de_recursos_por_venta_de_servic.pdf",
+    "titulo": "Procedimiento De Recaudacion De Recursos Por Venta De Servic",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "2602.7 KB",
+    "fechaOficial": "10 de septiembre de 2018",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "10 de septiembre de 2018",
+      "30 de agosto de 2018",
+      "10 de septiembre de 2018",
+      "8 de agosto de 2011",
+      "28 de febrero de 2018",
+      "4 de marzo de 2005",
+      "30 de julio de 1997"
+    ],
+    "numero": 66
+  },
+  {
+    "archivo": "doc_067_ra_40_aprobacion_de_manuales_organizacionales.pdf",
+    "titulo": "RA 40 Aprobacion De Manuales Organizacionales",
+    "categoria": "Manuales",
+    "extension": "PDF",
+    "tamano": "646.9 KB",
+    "fechaOficial": "28 de febrero de 2018",
+    "tipoFecha": "fecha_completa",
+    "resolucion": "R.A. Nº 40",
+    "todasFechas": [
+      "28 de febrero de 2018",
+      "30 de julio de 2019"
+    ],
+    "numero": 67
+  },
+  {
+    "archivo": "doc_068_reglamento_de_administracion_de_recursos_del_fondo_social.pdf",
+    "titulo": "Reglamento De Administracion De Recursos Del Fondo Social",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "5154.1 KB",
+    "fechaOficial": "23 de noviembre de 2018",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "23 de noviembre de 2018",
+      "28 de febrero de 2018",
+      "20 de julio de 1990",
+      "4 de julio de 1983",
+      "3 de diciembre de 2004",
+      "19 de diciembre de 2007",
+      "13 de noviembre de 2018",
+      "23 de noviembre de 2018",
+      "13 de noviembre de 2018",
+      "23 de noviembre de 2018"
+    ],
+    "numero": 68
+  },
+  {
+    "archivo": "doc_069_reglamento_de_fondo_rotativo_agbc.pdf",
+    "titulo": "Reglamento De Fondo Rotativo AGBC",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "7054.9 KB",
+    "fechaOficial": "14 de mayo de 2018",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "14 de mayo de 2018",
+      "20 de julio de 1990",
+      "30 de julio de 1997",
+      "4 de marzo de 2005",
+      "28 de febrero de 2018",
+      "14 de marzo 2018",
+      "10 de mayo de 2018",
+      "14 de mayo de 2018",
+      "10 de mayo de 2018",
+      "14 de mayo de 2018"
+    ],
+    "numero": 69
+  },
+  {
+    "archivo": "doc_070_reglamento_de_la_unidad_de_transparencia_y_lucha_contra_la_c.pdf",
+    "titulo": "Reglamento De La Unidad De Transparencia Y Lucha Contra La C",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "1747.0 KB",
+    "fechaOficial": "20 de septiembre de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "20 de septiembre de 2019",
+      "8 de agosto de 2011",
+      "28 de febrero de 2018",
+      "19 de septiembre de 2019",
+      "7 de febrero de 2009",
+      "31 de marzo de 2010",
+      "5 de diciembre de 2010",
+      "18 de mayo de 2010",
+      "19 de enero de 2015",
+      "9 de marzo de 2016"
+    ],
+    "numero": 70
+  },
+  {
+    "archivo": "doc_071_reglamento_de_pasajes_y_viaticos.pdf",
+    "titulo": "Reglamento De Pasajes Y Viaticos",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "833.4 KB",
+    "fechaOficial": "23 de Noviembre de 2021",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "23 de Noviembre de 2021",
+      "28 de febrero de 2018",
+      "7 de noviembre de 2013",
+      "7 de noviembre de 2013",
+      "11 de octubre de 2021",
+      "22 de Noviembre de 2021"
+    ],
+    "numero": 71
+  },
+  {
+    "archivo": "doc_072_reglamento_de_rezagos_r_a_n_33_19.pdf",
+    "titulo": "Reglamento De Rezagos R A N 33 19",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "506.2 KB",
+    "fechaOficial": "4 de julio de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "4 de julio de 2019",
+      "8 de agosto de 2011",
+      "28 de febrero de 2018",
+      "24 de mayo de 2019",
+      "4 de julio de 2019"
+    ],
+    "numero": 72
+  },
+  {
+    "archivo": "doc_073_reglamento_del_procedimiento_operativo_de_control_aduanero_d.pdf",
+    "titulo": "Reglamento Del Procedimiento Operativo De Control Aduanero D",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "6622.2 KB",
+    "fechaOficial": "21 de agosto de 2018",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "21 de agosto de 2018",
+      "8 de agosto de 2011",
+      "28 de febrero de 2018",
+      "20 de junio de 2018",
+      "16 de agosto de 2018"
+    ],
+    "numero": 73
+  },
+  {
+    "archivo": "doc_074_reglamento_especifico_de_proceso_sumario_agencia_boliviana_d.pdf",
+    "titulo": "Reglamento Especifico De Proceso Sumario Agencia Boliviana D",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "1115.4 KB",
+    "fechaOficial": "14 de enero de 2022",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "14 de enero de 2022",
+      "20 de julio de 1990",
+      "28 de febrero de 2018",
+      "14 de enero de 2022"
+    ],
+    "numero": 74
+  },
+  {
+    "archivo": "doc_075_reglamento_especifico_del_sistema_de_administracion_de_biene.pdf",
+    "titulo": "Reglamento Especifico Del Sistema De Administracion De Biene",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "4903.4 KB",
+    "fechaOficial": "7 de febrero de 2009",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "7 de febrero de 2009",
+      "28 de junio de 2009",
+      "28 de febrero de 2018",
+      "28 de junio del 2009",
+      "14 de enero del 2021",
+      "09 de junio del 2021",
+      "28 DE JUNIO DE 2009",
+      "16 de junio de 2021",
+      "4 de enero de 2021"
+    ],
+    "numero": 75
+  },
+  {
+    "archivo": "doc_076_reglamento_especifico_del_sistema_de_administracion_de_biene.pdf",
+    "titulo": "Reglamento Especifico Del Sistema De Administracion De Biene",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "7236.3 KB",
+    "fechaOficial": "07 de mayo de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "07 de mayo de 2019",
+      "8 de agosto de 2011",
+      "28 de febrero de 2018",
+      "16 de abril de 2019",
+      "22 de abril de 2019"
+    ],
+    "numero": 76
+  },
+  {
+    "archivo": "doc_077_reglamento_especifico_del_sistema_de_administracion_de_perso.pdf",
+    "titulo": "Reglamento Especifico Del Sistema De Administracion De Perso",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "3029.1 KB",
+    "fechaOficial": "28 de febrero de 2018",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "28 de febrero de 2018",
+      "18 de diciembre de 2025",
+      "12 de mayo de 2026",
+      "16 de marzo de 2001",
+      "28 de julio de 2026",
+      "30 de octubre de 2025",
+      "9 de marzo de 2026",
+      "05 de agosto de 2026",
+      "12 de mayo de 2026",
+      "13 de enero de 2020",
+      "13 de enero de 2020"
+    ],
+    "numero": 77
+  },
+  {
+    "archivo": "doc_078_reglamento_especifico_del_sistema_de_contabilidad_integrada_.pdf",
+    "titulo": "Reglamento Especifico Del Sistema De Contabilidad Integrada ",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "4427.9 KB",
+    "fechaOficial": "31 de diciembre de 2018",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "31 de diciembre de 2018",
+      "8 de agosto de 2011",
+      "28 de febrero de 2018",
+      "4 de marzo de 2005",
+      "21 de diciembre de 2018",
+      "04 de marzo de 2005"
+    ],
+    "numero": 78
+  },
+  {
+    "archivo": "doc_079_reglamento_especifico_del_sistema_de_organizacion_administra.pdf",
+    "titulo": "Reglamento Especifico Del Sistema De Organizacion Administra",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "5136.3 KB",
+    "fechaOficial": "11 de junio de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "11 de junio de 2019",
+      "8 de agosto de 2011",
+      "28 de febrero de 2018",
+      "20 de mayo de 1997",
+      "22 de mayo de 2019",
+      "20 de mayo de 1997"
+    ],
+    "numero": 79
+  },
+  {
+    "archivo": "doc_080_reglamento_especifico_del_sistema_de_presupuestos_r_a_n_41_2.pdf",
+    "titulo": "Reglamento Especifico Del Sistema De Presupuestos R A N 41 2",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "3031.1 KB",
+    "fechaOficial": "03 de diciembre de 2018",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "03 de diciembre de 2018",
+      "8 de agosto de 2011",
+      "28 de febrero de 2018",
+      "10 de diciembre de 2005",
+      "20 de septiembre de 2018",
+      "23 de noviembre de 2018",
+      "01 de diciembre de 2005"
+    ],
+    "numero": 80
+  },
+  {
+    "archivo": "doc_081_reglamento_especifico_del_sistema_de_programacion_de_operaci.pdf",
+    "titulo": "Reglamento Especifico Del Sistema De Programacion De Operaci",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "3324.0 KB",
+    "fechaOficial": "12 de noviembre de 2018",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "12 de noviembre de 2018",
+      "8 de agosto de 2011",
+      "28 de febrero de 2018",
+      "5 de julio de 2017",
+      "26 de octubre de 2018",
+      "5 de noviembre de 2018",
+      "5 de julio de 2017",
+      "7 de noviembre de 2018"
+    ],
+    "numero": 81
+  },
+  {
+    "archivo": "doc_082_reglamento_especifico_del_sistema_de_tesoreria_r_a_n_047_201.pdf",
+    "titulo": "Reglamento Especifico Del Sistema De Tesoreria R A N 047 201",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "3073.8 KB",
+    "fechaOficial": "31 de diciembre de 2018",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "31 de diciembre de 2018",
+      "8 de agosto de 2011",
+      "28 de febrero de 2018",
+      "30 de julio de 1997",
+      "20 de diciembre de 2018",
+      "30 de julio de 1997"
+    ],
+    "numero": 82
+  },
+  {
+    "archivo": "doc_083_reglamento_especifico_para_cumplimiento_oportuno_de_la_decla.pdf",
+    "titulo": "Reglamento Especifico Para Cumplimiento Oportuno De La Decla",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "11168.5 KB",
+    "fechaOficial": "29 de Noviembre de 2021",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "29 de Noviembre de 2021",
+      "28 de febrero de 2018",
+      "04 de noviembre de 2021",
+      "17 de Noviembre de 2021"
+    ],
+    "numero": 83
+  },
+  {
+    "archivo": "doc_084_reglamento_especifico_del_sistema_de_administracion_de_biene.pdf",
+    "titulo": "Reglamento Especifico Del Sistema De Administracion De Biene",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "4218.9 KB",
+    "fechaOficial": "05 DE AGOSTO DE 2026",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "05 DE AGOSTO DE 2026",
+      "18 de mayo de 2026",
+      "28 de julio de 2026",
+      "05 de agosto de 2026",
+      "20 de julio de 1990",
+      "28 de junio de 2009",
+      "14 de enero de 2021",
+      "28 de junio de 2009",
+      "28 de febrero de 2018",
+      "18 de diciembre de 2025",
+      "18 de mayo de 2026",
+      "28 de julio de 2026",
+      "30 de octubre de 2025",
+      "9 de marzo de 2026",
+      "05 de agosto de 2026",
+      "7 de septiembre de 2021"
+    ],
+    "numero": 84
+  },
+  {
+    "archivo": "doc_085_reglamento_especifico_del_sistema_de_organizacion_administra.pdf",
+    "titulo": "Reglamento Especifico Del Sistema De Organizacion Administra",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "13342.9 KB",
+    "fechaOficial": "05 DE MAYO DE 2026",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "05 DE MAYO DE 2026",
+      "08 de abril de 2026",
+      "23 de marzo de 2026",
+      "05 de mayo de 2026",
+      "20 de julio de 1990",
+      "20 de mayo de 1997",
+      "28 de febrero de 2018",
+      "18 de diciembre de 2025",
+      "08 de abril de 2026",
+      "20 de mayo de 1997",
+      "30 de octubre de 2025",
+      "23 de abril de 2026",
+      "30 de octubre de 2025",
+      "9 de marzo de 2026",
+      "05 de mayo de 2026",
+      "0 de abril de 2026",
+      "0 de abril de 2026",
+      "11 de junio de 2019"
+    ],
+    "numero": 85
+  },
+  {
+    "archivo": "doc_086_reglamento_interno_de_cargos_de_cuenta.pdf",
+    "titulo": "Reglamento Interno De Cargos De Cuenta",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "4618.9 KB",
+    "fechaOficial": "22 de octubre de 2018",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "22 de octubre de 2018",
+      "8 de agosto de 2011",
+      "28 de febrero de 2018",
+      "27 de septiembre de 2018",
+      "22 de octubre de 2018",
+      "27 de septiembre de 2018",
+      "22 de octubre de 2018"
+    ],
+    "numero": 86
+  },
+  {
+    "archivo": "doc_087_reglamento_interno_de_pasantia_agbc.pdf",
+    "titulo": "Reglamento Interno De Pasantia AGBC",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "5936.0 KB",
+    "fechaOficial": "29 de junio de 2018",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "29 de junio de 2018",
+      "8 de agosto de 2011",
+      "28 de febrero de 2018",
+      "16 de marzo de 2001",
+      "13 de agosto de 2012",
+      "29 de junio de 2018",
+      "29 de junio de 2018"
+    ],
+    "numero": 87
+  },
+  {
+    "archivo": "doc_088_reglamento_interno_para_el_pago_de_refrigerios_r_a_n_23_19.pdf",
+    "titulo": "Reglamento Interno Para El Pago De Refrigerios R A N 23 19",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "2147.8 KB",
+    "fechaOficial": "05 de junio de 2019",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "05 de junio de 2019",
+      "28 de febrero de 2018",
+      "17 de diciembre de 2014",
+      "27 de octubre de 1999",
+      "28 de mayo de 2019",
+      "05 de junio de 2019"
+    ],
+    "numero": 88
+  },
+  {
+    "archivo": "doc_089_reglamento_interno_para_la_adquisicion_dotacion_y_uso_de_rop.pdf",
+    "titulo": "Reglamento Interno Para La Adquisicion Dotacion Y Uso De Rop",
+    "categoria": "Reglamentos",
+    "extension": "PDF",
+    "tamano": "1623.2 KB",
+    "fechaOficial": "3 de octubre de 2018",
+    "tipoFecha": "fecha_completa",
+    "resolucion": null,
+    "todasFechas": [
+      "3 de octubre de 2018",
+      "28 de febrero de 2018",
+      "14 de marzo 2018",
+      "26 de agosto de 2013",
+      "20 de diciembre de 2017",
+      "26 de agosto de 2013",
+      "3 de octubre de 2018",
+      "10 de mayo de 2009",
+      "3 de octubre de 2018"
+    ],
+    "numero": 89
+  }
+]
