@@ -117,6 +117,13 @@ const PLANTILLA_ESTANDAR_BASE: PlantillaCustom = {
     "Estimados/as funcionarios/as y personal de la Agencia Boliviana de Correos:\n\nPor medio del presente se comunica que...\n\nPara mayor información o coordinación, comunicarse con la unidad correspondiente.\n\nAtentamente,\nDirección General Ejecutiva\nAgencia Boliviana de Correos",
 }
 
+function resolverUrlDocumento(enlace: string): string {
+  if (enlace.startsWith("/api/documentos/") || enlace.startsWith("http://") || enlace.startsWith("https://")) {
+    return enlace
+  }
+  return `/api/documentos/${enlace.replace(/^\/?(documentos\/)?/, "")}`
+}
+
 export function MensajeriaModule({
   destinatariosData,
   historialInicial,
@@ -1076,7 +1083,7 @@ export function MensajeriaModule({
                         <span>Remitente: <strong>{item.remitente}</strong></span>
                         {item.enlace && (
                           <a
-                            href={item.enlace}
+                            href={resolverUrlDocumento(item.enlace)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 font-medium hover:underline text-xs"
@@ -1369,7 +1376,7 @@ export function MensajeriaModule({
                   <div className="text-xs">
                     <span className="font-semibold text-slate-600 dark:text-slate-300">Documento Adjunto:</span>{" "}
                     <a
-                      href={detalleModalItem.enlace}
+                      href={resolverUrlDocumento(detalleModalItem.enlace)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 dark:text-blue-400 underline font-mono ml-1"

@@ -180,7 +180,13 @@ export async function enviarMensajeMasivo(data: EnviarMensajeMasivoInput): Promi
       return { success: false, message: "No se encontraron destinatarios activos para el envío." }
     }
 
-    const enlaceAdjunto = data.adjunto?.url || null
+    let enlaceAdjunto: string | null = null
+    if (data.adjunto?.url) {
+      const rawUrl = data.adjunto.url.trim()
+      enlaceAdjunto = rawUrl.startsWith("/api/documentos/")
+        ? rawUrl
+        : `/api/documentos/${rawUrl.replace(/^\/?(documentos\/)?/, "")}`
+    }
 
     // 1. Inserción interna en base de datos para la campana de notificaciones
     const rows = targetUsers.map((u) => ({

@@ -13,7 +13,9 @@ import {
   XIcon,
   ChevronLeft,
   ChevronRight,
+  Folder,
   FolderOpen,
+  ArrowLeft,
   ArrowRight,
   BookOpen,
   PlayCircle,
@@ -24,6 +26,7 @@ import {
   Layers,
   RotateCcw,
   Sparkles,
+  Home,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
@@ -469,232 +472,379 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
               </div>
             </div>
 
-            {/* NIVEL 1: DIRECCIONES INSTITUCIONALES */}
-            <div className="space-y-2 pt-1 border-t border-slate-100">
-              <div className="flex items-center gap-2 text-xs font-black text-[#002F6C] uppercase tracking-wider">
-                <Building2 className="h-4 w-4 text-[#0E5296]" />
-                <span>Nivel 1 • Direcciones Institucionales</span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDireccionActiva(null)
-                    setSubcategoriaActiva(null)
-                    setCurrentPage(1)
-                  }}
-                  className={`flex items-center justify-between gap-2 p-2.5 rounded-2xl text-xs font-black border transition-all cursor-pointer ${
-                    !direccionActiva
-                      ? "bg-[#0E5296] text-[#FFCC00] border-[#0E5296] shadow-md shadow-[#0E5296]/20"
-                      : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-blue-50/50 hover:text-[#002F6C]"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 truncate">
-                    <Layers className="h-4 w-4 shrink-0" />
-                    <span className="truncate">Todas</span>
-                  </div>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    !direccionActiva ? "bg-white/20 text-white" : "bg-slate-200 text-slate-600"
-                  }`}>
-                    {docsEnriquecidos.length}
-                  </span>
-                </button>
-
-                {ESTRUCTURA_JERARQUICA.map((dir) => {
-                  const Icon = ICONOS_DIRECCION[dir.nombre] || Building2
-                  const count = docsEnriquecidos.filter((d) => d.direccion === dir.nombre).length
-                  const isSelected = direccionActiva === dir.nombre
-
-                  return (
+            {/* NAVEGACIÓN Y DRILL-DOWN JERÁRQUICO EN 3 NIVELES */}
+            
+            {/* Si NO hay búsqueda activa: NAVEGACIÓN POR CARPETAS */}
+            {!busqueda.trim() && (
+              <div className="space-y-4 pt-1 border-t border-slate-100">
+                {/* ── BREADCRUMB DE NAVEGACIÓN ── */}
+                <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-700">
                     <button
-                      key={dir.codigo}
                       type="button"
                       onClick={() => {
-                        setDireccionActiva(isSelected ? null : dir.nombre)
+                        setDireccionActiva(null)
                         setSubcategoriaActiva(null)
+                        setTipoDocumentalActivo(null)
                         setCurrentPage(1)
                       }}
-                      className={`flex items-center justify-between gap-2 p-2.5 rounded-2xl text-xs font-black border transition-all cursor-pointer ${
-                        isSelected
-                          ? "bg-[#0E5296] text-[#FFCC00] border-[#0E5296] shadow-md shadow-[#0E5296]/20"
-                          : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-blue-50/50 hover:text-[#002F6C]"
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
+                        !direccionActiva
+                          ? "bg-[#0E5296] text-[#FFCC00] shadow-xs"
+                          : "hover:bg-slate-200 text-slate-600 hover:text-[#002F6C]"
                       }`}
-                      title={dir.descripcion}
                     >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Icon className="h-4 w-4 shrink-0" />
-                        <span className="truncate">{dir.codigo} - {dir.nombre.replace("Dirección ", "")}</span>
+                      <Home className="h-3.5 w-3.5" />
+                      <span>Inicio (4 Direcciones)</span>
+                    </button>
+
+                    {direccionActiva && (
+                      <>
+                        <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSubcategoriaActiva(null)
+                            setTipoDocumentalActivo(null)
+                            setCurrentPage(1)
+                          }}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
+                            !subcategoriaActiva
+                              ? "bg-[#0E5296] text-[#FFCC00] shadow-xs"
+                              : "hover:bg-slate-200 text-slate-600 hover:text-[#002F6C]"
+                          }`}
+                        >
+                          <Building2 className="h-3.5 w-3.5" />
+                          <span>{direccionActiva}</span>
+                        </button>
+                      </>
+                    )}
+
+                    {subcategoriaActiva && (
+                      <>
+                        <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTipoDocumentalActivo(null)
+                            setCurrentPage(1)
+                          }}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
+                            !tipoDocumentalActivo
+                              ? "bg-[#002F6C] text-white shadow-xs"
+                              : "hover:bg-slate-200 text-slate-600 hover:text-[#002F6C]"
+                          }`}
+                        >
+                          <Briefcase className="h-3.5 w-3.5" />
+                          <span>{subcategoriaActiva}</span>
+                        </button>
+                      </>
+                    )}
+
+                    {tipoDocumentalActivo && (
+                      <>
+                        <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#FFCC00] text-[#002F6C] font-black shadow-xs">
+                          <FileText className="h-3.5 w-3.5" />
+                          <span>{tipoDocumentalActivo}</span>
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Botón de retroceso rápido */}
+                  {(direccionActiva || subcategoriaActiva) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (subcategoriaActiva) {
+                          setSubcategoriaActiva(null)
+                          setTipoDocumentalActivo(null)
+                        } else if (direccionActiva) {
+                          setDireccionActiva(null)
+                        }
+                        setCurrentPage(1)
+                      }}
+                      className="inline-flex items-center gap-1 text-xs font-black text-[#0E5296] hover:text-[#002F6C] bg-white px-3 py-1.5 rounded-xl border border-slate-200 hover:border-[#0E5296] transition-all cursor-pointer shadow-2xs"
+                    >
+                      <ArrowLeft className="h-3.5 w-3.5" />
+                      <span>{subcategoriaActiva ? `Volver a ${direccionActiva?.replace("Dirección ", "")}` : "Volver a Direcciones"}</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* ── NIVEL 1: SOLO LAS 4 DIRECCIONES ── */}
+                {!direccionActiva && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-xs font-black text-[#002F6C] uppercase tracking-wider">
+                        <Folder className="h-4 w-4 text-[#0E5296]" />
+                        <span>Nivel 1 • Direcciones Institucionales de la AGBC</span>
                       </div>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
-                        isSelected ? "bg-white/20 text-white" : "bg-slate-200 text-slate-600"
-                      }`}>
-                        {count}
+                      <span className="text-[11px] font-bold text-slate-500">
+                        Haga clic en una Dirección para abrir sus carpetas
                       </span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
+                    </div>
 
-            {/* NIVEL 2: SUBCATEGORÍAS / ÁREAS OPERATIVAS */}
-            <div className="space-y-2 pt-2 border-t border-slate-100">
-              <div className="flex items-center justify-between text-xs font-black text-[#002F6C] uppercase tracking-wider">
-                <div className="flex items-center gap-2">
-                  <Briefcase className="h-4 w-4 text-[#0E5296]" />
-                  <span>Nivel 2 • Subcategorías {direccionActiva ? `(${direccionActiva})` : "por Dirección"}</span>
-                </div>
-                {subcategoriaActiva && (
-                  <button
-                    type="button"
-                    onClick={() => { setSubcategoriaActiva(null); setCurrentPage(1); }}
-                    className="text-[11px] text-slate-400 hover:text-[#0E5296] cursor-pointer font-bold lowercase"
-                  >
-                    (quitar filtro de subcategoría)
-                  </button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                      {ESTRUCTURA_JERARQUICA.map((dir) => {
+                        const Icon = ICONOS_DIRECCION[dir.nombre] || Building2
+                        const countDocs = docsEnriquecidos.filter((d) => d.direccion === dir.nombre).length
+                        const countSubs = dir.subcategorias.length
+
+                        return (
+                          <div
+                            key={dir.codigo}
+                            onClick={() => {
+                              setDireccionActiva(dir.nombre)
+                              setSubcategoriaActiva(null)
+                              setTipoDocumentalActivo(null)
+                              setCurrentPage(1)
+                            }}
+                            className="group relative flex flex-col justify-between p-5 rounded-3xl bg-gradient-to-br from-white via-slate-50 to-blue-50/30 border-2 border-slate-200/80 hover:border-[#0E5296] hover:shadow-xl hover:shadow-[#0E5296]/10 transition-all duration-300 cursor-pointer hover:-translate-y-1 overflow-hidden"
+                          >
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0E5296]/10 text-[#0E5296] group-hover:bg-[#0E5296] group-hover:text-[#FFCC00] transition-colors shadow-xs">
+                                  <Folder className="h-6 w-6" />
+                                </div>
+                                <span className="rounded-full bg-[#002F6C]/10 text-[#002F6C] px-2.5 py-0.5 text-[10px] font-black tracking-wider">
+                                  {dir.codigo}
+                                </span>
+                              </div>
+
+                              <div>
+                                <h4 className="text-sm font-black text-[#002F6C] group-hover:text-[#0E5296] transition-colors line-clamp-1">
+                                  {dir.nombre}
+                                </h4>
+                                <p className="text-[11px] text-slate-500 font-medium line-clamp-2 mt-1 leading-relaxed">
+                                  {dir.descripcion}
+                                </p>
+                              </div>
+
+                              {/* Vista previa de subcategorías */}
+                              <div className="pt-1 flex flex-wrap gap-1">
+                                {dir.subcategorias.map((s) => (
+                                  <span key={s.codigo} className="text-[9.5px] font-semibold bg-white px-2 py-0.5 rounded-lg border border-slate-200 text-slate-600">
+                                    {s.nombre}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs font-black">
+                              <span className="text-slate-500 text-[11px]">
+                                <strong className="text-[#002F6C] font-black">{countDocs}</strong> docs • <strong className="text-slate-700">{countSubs}</strong> áreas
+                              </span>
+                              <span className="inline-flex items-center gap-1 text-[#0E5296] group-hover:translate-x-1 transition-transform">
+                                <span>Abrir carpeta</span>
+                                <ArrowRight className="h-3.5 w-3.5" />
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── NIVEL 2: SUBCATEGORÍAS / ÁREAS OPERATIVAS ── */}
+                {direccionActiva && !subcategoriaActiva && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-xs font-black text-[#002F6C] uppercase tracking-wider">
+                        <FolderOpen className="h-4 w-4 text-[#0E5296]" />
+                        <span>Nivel 2 • Subcategorías de {direccionActiva}</span>
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-500">
+                        Seleccione un área para consultar sus 6 categorías documentales
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {subcategoriasDisponibles.map((sub) => {
+                        const countDocs = docsEnriquecidos.filter(
+                          (d) => d.direccion === direccionActiva && d.subcategoria === sub.nombre
+                        ).length
+
+                        return (
+                          <div
+                            key={sub.codigo}
+                            onClick={() => {
+                              setSubcategoriaActiva(sub.nombre)
+                              setTipoDocumentalActivo(null)
+                              setCurrentPage(1)
+                            }}
+                            className="group flex flex-col justify-between p-5 rounded-3xl bg-gradient-to-br from-white via-slate-50 to-amber-50/25 border-2 border-slate-200/80 hover:border-[#002F6C] hover:shadow-xl hover:shadow-[#002F6C]/10 transition-all duration-300 cursor-pointer hover:-translate-y-1"
+                          >
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-800 group-hover:bg-[#002F6C] group-hover:text-white transition-colors shadow-xs">
+                                  <Briefcase className="h-5 w-5" />
+                                </div>
+                                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold text-slate-600">
+                                  Área Oficial
+                                </span>
+                              </div>
+
+                              <div>
+                                <h4 className="text-sm font-black text-[#002F6C] group-hover:text-[#0E5296] transition-colors">
+                                  {sub.nombre}
+                                </h4>
+                                <p className="text-[11px] text-slate-500 font-medium line-clamp-2 mt-1 leading-relaxed">
+                                  {sub.descripcion}
+                                </p>
+                              </div>
+
+                              <div className="text-[10px] font-bold text-slate-500 bg-white/80 p-2 rounded-xl border border-slate-200">
+                                6 Categorías disponibles: Circulares, Formularios, Instructivos, Manuales, Normativas, Reglamentos
+                              </div>
+                            </div>
+
+                            <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs font-black">
+                              <span className="text-slate-500 text-[11px]">
+                                <strong className="text-[#002F6C] font-black">{countDocs}</strong> documentos
+                              </span>
+                              <span className="inline-flex items-center gap-1 text-[#002F6C] group-hover:translate-x-1 transition-transform">
+                                <span>Ingresar</span>
+                                <ArrowRight className="h-3.5 w-3.5" />
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── NIVEL 3: CATEGORÍAS DOCUMENTALES (6 CATEGORÍAS) ── */}
+                {direccionActiva && subcategoriaActiva && (
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 text-xs font-black text-[#002F6C] uppercase tracking-wider">
+                        <FileText className="h-4 w-4 text-[#0E5296]" />
+                        <span>Nivel 3 • Categorías Documentales en {subcategoriaActiva}</span>
+                      </div>
+                      <span className="text-xs font-bold text-[#0E5296] bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200">
+                        {docsFiltrados.length} documentos en esta sección
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTipoDocumentalActivo(null)
+                          setCurrentPage(1)
+                        }}
+                        className={`rounded-2xl px-3.5 py-2 text-xs font-black border transition-all cursor-pointer flex items-center gap-2 ${
+                          !tipoDocumentalActivo
+                            ? "bg-[#0E5296] text-[#FFCC00] border-[#0E5296] shadow-sm"
+                            : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                        }`}
+                      >
+                        <Layers className="h-3.5 w-3.5" />
+                        <span>Todas las categorías</span>
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                          !tipoDocumentalActivo ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                        }`}>
+                          {docsEnriquecidos.filter((d) => d.direccion === direccionActiva && d.subcategoria === subcategoriaActiva).length}
+                        </span>
+                      </button>
+
+                      {TIPOS_DOCUMENTALES.map((tipo) => {
+                        const isSelected = tipoDocumentalActivo === tipo
+                        const countInSub = docsEnriquecidos.filter(
+                          (d) => d.direccion === direccionActiva && d.subcategoria === subcategoriaActiva && d.tipoDocumental === tipo
+                        ).length
+
+                        return (
+                          <button
+                            key={tipo}
+                            type="button"
+                            onClick={() => {
+                              setTipoDocumentalActivo(isSelected ? null : tipo)
+                              setCurrentPage(1)
+                            }}
+                            className={`rounded-2xl px-3.5 py-2 text-xs font-black border transition-all cursor-pointer flex items-center gap-2 ${
+                              isSelected
+                                ? "bg-[#FFCC00] text-[#002F6C] border-[#FFCC00] shadow-sm"
+                                : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300"
+                            }`}
+                          >
+                            <span>{tipo}</span>
+                            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                              isSelected ? "bg-[#002F6C]/20 text-[#002F6C]" : "bg-slate-100 text-slate-500"
+                            }`}>
+                              {countInSub}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
                 )}
               </div>
+            )}
 
-              <div className="flex flex-wrap items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSubcategoriaActiva(null)
-                    setCurrentPage(1)
-                  }}
-                  className={`rounded-full px-3 py-1 text-xs font-bold border transition-all cursor-pointer ${
-                    !subcategoriaActiva
-                      ? "bg-[#002F6C] text-white border-[#002F6C] shadow-xs"
-                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
-                  }`}
-                >
-                  Todas las Áreas
-                </button>
-
-                {subcategoriasDisponibles.map((sub) => {
-                  const isSelected = subcategoriaActiva === sub.nombre
-                  const count = docsEnriquecidos.filter((d) => 
-                    (!direccionActiva || d.direccion === direccionActiva) && d.subcategoria === sub.nombre
-                  ).length
-
-                  return (
-                    <button
-                      key={sub.codigo}
-                      type="button"
-                      onClick={() => {
-                        setSubcategoriaActiva(isSelected ? null : sub.nombre)
-                        setCurrentPage(1)
-                      }}
-                      className={`rounded-full px-3 py-1 text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
-                        isSelected
-                          ? "bg-[#002F6C] text-white border-[#002F6C] shadow-xs"
-                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300"
-                      }`}
-                      title={sub.descripcion}
-                    >
-                      <span>{sub.nombre}</span>
-                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                        isSelected ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
-                      }`}>
-                        {count}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* NIVEL 3: TIPOS DOCUMENTALES */}
-            <div className="space-y-2 pt-2 border-t border-slate-100">
-              <div className="flex items-center justify-between text-xs font-black text-[#002F6C] uppercase tracking-wider">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-[#0E5296]" />
-                  <span>Nivel 3 • Tipo Documental</span>
+            {/* Vista de búsqueda activa si el usuario escribió un término */}
+            {busqueda.trim() && (
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between bg-amber-50/50 p-3 rounded-2xl border border-amber-200">
+                <div className="flex items-center gap-2 text-xs font-bold text-[#002F6C]">
+                  <Search className="h-4 w-4 text-[#0E5296]" />
+                  <span>Buscando: &quot;{busqueda}&quot; en todos los documentos institucionales</span>
                 </div>
-                {tipoDocumentalActivo && (
-                  <button
-                    type="button"
-                    onClick={() => { setTipoDocumentalActivo(null); setCurrentPage(1); }}
-                    className="text-[11px] text-slate-400 hover:text-[#0E5296] cursor-pointer font-bold lowercase"
-                  >
-                    (quitar filtro de tipo)
-                  </button>
-                )}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={() => {
-                    setTipoDocumentalActivo(null)
-                    setCurrentPage(1)
-                  }}
-                  className={`rounded-full px-3 py-1 text-xs font-bold border transition-all cursor-pointer ${
-                    !tipoDocumentalActivo
-                      ? "bg-[#FFCC00] text-[#002F6C] border-[#FFCC00] shadow-xs font-black"
-                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
-                  }`}
+                  onClick={() => setBusqueda("")}
+                  className="text-xs font-bold text-[#0E5296] hover:underline cursor-pointer"
                 >
-                  Todos los Tipos
+                  Volver a carpetas
                 </button>
-
-                {TIPOS_DOCUMENTALES.map((tipo) => {
-                  const isSelected = tipoDocumentalActivo === tipo
-                  const count = docsEnriquecidos.filter((d) => {
-                    const matchDir = !direccionActiva || d.direccion === direccionActiva
-                    const matchSub = !subcategoriaActiva || d.subcategoria === subcategoriaActiva
-                    return matchDir && matchSub && d.tipoDocumental === tipo
-                  }).length
-
-                  return (
-                    <button
-                      key={tipo}
-                      type="button"
-                      onClick={() => {
-                        setTipoDocumentalActivo(isSelected ? null : tipo)
-                        setCurrentPage(1)
-                      }}
-                      className={`rounded-full px-3 py-1 text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
-                        isSelected
-                          ? "bg-[#FFCC00] text-[#002F6C] border-[#FFCC00] shadow-xs font-black"
-                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
-                      }`}
-                    >
-                      <span>{tipo}</span>
-                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                        isSelected ? "bg-[#002F6C]/20 text-[#002F6C]" : "bg-slate-100 text-slate-500"
-                      }`}>
-                        {count}
-                      </span>
-                    </button>
-                  )
-                })}
               </div>
-            </div>
+            )}
           </div>
 
-          {/* Grid de Documentos */}
-          {paginatedDocs.length === 0 ? (
-            <div className="py-16 text-center text-slate-500 font-medium bg-card rounded-3xl border border-border/60">
-              <FolderOpen className="h-10 w-10 mx-auto mb-2 text-slate-300" />
-              <p className="font-bold text-slate-700">No se encontraron documentos para esta combinación de filtros.</p>
-              <button
-                type="button"
-                onClick={limpiarFiltros}
-                className="mt-3 inline-flex items-center gap-1.5 text-xs text-[#0E5296] font-bold hover:underline cursor-pointer"
-              >
-                <RotateCcw className="h-3 w-3" />
-                Restablecer todos los filtros
-              </button>
+          {/* Estado de navegación: Documentos se muestran en Nivel 3 o durante Búsqueda */}
+          {!busqueda.trim() && !subcategoriaActiva && (
+            <div className="rounded-3xl border border-slate-200/80 bg-gradient-to-r from-blue-50/40 via-white to-amber-50/40 p-6 text-center text-slate-600 shadow-2xs">
+              <Folder className="h-8 w-8 mx-auto text-[#0E5296] mb-2 opacity-80" />
+              <p className="text-xs font-bold text-[#002F6C]">
+                {!direccionActiva
+                  ? "Paso 1 de 3: Seleccione una de las 4 Direcciones Generales para acceder a sus subcategorías y áreas."
+                  : `Paso 2 de 3: Ingrese a un área de ${direccionActiva} para consultar sus 6 categorías documentales oficiales.`}
+              </p>
+              <p className="text-[11px] text-slate-500 mt-1">
+                También puede usar la barra de búsqueda superior para buscar directamente por nombre o palabra clave en todo el catálogo.
+              </p>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          )}
+
+          {/* Grid de Documentos (Solo visible en Nivel 3 o con búsqueda activa) */}
+          {(busqueda.trim() || subcategoriaActiva) && (
+            <>
+              {paginatedDocs.length === 0 ? (
+                <div className="py-16 text-center text-slate-500 font-medium bg-card rounded-3xl border border-border/60">
+                  <FolderOpen className="h-10 w-10 mx-auto mb-2 text-slate-300" />
+                  <p className="font-bold text-slate-700">No se encontraron documentos en esta sección.</p>
+                  <button
+                    type="button"
+                    onClick={limpiarFiltros}
+                    className="mt-3 inline-flex items-center gap-1.5 text-xs text-[#0E5296] font-bold hover:underline cursor-pointer"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Restablecer y volver al inicio
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {paginatedDocs.map((doc, idx) => {
                 const color = getFileColor(doc.tipoArchivo)
                 const IconComponent = getFileIcon(doc.tipoArchivo)
                 const tamano = formatTamano(doc.tamano)
                 const catPalette = getCategoryPalette(doc.tipoDocumental || doc.categoria)
                 const priority = getDocPriority(doc.titulo, doc.tipoDocumental || doc.categoria)
-                const fechaOficial = obtenerFechaOficialDocumento(doc.nombreArchivo || doc.archivo, doc.titulo)
+                const fechaOficial = obtenerFechaOficialDocumento(doc.archivo, doc.titulo, doc.nombreArchivo, doc.createdAt)
 
                 return (
                   <div
@@ -843,8 +993,10 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
               </p>
             </div>
           )}
-        </div>
-      </section>
+        </>
+      )}
+    </div>
+  </section>
 
       {/* ── MODAL DEL VISUALIZADOR DE DOCUMENTO CON ACCESIBILIDAD RADIX ── */}
       {viewingDoc && (
@@ -862,7 +1014,7 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
               const isImage = ["jpg", "jpeg", "png", "webp", "gif"].some(ext => t.includes(ext) || fileUrl.endsWith("." + ext) || fileName.endsWith("." + ext))
               const isExcel = t.includes("xls") || t.includes("sheet") || t.includes("csv") || fileUrl.endsWith(".xlsx") || fileUrl.endsWith(".xls") || fileUrl.endsWith(".csv") || fileName.endsWith(".xlsx") || fileName.endsWith(".xls") || fileName.endsWith(".csv")
               const isWord = t.includes("doc") || t.includes("word") || fileUrl.endsWith(".docx") || fileUrl.endsWith(".doc") || fileName.endsWith(".docx") || fileName.endsWith(".doc")
-              const fechaOficial = obtenerFechaOficialDocumento(viewingDoc.nombreArchivo || viewingDoc.archivo, viewingDoc.titulo)
+              const fechaOficial = obtenerFechaOficialDocumento(viewingDoc.archivo, viewingDoc.titulo, viewingDoc.nombreArchivo, viewingDoc.createdAt)
 
               return (
                 <>

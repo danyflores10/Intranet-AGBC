@@ -34,7 +34,7 @@ export const ESTRUCTURA_JERARQUICA: DireccionDef[] = [
       },
       {
         codigo: "DGE_AUDIT",
-        nombre: "Auditoría",
+        nombre: "Auditoria Interna",
         descripcion: "Control interno, auditoría gubernamental y evaluación de gestión",
         orden: 3,
       },
@@ -49,7 +49,7 @@ export const ESTRUCTURA_JERARQUICA: DireccionDef[] = [
   {
     codigo: "DAF",
     nombre: "Dirección Administrativa Financiera",
-    descripcion: "Administración de recursos humanos, gestión presupuestaria, contable y activos",
+    descripcion: "Administración de recursos humanos, tesorería, sistemas, presupuestos, contabilidad y bienes de la institución",
     orden: 2,
     subcategorias: [
       {
@@ -59,10 +59,34 @@ export const ESTRUCTURA_JERARQUICA: DireccionDef[] = [
         orden: 1,
       },
       {
+        codigo: "DAF_TESO",
+        nombre: "Tesorería Facturación y Cobranzas",
+        descripcion: "Gestión de tesorería, recaudaciones, cobranzas, facturación y órdenes de pago",
+        orden: 2,
+      },
+      {
+        codigo: "DAF_SIST",
+        nombre: "Sistemas",
+        descripcion: "Sistemas de información, tecnologías, seguridad informática, redes y soporte técnico",
+        orden: 3,
+      },
+      {
+        codigo: "DAF_PRES",
+        nombre: "Presupuesto y Adquisiciones",
+        descripcion: "Planificación presupuestaria, contrataciones, adquisiciones y compras",
+        orden: 4,
+      },
+      {
         codigo: "DAF_CONTA",
         nombre: "Contabilidad Nacional e Internacional",
-        descripcion: "Tesorería, recaudaciones, compras y activos fijos, presupuestos y fondo rotativo",
-        orden: 2,
+        descripcion: "Contabilidad integrada, fondos rotativos, retenciones y cargos de cuenta",
+        orden: 5,
+      },
+      {
+        codigo: "DAF_BIENES",
+        nombre: "Bienes de Uso, Bienes de Consumo y Servicios Generales",
+        descripcion: "SABS, activos fijos, vehículos institucional, telefonía, uniformes y servicios generales",
+        orden: 6,
       },
     ],
   },
@@ -87,9 +111,9 @@ export const ESTRUCTURA_JERARQUICA: DireccionDef[] = [
     orden: 4,
     subcategorias: [
       {
-        codigo: "DC_IMC",
-        nombre: "Relaciones I. M. C.",
-        descripcion: "Relaciones Institucionales, Marketing y Comercial, atención de quejas y reclamos",
+        codigo: "DC_RIMC",
+        nombre: "Relaciones Internacionales Marketing y Comunicación",
+        descripcion: "Relaciones Internacionales, Marketing y Comercial, atención de quejas y reclamos",
         orden: 1,
       },
     ],
@@ -142,12 +166,12 @@ export function clasificarDocumento(archivo?: string | null, titulo?: string | n
   if (/auditoria/i.test(norm)) {
     return {
       direccionNombre: "Dirección General Ejecutiva",
-      subcategoriaNombre: "Auditoría",
+      subcategoriaNombre: "Auditoria Interna",
       tipoDocumental,
     }
   }
 
-  if (/legal|sumario|resoluciones.*admini|gescon/i.test(norm)) {
+  if (/legal|sumario|resoluciones.*admini/i.test(norm)) {
     return {
       direccionNombre: "Dirección General Ejecutiva",
       subcategoriaNombre: "Legal",
@@ -156,7 +180,7 @@ export function clasificarDocumento(archivo?: string | null, titulo?: string | n
   }
 
   if (
-    /personal|pasantia|refrigerio|ropa.*trabajo|fondo.*social|pasajes.*viaticos|administracion.*de.*perso/i.test(
+    /personal|pasantia|fondo.*social|pasajes.*viaticos|administracion.*de.*perso/i.test(
       norm
     )
   ) {
@@ -167,18 +191,56 @@ export function clasificarDocumento(archivo?: string | null, titulo?: string | n
     }
   }
 
+  // DAF - Tesorería Facturación y Cobranzas
+  if (/tesoreria|cobranza|recaudacion|orden.*de.*pago|facturacion/i.test(norm)) {
+    return {
+      direccionNombre: "Dirección Administrativa Financiera",
+      subcategoriaNombre: "Tesorería Facturación y Cobranzas",
+      tipoDocumental,
+    }
+  }
+
+  // DAF - Sistemas / Tecnologías
+  if (/seguridad.*informacion|sistema.*gescon|sistema.*sireco|sistema.*senca|sigec|trackingbo|software|hardware|redes/i.test(norm)) {
+    return {
+      direccionNombre: "Dirección Administrativa Financiera",
+      subcategoriaNombre: "Sistemas",
+      tipoDocumental,
+    }
+  }
+
+  // DAF - Presupuesto y Adquisiciones
+  if (/presupuesto|adquisicion|contratacion.*excepcion/i.test(norm)) {
+    return {
+      direccionNombre: "Dirección Administrativa Financiera",
+      subcategoriaNombre: "Presupuesto y Adquisiciones",
+      tipoDocumental,
+    }
+  }
+
+  // DAF - Bienes de Uso, Bienes de Consumo y Servicios Generales
+  if (/bienes.*y.*servicios|bienes.*de.*uso|sabs|vehicul|telefonia|ropa.*trabajo|uniforme|refrigerio/i.test(norm)) {
+    return {
+      direccionNombre: "Dirección Administrativa Financiera",
+      subcategoriaNombre: "Bienes de Uso, Bienes de Consumo y Servicios Generales",
+      tipoDocumental,
+    }
+  }
+
+  // Dirección Comercial
   if (
-    /queja|reclama|sireco|sigec|comercial|cn.*08|correspondencia|comite.*de.*reclamaciones/i.test(
+    /queja|reclama|comercial|cn.*08|correspondencia|comite.*de.*reclamaciones|relaciones.*internacionales|marketing|comunicacion/i.test(
       norm
     )
   ) {
     return {
       direccionNombre: "Dirección Comercial",
-      subcategoriaNombre: "Relaciones I. M. C.",
+      subcategoriaNombre: "Relaciones Internacionales Marketing y Comunicación",
       tipoDocumental,
     }
   }
 
+  // Dirección de Operaciones
   if (
     /casilla|senca|calidad|paqueteria|sellos.*postales|felcn|aduanero|rezagos|articulos.*peligrosos|chapas|llaves.*blancas|incautacion.*envio/i.test(
       norm
@@ -191,6 +253,7 @@ export function clasificarDocumento(archivo?: string | null, titulo?: string | n
     }
   }
 
+  // DGE - Planificación
   if (
     /planificacion|diagnostico|rediseno|organigrama|proceso.*organi|poa|programacion.*operaci|organizacion.*administra|aprobacion.*de.*manuales/i.test(
       norm
@@ -203,22 +266,15 @@ export function clasificarDocumento(archivo?: string | null, titulo?: string | n
     }
   }
 
+  // DAF - Contabilidad Nacional e Internacional
   if (
-    /fondo.*rotativo|recaudacion|tributaria|vehicul|telefonia|orden.*de.*pago|cobranza|contratacion.*excepcion|contabilidad|presupuesto|tesoreria|cargos.*de.*cuenta|bienes.*y.*servicios|sabs|administrativa.*financiera/i.test(
+    /fondo.*rotativo|tributaria|contabilidad|cargos.*de.*cuenta/i.test(
       norm
     )
   ) {
     return {
       direccionNombre: "Dirección Administrativa Financiera",
       subcategoriaNombre: "Contabilidad Nacional e Internacional",
-      tipoDocumental,
-    }
-  }
-
-  if (/seguridad.*informacion/i.test(norm)) {
-    return {
-      direccionNombre: "Dirección General Ejecutiva",
-      subcategoriaNombre: "Planificación",
       tipoDocumental,
     }
   }

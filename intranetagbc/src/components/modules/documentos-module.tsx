@@ -29,6 +29,10 @@ import {
   HandshakeIcon,
   RotateCcwIcon,
   SlidersHorizontalIcon,
+  FolderOpenIcon,
+  ArrowLeftIcon,
+  ExternalLinkIcon,
+  UploadCloudIcon,
 } from "lucide-react"
 import toast from "react-hot-toast"
 
@@ -53,7 +57,7 @@ import { registrarAccionDocumentoAction } from "@/actions/auditoria"
 import { PERMISOS } from "@/lib/auth/permisos"
 import { crearContextoAcceso, puedeAcceder, type UsuarioRbac } from "@/lib/rbac"
 import { DocumentContentViewer } from "@/components/modules/document-content-viewer"
-import { DocumentosBulkDialog } from "@/components/modules/documentos-bulk-dialog"
+import { ImportarCatalogoDialog } from "@/components/modules/importar-catalogo-dialog"
 import * as XLSX from "xlsx"
 import { LISTA_DOCUMENTOS_OFICIALES, obtenerFechaOficialDocumento } from "@/lib/documentos-fechas-map"
 import { ESTRUCTURA_JERARQUICA, TIPOS_DOCUMENTALES, clasificarDocumento } from "@/lib/documentos-jerarquia"
@@ -66,7 +70,7 @@ export function getDocumentUrl(archivo: string | null): string {
   return `/api/documentos/${clean}`
 }
 
-type Tab = "todos" | "archivos" | "categorias"
+type Tab = "todos" | "categorias"
 
 interface DocRow {
   id: string
@@ -151,8 +155,13 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   const [tipoDocumentalFiltro, setTipoDocumentalFiltro] = useState<string | null>(null)
   const [nivelCatFiltro, setNivelCatFiltro] = useState<number | null>(null)
 
+  // Exploración por carpetas para Tab Categorías Jerárquicas (Nivel 1 -> Nivel 2 -> Nivel 3 -> Documentos)
+  const [catFolderDirId, setCatFolderDirId] = useState<string | null>(null)
+  const [catFolderSubId, setCatFolderSubId] = useState<string | null>(null)
+  const [catFolderTipoId, setCatFolderTipoId] = useState<string | null>(null)
+
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [bulkDialogOpen, setBulkDialogOpen] = useState(false)
+  const [importCatalogOpen, setImportCatalogOpen] = useState(false)
   const [catDialogOpen, setCatDialogOpen] = useState(false)
   const [previewDoc, setPreviewDoc] = useState<DocRow | null>(null)
   const [editDoc, setEditDoc] = useState<DocRow | null>(null)
@@ -215,6 +224,9 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
     setSubcategoriaFiltro(null)
     setTipoDocumentalFiltro(null)
     setNivelCatFiltro(null)
+    setCatFolderDirId(null)
+    setCatFolderSubId(null)
+    setCatFolderTipoId(null)
     setCurrentPage(1)
     setSelectedIds([])
   }
@@ -527,31 +539,93 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
     })
   }, [docsEnriquecidos, searchQuery, direccionFiltro, subcategoriaFiltro, tipoDocumentalFiltro])
 
-  const filteredArchivos = useMemo(() => {
-    return docsConArchivo.filter((d) => {
-      const matchSearch =
-        !searchQuery ||
-        d.titulo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (d.nombreArchivo && d.nombreArchivo.toLowerCase().includes(searchQuery.toLowerCase()))
-      const matchDir = !direccionFiltro || d.direccion === direccionFiltro
-      const matchSub = !subcategoriaFiltro || d.subcategoria === subcategoriaFiltro
-      const matchTipo = !tipoDocumentalFiltro || d.tipoDocumental === tipoDocumentalFiltro
-      return matchSearch && matchDir && matchSub && matchTipo
+  const selectedDir = useMemo(
+    () => (catFolderDirId ? categorias.find((c) => c.id === catFolderDirId) : null),
+    [catFolderDirId, categorias]
+  )
+
+  const selectedSub = useMemo(
+    () => (catFolderSubId ? categorias.find((c) => c.id === catFolderSubId) : null),
+    [catFolderSubId, categorias]
+  )
+
+  const selectedTipo = useMemo(
+    () => (catFolderTipoId ? categorias.find((c) => c.id === catFolderTipoId) : null),
+    [catFolderTipoId, categorias]
+  )
+
+  // Documentos dentro del tipo documental seleccionado
+  const docsEnCategoriaSeleccionada = useMemo(() => {
+    if (!selectedTipo) return []
+    return docsEnriquecidos.filter((d) => {
+      const matchDir = !selectedDir || d.direccion?.toLowerCase() === selectedDir.nombre.toLowerCase()
+      const matchSub = !selectedSub || d.subcategoria?.toLowerCase() === selectedSub.nombre.toLowerCase()
+      const matchTipo =
+        d.tipoDocumental?.toLowerCase() === selectedTipo.nombre.toLowerCase() ||
+        d.categoriaId === selectedTipo.id
+      return matchDir && matchSub && matchTipo
     })
-  }, [docsConArchivo, searchQuery, direccionFiltro, subcategoriaFiltro, tipoDocumentalFiltro])
+  }, [selectedDir, selectedSub, selectedTipo, docsEnriquecidos])
 
   const filteredCategorias = useMemo(() => {
-    return categorias.filter((c) => {
-      const matchSearch =
-        !searchQuery ||
-        c.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (c.descripcion && c.descripcion.toLowerCase().includes(searchQuery.toLowerCase()))
-      const matchNivel = !nivelCatFiltro || c.nivel === nivelCatFiltro
-      return matchSearch && matchNivel
-    })
-  }, [categorias, searchQuery, nivelCatFiltro])
+    // Si hay búsqueda activa: buscar en todas las categorías
+    if (searchQuery.trim().length > 0) {
+      const q = searchQuery.toLowerCase().trim()
+      return categorias.filter((c) => {
+        return (
+          c.nombre.toLowerCase().includes(q) ||
+          (c.descripcion && c.descripcion.toLowerCase().includes(q))
+        )
+      })
+    }
 
-  const currentList = tab === "todos" ? filteredDocs : tab === "archivos" ? filteredArchivos : filteredCategorias
+    // Modo exploración de carpetas jerárquicas:
+    // Nivel 1: Sin dirección seleccionada -> SOLO LAS 4 DIRECCIONES
+    if (!catFolderDirId) {
+      return categorias.filter((c) => c.nivel === 1)
+    }
+
+    // Nivel 2: Con dirección seleccionada -> Subcategorías de esta Dirección
+    if (catFolderDirId && !catFolderSubId) {
+      return categorias.filter((c) => c.nivel === 2 && c.parentId === catFolderDirId)
+    }
+
+    // Nivel 3: Con subcategoría seleccionada -> Las 6 categorías estándar de esta Subcategoría
+    if (catFolderDirId && catFolderSubId && !catFolderTipoId) {
+      return categorias.filter((c) => c.nivel === 3 && c.parentId === catFolderSubId)
+    }
+
+    // Nivel 4: Dentro del tipo documental -> Devolver documentos de esta categoría
+    return docsEnCategoriaSeleccionada
+  }, [categorias, searchQuery, catFolderDirId, catFolderSubId, catFolderTipoId, docsEnCategoriaSeleccionada])
+
+  const handleDrillDown = (cat: any) => {
+    if (cat.nivel === 1) {
+      setCatFolderDirId(cat.id)
+      setCatFolderSubId(null)
+      setCatFolderTipoId(null)
+    } else if (cat.nivel === 2) {
+      if (!catFolderDirId && cat.parentId) {
+        setCatFolderDirId(cat.parentId)
+      }
+      setCatFolderSubId(cat.id)
+      setCatFolderTipoId(null)
+    } else if (cat.nivel === 3) {
+      if (cat.parentId) {
+        setCatFolderSubId(cat.parentId)
+        const parentSub = categorias.find((c) => c.id === cat.parentId)
+        if (parentSub && parentSub.parentId) {
+          setCatFolderDirId(parentSub.parentId)
+        }
+      }
+      setCatFolderTipoId(cat.id)
+    }
+    setSearchQuery("")
+    setCurrentPage(1)
+    setSelectedIds([])
+  }
+
+  const currentList = tab === "todos" ? filteredDocs : filteredCategorias
   const totalPages = Math.max(1, Math.ceil(currentList.length / pageSize))
   const paginatedList = currentList.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
@@ -633,14 +707,15 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         ]
       ]
 
-      const origin = typeof window !== "undefined" ? window.location.origin : ""
+      // Base URL fija de producción para que el archivo Excel funcione globalmente al hacer clic
+      const PROD_BASE_URL = "https://intranet.correos.gob.bo"
 
       docsToExport.forEach((d: any, idx: number) => {
-        const fechaOficial = obtenerFechaOficialDocumento(d.nombreArchivo || d.archivo, d.titulo)
+        const fechaOficial = obtenerFechaOficialDocumento(d.archivo, d.titulo, d.nombreArchivo, d.createdAt)
         const relPath = d.archivo?.startsWith("/") ? d.archivo : `/documentos/${d.archivo}`
-        const fullUrl = d.archivo ? (d.archivo.startsWith("http") ? d.archivo : `${origin}${relPath}`) : ""
+        const fullUrl = d.archivo ? (d.archivo.startsWith("http") ? d.archivo : `${PROD_BASE_URL}${relPath}`) : ""
 
-        const jerarquia = clasificarDocumento(d.nombreArchivo || d.archivo, d.titulo)
+        const jerarquia = clasificarDocumento(d.archivo || d.nombreArchivo, d.titulo)
         const direccion = d.direccion || jerarquia.direccionNombre
         const subcategoria = d.subcategoria || jerarquia.subcategoriaNombre
         const tipoDoc = d.tipoDocumental || d.categoria || jerarquia.tipoDocumental
@@ -673,11 +748,11 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         { wch: 32 },  // Enlace
       ]
 
-      // Enriquecer cada celda de enlace con hipervínculo nativo cliqueable en Excel
+      // Enriquecer cada celda de enlace con hipervínculo nativo cliqueable en Excel apuntando a producción
       docsToExport.forEach((d: any, idx: number) => {
         if (d.archivo) {
           const relPath = d.archivo?.startsWith("/") ? d.archivo : `/documentos/${d.archivo}`
-          const fullUrl = d.archivo.startsWith("http") ? d.archivo : `${origin}${relPath}`
+          const fullUrl = d.archivo.startsWith("http") ? d.archivo : `${PROD_BASE_URL}${relPath}`
           const cellAddress = XLSX.utils.encode_cell({ r: 6 + idx, c: 8 })
           ws[cellAddress] = {
             t: "s",
@@ -724,32 +799,45 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {canCreateDocumento && tab !== "categorias" && (
-            <Button
-              variant="outline"
-              className="border-2 border-[#0E5296] bg-white hover:bg-blue-50/90 text-[#002F6C] font-black rounded-2xl shadow-xs cursor-pointer text-xs transition-all"
-              onClick={() => setBulkDialogOpen(true)}
-            >
-              <LayersIcon className="mr-1.5 h-4 w-4 text-[#0E5296]" />
-              Subir varios documentos
-            </Button>
-          )}
           {canCreateDocumento && (
             <Button
               className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold rounded-2xl shadow-md shadow-[#0E5296]/20 cursor-pointer text-xs"
               onClick={() => {
                 if (tab === "categorias") {
-                  setEditCat(null)
-                  setCatNivel(1)
-                  setCatParentId("")
-                  setCatDialogOpen(true)
+                  if (catFolderTipoId) {
+                    setDocDireccion(selectedDir?.nombre || "")
+                    setDocSubcategoria(selectedSub?.nombre || "")
+                    setDocTipoDocumental(selectedTipo?.nombre || "")
+                    openCreateDoc()
+                  } else {
+                    setEditCat(null)
+                    if (!catFolderDirId) {
+                      setCatNivel(1)
+                      setCatParentId("")
+                    } else if (catFolderDirId && !catFolderSubId) {
+                      setCatNivel(2)
+                      setCatParentId(catFolderDirId)
+                    } else if (catFolderSubId) {
+                      setCatNivel(3)
+                      setCatParentId(catFolderSubId)
+                    }
+                    setCatDialogOpen(true)
+                  }
                 } else {
                   openCreateDoc()
                 }
               }}
             >
               <PlusIcon className="mr-1.5 h-4 w-4 text-[#FFCC00]" />
-              {tab === "categorias" ? "Nueva Categoría" : "Subir nuevo documento"}
+              {tab === "categorias"
+                ? catFolderTipoId
+                  ? "Subir documento aquí"
+                  : catFolderSubId
+                  ? "Nueva Categoría (Nivel 3)"
+                  : catFolderDirId
+                  ? "Nueva Subcategoría (Nivel 2)"
+                  : "Nueva Dirección (Nivel 1)"
+                : "Subir nuevo documento"}
             </Button>
           )}
         </div>
@@ -759,7 +847,6 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
       <div className="flex items-center gap-2 rounded-2xl bg-slate-100/80 p-1.5 border border-[#002F6C]/10 w-fit">
         {([
           { key: "todos" as Tab, label: "Todos los Documentos", icon: FileTextIcon, count: docsEnriquecidos.length },
-          { key: "archivos" as Tab, label: "Archivos Adjuntos", icon: UploadIcon, count: docsConArchivo.length },
           { key: "categorias" as Tab, label: "Categorías Jerárquicas", icon: FolderIcon, count: categorias.length },
         ]).map((t) => (
           <button
@@ -786,39 +873,47 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="flex items-center gap-3.5 rounded-2xl border-2 border-sky-200/90 bg-gradient-to-br from-sky-50 via-blue-50/60 to-white p-4 shadow-xs">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0E5296] text-[#FFCC00]">
-            <FileTextIcon className="h-5 w-5" />
+            {tab === "categorias" ? <Building2Icon className="h-5 w-5" /> : <FileTextIcon className="h-5 w-5" />}
           </div>
           <div>
             <div className="text-2xl font-black text-[#002F6C]">
-              {tab === "categorias" ? categorias.length : docsEnriquecidos.length}
+              {tab === "categorias" ? categorias.filter((c) => c.nivel === 1).length : docsEnriquecidos.length}
             </div>
             <div className="text-xs text-slate-600 font-bold">
-              {tab === "categorias" ? "Total Categorías Registradas" : "Total Documentos Registrados"}
+              {tab === "categorias" ? "4 Direcciones (Nivel 1)" : "Total Documentos Registrados"}
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-3.5 rounded-2xl border-2 border-amber-200/90 bg-gradient-to-br from-amber-50 via-yellow-50/60 to-white p-4 shadow-xs">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FFCC00] text-[#002F6C]">
-            <CheckCircle2Icon className="h-5 w-5" />
+            {tab === "categorias" ? <BriefcaseIcon className="h-5 w-5" /> : <CheckCircle2Icon className="h-5 w-5" />}
           </div>
           <div>
             <div className="text-2xl font-black text-[#002F6C]">
-              {docsEnriquecidos.filter((d) => d.estado === "publicado").length}
+              {tab === "categorias"
+                ? categorias.filter((c) => c.nivel === 2).length
+                : docsEnriquecidos.filter((d) => d.estado === "publicado").length}
             </div>
-            <div className="text-xs text-slate-600 font-bold">Publicados / Vigentes</div>
+            <div className="text-xs text-slate-600 font-bold">
+              {tab === "categorias" ? `${categorias.filter((c) => c.nivel === 2).length} Subcategorías (Nivel 2)` : "Publicados / Vigentes"}
+            </div>
           </div>
         </div>
 
         <div className="flex items-center gap-3.5 rounded-2xl border-2 border-blue-200/90 bg-gradient-to-br from-blue-50 via-sky-50/50 to-white p-4 shadow-xs">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-200 text-[#002F6C]">
-            <SparklesIcon className="h-5 w-5" />
+            <FolderIcon className="h-5 w-5 text-[#002F6C]" />
           </div>
           <div>
             <div className="text-2xl font-black text-[#002F6C]">
-              {docsConArchivo.length}
+              {tab === "categorias"
+                ? categorias.filter((c) => c.nivel === 3).length
+                : categorias.length}
             </div>
-            <div className="text-xs text-slate-600 font-bold">Con Archivo Descargable</div>
+            <div className="text-xs text-slate-600 font-bold">
+              {tab === "categorias" ? `${categorias.filter((c) => c.nivel === 3).length} Tipos Documentales (6 por área)` : "Categorías Jerárquicas Totales"}
+            </div>
           </div>
         </div>
       </div>
@@ -839,8 +934,8 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
-            {/* BOTÓN: "Exportar Catálogo" - tal como solicitó el usuario */}
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            {/* BOTÓN: "Exportar Catálogo" */}
             <Button
               type="button"
               onClick={handleExportarExcelDocumentos}
@@ -850,6 +945,19 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
               <FileSpreadsheetIcon className="h-4 w-4 text-[#FFCC00]" />
               <span>Exportar Catálogo</span>
             </Button>
+
+            {/* BOTÓN: "Importar Catálogo" */}
+            {canCreateDocumento && (
+              <Button
+                type="button"
+                onClick={() => setImportCatalogOpen(true)}
+                className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold rounded-xl text-xs gap-1.5 h-9 cursor-pointer shadow-xs flex items-center px-3.5 transition-all"
+                title="Importar catálogo desde Excel y sincronizar documentos o cambios"
+              >
+                <UploadCloudIcon className="h-4 w-4 text-[#FFCC00]" />
+                <span>Importar Catálogo</span>
+              </Button>
+            )}
 
             <span className="text-xs font-bold text-[#0E5296] bg-blue-50/80 border border-[#0E5296]/20 px-3 py-1.5 rounded-xl shadow-2xs">
               {currentList.length} encontrados
@@ -952,32 +1060,116 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
           </div>
         )}
 
-        {/* Filtros para Tab Categorías */}
+        {/* Explorador de Navegación por Carpetas Jerárquicas */}
         {tab === "categorias" && (
-          <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2 text-xs">
-            <span className="font-bold text-[#002F6C] text-[11px]">Nivel Jerárquico:</span>
-            {[
-              { val: null, label: "Todos los Niveles" },
-              { val: 1, label: "Nivel 1 • Direcciones" },
-              { val: 2, label: "Nivel 2 • Subcategorías" },
-              { val: 3, label: "Nivel 3 • Tipos Documentales" },
-            ].map((n) => (
+          <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+            {/* Ruta Jerárquica de Carpetas (Breadcrumbs) */}
+            <div className="flex flex-wrap items-center gap-1.5 font-bold">
               <button
-                key={String(n.val)}
                 type="button"
                 onClick={() => {
-                  setNivelCatFiltro(n.val)
+                  setCatFolderDirId(null)
+                  setCatFolderSubId(null)
+                  setCatFolderTipoId(null)
                   setCurrentPage(1)
+                  setSelectedIds([])
                 }}
-                className={`px-3 py-1 rounded-full text-xs font-bold border transition-all cursor-pointer ${
-                  nivelCatFiltro === n.val
-                    ? "bg-[#0E5296] text-[#FFCC00] border-[#0E5296] shadow-xs"
-                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                  !catFolderDirId
+                    ? "bg-[#0E5296] text-[#FFCC00] shadow-sm shadow-[#0E5296]/20 font-black"
+                    : "bg-slate-100 text-[#002F6C] hover:bg-blue-50"
                 }`}
               >
-                {n.label}
+                <FolderIcon className="h-4 w-4 text-amber-500" />
+                <span>4 Direcciones</span>
               </button>
-            ))}
+
+              {selectedDir && (
+                <>
+                  <ChevronRightIcon className="h-4 w-4 text-slate-400" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCatFolderSubId(null)
+                      setCatFolderTipoId(null)
+                      setCurrentPage(1)
+                      setSelectedIds([])
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                      catFolderDirId && !catFolderSubId
+                        ? "bg-[#0E5296] text-[#FFCC00] shadow-sm shadow-[#0E5296]/20 font-black"
+                        : "bg-slate-100 text-[#002F6C] hover:bg-blue-50"
+                    }`}
+                  >
+                    <FolderOpenIcon className="h-4 w-4 text-amber-500" />
+                    <span>{selectedDir.nombre}</span>
+                  </button>
+                </>
+              )}
+
+              {selectedSub && (
+                <>
+                  <ChevronRightIcon className="h-4 w-4 text-slate-400" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCatFolderTipoId(null)
+                      setCurrentPage(1)
+                      setSelectedIds([])
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                      catFolderSubId && !catFolderTipoId
+                        ? "bg-[#0E5296] text-[#FFCC00] shadow-sm shadow-[#0E5296]/20 font-black"
+                        : "bg-slate-100 text-[#002F6C] hover:bg-blue-50"
+                    }`}
+                  >
+                    <FolderOpenIcon className="h-4 w-4 text-purple-500" />
+                    <span>{selectedSub.nombre}</span>
+                  </button>
+                </>
+              )}
+
+              {selectedTipo && (
+                <>
+                  <ChevronRightIcon className="h-4 w-4 text-slate-400" />
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 text-white shadow-sm font-black">
+                    <FileTextIcon className="h-4 w-4 text-[#002F6C]" />
+                    <span>{selectedTipo.nombre}</span>
+                  </span>
+                </>
+              )}
+            </div>
+
+            {/* Botón Volver si estamos dentro de alguna carpeta */}
+            {(catFolderDirId || catFolderSubId || catFolderTipoId) && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  if (catFolderTipoId) {
+                    setCatFolderTipoId(null)
+                  } else if (catFolderSubId) {
+                    setCatFolderSubId(null)
+                  } else if (catFolderDirId) {
+                    setCatFolderDirId(null)
+                  }
+                  setCurrentPage(1)
+                  setSelectedIds([])
+                }}
+                className="h-8 px-3 rounded-xl border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-[#002F6C] font-bold text-xs gap-1.5 cursor-pointer shadow-xs ml-auto"
+              >
+                <ArrowLeftIcon className="h-3.5 w-3.5 text-[#0E5296]" />
+                <span>
+                  Volver a{" "}
+                  {catFolderTipoId
+                    ? "Categorías"
+                    : catFolderSubId
+                    ? "Subcategorías"
+                    : "Direcciones"}
+                </span>
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -1058,10 +1250,10 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                     )}
                   </button>
                 </th>
-                <th className="py-3 px-4">{tab === "categorias" ? "Categoría / Nivel" : "Documento"}</th>
-                <th className="py-3 px-4">{tab === "categorias" ? "Pertenece a (Padre)" : "Dirección / Área"}</th>
-                <th className="py-3 px-4">{tab === "categorias" ? "Descripción" : "Tipo Documental"}</th>
-                <th className="py-3 px-4">{tab === "categorias" ? "Fecha" : "Fecha Oficial"}</th>
+                <th className="py-3 px-4">{tab === "categorias" && !catFolderTipoId ? "Categoría / Carpeta" : "Documento"}</th>
+                <th className="py-3 px-4">{tab === "categorias" && !catFolderTipoId ? "Jerarquía / Pertenece a" : "Dirección / Área"}</th>
+                <th className="py-3 px-4">{tab === "categorias" && !catFolderTipoId ? "Contenido / Sub-niveles" : "Tipo Documental"}</th>
+                <th className="py-3 px-4">{tab === "categorias" && !catFolderTipoId ? "Fecha Creación" : "Fecha Oficial"}</th>
                 <th className="py-3 px-4 text-right">Acciones</th>
               </tr>
             </thead>
@@ -1069,18 +1261,50 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
               {currentList.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-slate-400 font-medium">
-                    No hay registros en {tab === "categorias" ? "Categorías" : tab === "archivos" ? "Archivos Adjuntos" : "Todos los Documentos"}.
+                    {tab === "categorias" && catFolderTipoId ? (
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <FolderOpenIcon className="h-10 w-10 text-amber-400 stroke-1" />
+                        <p className="text-sm font-bold text-[#002F6C]">No hay documentos en {selectedTipo?.nombre} todavía</p>
+                        <p className="text-xs text-slate-400">
+                          Esta categoría ({selectedDir?.nombre} &gt; {selectedSub?.nombre}) está lista para recibir documentos.
+                        </p>
+                        {canCreateDocumento && (
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setDocDireccion(selectedDir?.nombre || "")
+                              setDocSubcategoria(selectedSub?.nombre || "")
+                              setDocTipoDocumental(selectedTipo?.nombre || "")
+                              openCreateDoc()
+                            }}
+                            className="mt-2 bg-[#0E5296] hover:bg-[#002F6C] text-white text-xs font-bold rounded-xl cursor-pointer"
+                          >
+                            <PlusIcon className="mr-1.5 h-3.5 w-3.5 text-[#FFCC00]" />
+                            Subir documento a {selectedTipo?.nombre}
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <span>No hay registros en {tab === "categorias" ? "Categorías" : "Todos los Documentos"}.</span>
+                    )}
                   </td>
                 </tr>
               ) : (
                 paginatedList.map((item: any) => {
-                  const isCat = tab === "categorias"
+                  const isCat = tab === "categorias" && !catFolderTipoId && !item.tipoArchivo
                   const Icon = isCat ? FolderIcon : getFileIcon(item.tipoArchivo)
                   const iconColor = isCat ? "#FF8800" : getFileColor(item.tipoArchivo)
 
                   if (isCat) {
                     const parentCat = categorias.find((p) => p.id === item.parentId)
                     const nivel = item.nivel || 1
+                    const subCatsCount = categorias.filter((c) => c.parentId === item.id).length
+                    const docsCount = nivel === 1
+                      ? docsEnriquecidos.filter((d) => d.direccion?.toLowerCase() === item.nombre.toLowerCase()).length
+                      : nivel === 2
+                      ? docsEnriquecidos.filter((d) => d.subcategoria?.toLowerCase() === item.nombre.toLowerCase()).length
+                      : docsEnriquecidos.filter((d) => (selectedSub ? d.subcategoria?.toLowerCase() === selectedSub.nombre.toLowerCase() : true) && (d.tipoDocumental?.toLowerCase() === item.nombre.toLowerCase() || d.categoriaId === item.id)).length
+
                     const nivelBadge =
                       nivel === 1
                         ? { label: "Nivel 1 • Dirección", bg: "bg-blue-50 text-[#002F6C] border-blue-200" }
@@ -1089,8 +1313,12 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                         : { label: "Nivel 3 • Tipo Documental", bg: "bg-amber-50 text-amber-800 border-amber-200" }
 
                     return (
-                      <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
-                        <td className="py-3 px-3 text-center">
+                      <tr
+                        key={item.id}
+                        onClick={() => handleDrillDown(item)}
+                        className="hover:bg-amber-50/40 transition-colors group cursor-pointer"
+                      >
+                        <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
                             onClick={() => handleToggleSelect(item.id)}
@@ -1105,11 +1333,20 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 font-black shadow-xs border border-amber-200">
-                              <Icon className="h-5 w-5" />
+                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-black shadow-xs border ${
+                              nivel === 1
+                                ? "bg-amber-50 text-amber-600 border-amber-200 group-hover:bg-amber-500 group-hover:text-white transition-colors"
+                                : nivel === 2
+                                ? "bg-purple-50 text-purple-600 border-purple-200 group-hover:bg-purple-600 group-hover:text-white transition-colors"
+                                : "bg-blue-50 text-blue-600 border-blue-200 group-hover:bg-[#0E5296] group-hover:text-white transition-colors"
+                            }`}>
+                              {nivel === 1 ? <Building2Icon className="h-5 w-5" /> : nivel === 2 ? <BriefcaseIcon className="h-5 w-5" /> : <FolderIcon className="h-5 w-5" />}
                             </div>
                             <div>
-                              <p className="font-bold text-[#002F6C] text-sm">{item.nombre}</p>
+                              <p className="font-bold text-[#002F6C] text-sm group-hover:text-[#0E5296] transition-colors flex items-center gap-1.5">
+                                <span>{item.nombre}</span>
+                                <ChevronRightIcon className="h-3.5 w-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </p>
                               <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[9.5px] font-bold border mt-0.5 ${nivelBadge.bg}`}>
                                 {nivelBadge.label}
                               </span>
@@ -1128,17 +1365,39 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                           )}
                         </td>
                         <td className="py-3 px-4 max-w-[280px]">
-                          <p className="text-slate-600 truncate text-xs">
-                            {item.descripcion || "—"}
-                          </p>
+                          <div className="space-y-0.5">
+                            <p className="text-xs font-bold text-slate-700">
+                              {nivel === 1
+                                ? `${subCatsCount} Subcategorías disponibles`
+                                : nivel === 2
+                                ? `6 Categorías estándar (${docsCount} docs)`
+                                : `${docsCount} Documentos registrados`}
+                            </p>
+                            {item.descripcion && (
+                              <p className="text-slate-500 truncate text-[11px]">
+                                {item.descripcion}
+                              </p>
+                            )}
+                          </div>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="text-slate-500 text-xs">
+                          <span className="text-slate-500 text-xs font-medium">
                             {item.createdAt ? new Date(item.createdAt).toLocaleDateString("es-BO") : "—"}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-right">
+                        <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-1.5">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDrillDown(item)}
+                              className="h-8 px-2.5 rounded-xl text-xs font-bold text-[#0E5296] hover:bg-blue-50 cursor-pointer hidden sm:flex items-center gap-1"
+                              title="Abrir carpeta y ver contenido"
+                            >
+                              <span>{nivel === 3 ? "Ver docs" : "Abrir"}</span>
+                              <ChevronRightIcon className="h-3.5 w-3.5" />
+                            </Button>
                             {canEditDocumento && (
                               <button
                                 onClick={() => {
@@ -1169,7 +1428,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                   }
 
                   // Vista de Fila de Documento
-                  const fechaOficial = obtenerFechaOficialDocumento(item.nombreArchivo || item.archivo, item.titulo)
+                  const fechaOficial = obtenerFechaOficialDocumento(item.archivo, item.titulo, item.nombreArchivo, item.createdAt)
 
                   return (
                     <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
@@ -1718,7 +1977,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
             (() => {
               const fileEffectiveUrl = getDocumentUrl(previewDoc.archivo)
               const downloadUrl = `${fileEffectiveUrl}?download=1`
-              const fechaOficial = obtenerFechaOficialDocumento(previewDoc.nombreArchivo || previewDoc.archivo, previewDoc.titulo)
+              const fechaOficial = obtenerFechaOficialDocumento(previewDoc.archivo, previewDoc.titulo, previewDoc.nombreArchivo, previewDoc.createdAt)
 
               return (
                 <>
@@ -1814,12 +2073,13 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         </DialogContent>
       </Dialog>
 
-      <DocumentosBulkDialog
-        open={bulkDialogOpen}
-        onClose={() => setBulkDialogOpen(false)}
-        existingDocs={documentos}
-        categorias={categorias as any}
-        onSuccess={() => {}}
+      <ImportarCatalogoDialog
+        open={importCatalogOpen}
+        onClose={() => setImportCatalogOpen(false)}
+        existingDocs={docsEnriquecidos}
+        onSuccess={() => {
+          // Re-render handled by Server Action revalidatePath
+        }}
       />
 
       {/* ── Modal de Confirmación Fuerte para Eliminación Permanente ── */}

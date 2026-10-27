@@ -171,7 +171,21 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
 
     if (notif.enlace) {
       setOpen(false)
-      router.push(notif.enlace)
+      const isDocumento =
+        notif.enlace.startsWith("/api/documentos/") ||
+        notif.enlace.startsWith("/documentos/") ||
+        /\.(pdf|docx?|xlsx?|pptx?|txt|csv|zip|rar|7z|png|jpe?g|webp)$/i.test(notif.enlace)
+
+      if (isDocumento) {
+        const cleanUrl = notif.enlace.startsWith("/api/documentos/")
+          ? notif.enlace
+          : `/api/documentos/${notif.enlace.replace(/^\/?(documentos\/)?/, "")}`
+        window.open(cleanUrl, "_blank", "noopener,noreferrer")
+      } else if (notif.enlace.startsWith("http://") || notif.enlace.startsWith("https://")) {
+        window.open(notif.enlace, "_blank", "noopener,noreferrer")
+      } else {
+        router.push(notif.enlace)
+      }
     }
   }, [marcarNotificacionLeidaLocal, router])
 

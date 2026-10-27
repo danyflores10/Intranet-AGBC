@@ -61,6 +61,27 @@ export async function GET(request: NextRequest) {
         return dTit.includes(cleanDocTitle) || cleanDocTitle.includes(dTit)
       })
 
+      // Resolver archivoUrl de catálogo o de adjunto de mensajería
+      let resolvedArchivoUrl: string | null = docMatch?.archivo || null
+      let resolvedNombreArchivo: string | null = docMatch?.nombreArchivo || null
+
+      if (!resolvedArchivoUrl && r.enlace) {
+        const cleanEnlace = r.enlace.trim()
+        if (
+          cleanEnlace.startsWith("/api/documentos/") ||
+          cleanEnlace.startsWith("/documentos/") ||
+          cleanEnlace.match(/\.(pdf|docx?|xlsx?|pptx?|txt|csv|zip|rar|7z|jpe?g|png|webp)$/i)
+        ) {
+          resolvedArchivoUrl = cleanEnlace.startsWith("/api/documentos/")
+            ? cleanEnlace
+            : `/api/documentos/${cleanEnlace.replace(/^\/?(documentos\/)?/, "")}`
+          const parts = cleanEnlace.split("/")
+          resolvedNombreArchivo = parts[parts.length - 1] || "documento_adjunto"
+        }
+      } else if (resolvedArchivoUrl && !resolvedArchivoUrl.startsWith("/api/documentos/")) {
+        resolvedArchivoUrl = `/api/documentos/${resolvedArchivoUrl.replace(/^\/?(documentos\/)?/, "")}`
+      }
+
       return {
         id: r.id,
         titulo: r.titulo,
@@ -68,10 +89,10 @@ export async function GET(request: NextRequest) {
         tipo: r.tipo as any,
         leida: r.leida,
         fecha: fechaFormatted,
-        enlace: r.enlace,
+        enlace: resolvedArchivoUrl || r.enlace,
         remitente: "Dirección General AGBC",
-        archivoUrl: docMatch?.archivo || null,
-        archivoNombre: docMatch?.nombreArchivo || null,
+        archivoUrl: resolvedArchivoUrl,
+        archivoNombre: resolvedNombreArchivo,
         tamano: docMatch?.tamano || null,
         documentoId: docMatch?.id || null,
       }

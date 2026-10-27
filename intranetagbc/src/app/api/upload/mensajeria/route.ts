@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer())
     await writeFile(filePath, buffer)
 
-    const url = `/documentos/${fileName}`
+    const url = `/api/documentos/${fileName}`
 
     return NextResponse.json({
       success: true,

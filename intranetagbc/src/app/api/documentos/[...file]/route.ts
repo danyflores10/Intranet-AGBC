@@ -17,6 +17,11 @@ const MIME_TYPES: Record<string, string> = {
   webp: "image/webp",
   txt: "text/plain; charset=utf-8",
   csv: "text/csv; charset=utf-8",
+  zip: "application/zip",
+  rar: "application/x-rar-compressed",
+  "7z": "application/x-7z-compressed",
+  odt: "application/vnd.oasis.opendocument.text",
+  ods: "application/vnd.oasis.opendocument.spreadsheet",
 }
 
 export async function GET(
@@ -33,13 +38,17 @@ export async function GET(
       return NextResponse.json({ error: "Ruta no especificada" }, { status: 400 })
     }
 
-    // Decode URL component safely
+    // Decode URL component safely and strip redundant "documentos/" prefix
     const decodedPath = decodeURIComponent(rawPath).replace(/\.\./g, "").replace(/^\/+/, "")
+    const cleanPath = decodedPath.replace(/^documentos\//, "")
     
     // Path resolution: search in public/documentos or public
-    let filePath = join(process.cwd(), "public", "documentos", decodedPath)
+    let filePath = join(process.cwd(), "public", "documentos", cleanPath)
     if (!existsSync(filePath)) {
-      filePath = join(process.cwd(), "public", decodedPath)
+      filePath = join(process.cwd(), "public", cleanPath)
+    }
+    if (!existsSync(filePath)) {
+      filePath = join(process.cwd(), "public", "documentos", decodedPath)
     }
 
     if (!existsSync(filePath)) {

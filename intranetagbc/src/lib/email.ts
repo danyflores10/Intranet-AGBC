@@ -720,6 +720,13 @@ export async function sendMensajeriaMasivaEmail({
           .replace(/"/g, "&quot;")
           .replace(/\n/g, "<br/>")
 
+        const cleanAdjuntoRelUrl = adjunto?.url
+          ? (adjunto.url.startsWith("/api/documentos/") ? adjunto.url : `/api/documentos/${adjunto.url.replace(/^\/?(documentos\/)?/, "")}`)
+          : ""
+        const fileUrl = adjunto?.url?.startsWith("http://") || adjunto?.url?.startsWith("https://")
+          ? adjunto.url
+          : `${config.appUrl}${cleanAdjuntoRelUrl}`
+
         const adjuntoHtml = adjunto
           ? `
             <tr>
@@ -733,7 +740,7 @@ export async function sendMensajeriaMasivaEmail({
                       <p style="margin: 0 0 10px; font-size: 13px; color: #334155; font-family: monospace;">
                         ${adjunto.nombre}
                       </p>
-                      <a href="${config.appUrl}${adjunto.url}" target="_blank" style="display: inline-block; background-color: #002F6C; color: #ffffff; text-decoration: none; font-size: 12px; font-weight: 700; padding: 8px 16px; border-radius: 8px;">
+                      <a href="${fileUrl}" target="_blank" style="display: inline-block; background-color: #002F6C; color: #ffffff; text-decoration: none; font-size: 12px; font-weight: 700; padding: 8px 16px; border-radius: 8px;">
                         Ver / Descargar Documento
                       </a>
                     </td>

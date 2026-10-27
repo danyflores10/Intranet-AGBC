@@ -742,8 +742,8 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
                       {selectedNotif.archivoUrl && (
                         <div className="pt-3">
                           <a
-                            href={selectedNotif.archivoUrl}
-                            download={selectedNotif.archivoNombre || "comunicado_agbc.pdf"}
+                            href={selectedNotif.archivoUrl.startsWith("/api/documentos/") ? selectedNotif.archivoUrl : `/api/documentos/${selectedNotif.archivoUrl.replace(/^\/?(documentos\/)?/, "")}`}
+                            download={selectedNotif.archivoNombre || "documento_adjunto"}
                             target="_blank"
                             rel="noopener noreferrer"
                           >
@@ -751,10 +751,10 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
                               type="button"
                               variant="outline"
                               size="sm"
-                              className="rounded-xl text-xs font-bold text-[#002F6C] border-slate-200 gap-1.5"
+                              className="rounded-xl text-xs font-bold text-[#002F6C] border-slate-200 gap-1.5 cursor-pointer hover:bg-slate-50"
                             >
                               <Download className="h-3.5 w-3.5 text-emerald-600" />
-                              Descargar Documento Adjunto (PDF)
+                              Descargar Documento Adjunto ({selectedNotif.archivoNombre ? selectedNotif.archivoNombre.split(".").pop()?.toUpperCase() : "ARCHIVO"})
                             </Button>
                           </a>
                         </div>
