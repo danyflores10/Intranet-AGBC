@@ -94,6 +94,12 @@ export async function obtenerDocumentos() {
       tipoArchivo: documentos.tipoArchivo,
       tamano: documentos.tamano,
       descripcion: documentos.descripcion,
+      version: documentos.version,
+      esVigente: documentos.esVigente,
+      familiaCodigo: documentos.familiaCodigo,
+      fechaEmision: documentos.fechaEmision,
+      numeroCorrelativo: documentos.numeroCorrelativo,
+      disponibilidadArchivo: documentos.disponibilidadArchivo,
       createdAt: documentos.createdAt,
       updatedAt: documentos.updatedAt,
     })

@@ -33,6 +33,8 @@ import {
   ArrowLeftIcon,
   ExternalLinkIcon,
   UploadCloudIcon,
+  HistoryIcon,
+  GitBranchIcon,
 } from "lucide-react"
 import toast from "react-hot-toast"
 
@@ -58,6 +60,7 @@ import { PERMISOS } from "@/lib/auth/permisos"
 import { crearContextoAcceso, puedeAcceder, type UsuarioRbac } from "@/lib/rbac"
 import { DocumentContentViewer } from "@/components/modules/document-content-viewer"
 import { ImportarCatalogoDialog } from "@/components/modules/importar-catalogo-dialog"
+import { HistorialImportacionesDialog } from "@/components/modules/historial-importaciones-dialog"
 import * as XLSX from "xlsx"
 import { LISTA_DOCUMENTOS_OFICIALES, obtenerFechaOficialDocumento } from "@/lib/documentos-fechas-map"
 import { ESTRUCTURA_JERARQUICA, TIPOS_DOCUMENTALES, clasificarDocumento } from "@/lib/documentos-jerarquia"
@@ -89,6 +92,12 @@ interface DocRow {
   tipoArchivo: string | null
   tamano: string | null
   descripcion: string | null
+  version?: string | null
+  esVigente?: boolean | null
+  familiaCodigo?: string | null
+  fechaEmision?: string | null
+  numeroCorrelativo?: number | null
+  disponibilidadArchivo?: string | null
   createdAt: Date
 }
 
@@ -162,6 +171,8 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [importCatalogOpen, setImportCatalogOpen] = useState(false)
+  const [historialImportOpen, setHistorialImportOpen] = useState(false)
+  const [vigenciaFiltro, setVigenciaFiltro] = useState<"todas" | "vigentes" | "historicos" | "falta_pdf">("todas")
   const [catDialogOpen, setCatDialogOpen] = useState(false)
   const [previewDoc, setPreviewDoc] = useState<DocRow | null>(null)
   const [editDoc, setEditDoc] = useState<DocRow | null>(null)
@@ -535,9 +546,14 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
       const matchSub = !subcategoriaFiltro || d.subcategoria === subcategoriaFiltro
       const matchTipo = !tipoDocumentalFiltro || d.tipoDocumental === tipoDocumentalFiltro
 
-      return matchSearch && matchDir && matchSub && matchTipo
+      let matchVigencia = true
+      if (vigenciaFiltro === "vigentes") matchVigencia = d.esVigente !== false
+      else if (vigenciaFiltro === "historicos") matchVigencia = d.esVigente === false
+      else if (vigenciaFiltro === "falta_pdf") matchVigencia = d.disponibilidadArchivo === "falta_archivo"
+
+      return matchSearch && matchDir && matchSub && matchTipo && matchVigencia
     })
-  }, [docsEnriquecidos, searchQuery, direccionFiltro, subcategoriaFiltro, tipoDocumentalFiltro])
+  }, [docsEnriquecidos, searchQuery, direccionFiltro, subcategoriaFiltro, tipoDocumentalFiltro, vigenciaFiltro])
 
   const selectedDir = useMemo(
     () => (catFolderDirId ? categorias.find((c) => c.id === catFolderDirId) : null),
@@ -685,8 +701,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
       }
 
       // Catálogo General de Documentos:
-      // Excluye "TIPO DE FECHA", "RESOLUCIÓN ADMINISTRATIVA", "NOMBRE DEL ARCHIVO", "ESTADO"
-      // Incluye hipervínculos cliqueables en el Excel para ver/descargar directamente
+      // Formato oficial optimizado con Versionamiento, Vigencia, Estado Digital y enlaces cliqueables
       const docsToExport = docsEnriquecidos.length > 0 ? docsEnriquecidos : (LISTA_DOCUMENTOS_OFICIALES as any[])
       const rows = [
         ["AGENCIA BOLIVIANA DE CORREOS - CORREOS DE BOLIVIA (AGBC)"],
@@ -696,14 +711,19 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         [],
         [
           "Nº",
+          "CÓDIGO SISTEMA",
           "TÍTULO DEL DOCUMENTO",
           "DIRECCIÓN",
           "SUB-ÁREA",
           "CATEGORÍA / TIPO",
+          "VERSIÓN",
+          "ESTADO DE VIGENCIA",
           "FECHA DE EMISIÓN / OFICIAL",
           "FORMATO",
           "TAMAÑO",
-          "ENLACE AL ARCHIVO"
+          "ESTADO DE ARCHIVO",
+          "ENLACE AL ARCHIVO",
+          "CHECK"
         ]
       ]
 
@@ -711,9 +731,12 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
       const PROD_BASE_URL = "https://intranet.correos.gob.bo"
 
       docsToExport.forEach((d: any, idx: number) => {
-        const fechaOficial = obtenerFechaOficialDocumento(d.archivo, d.titulo, d.nombreArchivo, d.createdAt)
-        const relPath = d.archivo?.startsWith("/") ? d.archivo : `/documentos/${d.archivo}`
-        const fullUrl = d.archivo ? (d.archivo.startsWith("http") ? d.archivo : `${PROD_BASE_URL}${relPath}`) : ""
+        const numCorrelativo = d.numeroCorrelativo || idx + 1
+        const fechaOficial = d.fechaEmision || obtenerFechaOficialDocumento(d.archivo, d.titulo, d.nombreArchivo, d.createdAt)
+        const relPath = d.archivo?.startsWith("/")
+          ? (d.archivo.startsWith("/api/documentos/") ? d.archivo : `/api/documentos/${d.archivo.replace(/^\/?(documentos\/)?/, "")}`)
+          : (d.archivo ? `/api/documentos/${d.archivo}` : "")
+        const fullUrl = relPath ? (relPath.startsWith("http") ? relPath : `${PROD_BASE_URL}${relPath}`) : ""
 
         const jerarquia = clasificarDocumento(d.archivo || d.nombreArchivo, d.titulo)
         const direccion = d.direccion || jerarquia.direccionNombre
@@ -721,39 +744,55 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         const tipoDoc = d.tipoDocumental || d.categoria || jerarquia.tipoDocumental
 
         const ext = d.tipoArchivo ? d.tipoArchivo.toUpperCase() : (d.archivo?.split(".").pop()?.toUpperCase() || "PDF")
+        const versionStr = d.version || "v1.0"
+        const vigenciaStr = d.esVigente !== false ? "Vigente" : "Histórico - Derogado"
+        const disponibilidadStr = d.disponibilidadArchivo === "falta_archivo" ? "FALTA PDF" : "DISPONIBLE"
+        const checkStr = d.disponibilidadArchivo === "falta_archivo" ? "FALTA PDF" : "OK"
 
         rows.push([
-          idx + 1,
+          numCorrelativo,
+          d.id,
           d.titulo,
           direccion,
           subcategoria,
           tipoDoc,
+          versionStr,
+          vigenciaStr,
           fechaOficial || "Sin fecha fija",
           ext,
           d.tamano || "—",
-          fullUrl ? "Ver / Descargar Documento" : "—"
+          disponibilidadStr,
+          fullUrl ? "Ver / Descargar Documento" : "—",
+          checkStr
         ])
       })
 
       const ws = XLSX.utils.aoa_to_sheet(rows)
       ws["!cols"] = [
         { wch: 6 },   // Nº
+        { wch: 26 },  // CÓDIGO SISTEMA
         { wch: 55 },  // Título
         { wch: 34 },  // Dirección
         { wch: 32 },  // Sub-área
         { wch: 22 },  // Tipo / Categoría
+        { wch: 10 },  // Versión
+        { wch: 20 },  // Vigencia
         { wch: 28 },  // Fecha Oficial
         { wch: 10 },  // Formato
         { wch: 12 },  // Tamaño
-        { wch: 32 },  // Enlace
+        { wch: 22 },  // Estado de Archivo
+        { wch: 30 },  // Enlace
+        { wch: 14 },  // Check
       ]
 
       // Enriquecer cada celda de enlace con hipervínculo nativo cliqueable en Excel apuntando a producción
       docsToExport.forEach((d: any, idx: number) => {
         if (d.archivo) {
-          const relPath = d.archivo?.startsWith("/") ? d.archivo : `/documentos/${d.archivo}`
-          const fullUrl = d.archivo.startsWith("http") ? d.archivo : `${PROD_BASE_URL}${relPath}`
-          const cellAddress = XLSX.utils.encode_cell({ r: 6 + idx, c: 8 })
+          const relPath = d.archivo?.startsWith("/")
+            ? (d.archivo.startsWith("/api/documentos/") ? d.archivo : `/api/documentos/${d.archivo.replace(/^\/?(documentos\/)?/, "")}`)
+            : `/api/documentos/${d.archivo}`
+          const fullUrl = relPath.startsWith("http") ? relPath : `${PROD_BASE_URL}${relPath}`
+          const cellAddress = XLSX.utils.encode_cell({ r: 6 + idx, c: 12 })
           ws[cellAddress] = {
             t: "s",
             f: `HYPERLINK("${fullUrl}", "Ver / Descargar Documento")`,
@@ -935,6 +974,18 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            {/* BOTÓN: "Historial de Cambios" */}
+            <Button
+              type="button"
+              onClick={() => setHistorialImportOpen(true)}
+              variant="outline"
+              className="rounded-xl text-xs gap-1.5 h-9 font-bold text-[#002F6C] border-slate-200 hover:bg-slate-50 cursor-pointer shadow-2xs flex items-center px-3"
+              title="Ver reportes y auditoría histórica de importaciones del catálogo"
+            >
+              <HistoryIcon className="h-4 w-4 text-[#0E5296]" />
+              <span>Historial de Cambios</span>
+            </Button>
+
             {/* BOTÓN: "Exportar Catálogo" */}
             <Button
               type="button"
@@ -1041,13 +1092,36 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
               </Select>
             </div>
 
-            {(direccionFiltro || subcategoriaFiltro || tipoDocumentalFiltro || searchQuery) && (
+            {/* Filtro de Vigencia / Estado de Archivo */}
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-[#002F6C] text-[11px]">Vigencia:</span>
+              <Select
+                value={vigenciaFiltro}
+                onValueChange={(val: any) => {
+                  setVigenciaFiltro(val)
+                  setCurrentPage(1)
+                }}
+              >
+                <SelectTrigger className="h-8 w-44 rounded-lg border-slate-200 text-xs bg-slate-50 font-bold">
+                  <SelectValue placeholder="Todas las versiones" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas las Versiones ({docsEnriquecidos.length})</SelectItem>
+                  <SelectItem value="vigentes">Solo Vigentes ({docsEnriquecidos.filter((d) => d.esVigente !== false).length})</SelectItem>
+                  <SelectItem value="historicos">Históricos / Derogados ({docsEnriquecidos.filter((d) => d.esVigente === false).length})</SelectItem>
+                  <SelectItem value="falta_pdf">Falta PDF ({docsEnriquecidos.filter((d) => d.disponibilidadArchivo === "falta_archivo").length})</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {(direccionFiltro || subcategoriaFiltro || tipoDocumentalFiltro || vigenciaFiltro !== "todas" || searchQuery) && (
               <button
                 type="button"
                 onClick={() => {
                   setDireccionFiltro(null)
                   setSubcategoriaFiltro(null)
                   setTipoDocumentalFiltro(null)
+                  setVigenciaFiltro("todas")
                   setSearchQuery("")
                   setCurrentPage(1)
                 }}
@@ -1451,9 +1525,34 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                             <Icon className="h-5 w-5" style={{ color: iconColor }} />
                           </div>
                           <div>
-                            <p className="font-bold text-[#002F6C] line-clamp-1">{item.titulo}</p>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {item.numeroCorrelativo && (
+                                <span className="text-[9px] font-black bg-[#002F6C] text-[#FFCC00] px-1.5 py-0.5 rounded shadow-2xs">
+                                  Nº {item.numeroCorrelativo}
+                                </span>
+                              )}
+                              <p className="font-bold text-[#002F6C] line-clamp-1">{item.titulo}</p>
+                              {/* Versión Badge */}
+                              <span
+                                className={`text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
+                                  item.esVigente !== false
+                                    ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                    : "bg-slate-100 text-slate-700 border border-slate-300"
+                                }`}
+                              >
+                                <GitBranchIcon className="h-2.5 w-2.5" />
+                                {item.version || "v1.0"} {item.esVigente !== false ? "• Vigente" : "• Histórico"}
+                              </span>
+                              {/* Falta Archivo Badge */}
+                              {item.disponibilidadArchivo === "falta_archivo" && (
+                                <span className="text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                                  <AlertTriangleIcon className="h-2.5 w-2.5" />
+                                  FALTA PDF
+                                </span>
+                              )}
+                            </div>
                             {item.nombreArchivo && (
-                              <p className="text-[10px] text-slate-400 truncate max-w-[240px] font-mono">{item.nombreArchivo}</p>
+                              <p className="text-[10px] text-slate-400 truncate max-w-[280px] font-mono mt-0.5">{item.nombreArchivo}</p>
                             )}
                           </div>
                         </div>
@@ -2080,6 +2179,12 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         onSuccess={() => {
           // Re-render handled by Server Action revalidatePath
         }}
+      />
+
+      {/* ── Modal Historial de Importaciones del Catálogo ── */}
+      <HistorialImportacionesDialog
+        open={historialImportOpen}
+        onClose={() => setHistorialImportOpen(false)}
       />
 
       {/* ── Modal de Confirmación Fuerte para Eliminación Permanente ── */}

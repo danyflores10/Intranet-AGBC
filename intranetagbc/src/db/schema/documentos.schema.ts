@@ -1,5 +1,5 @@
 import { createId } from '@paralleldrive/cuid2';
-import { pgTable, timestamp, varchar, text, integer, index } from 'drizzle-orm/pg-core';
+import { pgTable, timestamp, varchar, text, integer, boolean, index } from 'drizzle-orm/pg-core';
 import { users } from './users.schema';
 
 export const documentoCategorias = pgTable(
@@ -37,6 +37,12 @@ export const documentos = pgTable(
     tipoArchivo: varchar('tipo_archivo', { length: 50 }),
     tamano: varchar('tamano', { length: 20 }),
     descripcion: text('descripcion'),
+    version: varchar('version', { length: 20 }).default('v1.0'),
+    esVigente: boolean('es_vigente').default(true),
+    familiaCodigo: varchar('familia_codigo', { length: 150 }),
+    fechaEmision: varchar('fecha_emision', { length: 100 }),
+    numeroCorrelativo: integer('numero_correlativo'),
+    disponibilidadArchivo: varchar('disponibilidad_archivo', { length: 30 }).default('disponible'),
     creadoPor: varchar('creado_por', { length: 24 }).references(() => users.id),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().$onUpdateFn(() => new Date()).notNull(),
@@ -47,6 +53,32 @@ export const documentos = pgTable(
     index('documentos_subcategoria_idx').on(t.subcategoriaId),
     index('documentos_tipo_doc_idx').on(t.tipoDocumental),
     index('documentos_estado_idx').on(t.estado),
+    index('documentos_familia_idx').on(t.familiaCodigo),
+    index('documentos_vigente_idx').on(t.esVigente),
+    index('documentos_correlativo_idx').on(t.numeroCorrelativo),
+  ],
+);
+
+export const catalogoImportaciones = pgTable(
+  'catalogo_importaciones',
+  {
+    id: varchar('id', { length: 24 })
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    nombreArchivo: varchar('nombre_archivo', { length: 255 }).notNull(),
+    totalProcesados: integer('total_procesados').default(0),
+    nuevos: integer('nuevos').default(0),
+    actualizados: integer('actualizados').default(0),
+    sinCambios: integer('sin_cambios').default(0),
+    faltanArchivo: integer('faltan_archivo').default(0),
+    detalles: text('detalles'), // JSON diff summary
+    usuarioId: varchar('usuario_id', { length: 24 }).references(() => users.id),
+    usuarioNombre: varchar('usuario_nombre', { length: 150 }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index('catalogo_importaciones_created_idx').on(t.createdAt),
+    index('catalogo_importaciones_usuario_idx').on(t.usuarioId),
   ],
 );
 

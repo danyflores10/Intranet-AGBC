@@ -54,6 +54,12 @@ type Doc = {
   tipoArchivo: string | null
   tamano: string | null
   descripcion: string | null
+  version?: string | null
+  esVigente?: boolean | null
+  familiaCodigo?: string | null
+  fechaEmision?: string | null
+  numeroCorrelativo?: number | null
+  disponibilidadArchivo?: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -873,12 +879,31 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
 
                       {/* Info del Documento */}
                       <div className="px-4 pb-2 space-y-2 text-center">
-                        {/* Fecha Oficial y tamaño */}
-                        <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground font-medium flex-wrap">
+                        {/* Fecha Oficial, Versión y tamaño */}
+                        <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground font-medium flex-wrap">
+                          {doc.numeroCorrelativo && (
+                            <span className="inline-flex items-center text-[9px] font-black bg-[#002F6C] text-[#FFCC00] px-1.5 py-0.5 rounded shadow-2xs">
+                              Nº {doc.numeroCorrelativo}
+                            </span>
+                          )}
                           <span className="inline-flex items-center gap-1 text-[#002F6C] dark:text-[#FFCC00] font-bold bg-blue-50/80 px-2 py-0.5 rounded-md border border-blue-100">
                             <CalendarDays className="h-3 w-3 text-[#0E5296]" />
                             {fechaOficial}
                           </span>
+                          <span
+                            className={`inline-flex items-center text-[9px] font-black px-1.5 py-0.5 rounded ${
+                              doc.esVigente !== false
+                                ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                : "bg-slate-100 text-slate-700 border border-slate-300"
+                            }`}
+                          >
+                            {doc.version || "v1.0"} {doc.esVigente !== false ? "• Vigente" : "• Histórico"}
+                          </span>
+                          {doc.disponibilidadArchivo === "falta_archivo" && (
+                            <span className="inline-flex items-center text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded">
+                              FALTA PDF
+                            </span>
+                          )}
                           {tamano && (
                             <span className="inline-flex items-center gap-1 text-slate-500">
                               <HardDrive className="h-3 w-3" />

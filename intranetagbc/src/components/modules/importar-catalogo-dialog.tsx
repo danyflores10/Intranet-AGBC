@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useTransition, useMemo } from "react"
+import { useState, useRef, useMemo } from "react"
 import {
   UploadCloudIcon,
   FileSpreadsheetIcon,
@@ -23,6 +23,8 @@ import {
   Loader2Icon,
   EyeIcon,
   AlertCircleIcon,
+  GitBranchIcon,
+  HistoryIcon,
 } from "lucide-react"
 import toast from "react-hot-toast"
 import * as XLSX from "xlsx"
@@ -39,8 +41,13 @@ import {
   sincronizarCatalogoExcelAction,
   type ItemSincronizacionCatalogo,
 } from "@/actions/catalogo-import"
-import { clasificarDocumento, ESTRUCTURA_JERARQUICA } from "@/lib/documentos-jerarquia"
+import { clasificarDocumento } from "@/lib/documentos-jerarquia"
 import { obtenerFechaOficialDocumento } from "@/lib/documentos-fechas-map"
+import {
+  calcularVersionesCatalogo,
+  normalizarFamiliaCanonica,
+  verificarDisponibilidadFisica,
+} from "@/lib/documentos-versionador"
 
 export interface DocExistente {
   id: string
@@ -54,6 +61,12 @@ export interface DocExistente {
   tamano?: string | null
   descripcion?: string | null
   createdAt?: string | Date | null
+  numeroCorrelativo?: number | null
+  version?: string | null
+  esVigente?: boolean | null
+  familiaCodigo?: string | null
+  fechaEmision?: string | null
+  disponibilidadArchivo?: string | null
 }
 
 interface Props {
@@ -67,6 +80,7 @@ export type TipoCambio = "nuevo" | "modificado" | "sin_cambios"
 
 export interface ItemAnalizado {
   id?: string
+  numeroCorrelativo?: number
   titulo: string
   direccionNueva: string
   direccionAnterior?: string
@@ -76,12 +90,18 @@ export interface ItemAnalizado {
   tipoDocumentalAnterior?: string
   fechaOficialNueva?: string
   fechaOficialAnterior?: string
+  versionCalculada: string
+  esVigenteCalculado: boolean
+  familiaCodigo: string
+  totalVersionesEnFamilia: number
   descripcionNueva?: string
   descripcionAnterior?: string
   nombreArchivoExcel?: string
   archivoFisicoAsociado?: File
   urlExistente?: string
   estadoCambio: TipoCambio
+  disponibilidadArchivo: "disponible" | "falta_archivo"
+  motivoDisponibilidad?: string
   diferencias: string[]
   esExistente: boolean
 }
@@ -118,7 +138,7 @@ export function ImportarCatalogoDialog({
 
   // Resultados del Análisis
   const [itemsAnalizados, setItemsAnalizados] = useState<ItemAnalizado[]>([])
-  const [filtroCambio, setFiltroCambio] = useState<"todos" | "nuevo" | "modificado" | "sin_cambios">("todos")
+  const [filtroCambio, setFiltroCambio] = useState<"todos" | "nuevo" | "modificado" | "sin_cambios" | "falta_archivo">("todos")
   const [busquedaPrevia, setBusquedaPrevia] = useState("")
 
   const excelInputRef = useRef<HTMLInputElement>(null)
@@ -143,7 +163,7 @@ export function ImportarCatalogoDialog({
   }
 
   // ─────────────────────────────────────────────────────────────
-  // 1. MANEJO DE ARCHIVOS EXCEL Y ARCHIVOS FÍSICOS
+  // 1. MANEJO DE ARCHIVOS (EXCEL Y ADJUNTOS FÍSICOS)
   // ─────────────────────────────────────────────────────────────
   function handleExcelSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -174,7 +194,7 @@ export function ImportarCatalogoDialog({
   }
 
   // ─────────────────────────────────────────────────────────────
-  // 2. PARSER Y MOTOR DE DIFERENCIAS (ANÁLISIS DE EXCEL)
+  // 2. PARSER ROBUSTO Y MOTOR DE VERSIONAMIENTO Y DIFERENCIAS
   // ─────────────────────────────────────────────────────────────
   async function analizarCatalogo() {
     if (!excelFile) {
@@ -183,7 +203,7 @@ export function ImportarCatalogoDialog({
     }
 
     setIsAnalyzing(true)
-    setProgressMsg("Leyendo archivo Excel...")
+    setProgressMsg("Leyendo archivo Excel y analizando estructura...")
 
     try {
       const buffer = await excelFile.arrayBuffer()
@@ -199,16 +219,18 @@ export function ImportarCatalogoDialog({
         return
       }
 
-      // Buscar la fila de encabezados
+      // Buscar la fila de encabezados principal
       let headerRowIndex = -1
-      for (let i = 0; i < Math.min(rawData.length, 12); i++) {
+      for (let i = 0; i < Math.min(rawData.length, 15); i++) {
         const row = rawData[i] || []
         const rowStr = row.map((cell) => String(cell || "").toLowerCase()).join(" ")
         if (
           rowStr.includes("titulo") ||
+          rowStr.includes("título") ||
           rowStr.includes("documento") ||
           rowStr.includes("nombre") ||
           rowStr.includes("direccion") ||
+          rowStr.includes("dirección") ||
           rowStr.includes("categoria")
         ) {
           headerRowIndex = i
@@ -223,95 +245,227 @@ export function ImportarCatalogoDialog({
       const headers = (rawData[headerRowIndex] || []).map((h) => String(h || "").trim().toLowerCase())
       const dataRows = rawData.slice(headerRowIndex + 1)
 
-      // Identificar índices de columnas
       const findColIdx = (patterns: string[]) => {
         return headers.findIndex((h) => patterns.some((p) => h.includes(p)))
       }
 
-      const colTitulo = findColIdx(["titulo", "documento", "nombre del doc"])
+      const colNum = findColIdx(["nº", "n°", "numero", "número", "num"])
+      const colId = findColIdx(["id", "código sistema", "codigo sistema", "codigo"])
+      const colTitulo = findColIdx(["titulo", "título", "documento", "nombre del doc"])
       const colDireccion = findColIdx(["direccion", "dirección"])
-      const colSubcategoria = findColIdx(["sub-area", "subarea", "subcategoria", "subcategoría", "area", "área"])
+      const colSubcategoria = findColIdx(["sub-area", "subarea", "sub-área", "subcategoria", "subcategoría", "area", "área"])
       const colTipo = findColIdx(["categoria", "categoría", "tipo", "tipo doc"])
+      const colVersion = findColIdx(["version", "versión"])
+      const colVigencia = findColIdx(["vigencia", "estado de vigencia"])
       const colFecha = findColIdx(["fecha", "emision", "emisión", "oficial", "año"])
       const colDesc = findColIdx(["descripcion", "descripción", "detalle", "alcance"])
       const colArchivo = findColIdx(["archivo", "nombre de archivo", "fichero", "file"])
-      const colId = findColIdx(["id", "codigo", "código", "nº", "n°"])
+      const colCheck = findColIdx(["check", "disponibilidad", "estado archivo", "observacion"])
 
-      // Map existing documents for matching
+      // Mapeos existentes en BD para matching ultra-preciso (Evita falsos "Nuevos")
+      const existingById = new Map<string, DocExistente>()
+      const existingByNum = new Map<number, DocExistente>()
       const existingByNormTitle = new Map<string, DocExistente>()
       const existingByNormFile = new Map<string, DocExistente>()
-      const existingById = new Map<string, DocExistente>()
+      const existingByFamiliaAndYear = new Map<string, DocExistente>()
 
       for (const d of existingDocs) {
         if (d.id) existingById.set(d.id.trim(), d)
-        if (d.titulo) existingByNormTitle.set(normalizar(d.titulo), d)
+        if (d.numeroCorrelativo) existingByNum.set(d.numeroCorrelativo, d)
+
+        const normT = normalizar(d.titulo)
+        if (normT) existingByNormTitle.set(normT, d)
+
         if (d.nombreArchivo) existingByNormFile.set(normalizar(d.nombreArchivo), d)
-        if (d.archivo) existingByNormFile.set(normalizar(d.archivo), d)
+        if (d.archivo) {
+          existingByNormFile.set(normalizar(d.archivo), d)
+          // Si el nombre de archivo contiene doc_0XX_
+          const matchDocNum = d.archivo.match(/doc_(\d{3})_/i)
+          if (matchDocNum) {
+            existingByNum.set(parseInt(matchDocNum[1], 10), d)
+          }
+        }
+
+        const fam = normalizarFamiliaCanonica(d.titulo)
+        const fechaDoc = d.fechaEmision || obtenerFechaOficialDocumento(d.archivo, d.titulo, d.nombreArchivo, d.createdAt)
+        const yearDoc = fechaDoc.match(/\b(20[1-3]\d)\b/)?.[1] || ""
+        if (fam && yearDoc) {
+          existingByFamiliaAndYear.set(`${fam}_${yearDoc}`, d)
+        }
       }
 
-      const resultadoItems: ItemAnalizado[] = []
+      // 1. Extraer filas válidas del Excel
+      const rawRowsParsed: Array<{
+        rawNum?: number
+        rawId?: string
+        rawTitulo: string
+        rawDireccion: string
+        rawSub: string
+        rawTipo: string
+        rawVersion?: string
+        rawVigencia?: string
+        rawFecha: string
+        rawDesc: string
+        rawArchivo: string
+        rawCheck: string
+      }> = []
 
       for (const row of dataRows) {
         if (!row || row.length === 0) continue
 
-        // Extraer campos
         const rawTitulo = colTitulo !== -1 ? String(row[colTitulo] || "").trim() : ""
         if (!rawTitulo || rawTitulo === "—" || rawTitulo.length < 3) continue
 
+        // Detener si es fila de sub-tabla de resumen
+        if (rawTitulo.toLowerCase() === "nombre" || rawTitulo.toLowerCase() === "etiquetas de fila") continue
+
+        const rawNumStr = colNum !== -1 ? String(row[colNum] || "").trim() : ""
+        const rawNum = rawNumStr ? parseInt(rawNumStr, 10) : undefined
+
+        const rawId = colId !== -1 ? String(row[colId] || "").trim() : undefined
         const rawDireccion = colDireccion !== -1 ? String(row[colDireccion] || "").trim() : ""
         const rawSub = colSubcategoria !== -1 ? String(row[colSubcategoria] || "").trim() : ""
         const rawTipo = colTipo !== -1 ? String(row[colTipo] || "").trim() : ""
+        const rawVersion = colVersion !== -1 ? String(row[colVersion] || "").trim() : undefined
+        const rawVigencia = colVigencia !== -1 ? String(row[colVigencia] || "").trim() : undefined
         const rawFecha = colFecha !== -1 ? String(row[colFecha] || "").trim() : ""
         const rawDesc = colDesc !== -1 ? String(row[colDesc] || "").trim() : ""
         const rawArchivo = colArchivo !== -1 ? String(row[colArchivo] || "").trim() : ""
-        const rawId = colId !== -1 ? String(row[colId] || "").trim() : ""
+        const rawCheck = colCheck !== -1 ? String(row[colCheck] || "").trim() : ""
 
-        // Clasificación por defecto o inferida si viene vacía
-        const autoClasif = clasificarDocumento(rawArchivo, rawTitulo)
-        const direccionFinal = rawDireccion || autoClasif.direccionNombre
-        const subcategoriaFinal = rawSub || autoClasif.subcategoriaNombre
-        const tipoFinal = rawTipo || autoClasif.tipoDocumental
+        rawRowsParsed.push({
+          rawNum,
+          rawId,
+          rawTitulo,
+          rawDireccion,
+          rawSub,
+          rawTipo,
+          rawVersion,
+          rawVigencia,
+          rawFecha,
+          rawDesc,
+          rawArchivo,
+          rawCheck,
+        })
+      }
 
-        // Buscar coincidencia en documentos existentes
-        const normT = normalizar(rawTitulo)
-        const normF = normalizar(rawArchivo)
-        
-        const docExistente =
-          (rawId && existingById.get(rawId)) ||
-          (normF && existingByNormFile.get(normF)) ||
-          (normT && existingByNormTitle.get(normT))
+      // 2. Pre-calcular versiones automáticas de los documentos analizados
+      const versionesPrecalculadas = calcularVersionesCatalogo(
+        rawRowsParsed.map((r) => ({
+          numeroCorrelativo: r.rawNum,
+          titulo: r.rawTitulo,
+          fechaEmision: r.rawFecha,
+          subcategoriaId: r.rawSub,
+        }))
+      )
 
-        // Buscar si hay archivo físico cargado para este documento
+      const mapVersionesPre = new Map<string, typeof versionesPrecalculadas[0]>()
+      for (const vp of versionesPrecalculadas) {
+        const k = `${vp.item.numeroCorrelativo || ""}_${normalizar(vp.item.titulo)}`
+        mapVersionesPre.set(k, vp)
+      }
+
+      // 3. Evaluar cada registro contra la base de datos (Motor Diff)
+      const resultadoItems: ItemAnalizado[] = []
+
+      for (const row of rawRowsParsed) {
+        const autoClasif = clasificarDocumento(row.rawArchivo, row.rawTitulo)
+        const direccionFinal = row.rawDireccion || autoClasif.direccionNombre
+        const subcategoriaFinal = row.rawSub || autoClasif.subcategoriaNombre
+        const tipoFinal = row.rawTipo || autoClasif.tipoDocumental
+
+        const normT = normalizar(row.rawTitulo)
+        const normF = normalizar(row.rawArchivo)
+        const famT = normalizarFamiliaCanonica(row.rawTitulo)
+        const yearT = row.rawFecha.match(/\b(20[1-3]\d)\b/)?.[1] || ""
+
+        // Matching jerárquico inteligente (evita falsos nuevos)
+        let docExistente: DocExistente | undefined = undefined
+
+        if (row.rawId && existingById.has(row.rawId)) {
+          docExistente = existingById.get(row.rawId)
+        } else if (row.rawNum && existingByNum.has(row.rawNum)) {
+          docExistente = existingByNum.get(row.rawNum)
+        } else if (normF && existingByNormFile.has(normF)) {
+          docExistente = existingByNormFile.get(normF)
+        } else if (normT && existingByNormTitle.has(normT)) {
+          docExistente = existingByNormTitle.get(normT)
+        } else if (famT && yearT && existingByFamiliaAndYear.has(`${famT}_${yearT}`)) {
+          docExistente = existingByFamiliaAndYear.get(`${famT}_${yearT}`)
+        }
+
+        // Buscar coincidencia en archivos físicos adjuntados en la sección inferior
         const matchedPhysicalFile = archivosFisicos.find((af) => {
           const normAF = normalizar(af.name)
           return (
             (normF && normAF === normF) ||
             normAF.includes(normT.slice(0, 20)) ||
-            normT.includes(normAF.replace(/\.[^/.]+$/, "").slice(0, 20))
+            normT.includes(normAF.replace(/\.[^/.]+$/, "").slice(0, 20)) ||
+            (row.rawNum && normAF.includes(`doc_${String(row.rawNum).padStart(3, "0")}`))
           )
         })
+
+        // Versión calculada
+        const vKey = `${row.rawNum || ""}_${normT}`
+        const vInfo = mapVersionesPre.get(vKey)
+        const versionCalculada = row.rawVersion || (vInfo ? vInfo.version : "v1.0")
+        const esVigenteCalculado = row.rawVigencia
+          ? row.rawVigencia.toLowerCase().includes("vigente")
+          : (vInfo ? vInfo.esVigente : true)
+        const familiaCodigo = vInfo ? vInfo.familiaCodigo : normalizarFamiliaCanonica(row.rawTitulo).replace(/\s+/g, "-")
+        const totalVersiones = vInfo ? vInfo.totalVersionesEnFamilia : 1
+
+        // Detección de disponibilidad física del archivo PDF
+        const checkFisicoDb = verificarDisponibilidadFisica(docExistente?.archivo)
+        const checkReportado = row.rawCheck.toUpperCase().includes("FALTA") || row.rawCheck.toLowerCase().includes("no se encuentra")
+        
+        let disponibilidadFinal: "disponible" | "falta_archivo" = "disponible"
+        let motivoDisp = ""
+
+        if (matchedPhysicalFile) {
+          disponibilidadFinal = "disponible"
+          motivoDisp = `Archivo físico nuevo adjuntado (${matchedPhysicalFile.name})`
+        } else if (checkReportado) {
+          disponibilidadFinal = "falta_archivo"
+          motivoDisp = "Reportado como FALTA PDF en el catálogo"
+        } else if (docExistente?.archivo && checkFisicoDb.disponible) {
+          disponibilidadFinal = "disponible"
+          motivoDisp = "Archivo digital verificado en servidor"
+        } else if (!docExistente && !matchedPhysicalFile) {
+          disponibilidadFinal = "falta_archivo"
+          motivoDisp = "Documento nuevo sin archivo físico adjuntado"
+        } else if (docExistente && !checkFisicoDb.disponible) {
+          disponibilidadFinal = "falta_archivo"
+          motivoDisp = "El archivo físico no existe en el almacenamiento digital"
+        }
 
         if (!docExistente) {
           // ── NUEVO DOCUMENTO ──
           resultadoItems.push({
-            titulo: rawTitulo,
+            numeroCorrelativo: row.rawNum,
+            titulo: row.rawTitulo,
             direccionNueva: direccionFinal,
             subcategoriaNueva: subcategoriaFinal,
             tipoDocumentalNuevo: tipoFinal,
-            fechaOficialNueva: rawFecha || "Detectada al procesar",
-            descripcionNueva: rawDesc,
-            nombreArchivoExcel: rawArchivo || matchedPhysicalFile?.name,
+            fechaOficialNueva: row.rawFecha || "Detectada al procesar",
+            versionCalculada,
+            esVigenteCalculado,
+            familiaCodigo,
+            totalVersionesEnFamilia: totalVersiones,
+            descripcionNueva: row.rawDesc,
+            nombreArchivoExcel: row.rawArchivo || matchedPhysicalFile?.name,
             archivoFisicoAsociado: matchedPhysicalFile,
             estadoCambio: "nuevo",
-            diferencias: ["Nuevo documento a registrar"],
+            disponibilidadArchivo: disponibilidadFinal,
+            motivoDisponibilidad: motivoDisp,
+            diferencias: ["Nuevo documento a registrar en el catálogo oficial"],
             esExistente: false,
           })
         } else {
-          // ── DOCUMENTO EXISTENTE: VERIFICAR CAMBIOS ──
+          // ── DOCUMENTO EXISTENTE: COMPARACIÓN DIFF ──
           const diffs: string[] = []
 
-          // Fecha oficial anterior
-          const fechaAnt = obtenerFechaOficialDocumento(
+          const fechaAnt = docExistente.fechaEmision || obtenerFechaOficialDocumento(
             docExistente.archivo,
             docExistente.titulo,
             docExistente.nombreArchivo,
@@ -335,35 +489,48 @@ export function ImportarCatalogoDialog({
           if (tipoFinal && normalizar(tipoAnt) !== normalizar(tipoFinal)) {
             diffs.push(`Tipo: ${tipoAnt} ➔ ${tipoFinal}`)
           }
-          if (rawFecha && rawFecha !== "—" && rawFecha !== "Sin fecha fija" && rawFecha !== fechaAnt) {
-            diffs.push(`Fecha Oficial: ${fechaAnt} ➔ ${rawFecha}`)
+          if (row.rawFecha && row.rawFecha !== "—" && row.rawFecha !== "Sin fecha fija" && normalizar(row.rawFecha) !== normalizar(fechaAnt)) {
+            diffs.push(`Fecha Oficial: ${fechaAnt} ➔ ${row.rawFecha}`)
           }
-          if (rawDesc && rawDesc !== "—" && rawDesc !== (docExistente.descripcion || "")) {
+          if (docExistente.version && docExistente.version !== versionCalculada) {
+            diffs.push(`Versión: ${docExistente.version} ➔ ${versionCalculada}`)
+          }
+          if (docExistente.esVigente !== undefined && docExistente.esVigente !== esVigenteCalculado) {
+            diffs.push(`Vigencia: ${docExistente.esVigente ? "Vigente" : "Histórico"} ➔ ${esVigenteCalculado ? "Vigente" : "Histórico"}`)
+          }
+          if (row.rawDesc && row.rawDesc !== "—" && row.rawDesc !== (docExistente.descripcion || "")) {
             diffs.push(`Descripción actualizada`)
           }
           if (matchedPhysicalFile) {
-            diffs.push(`Reemplazo de archivo: ${matchedPhysicalFile.name}`)
+            diffs.push(`Reemplazo de archivo digital: ${matchedPhysicalFile.name}`)
           }
 
           const estado: TipoCambio = diffs.length > 0 ? "modificado" : "sin_cambios"
 
           resultadoItems.push({
             id: docExistente.id,
-            titulo: rawTitulo || docExistente.titulo,
+            numeroCorrelativo: row.rawNum || docExistente.numeroCorrelativo || undefined,
+            titulo: row.rawTitulo || docExistente.titulo,
             direccionNueva: direccionFinal,
             direccionAnterior: dirAnt,
             subcategoriaNueva: subcategoriaFinal,
             subcategoriaAnterior: subAnt,
             tipoDocumentalNuevo: tipoFinal,
             tipoDocumentalAnterior: tipoAnt,
-            fechaOficialNueva: rawFecha || fechaAnt,
+            fechaOficialNueva: row.rawFecha || fechaAnt,
             fechaOficialAnterior: fechaAnt,
-            descripcionNueva: rawDesc || docExistente.descripcion || "",
+            versionCalculada,
+            esVigenteCalculado,
+            familiaCodigo,
+            totalVersionesEnFamilia: totalVersiones,
+            descripcionNueva: row.rawDesc || docExistente.descripcion || "",
             descripcionAnterior: docExistente.descripcion || "",
-            nombreArchivoExcel: rawArchivo || docExistente.nombreArchivo || "",
+            nombreArchivoExcel: row.rawArchivo || docExistente.nombreArchivo || "",
             archivoFisicoAsociado: matchedPhysicalFile,
             urlExistente: docExistente.archivo || undefined,
             estadoCambio: estado,
+            disponibilidadArchivo: disponibilidadFinal,
+            motivoDisponibilidad: motivoDisp,
             diferencias: diffs,
             esExistente: true,
           })
@@ -387,13 +554,16 @@ export function ImportarCatalogoDialog({
   // ─────────────────────────────────────────────────────────────
   async function aplicarSincronizacion() {
     const itemsAplicar = itemsAnalizados.filter((item) => item.estadoCambio !== "sin_cambios")
+    const totalSinCambiosCount = itemsAnalizados.filter((i) => i.estadoCambio === "sin_cambios").length
+    const totalFaltaArchivoCount = itemsAnalizados.filter((i) => i.disponibilidadArchivo === "falta_archivo").length
+
     if (itemsAplicar.length === 0) {
-      toast("No se detectaron cambios ni documentos nuevos para aplicar", { icon: "ℹ️" })
+      toast("No se detectaron cambios ni documentos nuevos para aplicar. El catálogo ya se encuentra 100% sincronizado.", { icon: "ℹ️" })
       return
     }
 
     setIsSubmitting(true)
-    setProgressMsg("Subiendo archivos físicos...")
+    setProgressMsg("Subiendo archivos físicos asociados...")
 
     try {
       // 1. Subir archivos físicos seleccionados si los hay
@@ -423,7 +593,7 @@ export function ImportarCatalogoDialog({
       }
 
       // 2. Preparar payload para la Server Action
-      setProgressMsg("Sincronizando catálogo en base de datos...")
+      setProgressMsg("Sincronizando catálogo y recalculando versiones en base de datos...")
 
       const payload: ItemSincronizacionCatalogo[] = itemsAplicar.map((item) => {
         let fileUrl = item.urlExistente
@@ -443,25 +613,35 @@ export function ImportarCatalogoDialog({
 
         return {
           id: item.id,
+          numeroCorrelativo: item.numeroCorrelativo,
           titulo: item.titulo,
           direccionNombre: item.direccionNueva,
           subcategoriaNombre: item.subcategoriaNueva,
           tipoDocumental: item.tipoDocumentalNuevo,
+          version: item.versionCalculada,
+          esVigente: item.esVigenteCalculado,
           fechaOficial: item.fechaOficialNueva,
           descripcion: item.descripcionNueva,
           archivoUrl: fileUrl,
           nombreArchivo: fileName,
           tipoArchivo: fileType,
           tamano: fileSize,
+          disponibilidadArchivo: item.disponibilidadArchivo,
           accion: item.estadoCambio === "nuevo" ? "nuevo" : "actualizado",
+          diferencias: item.diferencias,
         }
       })
 
-      const resAction = await sincronizarCatalogoExcelAction(payload)
+      const resAction = await sincronizarCatalogoExcelAction(
+        payload,
+        excelFile?.name || "catalogo_documentos.xlsx",
+        totalSinCambiosCount,
+        totalFaltaArchivoCount
+      )
 
       if (resAction.success) {
         toast.success(
-          `Catálogo sincronizado: ${resAction.nuevos} nuevos, ${resAction.actualizados} actualizados`
+          `Catálogo sincronizado exitosamente: ${resAction.nuevos} nuevos, ${resAction.actualizados} actualizados, ${resAction.sinCambios} sin cambios`
         )
         onSuccess()
         handleClose()
@@ -493,401 +673,518 @@ export function ImportarCatalogoDialog({
     () => itemsAnalizados.filter((i) => i.estadoCambio === "sin_cambios").length,
     [itemsAnalizados]
   )
+  const totalFaltanArchivo = useMemo(
+    () => itemsAnalizados.filter((i) => i.disponibilidadArchivo === "falta_archivo").length,
+    [itemsAnalizados]
+  )
 
   // Filtrado de la tabla de análisis
   const itemsFiltrados = useMemo(() => {
     return itemsAnalizados.filter((item) => {
-      const matchTipo =
-        filtroCambio === "todos" || item.estadoCambio === filtroCambio
-      const search = busquedaPrevia.toLowerCase().trim()
-      const matchSearch =
-        !search ||
-        item.titulo.toLowerCase().includes(search) ||
-        item.direccionNueva.toLowerCase().includes(search) ||
-        item.subcategoriaNueva.toLowerCase().includes(search) ||
-        item.tipoDocumentalNuevo.toLowerCase().includes(search)
-      return matchTipo && matchSearch
+      let matchTipo = true
+      if (filtroCambio === "nuevo") matchTipo = item.estadoCambio === "nuevo"
+      else if (filtroCambio === "modificado") matchTipo = item.estadoCambio === "modificado"
+      else if (filtroCambio === "sin_cambios") matchTipo = item.estadoCambio === "sin_cambios"
+      else if (filtroCambio === "falta_archivo") matchTipo = item.disponibilidadArchivo === "falta_archivo"
+
+      const q = busquedaPrevia.toLowerCase().trim()
+      const matchBusqueda =
+        !q ||
+        item.titulo.toLowerCase().includes(q) ||
+        item.direccionNueva.toLowerCase().includes(q) ||
+        item.subcategoriaNueva.toLowerCase().includes(q) ||
+        item.tipoDocumentalNuevo.toLowerCase().includes(q) ||
+        item.versionCalculada.toLowerCase().includes(q) ||
+        (item.fechaOficialNueva && item.fechaOficialNueva.toLowerCase().includes(q))
+
+      return matchTipo && matchBusqueda
     })
   }, [itemsAnalizados, filtroCambio, busquedaPrevia])
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose() }}>
-      <DialogContent className="w-[95vw] max-w-5xl max-h-[92vh] flex flex-col p-0 gap-0 rounded-3xl border-border/50 overflow-hidden shadow-2xl">
-        <DialogHeader className="sr-only">
-          <DialogTitle>Importar Catálogo de Documentos</DialogTitle>
-        </DialogHeader>
-
-        {/* ── Cabecera Temática AGBC ── */}
-        <div className="bg-gradient-to-r from-[#002F6C] via-[#0E5296] to-[#002F6C] px-6 py-4 text-white flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FFCC00] text-[#002F6C] font-black shadow-md">
-              <UploadCloudIcon className="h-6 w-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-black tracking-tight text-white">
-                  Importar y Sincronizar Catálogo
-                </h3>
-                <span className="rounded-full bg-[#FFCC00] text-[#002F6C] px-2 py-0.5 text-[9px] font-black uppercase">
-                  AGBC
-                </span>
+    <Dialog open={open} onOpenChange={(val) => !val && handleClose()}>
+      <DialogContent className="max-w-6xl max-h-[92vh] flex flex-col p-0 gap-0 overflow-hidden bg-white dark:bg-slate-900 border-2 border-[#002F6C]/20 rounded-3xl shadow-2xl">
+        {/* Header Oficial AGBC */}
+        <div className="bg-gradient-to-r from-[#002F6C] via-[#0E5296] to-[#002F6C] p-6 text-white shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FFCC00] text-[#002F6C] shadow-md ring-2 ring-white/20">
+                <FileSpreadsheetIcon className="h-6 w-6" />
               </div>
-              <p className="text-xs text-blue-100 font-medium">
-                Carga la planilla Excel y archivos adjuntos para validar altas y actualizaciones
-              </p>
+              <div>
+                <DialogTitle className="text-xl font-black tracking-tight text-white flex items-center gap-2">
+                  Importar y Sincronizar Catálogo Documental
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-white/20 text-[#FFCC00]">
+                    Motor Inteligente con Versionamiento
+                  </span>
+                </DialogTitle>
+                <p className="text-xs text-blue-100 mt-0.5">
+                  Carga una planilla Excel para validar cambios, detectar documentos nuevos, gestionar versiones históricas y verificar archivos digitales.
+                </p>
+              </div>
             </div>
-          </div>
 
-          {/* Stepper Pill */}
-          <div className="hidden sm:flex items-center gap-2 bg-white/10 rounded-xl px-3 py-1.5 text-xs font-bold text-white border border-white/20">
-            <span className={paso === "carga" ? "text-[#FFCC00]" : "text-emerald-300 flex items-center gap-1"}>
-              {paso === "analisis" && <CheckIcon className="h-3.5 w-3.5" />} 1. Carga
-            </span>
-            <ArrowRightIcon className="h-3 w-3 text-white/40" />
-            <span className={paso === "analisis" ? "text-[#FFCC00]" : "text-white/60"}>
-              2. Previsualización y Validación
-            </span>
+            {/* Stepper Pill */}
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/15 text-xs font-bold">
+              <span
+                className={`px-2.5 py-1 rounded-xl transition-all ${
+                  paso === "carga"
+                    ? "bg-[#FFCC00] text-[#002F6C] shadow-xs"
+                    : "text-blue-100"
+                }`}
+              >
+                1. Carga de Archivos
+              </span>
+              <ArrowRightIcon className="h-3 w-3 text-white/50" />
+              <span
+                className={`px-2.5 py-1 rounded-xl transition-all ${
+                  paso === "analisis"
+                    ? "bg-[#FFCC00] text-[#002F6C] shadow-xs"
+                    : "text-blue-100"
+                }`}
+              >
+                2. Validación & Comparador Diff
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* ── Contenido Principal Scrollable ── */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {paso === "carga" ? (
-            <div className="space-y-6">
-              {/* ══════════════════════════════════════════════════════════ */}
-              {/* SECCIÓN 1 (ARRIBA): SUBIR PLANILLA EXCEL DEL CATÁLOGO    */}
-              {/* ══════════════════════════════════════════════════════════ */}
-              <div className="rounded-2xl border-2 border-dashed border-[#0E5296]/30 bg-gradient-to-br from-blue-50/50 via-sky-50/20 to-white p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#0E5296] text-[#FFCC00] text-xs font-black">
-                      1
-                    </span>
-                    <h4 className="text-sm font-black text-[#002F6C]">
-                      Planilla Excel del Catálogo Documental
-                    </h4>
-                  </div>
-                  <span className="text-[11px] text-slate-500 font-semibold">
-                    Formatos soportados: .xlsx, .xls, .csv
+        {/* ─────────────────────────────────────────────────────────────
+            PASO 1: CARGA DE EXCEL Y ARCHIVOS FÍSICOS
+           ───────────────────────────────────────────────────────────── */}
+        {paso === "carga" && (
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50 dark:bg-slate-950/50">
+            {/* Sección Superior: Archivo Excel */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-black uppercase tracking-wider text-[#002F6C] dark:text-blue-300 flex items-center gap-2">
+                  <FileSpreadsheetIcon className="h-4 w-4 text-emerald-600" />
+                  <span>Planilla Excel del Catálogo Institucional (.xlsx, .xls)</span>
+                  <span className="text-red-500">*</span>
+                </label>
+                {excelFile && (
+                  <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                    <CheckCircle2Icon className="h-3 w-3" />
+                    Archivo listo para análisis
                   </span>
-                </div>
-
-                <input
-                  ref={excelInputRef}
-                  type="file"
-                  accept=".xlsx, .xls, .csv"
-                  onChange={handleExcelSelect}
-                  className="hidden"
-                />
-
-                {!excelFile ? (
-                  <div
-                    onClick={() => excelInputRef.current?.click()}
-                    className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-300 rounded-xl bg-white hover:bg-blue-50/60 hover:border-[#0E5296] transition-all cursor-pointer group"
-                  >
-                    <div className="h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center mb-2 shadow-xs group-hover:scale-105 transition-transform">
-                      <FileSpreadsheetIcon className="h-6 w-6" />
-                    </div>
-                    <p className="text-xs font-black text-[#002F6C] group-hover:text-[#0E5296]">
-                      Haz clic para seleccionar el archivo Excel del Catálogo
-                    </p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      El sistema comparará automáticamente títulos, fechas y jerarquías con la base de datos
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between p-3.5 bg-white border border-emerald-300 rounded-xl shadow-xs">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
-                        <FileSpreadsheetIcon className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-black text-[#002F6C]">{excelFile.name}</p>
-                        <p className="text-[11px] text-slate-500">{formatBytes(excelFile.size)}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => excelInputRef.current?.click()}
-                        className="h-8 rounded-lg text-xs font-bold text-slate-600 hover:text-[#002F6C]"
-                      >
-                        Cambiar Excel
-                      </Button>
-                      <button
-                        type="button"
-                        onClick={() => setExcelFile(null)}
-                        className="text-slate-400 hover:text-red-600 p-1 rounded-lg"
-                      >
-                        <XIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
                 )}
               </div>
 
-              {/* ══════════════════════════════════════════════════════════ */}
-              {/* SECCIÓN 2 (ABAJO): SUBIR VARIOS ARCHIVOS ADJUNTOS         */}
-              {/* ══════════════════════════════════════════════════════════ */}
-              <div className="rounded-2xl border-2 border-dashed border-amber-300/80 bg-gradient-to-br from-amber-50/40 via-yellow-50/20 to-white p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#FFCC00] text-[#002F6C] text-xs font-black">
-                      2
-                    </span>
-                    <h4 className="text-sm font-black text-[#002F6C]">
-                      Archivos Físicos Adjuntos (Varios documentos: PDF, Word, Excel, etc.)
-                    </h4>
+              <input
+                ref={excelInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                onChange={handleExcelSelect}
+                className="hidden"
+              />
+
+              {!excelFile ? (
+                <div
+                  onClick={() => excelInputRef.current?.click()}
+                  className="border-2 border-dashed border-emerald-300 dark:border-emerald-700/60 hover:border-emerald-500 rounded-3xl p-8 text-center cursor-pointer bg-gradient-to-br from-emerald-50/40 via-white to-blue-50/30 dark:bg-slate-900 transition-all hover:shadow-md group"
+                >
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-700 group-hover:scale-110 transition-transform shadow-xs">
+                      <UploadCloudIcon className="h-7 w-7" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                        Haz clic aquí para seleccionar el archivo Excel del Catálogo
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Formatos soportados: <strong>.xlsx, .xls, .csv</strong> (Plantilla de 89 documentos, con direcciones, sub-áreas, fechas y versiones).
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-[11px] text-slate-500 font-semibold">
-                    {archivosFisicos.length} archivo(s) seleccionado(s)
-                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-4 rounded-2xl border-2 border-emerald-200 bg-emerald-50/60 dark:bg-emerald-950/30">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white shrink-0 shadow-xs">
+                      <FileSpreadsheetIcon className="h-5 w-5" />
+                    </div>
+                    <div className="truncate">
+                      <p className="text-xs font-black text-emerald-900 dark:text-emerald-200 truncate">
+                        {excelFile.name}
+                      </p>
+                      <p className="text-[11px] text-emerald-700 dark:text-emerald-300 font-medium">
+                        {formatBytes(excelFile.size)} • Listo para validación
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => excelInputRef.current?.click()}
+                      className="text-xs rounded-xl font-bold border-emerald-300 text-emerald-800 hover:bg-emerald-100"
+                    >
+                      Cambiar
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setExcelFile(null)}
+                      className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-700 rounded-xl"
+                    >
+                      <XIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Sección Inferior: Carga de Varios Archivos Físicos */}
+            <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-xs font-black uppercase tracking-wider text-[#002F6C] dark:text-blue-300 flex items-center gap-2">
+                    <FileTextIcon className="h-4 w-4 text-[#0E5296]" />
+                    <span>Archivos Físicos Digitales (PDF, Word, Excel, etc.)</span>
+                    <span className="text-xs text-slate-400 font-normal normal-case">(Opcional / Carga simultánea)</span>
+                  </label>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Sube los documentos físicos faltantes o actualizados. El sistema los asociará automáticamente por nombre de archivo o título oficial.
+                  </p>
                 </div>
 
-                <input
-                  ref={filesInputRef}
-                  type="file"
-                  multiple
-                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg"
-                  onChange={handleFilesSelect}
-                  className="hidden"
-                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => filesInputRef.current?.click()}
+                  className="rounded-xl text-xs font-bold gap-1.5 border-[#0E5296]/30 text-[#002F6C] hover:bg-blue-50"
+                >
+                  <UploadCloudIcon className="h-3.5 w-3.5 text-[#0E5296]" />
+                  <span>Seleccionar Archivos</span>
+                </Button>
+              </div>
 
+              <input
+                ref={filesInputRef}
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
+                onChange={handleFilesSelect}
+                className="hidden"
+              />
+
+              {archivosFisicos.length === 0 ? (
                 <div
                   onClick={() => filesInputRef.current?.click()}
-                  className="flex flex-col items-center justify-center p-5 border-2 border-dashed border-slate-300 rounded-xl bg-white hover:bg-amber-50/60 hover:border-amber-400 transition-all cursor-pointer group mb-3"
+                  className="border border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-400 rounded-2xl p-6 text-center cursor-pointer bg-white dark:bg-slate-900 transition-colors"
                 >
-                  <div className="h-10 w-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center mb-1.5 shadow-xs group-hover:scale-105 transition-transform">
-                    <LayersIcon className="h-5 w-5" />
-                  </div>
-                  <p className="text-xs font-black text-[#002F6C] group-hover:text-amber-700">
-                    Haz clic para seleccionar múltiples archivos digitales
+                  <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                    ¿Deseas adjuntar archivos PDF o documentos digitales nuevos?
                   </p>
-                  <p className="text-[11px] text-slate-400">
-                    PDF, DOC, DOCX, XLS, XLSX correspondientes a los documentos del catálogo
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Puedes arrastrar o seleccionar varios archivos simultáneamente aquí.
                   </p>
                 </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-600 px-1">
+                    <span>{archivosFisicos.length} archivo(s) físico(s) listo(s) para asociar:</span>
+                    <button
+                      type="button"
+                      onClick={() => setArchivosFisicos([])}
+                      className="text-red-600 hover:underline cursor-pointer"
+                    >
+                      Limpiar lista
+                    </button>
+                  </div>
 
-                {archivosFisicos.length > 0 && (
-                  <div className="max-h-48 overflow-y-auto divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white shadow-2xs">
-                    {archivosFisicos.map((af, idx) => (
-                      <div key={`${af.name}_${idx}`} className="flex items-center justify-between px-3 py-2 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto p-1">
+                    {archivosFisicos.map((f, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-white dark:bg-slate-900 shadow-2xs text-xs"
+                      >
                         <div className="flex items-center gap-2 min-w-0">
-                          <FileTextIcon className="h-4 w-4 text-[#0E5296] shrink-0" />
-                          <span className="font-bold text-[#002F6C] truncate max-w-sm">{af.name}</span>
-                          <span className="text-[10px] text-slate-400 font-mono">({formatBytes(af.size)})</span>
+                          <FileIcon className="h-4 w-4 text-[#0E5296] shrink-0" />
+                          <span className="truncate font-medium">{f.name}</span>
                         </div>
                         <button
                           type="button"
                           onClick={() => removeArchivoFisico(idx)}
-                          className="text-slate-400 hover:text-red-600 p-1"
+                          className="text-slate-400 hover:text-red-500 p-1"
                         >
-                          <Trash2Icon className="h-3.5 w-3.5" />
+                          <XIcon className="h-3 w-3" />
                         </button>
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+            </div>
 
-              {/* Banner informativo de validación */}
-              <div className="flex items-start gap-3 rounded-2xl bg-blue-50/80 border border-blue-200 p-4 text-xs text-[#002F6C]">
-                <InfoIcon className="h-5 w-5 text-[#0E5296] shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <p className="font-bold">¿Cómo funciona la sincronización inteligente?</p>
-                  <p className="text-[11px] text-slate-600 leading-relaxed">
-                    Al hacer clic en <strong>Analizar y Validar</strong>, el sistema comparará cada fila del Excel con los documentos existentes. Detectará cuáles son <strong>documentos nuevos</strong> para crearlos en su jerarquía, cuáles sufrieron <strong>cambios en Dirección, Subcategoría, Fecha o Título</strong> para actualizarlos, y cuáles no han cambiado para dejarlos intactos. Podrás revisar todos los cambios antes de confirmar.
+            {/* Aviso de Versionamiento Inteligente */}
+            <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 text-amber-900 text-xs flex items-start gap-3">
+              <SparklesIcon className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-bold">Detección Inteligente de Versiones y Validación de Vigencia</p>
+                <p className="text-[11px] leading-relaxed text-amber-800">
+                  El sistema agrupa automáticamente los documentos que comparten la misma familia normativa (ej. <em>RE-SABS 2019, 2021 y 2026</em>), asignándoles su versión correlativa (<strong>v1.0</strong>, <strong>v2.0</strong>, <strong>v3.0</strong>) y marcando la más reciente como <strong>Vigente</strong> y las anteriores como <strong>Históricas / Derogadas</strong>.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─────────────────────────────────────────────────────────────
+            PASO 2: RESULTADOS DEL ANÁLISIS (DASHBOARD PREVIEW Y DIFF)
+           ───────────────────────────────────────────────────────────── */}
+        {paso === "analisis" && (
+          <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-slate-50/50 dark:bg-slate-950/50">
+            {/* Banner Alerta si Faltan Archivos PDF */}
+            {totalFaltanArchivo > 0 && (
+              <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border-2 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-3 shadow-xs">
+                <AlertTriangleIcon className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-0.5 flex-1">
+                  <p className="font-black text-sm">
+                    Atención: Se detectaron {totalFaltanArchivo} documentos sin archivo digital PDF
+                  </p>
+                  <p className="text-[11px] leading-relaxed text-amber-800 dark:text-amber-300">
+                    Estos documentos están registrados en el Excel pero no cuentan con archivo físico en el servidor. Puedes importarlos con la marca <strong>FALTA PDF</strong> para completar sus metadatos y asociar el archivo posteriormente.
                   </p>
                 </div>
               </div>
-            </div>
-          ) : (
-            /* ══════════════════════════════════════════════════════════ */
-            /* PASO 2: PREVISUALIZACIÓN Y REVISIÓN DE CAMBIOS (DIFF)     */
-            /* ══════════════════════════════════════════════════════════ */
-            <div className="space-y-4">
-              {/* KPIs de Cambios Detectados */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800">
-                    Nuevos a Registrar
-                  </span>
-                  <div className="text-2xl font-black text-emerald-700 mt-0.5">
-                    +{totalNuevos}
-                  </div>
-                  <span className="text-[10px] text-emerald-600 font-medium">Se crearán en la base de datos</span>
-                </div>
+            )}
 
-                <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-3">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-amber-800">
-                    Con Cambios Detectados
-                  </span>
-                  <div className="text-2xl font-black text-amber-700 mt-0.5">
-                    {totalModificados}
-                  </div>
-                  <span className="text-[10px] text-amber-600 font-medium">Se actualizarán fechas o jerarquías</span>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-600">
-                    Sin Modificaciones
-                  </span>
-                  <div className="text-2xl font-black text-slate-700 mt-0.5">
-                    {totalSinCambios}
-                  </div>
-                  <span className="text-[10px] text-slate-500 font-medium">Permanecen idénticos</span>
-                </div>
-
-                <div className="rounded-2xl border border-blue-200 bg-blue-50/60 p-3">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-[#002F6C]">
-                    Archivos Físicos Listos
-                  </span>
-                  <div className="text-2xl font-black text-[#0E5296] mt-0.5">
-                    {archivosFisicos.length}
-                  </div>
-                  <span className="text-[10px] text-blue-600 font-medium">Listos para vincular</span>
-                </div>
+            {/* Tarjetas KPI de Estado */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              <div
+                onClick={() => setFiltroCambio("todos")}
+                className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${
+                  filtroCambio === "todos"
+                    ? "border-[#002F6C] bg-blue-50/70 shadow-xs ring-2 ring-[#002F6C]/20"
+                    : "border-slate-200 bg-white hover:bg-slate-50"
+                }`}
+              >
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Evaluados</p>
+                <p className="text-xl font-black text-[#002F6C] mt-0.5">{itemsAnalizados.length}</p>
+                <p className="text-[10px] text-slate-400">Total en planilla</p>
               </div>
 
-              {/* Filtros de Tabla Previa */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-bold">
-                  {(
-                    [
-                      { key: "todos", label: `Todos (${itemsAnalizados.length})` },
-                      { key: "nuevo", label: `Nuevos (${totalNuevos})` },
-                      { key: "modificado", label: `Con Cambios (${totalModificados})` },
-                      { key: "sin_cambios", label: `Sin Cambios (${totalSinCambios})` },
-                    ] as const
-                  ).map((f) => (
-                    <button
-                      key={f.key}
-                      type="button"
-                      onClick={() => setFiltroCambio(f.key)}
-                      className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                        filtroCambio === f.key
-                          ? "bg-white text-[#002F6C] shadow-xs font-black"
-                          : "text-slate-600 hover:text-[#002F6C]"
+              <div
+                onClick={() => setFiltroCambio("nuevo")}
+                className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${
+                  filtroCambio === "nuevo"
+                    ? "border-emerald-600 bg-emerald-50 shadow-xs ring-2 ring-emerald-600/20"
+                    : "border-slate-200 bg-white hover:bg-slate-50"
+                }`}
+              >
+                <p className="text-[10px] font-black uppercase tracking-wider text-emerald-600">Nuevos</p>
+                <p className="text-xl font-black text-emerald-700 mt-0.5">{totalNuevos}</p>
+                <p className="text-[10px] text-emerald-600/70">A incorporar</p>
+              </div>
+
+              <div
+                onClick={() => setFiltroCambio("modificado")}
+                className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${
+                  filtroCambio === "modificado"
+                    ? "border-blue-600 bg-blue-50 shadow-xs ring-2 ring-blue-600/20"
+                    : "border-slate-200 bg-white hover:bg-slate-50"
+                }`}
+              >
+                <p className="text-[10px] font-black uppercase tracking-wider text-blue-600">Modificados</p>
+                <p className="text-xl font-black text-blue-700 mt-0.5">{totalModificados}</p>
+                <p className="text-[10px] text-blue-600/70">Con cambios detectados</p>
+              </div>
+
+              <div
+                onClick={() => setFiltroCambio("sin_cambios")}
+                className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${
+                  filtroCambio === "sin_cambios"
+                    ? "border-slate-600 bg-slate-100 shadow-xs ring-2 ring-slate-600/20"
+                    : "border-slate-200 bg-white hover:bg-slate-50"
+                }`}
+              >
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Sin Cambios</p>
+                <p className="text-xl font-black text-slate-700 mt-0.5">{totalSinCambios}</p>
+                <p className="text-[10px] text-slate-400">Idénticos en BD</p>
+              </div>
+
+              <div
+                onClick={() => setFiltroCambio("falta_archivo")}
+                className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${
+                  filtroCambio === "falta_archivo"
+                    ? "border-amber-500 bg-amber-50 shadow-xs ring-2 ring-amber-500/20"
+                    : "border-slate-200 bg-white hover:bg-slate-50"
+                }`}
+              >
+                <p className="text-[10px] font-black uppercase tracking-wider text-amber-600">Falta PDF</p>
+                <p className="text-xl font-black text-amber-700 mt-0.5">{totalFaltanArchivo}</p>
+                <p className="text-[10px] text-amber-600/70">Sin archivo digital</p>
+              </div>
+            </div>
+
+            {/* Barra de Filtros y Buscador Rápido */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="relative w-full sm:w-80">
+                <SearchIcon className="h-4 w-4 absolute left-3 top-3 text-slate-400" />
+                <Input
+                  value={busquedaPrevia}
+                  onChange={(e) => setBusquedaPrevia(e.target.value)}
+                  placeholder="Filtrar por título, dirección, versión o fecha..."
+                  className="pl-9 h-9 text-xs rounded-xl bg-white border-slate-200"
+                />
+              </div>
+
+              <p className="text-xs text-slate-500 font-medium">
+                Mostrando <strong>{itemsFiltrados.length}</strong> de {itemsAnalizados.length} documentos
+              </p>
+            </div>
+
+            {/* Lista Interactiva de Documentos Analizados */}
+            <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
+              {itemsFiltrados.length === 0 ? (
+                <div className="p-8 text-center bg-white rounded-3xl border border-slate-200 text-xs text-slate-500">
+                  No se encontraron documentos bajo el filtro seleccionado
+                </div>
+              ) : (
+                itemsFiltrados.map((item, idx) => {
+                  const esNuevo = item.estadoCambio === "nuevo"
+                  const esModificado = item.estadoCambio === "modificado"
+                  const esFaltaPdf = item.disponibilidadArchivo === "falta_archivo"
+
+                  return (
+                    <div
+                      key={idx}
+                      className={`p-4 rounded-2xl border transition-all ${
+                        esNuevo
+                          ? "bg-emerald-50/40 border-emerald-300 dark:border-emerald-800"
+                          : esModificado
+                          ? "bg-blue-50/40 border-blue-300 dark:border-blue-800"
+                          : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                       }`}
                     >
-                      {f.label}
-                    </button>
-                  ))}
-                </div>
+                      <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
+                        <div className="space-y-1.5 flex-1 min-w-0">
+                          {/* Badges de Estado y Versión */}
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {item.numeroCorrelativo && (
+                              <span className="text-[10px] font-black bg-[#002F6C] text-[#FFCC00] px-2 py-0.5 rounded-md">
+                                Nº {item.numeroCorrelativo}
+                              </span>
+                            )}
 
-                <div className="relative w-full sm:w-64">
-                  <SearchIcon className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
-                  <Input
-                    type="text"
-                    placeholder="Filtrar por título o dirección..."
-                    value={busquedaPrevia}
-                    onChange={(e) => setBusquedaPrevia(e.target.value)}
-                    className="h-8 pl-8 text-xs bg-slate-50 rounded-xl"
-                  />
-                </div>
-              </div>
+                            <span
+                              className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
+                                esNuevo
+                                  ? "bg-emerald-600 text-white"
+                                  : esModificado
+                                  ? "bg-blue-600 text-white"
+                                  : "bg-slate-200 text-slate-700"
+                              }`}
+                            >
+                              {esNuevo ? "NUEVO" : esModificado ? "MODIFICADO" : "SIN CAMBIOS"}
+                            </span>
 
-              {/* Tabla de Diferencias y Validación */}
-              <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs max-h-80 overflow-y-auto">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead className="bg-slate-50 sticky top-0 z-10 border-b border-slate-200 text-[10px] uppercase font-black text-[#002F6C]">
-                    <tr>
-                      <th className="py-2.5 px-3">Estado</th>
-                      <th className="py-2.5 px-3">Documento</th>
-                      <th className="py-2.5 px-3">Jerarquía Asignada</th>
-                      <th className="py-2.5 px-3">Fecha Oficial</th>
-                      <th className="py-2.5 px-3">Diferencias / Cambios</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {itemsFiltrados.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="py-8 text-center text-slate-400">
-                          No hay elementos para mostrar con este filtro.
-                        </td>
-                      </tr>
-                    ) : (
-                      itemsFiltrados.map((item, idx) => (
-                        <tr
-                          key={`${item.titulo}_${idx}`}
-                          className={`hover:bg-slate-50/80 transition-colors ${
-                            item.estadoCambio === "nuevo"
-                              ? "bg-emerald-50/20"
-                              : item.estadoCambio === "modificado"
-                              ? "bg-amber-50/20"
-                              : ""
-                          }`}
-                        >
-                          <td className="py-2.5 px-3 whitespace-nowrap">
-                            {item.estadoCambio === "nuevo" && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                <SparklesIcon className="h-3 w-3" /> Nuevo
+                            {/* Badge Versión */}
+                            <span className="text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                              <GitBranchIcon className="h-2.5 w-2.5" />
+                              {item.versionCalculada}
+                            </span>
+
+                            {/* Badge Vigencia */}
+                            <span
+                              className={`text-[10px] font-black px-2 py-0.5 rounded-md ${
+                                item.esVigenteCalculado
+                                  ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                                  : "bg-amber-100 text-amber-800 border border-amber-200"
+                              }`}
+                            >
+                              {item.esVigenteCalculado ? "Vigente" : "Histórico"}
+                            </span>
+
+                            {/* Badge Disponibilidad PDF */}
+                            {esFaltaPdf ? (
+                              <span className="text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-300 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                <AlertTriangleIcon className="h-2.5 w-2.5" />
+                                FALTA PDF
                               </span>
-                            )}
-                            {item.estadoCambio === "modificado" && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300">
-                                <RefreshCwIcon className="h-3 w-3" /> Con Cambios
-                              </span>
-                            )}
-                            {item.estadoCambio === "sin_cambios" && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                                Sin Cambios
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-2.5 px-3 max-w-[280px]">
-                            <p className="font-bold text-[#002F6C] truncate">{item.titulo}</p>
-                            {item.nombreArchivoExcel && (
-                              <p className="text-[10px] text-slate-400 font-mono truncate">
-                                {item.nombreArchivoExcel}
-                              </p>
-                            )}
-                          </td>
-                          <td className="py-2.5 px-3">
-                            <div className="space-y-0.5 text-[11px]">
-                              <p className="font-bold text-[#0E5296]">{item.direccionNueva}</p>
-                              <p className="text-slate-600">{item.subcategoriaNueva} • {item.tipoDocumentalNuevo}</p>
-                            </div>
-                          </td>
-                          <td className="py-2.5 px-3 whitespace-nowrap text-[11px] font-medium text-slate-700">
-                            {item.fechaOficialNueva || "—"}
-                          </td>
-                          <td className="py-2.5 px-3">
-                            {item.diferencias.length === 0 ? (
-                              <span className="text-[10px] text-slate-400 italic">Sin modificaciones</span>
                             ) : (
-                              <div className="space-y-1">
-                                {item.diferencias.map((diff, dIdx) => (
-                                  <span
-                                    key={dIdx}
-                                    className="block text-[10.5px] font-semibold text-amber-800 bg-amber-50 rounded-md px-1.5 py-0.5 border border-amber-200/80 w-fit"
-                                  >
-                                    {diff}
-                                  </span>
-                                ))}
-                              </div>
+                              <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                <CheckIcon className="h-2.5 w-2.5" />
+                                Archivo Digital OK
+                              </span>
                             )}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
 
-        {/* ── Barra Inferior de Acciones ── */}
-        <div className="border-t border-slate-200 bg-slate-50/80 px-6 py-3.5 flex items-center justify-between">
+                            {item.totalVersionesEnFamilia > 1 && (
+                              <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                                Familia: {item.totalVersionesEnFamilia} versiones
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Título Oficial */}
+                          <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-snug">
+                            {item.titulo}
+                          </h4>
+
+                          {/* Jerarquía y Fecha */}
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                            <span className="flex items-center gap-1">
+                              <Building2Icon className="h-3 w-3 text-slate-400" />
+                              {item.direccionNueva}
+                            </span>
+                            <span>•</span>
+                            <span className="flex items-center gap-1">
+                              <FolderIcon className="h-3 w-3 text-slate-400" />
+                              {item.subcategoriaNueva}
+                            </span>
+                            <span>•</span>
+                            <span className="font-semibold text-slate-700 dark:text-slate-300">
+                              {item.tipoDocumentalNuevo}
+                            </span>
+                            <span>•</span>
+                            <span className="flex items-center gap-1">
+                              <CalendarIcon className="h-3 w-3 text-slate-400" />
+                              {item.fechaOficialNueva || "Sin fecha fija"}
+                            </span>
+                          </div>
+
+                          {/* Desglose de Diferencias (Diffs) */}
+                          {item.diferencias.length > 0 && (
+                            <div className="pt-1.5 flex flex-wrap gap-1.5">
+                              {item.diferencias.map((d, dIdx) => (
+                                <span
+                                  key={dIdx}
+                                  className="text-[10px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-md text-blue-900 dark:text-blue-300"
+                                >
+                                  • {d}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Footer con Acciones */}
+        <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
           <div>
-            {progressMsg && (
-              <div className="flex items-center gap-2 text-xs font-bold text-[#0E5296]">
-                <Loader2Icon className="h-4 w-4 animate-spin text-[#0E5296]" />
-                <span>{progressMsg}</span>
-              </div>
+            {paso === "analisis" && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setPaso("carga")}
+                disabled={isSubmitting}
+                className="text-xs font-bold text-slate-600 hover:text-slate-900 rounded-xl"
+              >
+                ← Volver a Carga
+              </Button>
             )}
           </div>
 
@@ -895,9 +1192,10 @@ export function ImportarCatalogoDialog({
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={handleClose}
-              disabled={isAnalyzing || isSubmitting}
-              className="rounded-xl text-xs font-bold cursor-pointer"
+              disabled={isSubmitting || isAnalyzing}
+              className="rounded-xl font-bold text-xs"
             >
               Cancelar
             </Button>
@@ -905,52 +1203,47 @@ export function ImportarCatalogoDialog({
             {paso === "carga" ? (
               <Button
                 type="button"
-                onClick={analizarCatalogo}
+                size="sm"
                 disabled={!excelFile || isAnalyzing}
-                className="rounded-xl bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold text-xs gap-1.5 shadow-md shadow-[#0E5296]/20 cursor-pointer"
+                onClick={analizarCatalogo}
+                className="bg-[#002F6C] hover:bg-[#0E5296] text-white rounded-xl text-xs font-bold gap-2 cursor-pointer shadow-sm px-4"
               >
                 {isAnalyzing ? (
                   <>
                     <Loader2Icon className="h-4 w-4 animate-spin text-[#FFCC00]" />
-                    Analizando...
+                    <span>{progressMsg || "Analizando..."}</span>
                   </>
                 ) : (
                   <>
                     <SparklesIcon className="h-4 w-4 text-[#FFCC00]" />
-                    Analizar y Validar Catálogo
+                    <span>Analizar Planilla y Validar</span>
                   </>
                 )}
               </Button>
             ) : (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setPaso("carga")}
-                  disabled={isSubmitting}
-                  className="rounded-xl text-xs font-bold cursor-pointer"
-                >
-                  Volver a Carga
-                </Button>
-                <Button
-                  type="button"
-                  onClick={aplicarSincronizacion}
-                  disabled={isSubmitting || (totalNuevos === 0 && totalModificados === 0)}
-                  className="rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs gap-1.5 shadow-md shadow-emerald-700/20 cursor-pointer"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2Icon className="h-4 w-4 animate-spin text-[#FFCC00]" />
-                      Aplicando Sincronización...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2Icon className="h-4 w-4 text-[#FFCC00]" />
-                      Confirmar y Sincronizar ({totalNuevos + totalModificados} cambios)
-                    </>
-                  )}
-                </Button>
-              </>
+              <Button
+                type="button"
+                size="sm"
+                disabled={isSubmitting || totalNuevos + totalModificados === 0}
+                onClick={aplicarSincronizacion}
+                className="bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold gap-2 cursor-pointer shadow-sm px-5"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2Icon className="h-4 w-4 animate-spin text-[#FFCC00]" />
+                    <span>{progressMsg || "Aplicando..."}</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2Icon className="h-4 w-4 text-[#FFCC00]" />
+                    <span>
+                      {totalNuevos + totalModificados === 0
+                        ? "Catálogo Sincronizado (0 cambios)"
+                        : `Confirmar e Importar (${totalNuevos} nuevos, ${totalModificados} modificados)`}
+                    </span>
+                  </>
+                )}
+              </Button>
             )}
           </div>
         </div>
@@ -958,4 +1251,3 @@ export function ImportarCatalogoDialog({
     </Dialog>
   )
 }
-
