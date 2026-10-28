@@ -218,20 +218,21 @@ export function ImportarCatalogoDialog({
         return
       }
 
-      // Buscar la fila de encabezados principal
+      // Buscar la fila de encabezados real de la tabla (debe tener al menos 3 columnas pobladas y contener títulos clave)
       let headerRowIndex = -1
-      for (let i = 0; i < Math.min(rawData.length, 15); i++) {
+      for (let i = 0; i < Math.min(rawData.length, 25); i++) {
         const row = rawData[i] || []
-        const rowStr = row.map((cell) => String(cell || "").toLowerCase()).join(" ")
-        if (
-          rowStr.includes("titulo") ||
-          rowStr.includes("título") ||
-          rowStr.includes("documento") ||
-          rowStr.includes("nombre") ||
-          rowStr.includes("direccion") ||
-          rowStr.includes("dirección") ||
-          rowStr.includes("categoria")
-        ) {
+        const rowTexts = row.map((cell) => String(cell || "").toLowerCase().trim())
+        const nonEmptyCount = rowTexts.filter((t) => t !== "").length
+        if (nonEmptyCount < 3) continue // Saltar banners, títulos institucionales o filas de metadatos
+
+        const rowStr = rowTexts.join(" ")
+        const hasTitulo = rowStr.includes("titulo") || rowStr.includes("título") || rowStr.includes("nombre")
+        const hasDireccion = rowStr.includes("direccion") || rowStr.includes("dirección")
+        const hasNum = rowStr.includes("nº") || rowStr.includes("n°") || rowStr.includes("num")
+        const hasCat = rowStr.includes("categoria") || rowStr.includes("categoría") || rowStr.includes("tipo")
+
+        if ((hasTitulo && (hasDireccion || hasNum || hasCat)) || (hasNum && hasDireccion)) {
           headerRowIndex = i
           break
         }
@@ -250,16 +251,17 @@ export function ImportarCatalogoDialog({
 
       const colNum = findColIdx(["nº", "n°", "numero", "número", "num"])
       const colId = findColIdx(["id", "código sistema", "codigo sistema", "codigo"])
-      const colTitulo = findColIdx(["titulo", "título", "documento", "nombre del doc"])
+      const colTitulo = findColIdx(["título del documento", "titulo del documento", "título", "titulo", "nombre"])
+      const colFamilia = findColIdx(["norma base", "familia", "norma"])
       const colDireccion = findColIdx(["direccion", "dirección"])
-      const colSubcategoria = findColIdx(["sub-area", "subarea", "sub-área", "subcategoria", "subcategoría", "area", "área"])
-      const colTipo = findColIdx(["categoria", "categoría", "tipo", "tipo doc"])
-      const colVersion = findColIdx(["version", "versión"])
-      const colVigencia = findColIdx(["vigencia", "estado de vigencia"])
-      const colFecha = findColIdx(["fecha", "emision", "emisión", "oficial", "año"])
+      const colSubcategoria = findColIdx(["sub-área", "sub-area", "subarea", "subcategoria", "subcategoría", "área", "area"])
+      const colTipo = findColIdx(["categoría / tipo", "categoria / tipo", "categoria", "categoría", "tipo"])
+      const colVersion = findColIdx(["versión", "version"])
+      const colVigencia = findColIdx(["estado de vigencia", "vigencia"])
+      const colFecha = findColIdx(["fecha de emisión", "fecha de emision", "fecha oficial", "fecha", "año"])
       const colDesc = findColIdx(["descripcion", "descripción", "detalle", "alcance"])
-      const colArchivo = findColIdx(["archivo", "nombre de archivo", "fichero", "file"])
-      const colCheck = findColIdx(["check", "disponibilidad", "estado archivo", "observacion"])
+      const colArchivo = findColIdx(["enlace al documento", "enlace", "archivo", "link"])
+      const colCheck = findColIdx(["estado de archivo", "disponibilidad", "check"])
 
       // Mapeos existentes en BD para matching ultra-preciso (Evita falsos "Nuevos")
       const existingById = new Map<string, DocExistente>()
@@ -315,8 +317,20 @@ export function ImportarCatalogoDialog({
         const rawTitulo = colTitulo !== -1 ? String(row[colTitulo] || "").trim() : ""
         if (!rawTitulo || rawTitulo === "—" || rawTitulo.length < 3) continue
 
-        // Detener si es fila de sub-tabla de resumen
-        if (rawTitulo.toLowerCase() === "nombre" || rawTitulo.toLowerCase() === "etiquetas de fila") continue
+        // Ignorar filas de metadatos de encabezado o tablas de resumen
+        const lowerTit = rawTitulo.toLowerCase()
+        if (
+          lowerTit.startsWith("fecha de generación") ||
+          lowerTit.startsWith("fecha de emision") ||
+          lowerTit.startsWith("fecha de emisión") ||
+          lowerTit.startsWith("total documentos") ||
+          lowerTit.startsWith("agencia boliviana") ||
+          lowerTit.startsWith("catálogo general") ||
+          lowerTit === "nombre" ||
+          lowerTit === "etiquetas de fila"
+        ) {
+          continue
+        }
 
         const rawNumStr = colNum !== -1 ? String(row[colNum] || "").trim() : ""
         const rawNum = rawNumStr ? parseInt(rawNumStr, 10) : undefined

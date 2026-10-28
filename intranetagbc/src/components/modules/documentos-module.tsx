@@ -61,6 +61,7 @@ import { crearContextoAcceso, puedeAcceder, type UsuarioRbac } from "@/lib/rbac"
 import { DocumentContentViewer } from "@/components/modules/document-content-viewer"
 import { ImportarCatalogoDialog } from "@/components/modules/importar-catalogo-dialog"
 import { HistorialImportacionesDialog } from "@/components/modules/historial-importaciones-dialog"
+import { DocumentosTourGuiado } from "@/components/modules/documentos-tour-guiado"
 import * as XLSX from "xlsx"
 import { LISTA_DOCUMENTOS_OFICIALES, obtenerFechaOficialDocumento } from "@/lib/documentos-fechas-map"
 import { ESTRUCTURA_JERARQUICA, TIPOS_DOCUMENTALES, clasificarDocumento } from "@/lib/documentos-jerarquia"
@@ -173,6 +174,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [importCatalogOpen, setImportCatalogOpen] = useState(false)
   const [historialImportOpen, setHistorialImportOpen] = useState(false)
+  const [tourOpen, setTourOpen] = useState(false)
   const [vigenciaFiltro, setVigenciaFiltro] = useState<"todas" | "vigentes" | "historicos" | "falta_pdf" | "multiversion">("todas")
   const [catDialogOpen, setCatDialogOpen] = useState(false)
   const [previewDoc, setPreviewDoc] = useState<DocRow | null>(null)
@@ -760,7 +762,6 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         [
           "Nº",
           "TÍTULO DEL DOCUMENTO",
-          "NORMA BASE / FAMILIA",
           "DIRECCIÓN",
           "SUB-ÁREA",
           "CATEGORÍA / TIPO",
@@ -791,12 +792,10 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         const versionStr = d.version || "v1.0"
         const vigenciaStr = d.esVigente !== false ? "Vigente (Oficial)" : "Histórico - Derogado"
         const disponibilidadStr = d.disponibilidadArchivo === "falta_archivo" ? "FALTA PDF" : "DISPONIBLE"
-        const familiaNombre = d.familiaCodigo ? d.familiaCodigo.replace(/-/g, " ").toUpperCase() : normalizarFamiliaCanonica(d.titulo)
 
         rows.push([
           numCorrelativo,
           d.titulo,
-          familiaNombre,
           direccion,
           subcategoria,
           tipoDoc,
@@ -811,8 +810,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
       const ws = XLSX.utils.aoa_to_sheet(rows)
       ws["!cols"] = [
         { wch: 6 },   // Nº
-        { wch: 55 },  // Título
-        { wch: 38 },  // Norma Base / Familia
+        { wch: 60 },  // Título
         { wch: 34 },  // Dirección
         { wch: 30 },  // Sub-área
         { wch: 22 },  // Tipo / Categoría
@@ -824,7 +822,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
       ]
 
       // Estilo visual con fondo azul institucional para el encabezado en Excel
-      for (let c = 0; c <= 10; c++) {
+      for (let c = 0; c <= 9; c++) {
         const headerCell = XLSX.utils.encode_cell({ r: 5, c })
         if (ws[headerCell]) {
           ws[headerCell].s = {
@@ -842,7 +840,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
             ? (d.archivo.startsWith("/api/documentos/") ? d.archivo : `/api/documentos/${d.archivo.replace(/^\/?(documentos\/)?/, "")}`)
             : `/api/documentos/${d.archivo}`
           const fullUrl = relPath.startsWith("http") ? relPath : `${PROD_BASE_URL}${relPath}`
-          const cellAddress = XLSX.utils.encode_cell({ r: 6 + idx, c: 10 })
+          const cellAddress = XLSX.utils.encode_cell({ r: 6 + idx, c: 9 })
           ws[cellAddress] = {
             t: "s",
             f: `HYPERLINK("${fullUrl}", "Ver / Descargar Documento")`,
@@ -888,9 +886,21 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* BOTÓN: Tutorial Paso a Paso */}
+          <Button
+            type="button"
+            onClick={() => setTourOpen(true)}
+            className="bg-amber-500 hover:bg-amber-600 text-white font-black rounded-2xl shadow-md shadow-amber-500/20 cursor-pointer text-xs flex items-center gap-1.5 h-10 px-3.5 transition-all"
+            title="Iniciar tutorial interactivo paso a paso de gestión documental"
+          >
+            <SparklesIcon className="h-4 w-4 text-[#FFCC00]" />
+            <span>Tutorial Interactivo</span>
+          </Button>
+
           {canCreateDocumento && (
             <Button
-              className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold rounded-2xl shadow-md shadow-[#0E5296]/20 cursor-pointer text-xs"
+              id="tour-btn-nuevo"
+              className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold rounded-2xl shadow-md shadow-[#0E5296]/20 cursor-pointer text-xs h-10 px-4"
               onClick={() => {
                 if (tab === "categorias") {
                   if (catFolderTipoId) {
@@ -1026,6 +1036,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
           <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
             {/* BOTÓN: "Historial de Cambios" */}
             <Button
+              id="tour-btn-historial"
               type="button"
               onClick={() => setHistorialImportOpen(true)}
               variant="outline"
@@ -1038,6 +1049,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
 
             {/* BOTÓN: "Exportar Catálogo" */}
             <Button
+              id="tour-btn-exportar"
               type="button"
               onClick={handleExportarExcelDocumentos}
               className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs gap-1.5 h-9 cursor-pointer shadow-xs flex items-center px-3.5 transition-all"
@@ -1050,6 +1062,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
             {/* BOTÓN: "Importar Catálogo" */}
             {canCreateDocumento && (
               <Button
+                id="tour-btn-importar"
                 type="button"
                 onClick={() => setImportCatalogOpen(true)}
                 className="bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold rounded-xl text-xs gap-1.5 h-9 cursor-pointer shadow-xs flex items-center px-3.5 transition-all"
@@ -1070,7 +1083,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         {tab !== "categorias" && (
           <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2 text-xs">
             {/* Dirección */}
-            <div className="flex items-center gap-1.5">
+            <div id="tour-filtro-direccion" className="flex items-center gap-1.5">
               <span className="font-bold text-[#002F6C] text-[11px]">Dirección:</span>
               <Select
                 value={direccionFiltro || "__all__"}
@@ -1095,7 +1108,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
             </div>
 
             {/* Subcategoría */}
-            <div className="flex items-center gap-1.5">
+            <div id="tour-filtro-subcategoria" className="flex items-center gap-1.5">
               <span className="font-bold text-[#002F6C] text-[11px]">Subcategoría:</span>
               <Select
                 value={subcategoriaFiltro || "__all__"}
@@ -1119,7 +1132,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
             </div>
 
             {/* Tipo Documental */}
-            <div className="flex items-center gap-1.5">
+            <div id="tour-filtro-tipo" className="flex items-center gap-1.5">
               <span className="font-bold text-[#002F6C] text-[11px]">Tipo:</span>
               <Select
                 value={tipoDocumentalFiltro || "__all__"}
@@ -1143,7 +1156,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
             </div>
 
             {/* Filtro de Vigencia / Estado de Archivo */}
-            <div className="flex items-center gap-1.5">
+            <div id="tour-filtro-vigencia" className="flex items-center gap-1.5">
               <span className="font-bold text-[#002F6C] text-[11px]">Vigencia:</span>
               <Select
                 value={vigenciaFiltro}
@@ -1415,7 +1428,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                   </td>
                 </tr>
               ) : (
-                paginatedList.map((item: any) => {
+                paginatedList.map((item: any, itemIdx: number) => {
                   const isCat = tab === "categorias" && !catFolderTipoId && !item.tipoArchivo
                   const Icon = isCat ? FolderIcon : getFileIcon(item.tipoArchivo)
                   const iconColor = isCat ? "#FF8800" : getFileColor(item.tipoArchivo)
@@ -1599,21 +1612,6 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                                 <GitBranchIcon className="h-2.5 w-2.5" />
                                 {item.version || "v1.0"} {item.esVigente !== false ? "• Vigente" : "• Histórico"}
                               </span>
-                              {/* Norma Base / Familia Badge */}
-                              {item.familiaCodigo && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setSearchQuery(item.familiaCodigo.replace(/-/g, " "))
-                                    setCurrentPage(1)
-                                  }}
-                                  className="text-[9px] font-bold bg-blue-50 text-[#002F6C] hover:bg-blue-100 border border-blue-200 px-1.5 py-0.5 rounded flex items-center gap-1 cursor-pointer transition-colors"
-                                  title="Haga clic para ver todas las versiones de esta norma matriz"
-                                >
-                                  <LayersIcon className="h-2.5 w-2.5 text-[#0E5296]" />
-                                  <span>Norma: {item.familiaCodigo.replace(/-/g, " ")}</span>
-                                </button>
-                              )}
                               {/* Falta Archivo Badge */}
                               {item.disponibilidadArchivo === "falta_archivo" && (
                                 <span className="text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded flex items-center gap-0.5">
@@ -1655,7 +1653,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                           )}
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td id={itemIdx === 0 ? "tour-acciones-fila" : undefined} className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           {item.archivo && (
                             <button
@@ -2411,6 +2409,12 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ── Tutorial Interactivo Paso a Paso ── */}
+      <DocumentosTourGuiado
+        open={tourOpen}
+        onClose={() => setTourOpen(false)}
+      />
     </div>
   )
 }
