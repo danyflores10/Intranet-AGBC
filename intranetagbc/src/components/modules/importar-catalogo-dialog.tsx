@@ -46,7 +46,6 @@ import { obtenerFechaOficialDocumento } from "@/lib/documentos-fechas-map"
 import {
   calcularVersionesCatalogo,
   normalizarFamiliaCanonica,
-  verificarDisponibilidadFisica,
 } from "@/lib/documentos-versionador"
 
 export interface DocExistente {
@@ -415,8 +414,11 @@ export function ImportarCatalogoDialog({
         const familiaCodigo = vInfo ? vInfo.familiaCodigo : normalizarFamiliaCanonica(row.rawTitulo).replace(/\s+/g, "-")
         const totalVersiones = vInfo ? vInfo.totalVersionesEnFamilia : 1
 
-        // Detección de disponibilidad física del archivo PDF
-        const checkFisicoDb = verificarDisponibilidadFisica(docExistente?.archivo)
+        // Detección de disponibilidad del archivo PDF
+        const archivoRegistradoEnDb = Boolean(
+          docExistente?.disponibilidadArchivo === "disponible" ||
+          (docExistente?.archivo && docExistente.archivo.trim() !== "" && docExistente.archivo !== "—" && docExistente.disponibilidadArchivo !== "falta_archivo")
+        )
         const checkReportado = row.rawCheck.toUpperCase().includes("FALTA") || row.rawCheck.toLowerCase().includes("no se encuentra")
         
         let disponibilidadFinal: "disponible" | "falta_archivo" = "disponible"
@@ -428,15 +430,15 @@ export function ImportarCatalogoDialog({
         } else if (checkReportado) {
           disponibilidadFinal = "falta_archivo"
           motivoDisp = "Reportado como FALTA PDF en el catálogo"
-        } else if (docExistente?.archivo && checkFisicoDb.disponible) {
+        } else if (docExistente?.archivo && archivoRegistradoEnDb) {
           disponibilidadFinal = "disponible"
-          motivoDisp = "Archivo digital verificado en servidor"
+          motivoDisp = "Archivo digital verificado en sistema"
         } else if (!docExistente && !matchedPhysicalFile) {
           disponibilidadFinal = "falta_archivo"
           motivoDisp = "Documento nuevo sin archivo físico adjuntado"
-        } else if (docExistente && !checkFisicoDb.disponible) {
+        } else if (docExistente && !archivoRegistradoEnDb) {
           disponibilidadFinal = "falta_archivo"
-          motivoDisp = "El archivo físico no existe en el almacenamiento digital"
+          motivoDisp = "Sin archivo digital registrado en el sistema"
         }
 
         if (!docExistente) {

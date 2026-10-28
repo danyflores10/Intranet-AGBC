@@ -11,8 +11,8 @@ import { clasificarDocumento } from "@/lib/documentos-jerarquia"
 import {
   calcularVersionesCatalogo,
   normalizarFamiliaCanonica,
-  verificarDisponibilidadFisica,
 } from "@/lib/documentos-versionador"
+import { verificarDisponibilidadFisica } from "@/lib/documentos-servidor"
 
 const ROL_SUPER_ADMIN = "super_admin"
 

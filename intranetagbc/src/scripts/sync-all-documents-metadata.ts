@@ -1,7 +1,8 @@
 import { db } from "../db"
 import { documentos, documentoCategorias } from "../db/schema"
 import { eq } from "drizzle-orm"
-import { calcularVersionesCatalogo, normalizarFamiliaCanonica, verificarDisponibilidadFisica } from "../lib/documentos-versionador"
+import { calcularVersionesCatalogo, normalizarFamiliaCanonica } from "../lib/documentos-versionador"
+import { verificarDisponibilidadFisica } from "../lib/documentos-servidor"
 import { obtenerFechaOficialDocumento } from "../lib/documentos-fechas-map"
 
 // Lista de los 89 documentos enviada por el usuario en el Excel
@@ -201,3 +202,4 @@ main().catch(err => {
   console.error("Error sincronizando metadatos:", err)
   process.exit(1)
 })
+
