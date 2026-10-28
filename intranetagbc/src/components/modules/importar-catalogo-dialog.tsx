@@ -46,6 +46,7 @@ import { obtenerFechaOficialDocumento } from "@/lib/documentos-fechas-map"
 import {
   calcularVersionesCatalogo,
   normalizarFamiliaCanonica,
+  obtenerCodigoFamiliaCanonica,
 } from "@/lib/documentos-versionador"
 
 export interface DocExistente {
@@ -207,9 +208,49 @@ export function ImportarCatalogoDialog({
     try {
       const buffer = await excelFile.arrayBuffer()
       const wb = XLSX.read(buffer, { type: "array" })
-      const firstSheetName = wb.SheetNames[0]
-      const ws = wb.Sheets[firstSheetName]
-      setExcelSheetName(firstSheetName)
+
+      // 1. Detección Inteligente de la Hoja del Catálogo Real (evita tablas dinámicas como Hoja2)
+      let targetSheetName = wb.SheetNames[0]
+      let maxScore = -1
+
+      for (const name of wb.SheetNames) {
+        const sheet = wb.Sheets[name]
+        if (!sheet) continue
+        const sheetData = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][]
+        if (!sheetData || sheetData.length === 0) continue
+
+        let score = 0
+        const lowerName = name.toLowerCase()
+        if (
+          lowerName.includes("catalogo") ||
+          lowerName.includes("catálogo") ||
+          lowerName.includes("documento") ||
+          lowerName.includes("normativa") ||
+          lowerName.includes("agbc")
+        ) {
+          score += 60
+        }
+
+        // Inspeccionar las primeras 15 filas buscando encabezados clave
+        for (let r = 0; r < Math.min(sheetData.length, 15); r++) {
+          const rowText = (sheetData[r] || []).map((c) => String(c || "").toLowerCase().trim()).join(" ")
+          if (rowText.includes("título") || rowText.includes("titulo")) score += 30
+          if (rowText.includes("dirección") || rowText.includes("direccion")) score += 20
+          if (rowText.includes("nº") || rowText.includes("n°")) score += 25
+          if (rowText.includes("categoría") || rowText.includes("categoria")) score += 15
+        }
+
+        // Penalizar hojas de resumen muy pequeñas que sean solo tablas dinámicas
+        if (sheetData.length >= 30) score += 40
+
+        if (score > maxScore) {
+          maxScore = score
+          targetSheetName = name
+        }
+      }
+
+      const ws = wb.Sheets[targetSheetName]
+      setExcelSheetName(targetSheetName)
 
       const rawData = XLSX.utils.sheet_to_json(ws, { header: 1 }) as any[][]
       if (!rawData || rawData.length < 2) {
@@ -252,7 +293,7 @@ export function ImportarCatalogoDialog({
       const colNum = findColIdx(["nº", "n°", "numero", "número", "num"])
       const colId = findColIdx(["id", "código sistema", "codigo sistema", "codigo"])
       const colTitulo = findColIdx(["título del documento", "titulo del documento", "título", "titulo", "nombre"])
-      const colFamilia = findColIdx(["norma base", "familia", "norma"])
+      const colFamilia = findColIdx(["código de familia", "codigo de familia", "código familia", "codigo familia", "familia / código", "norma base", "familia", "norma"])
       const colDireccion = findColIdx(["direccion", "dirección"])
       const colSubcategoria = findColIdx(["sub-área", "sub-area", "subarea", "subcategoria", "subcategoría", "área", "area"])
       const colTipo = findColIdx(["categoría / tipo", "categoria / tipo", "categoria", "categoría", "tipo"])
@@ -260,7 +301,7 @@ export function ImportarCatalogoDialog({
       const colVigencia = findColIdx(["estado de vigencia", "vigencia"])
       const colFecha = findColIdx(["fecha de emisión", "fecha de emision", "fecha oficial", "fecha", "año"])
       const colDesc = findColIdx(["descripcion", "descripción", "detalle", "alcance"])
-      const colArchivo = findColIdx(["enlace al documento", "enlace", "archivo", "link"])
+      const colArchivo = findColIdx(["enlace al documento", "enlace al archivo", "enlace", "archivo", "link"])
       const colCheck = findColIdx(["estado de archivo", "disponibilidad", "check"])
 
       // Mapeos existentes en BD para matching ultra-preciso (Evita falsos "Nuevos")
@@ -303,6 +344,7 @@ export function ImportarCatalogoDialog({
         rawDireccion: string
         rawSub: string
         rawTipo: string
+        rawFamilia?: string
         rawVersion?: string
         rawVigencia?: string
         rawFecha: string
@@ -313,6 +355,12 @@ export function ImportarCatalogoDialog({
 
       for (const row of dataRows) {
         if (!row || row.length === 0) continue
+
+        const rowTexts = row.map((cell) => String(cell || "").toLowerCase().trim())
+        // Detener procesamiento si se detecta inicio de tabla secundaria (ej. ",NOMBRE,AREA,")
+        if (rowTexts.includes("nombre") && (rowTexts.includes("area") || rowTexts.includes("área"))) {
+          break
+        }
 
         const rawTitulo = colTitulo !== -1 ? String(row[colTitulo] || "").trim() : ""
         if (!rawTitulo || rawTitulo === "—" || rawTitulo.length < 3) continue
@@ -339,6 +387,8 @@ export function ImportarCatalogoDialog({
         const rawDireccion = colDireccion !== -1 ? String(row[colDireccion] || "").trim() : ""
         const rawSub = colSubcategoria !== -1 ? String(row[colSubcategoria] || "").trim() : ""
         const rawTipo = colTipo !== -1 ? String(row[colTipo] || "").trim() : ""
+        const rawFamiliaVal = colFamilia !== -1 ? String(row[colFamilia] || "").trim() : ""
+        const rawFamilia = rawFamiliaVal && rawFamiliaVal !== "—" ? rawFamiliaVal : undefined
         const rawVersion = colVersion !== -1 ? String(row[colVersion] || "").trim() : undefined
         const rawVigencia = colVigencia !== -1 ? String(row[colVigencia] || "").trim() : undefined
         const rawFecha = colFecha !== -1 ? String(row[colFecha] || "").trim() : ""
@@ -353,6 +403,7 @@ export function ImportarCatalogoDialog({
           rawDireccion,
           rawSub,
           rawTipo,
+          rawFamilia,
           rawVersion,
           rawVigencia,
           rawFecha,
@@ -362,13 +413,16 @@ export function ImportarCatalogoDialog({
         })
       }
 
-      // 2. Pre-calcular versiones automáticas de los documentos analizados
+      // 2. Pre-calcular versiones automáticas de los documentos analizados respetando códigos de familia
       const versionesPrecalculadas = calcularVersionesCatalogo(
         rawRowsParsed.map((r) => ({
           numeroCorrelativo: r.rawNum,
           titulo: r.rawTitulo,
           fechaEmision: r.rawFecha,
           subcategoriaId: r.rawSub,
+          familiaCodigo: r.rawFamilia,
+          version: r.rawVersion,
+          esVigente: r.rawVigencia ? r.rawVigencia.toLowerCase().includes("vigente") : undefined,
         }))
       )
 
@@ -389,20 +443,20 @@ export function ImportarCatalogoDialog({
 
         const normT = normalizar(row.rawTitulo)
         const normF = normalizar(row.rawArchivo)
-        const famT = normalizarFamiliaCanonica(row.rawTitulo)
+        const famT = obtenerCodigoFamiliaCanonica(row.rawTitulo, row.rawFamilia)
         const yearT = row.rawFecha.match(/\b(20[1-3]\d)\b/)?.[1] || ""
 
-        // Matching jerárquico inteligente (evita falsos nuevos)
+        // Matching jerárquico inteligente (Prioridad 1: Correlativo Oficial, Prioridad 2: ID Sistema, Prioridad 3: Título)
         let docExistente: DocExistente | undefined = undefined
 
-        if (row.rawId && existingById.has(row.rawId)) {
-          docExistente = existingById.get(row.rawId)
-        } else if (row.rawNum && existingByNum.has(row.rawNum)) {
+        if (row.rawNum && existingByNum.has(row.rawNum)) {
           docExistente = existingByNum.get(row.rawNum)
-        } else if (normF && existingByNormFile.has(normF)) {
-          docExistente = existingByNormFile.get(normF)
+        } else if (row.rawId && existingById.has(row.rawId)) {
+          docExistente = existingById.get(row.rawId)
         } else if (normT && existingByNormTitle.has(normT)) {
           docExistente = existingByNormTitle.get(normT)
+        } else if (normF && existingByNormFile.has(normF)) {
+          docExistente = existingByNormFile.get(normF)
         } else if (famT && yearT && existingByFamiliaAndYear.has(`${famT}_${yearT}`)) {
           docExistente = existingByFamiliaAndYear.get(`${famT}_${yearT}`)
         }
@@ -421,11 +475,13 @@ export function ImportarCatalogoDialog({
         // Versión calculada
         const vKey = `${row.rawNum || ""}_${normT}`
         const vInfo = mapVersionesPre.get(vKey)
-        const versionCalculada = row.rawVersion || (vInfo ? vInfo.version : "v1.0")
+        const versionCalculada = row.rawVersion || (vInfo ? vInfo.version : (docExistente?.version || "v1.0"))
         const esVigenteCalculado = row.rawVigencia
           ? row.rawVigencia.toLowerCase().includes("vigente")
-          : (vInfo ? vInfo.esVigente : true)
-        const familiaCodigo = vInfo ? vInfo.familiaCodigo : normalizarFamiliaCanonica(row.rawTitulo).replace(/\s+/g, "-")
+          : (vInfo ? vInfo.esVigente : (docExistente?.esVigente !== false))
+        const familiaCodigo = row.rawFamilia && row.rawFamilia !== "—"
+          ? row.rawFamilia
+          : (vInfo?.familiaCodigo || obtenerCodigoFamiliaCanonica(row.rawTitulo, docExistente?.familiaCodigo))
         const totalVersiones = vInfo ? vInfo.totalVersionesEnFamilia : 1
 
         // Detección de disponibilidad del archivo PDF
@@ -505,14 +561,31 @@ export function ImportarCatalogoDialog({
           if (tipoFinal && normalizar(tipoAnt) !== normalizar(tipoFinal)) {
             diffs.push(`Tipo: ${tipoAnt} ➔ ${tipoFinal}`)
           }
-          if (row.rawFecha && row.rawFecha !== "—" && row.rawFecha !== "Sin fecha fija" && normalizar(row.rawFecha) !== normalizar(fechaAnt)) {
+          if (
+            row.rawFecha &&
+            row.rawFecha !== "—" &&
+            row.rawFecha !== "Sin fecha fija" &&
+            fechaAnt &&
+            fechaAnt !== "—" &&
+            fechaAnt !== "Sin fecha fija" &&
+            normalizar(row.rawFecha) !== normalizar(fechaAnt)
+          ) {
             diffs.push(`Fecha Oficial: ${fechaAnt} ➔ ${row.rawFecha}`)
           }
-          if (docExistente.version && docExistente.version !== versionCalculada) {
+          if (row.rawVersion && docExistente.version && docExistente.version !== versionCalculada) {
             diffs.push(`Versión: ${docExistente.version} ➔ ${versionCalculada}`)
           }
-          if (docExistente.esVigente !== undefined && docExistente.esVigente !== esVigenteCalculado) {
+          if (row.rawVigencia && docExistente.esVigente !== undefined && docExistente.esVigente !== esVigenteCalculado) {
             diffs.push(`Vigencia: ${docExistente.esVigente ? "Vigente" : "Histórico"} ➔ ${esVigenteCalculado ? "Vigente" : "Histórico"}`)
+          }
+          if (
+            row.rawFamilia &&
+            row.rawFamilia !== "—" &&
+            docExistente.familiaCodigo &&
+            docExistente.familiaCodigo !== "—" &&
+            docExistente.familiaCodigo !== row.rawFamilia
+          ) {
+            diffs.push(`Familia: ${docExistente.familiaCodigo} ➔ ${row.rawFamilia}`)
           }
           if (row.rawDesc && row.rawDesc !== "—" && row.rawDesc !== (docExistente.descripcion || "")) {
             diffs.push(`Descripción actualizada`)

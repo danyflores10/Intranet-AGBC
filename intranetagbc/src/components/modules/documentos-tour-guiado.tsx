@@ -447,127 +447,219 @@ export function DocumentosTourGuiado({ open, onClose }: Props) {
 
   if (!mounted || !open) return null
 
+  // Posición dinámica de la tarjeta flotante para no tapar el elemento enmarcado
+  const getCardStyle = (): React.CSSProperties => {
+    if (!targetRect || typeof window === "undefined") {
+      return {
+        position: "fixed",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        width: "min(520px, 94vw)",
+        zIndex: 10001,
+      }
+    }
+
+    const cardWidth = Math.min(480, window.innerWidth - 32)
+    const cardEstHeight = 440
+    const margin = 20
+
+    const spaceRight = window.innerWidth - (targetRect.right + margin)
+    const spaceLeft = targetRect.left - margin
+    const spaceBottom = window.innerHeight - (targetRect.bottom + margin)
+    const spaceTop = targetRect.top - margin
+
+    // 1. Preferir a la derecha si cabe
+    if (spaceRight >= cardWidth + margin) {
+      const top = Math.max(margin, Math.min(targetRect.top, window.innerHeight - cardEstHeight - margin))
+      return {
+        position: "fixed",
+        left: `${targetRect.right + margin}px`,
+        top: `${top}px`,
+        width: `${cardWidth}px`,
+        zIndex: 10001,
+      }
+    }
+
+    // 2. Si no cabe a la derecha, probar a la izquierda
+    if (spaceLeft >= cardWidth + margin) {
+      const top = Math.max(margin, Math.min(targetRect.top, window.innerHeight - cardEstHeight - margin))
+      return {
+        position: "fixed",
+        left: `${Math.max(margin, targetRect.left - cardWidth - margin)}px`,
+        top: `${top}px`,
+        width: `${cardWidth}px`,
+        zIndex: 10001,
+      }
+    }
+
+    // 3. Si no cabe a los lados, probar abajo
+    if (spaceBottom >= 340) {
+      const left = Math.max(margin, Math.min(targetRect.left, window.innerWidth - cardWidth - margin))
+      return {
+        position: "fixed",
+        top: `${targetRect.bottom + margin}px`,
+        left: `${left}px`,
+        width: `${cardWidth}px`,
+        zIndex: 10001,
+      }
+    }
+
+    // 4. Probar arriba
+    if (spaceTop >= 340) {
+      const left = Math.max(margin, Math.min(targetRect.left, window.innerWidth - cardWidth - margin))
+      return {
+        position: "fixed",
+        bottom: `${Math.max(margin, window.innerHeight - targetRect.top + margin)}px`,
+        left: `${left}px`,
+        width: `${cardWidth}px`,
+        zIndex: 10001,
+      }
+    }
+
+    // Fallback centrado
+    return {
+      position: "fixed",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      width: "min(520px, 94vw)",
+      zIndex: 10001,
+    }
+  }
+
   return createPortal(
     <div className="fixed inset-0 z-[9999] overflow-hidden select-none">
-      {/* Fondo oscuro con difuminado */}
-      <div
-        onClick={onClose}
-        className="absolute inset-0 bg-slate-950/80 backdrop-blur-xs transition-opacity duration-300"
-      />
-
-      {/* Recuadro de luz (Spotlight) enfocado sobre el elemento del paso actual */}
-      {targetRect && (
+      {/* Fondo oscuro para pasos introductorios sin spotlight */}
+      {!targetRect && (
         <div
-          style={{
-            top: `${Math.max(0, targetRect.top - 6)}px`,
-            left: `${Math.max(0, targetRect.left - 6)}px`,
-            width: `${targetRect.width + 12}px`,
-            height: `${targetRect.height + 12}px`,
-          }}
-          className="absolute z-[10000] rounded-2xl pointer-events-none transition-all duration-300 ring-4 ring-[#FFCC00] ring-offset-4 ring-offset-slate-950 shadow-[0_0_50px_rgba(255,204,0,0.45)]"
+          onClick={onClose}
+          className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs transition-opacity duration-300 pointer-events-auto z-[9999]"
         />
       )}
 
-      {/* Modal / Tarjeta Flotante del Paso Actual */}
-      <div className="absolute inset-0 z-[10001] flex items-center justify-center p-4 pointer-events-none">
-        <div className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border-2 border-[#002F6C]/25 overflow-hidden pointer-events-auto flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
-          {/* Header del Paso */}
-          <div className="bg-gradient-to-r from-[#002F6C] via-[#0E5296] to-[#002F6C] p-5 text-white shrink-0">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#FFCC00] text-[#002F6C] font-black shadow-md">
-                  <Sparkles className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-[#FFCC00] block">
-                    {pasoActual.categoria} • Paso {pasoIndex + 1} de {PASOS.length}
-                  </span>
-                  <h3 className="text-base font-black truncate text-white">{pasoActual.titulo}</h3>
-                </div>
+      {/* Recuadro de luz (Spotlight Cutout) enfocado sobre el elemento del paso actual */}
+      {targetRect && (
+        <>
+          {/* Overlay transparente para cerrar al hacer clic fuera */}
+          <div
+            onClick={onClose}
+            className="fixed inset-0 pointer-events-auto z-[9998]"
+          />
+          {/* Spotlight con recorte 100% transparente y sombra envolvente de 9999px */}
+          <div
+            style={{
+              top: `${Math.max(0, targetRect.top - 6)}px`,
+              left: `${Math.max(0, targetRect.left - 6)}px`,
+              width: `${targetRect.width + 12}px`,
+              height: `${targetRect.height + 12}px`,
+            }}
+            className="fixed z-[9999] rounded-2xl pointer-events-none transition-all duration-300 ring-4 ring-[#FFCC00] ring-offset-2 ring-offset-slate-950 shadow-[0_0_0_9999px_rgba(15,23,42,0.82),0_0_35px_rgba(255,204,0,0.4)]"
+          />
+        </>
+      )}
+
+      {/* Modal / Tarjeta Flotante del Paso Actual posicionado a un costado */}
+      <div
+        style={getCardStyle()}
+        className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border-2 border-[#002F6C]/25 overflow-hidden pointer-events-auto flex flex-col max-h-[88vh] animate-in fade-in zoom-in-95 duration-200"
+      >
+        {/* Header del Paso */}
+        <div className="bg-gradient-to-r from-[#002F6C] via-[#0E5296] to-[#002F6C] p-5 text-white shrink-0">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#FFCC00] text-[#002F6C] font-black shadow-md">
+                <Sparkles className="h-5 w-5" />
               </div>
-
-              <button
-                type="button"
-                onClick={onClose}
-                className="h-8 w-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
-                title="Cerrar tutorial"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <div className="min-w-0">
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#FFCC00] block">
+                  {pasoActual.categoria} • Paso {pasoIndex + 1} de {PASOS.length}
+                </span>
+                <h3 className="text-base font-black truncate text-white">{pasoActual.titulo}</h3>
+              </div>
             </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-8 w-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+              title="Cerrar tutorial"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Subtítulo & Contenido */}
+        <div className="p-6 overflow-y-auto space-y-4">
+          <p className="text-xs font-bold text-[#002F6C] dark:text-blue-300">
+            {pasoActual.subtitulo}
+          </p>
+
+          {pasoActual.contenido}
+        </div>
+
+        {/* Footer con Controles de Navegación */}
+        <div className="p-4 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 shrink-0">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="text-xs font-bold text-slate-500 hover:text-slate-800 rounded-xl cursor-pointer"
+          >
+            Saltar tutorial
+          </Button>
+
+          {/* Indicadores de bolitas */}
+          <div className="hidden sm:flex items-center gap-1.5">
+            {PASOS.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setPasoIndex(i)}
+                className={`h-2 rounded-full transition-all cursor-pointer ${
+                  i === pasoIndex ? "w-6 bg-[#0E5296]" : "w-2 bg-slate-300 hover:bg-slate-400"
+                }`}
+                title={`Ir al paso ${i + 1}`}
+              />
+            ))}
           </div>
 
-          {/* Subtítulo & Contenido */}
-          <div className="p-6 overflow-y-auto space-y-4">
-            <p className="text-xs font-bold text-[#002F6C] dark:text-blue-300">
-              {pasoActual.subtitulo}
-            </p>
-
-            {pasoActual.contenido}
-          </div>
-
-          {/* Footer con Controles de Navegación */}
-          <div className="p-4 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 shrink-0">
+          <div className="flex items-center gap-2">
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               size="sm"
-              onClick={onClose}
-              className="text-xs font-bold text-slate-500 hover:text-slate-800 rounded-xl cursor-pointer"
+              disabled={pasoIndex === 0}
+              onClick={() => setPasoIndex((p) => Math.max(0, p - 1))}
+              className="h-9 rounded-xl text-xs font-bold gap-1 cursor-pointer"
             >
-              Saltar tutorial
+              <ChevronLeft className="h-4 w-4" />
+              <span>Anterior</span>
             </Button>
 
-            {/* Indicadores de bolitas */}
-            <div className="hidden sm:flex items-center gap-1.5">
-              {PASOS.map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setPasoIndex(i)}
-                  className={`h-2 rounded-full transition-all cursor-pointer ${
-                    i === pasoIndex ? "w-6 bg-[#0E5296]" : "w-2 bg-slate-300 hover:bg-slate-400"
-                  }`}
-                  title={`Ir al paso ${i + 1}`}
-                />
-              ))}
-            </div>
-
-            <div className="flex items-center gap-2">
+            {pasoIndex < PASOS.length - 1 ? (
               <Button
                 type="button"
-                variant="outline"
                 size="sm"
-                disabled={pasoIndex === 0}
-                onClick={() => setPasoIndex((p) => Math.max(0, p - 1))}
-                className="h-9 rounded-xl text-xs font-bold gap-1 cursor-pointer"
+                onClick={() => setPasoIndex((p) => Math.min(PASOS.length - 1, p + 1))}
+                className="h-9 rounded-xl text-xs font-bold bg-[#0E5296] hover:bg-[#002F6C] text-white gap-1 cursor-pointer shadow-xs"
               >
-                <ChevronLeft className="h-4 w-4" />
-                <span>Anterior</span>
+                <span>Siguiente</span>
+                <ChevronRight className="h-4 w-4" />
               </Button>
-
-              {pasoIndex < PASOS.length - 1 ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => setPasoIndex((p) => Math.min(PASOS.length - 1, p + 1))}
-                  className="h-9 rounded-xl text-xs font-bold bg-[#0E5296] hover:bg-[#002F6C] text-white gap-1 cursor-pointer shadow-xs"
-                >
-                  <span>Siguiente</span>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={onClose}
-                  className="h-9 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white gap-1 cursor-pointer shadow-xs"
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span>¡Entendido!</span>
-                </Button>
-              )}
-            </div>
+            ) : (
+              <Button
+                type="button"
+                size="sm"
+                onClick={onClose}
+                className="h-9 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white gap-1 cursor-pointer shadow-xs"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                <span>¡Entendido!</span>
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -575,3 +667,4 @@ export function DocumentosTourGuiado({ open, onClose }: Props) {
     document.body
   )
 }
+

@@ -65,43 +65,37 @@ export function parsearFechaParaOrden(fechaStr?: string | null): number {
 }
 
 /**
- * Normaliza el título de un documento para extraer la FAMILIA BASE CANÓNICA.
- * Remueve resoluciones administrativas (ej. "R.A. N° 013 . 2019", "RA 40", "R.A. 11.18"),
- * siglas entre paréntesis ("(RE-SABS)", "(RE-SOA)"), años sueltos y caracteres especiales.
- *
- * Esto permite identificar con precisión si dos documentos son versiones del mismo
- * sin confundirlos con documentos distintos.
+ * Obtiene el código canónico conciso de familia (por siglas):
+ * Ej: 'RE-SABS', 'RE-SAP', 'RE-SOA', 'ETICA'.
+ * Si el documento no pertenece a una familia multiversión conocida y no tiene
+ * código asignado manualmente, devuelve cadena vacía "" (documento individual).
+ */
+export function obtenerCodigoFamiliaCanonica(titulo: string, familiaCodigoExistente?: string | null): string {
+  if (familiaCodigoExistente && familiaCodigoExistente.trim() !== "" && familiaCodigoExistente.trim() !== "—") {
+    return familiaCodigoExistente.trim().toUpperCase()
+  }
+
+  const norm = (titulo || "").toLowerCase()
+  if (norm.includes("bienes y servicios") || norm.includes("sabs")) {
+    return "RE-SABS"
+  }
+  if (norm.includes("personal") && (norm.includes("administracion") || norm.includes("administración") || norm.includes("sap"))) {
+    return "RE-SAP"
+  }
+  if (norm.includes("organizacion administrativa") || norm.includes("organización administrativa") || norm.includes("soa")) {
+    return "RE-SOA"
+  }
+  if (norm.includes("etica") || norm.includes("ética")) {
+    return "ETICA"
+  }
+  return ""
+}
+
+/**
+ * Normaliza el título de un documento para comparaciones de texto.
  */
 export function normalizarFamiliaCanonica(titulo: string): string {
-  if (!titulo) return ""
-
-  let base = titulo
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // Sin tildes
-
-  // Remover sufijos y prefijos de resoluciones administrativas (ej: RA 17.18, R.A. N° 013 . 2019, RA 40)
-  base = base.replace(/\br\.?a\.?\s*n?°?\s*\d+[\d\.\s\/\-_]*\d*/gi, " ")
-
-  // Remover siglas técnicas de reglamentos específicos y manuales (ej: RE-SABS, RE-SOA, RE-SAP)
-  base = base.replace(/\s*[\(\-–—\[]\s*re\-[a-z]+\s*[\)\-–—\]]?/gi, " ")
-  base = base.replace(/\bre\-[a-z]+\b/gi, " ")
-  base = base.replace(/\bsigec\b/gi, " sigec ")
-  base = base.replace(/\bsigep\b/gi, " sigep ")
-
-  // Remover años standalone entre 2010 y 2035
-  base = base.replace(/\b20[1-3]\d\b/g, " ")
-
-  // Remover palabras comunes de relleno o número
-  base = base.replace(/\bno\b/gi, " ")
-  base = base.replace(/\bnumero\b/gi, " ")
-  base = base.replace(/\baprobacion\b/gi, " ")
-
-  // Normalizar caracteres no alfanuméricos a espacios simples
-  base = base.replace(/[^a-z0-9]/g, " ")
-  base = base.replace(/\s+/g, " ").trim()
-
-  return base
+  return obtenerCodigoFamiliaCanonica(titulo)
 }
 
 export interface InfoVersionDocumento {
@@ -135,43 +129,72 @@ export function calcularVersionesCatalogo<
     numeroCorrelativo?: number | null
     direccionId?: string | null
     subcategoriaId?: string | null
+    familiaCodigo?: string | null
+    version?: string | null
+    esVigente?: boolean | null
     archivo?: string | null
     nombreArchivo?: string | null
   }
 >(documentosLista: T[]): DocumentoConVersion<T>[] {
-  // Agrupar por familia canónica + subárea (para evitar colisiones entre áreas distintas)
+  // Agrupar por código de familia explícito o canónico
   const grupos = new Map<string, T[]>()
+  const individuales: T[] = []
 
   for (const doc of documentosLista) {
-    const familiaSlug = normalizarFamiliaCanonica(doc.titulo)
-    // Usar familiaSlug combinada con subcategoría si existe
-    const subKey = doc.subcategoriaId ? `_${doc.subcategoriaId}` : ""
-    const key = `${familiaSlug}${subKey}`
-
-    const lista = grupos.get(key) || []
-    lista.push(doc)
-    grupos.set(key, lista)
+    const cod = obtenerCodigoFamiliaCanonica(doc.titulo, doc.familiaCodigo)
+    if (!cod) {
+      individuales.push(doc)
+    } else {
+      const lista = grupos.get(cod) || []
+      lista.push(doc)
+      grupos.set(cod, lista)
+    }
   }
 
   const resultados: DocumentoConVersion<T>[] = []
 
-  for (const [key, lista] of grupos.entries()) {
-    // Si la familia tiene un solo documento: es v1.0 y siempre Vigente
+  // 1. Procesar individuales (v1.0 • Vigente siempre)
+  for (const doc of individuales) {
+    const ver = doc.version || "v1.0"
+    const vig = doc.esVigente !== undefined && doc.esVigente !== null ? doc.esVigente : true
+    resultados.push({
+      item: doc,
+      familiaCodigo: "",
+      version: ver,
+      esVigente: vig,
+      totalVersionesEnFamilia: 1,
+      historialVersiones: [
+        {
+          id: doc.id,
+          numeroCorrelativo: doc.numeroCorrelativo,
+          version: ver,
+          esVigente: vig,
+          fechaEmision: doc.fechaEmision || "Sin fecha fija",
+          titulo: doc.titulo,
+          archivo: doc.archivo || doc.nombreArchivo,
+        },
+      ],
+    })
+  }
+
+  // 2. Procesar familias multiversión
+  for (const [codFamilia, lista] of grupos.entries()) {
     if (lista.length === 1) {
       const doc = lista[0]
-      const familiaCodigo = normalizarFamiliaCanonica(doc.titulo).replace(/\s+/g, "-") || "doc"
+      const ver = doc.version || "v1.0"
+      const vig = doc.esVigente !== undefined && doc.esVigente !== null ? doc.esVigente : true
       resultados.push({
         item: doc,
-        familiaCodigo,
-        version: "v1.0",
-        esVigente: true,
+        familiaCodigo: codFamilia,
+        version: ver,
+        esVigente: vig,
         totalVersionesEnFamilia: 1,
         historialVersiones: [
           {
             id: doc.id,
             numeroCorrelativo: doc.numeroCorrelativo,
-            version: "v1.0",
-            esVigente: true,
+            version: ver,
+            esVigente: vig,
             fechaEmision: doc.fechaEmision || "Sin fecha fija",
             titulo: doc.titulo,
             archivo: doc.archivo || doc.nombreArchivo,
@@ -181,13 +204,11 @@ export function calcularVersionesCatalogo<
       continue
     }
 
-    // Múltiples versiones: ordenar cronológicamente por fecha de emisión ascendente
-    // (el más antiguo es v1.0, el siguiente v2.0, y el más reciente es vX.0 y VIGENTE)
+    // Ordenar cronológicamente por fecha de emisión ascendente
     const ordenados = [...lista].sort((a, b) => {
       const timeA = parsearFechaParaOrden(a.fechaEmision)
       const timeB = parsearFechaParaOrden(b.fechaEmision)
       if (timeA !== timeB) return timeA - timeB
-      // Si tienen la misma fecha o año, desempatar por número correlativo o título
       const numA = a.numeroCorrelativo || 0
       const numB = b.numeroCorrelativo || 0
       if (numA !== numB) return numA - numB
@@ -195,33 +216,31 @@ export function calcularVersionesCatalogo<
     })
 
     const total = ordenados.length
-    const familiaCodigo = normalizarFamiliaCanonica(ordenados[0].titulo).replace(/\s+/g, "-") || "familia-doc"
 
-    // Crear el historial de toda la familia
+    // Historial ordenado
     const historial: InfoVersionDocumento[] = ordenados.map((doc, idx) => {
       const verNum = idx + 1
       const esUltimo = idx === total - 1
+      const verStr = doc.version && doc.version.startsWith("v") ? doc.version : `v${verNum}.0`
+      const vig = doc.esVigente !== undefined && doc.esVigente !== null ? doc.esVigente : esUltimo
       return {
         id: doc.id,
         numeroCorrelativo: doc.numeroCorrelativo,
-        version: `v${verNum}.0`,
-        esVigente: esUltimo,
+        version: verStr,
+        esVigente: vig,
         fechaEmision: doc.fechaEmision || "Sin fecha fija",
         titulo: doc.titulo,
         archivo: doc.archivo || doc.nombreArchivo,
       }
     })
 
-    // Asignar a cada documento su versión individual y referencia al historial completo
     ordenados.forEach((doc, idx) => {
-      const verNum = idx + 1
-      const esUltimo = idx === total - 1
-
+      const histItem = historial[idx]
       resultados.push({
         item: doc,
-        familiaCodigo,
-        version: `v${verNum}.0`,
-        esVigente: esUltimo,
+        familiaCodigo: codFamilia,
+        version: histItem.version,
+        esVigente: histItem.esVigente,
         totalVersionesEnFamilia: total,
         historialVersiones: historial,
       })
@@ -230,5 +249,3 @@ export function calcularVersionesCatalogo<
 
   return resultados
 }
-
-

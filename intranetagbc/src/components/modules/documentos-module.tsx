@@ -65,7 +65,7 @@ import { DocumentosTourGuiado } from "@/components/modules/documentos-tour-guiad
 import * as XLSX from "xlsx"
 import { LISTA_DOCUMENTOS_OFICIALES, obtenerFechaOficialDocumento } from "@/lib/documentos-fechas-map"
 import { ESTRUCTURA_JERARQUICA, TIPOS_DOCUMENTALES, clasificarDocumento } from "@/lib/documentos-jerarquia"
-import { normalizarFamiliaCanonica } from "@/lib/documentos-versionador"
+import { normalizarFamiliaCanonica, obtenerCodigoFamiliaCanonica } from "@/lib/documentos-versionador"
 
 export function getDocumentUrl(archivo: string | null): string {
   if (!archivo) return ""
@@ -218,15 +218,27 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
     [accessContext],
   )
 
-  // Enriquecer documentos con jerarquía si viene vacía
+  // Enriquecer documentos con jerarquía y códigos de familia oficiales
   const docsEnriquecidos = useMemo(() => {
+    const countPorFamilia = new Map<string, number>()
+    documentos.forEach((d) => {
+      const cod = d.familiaCodigo || obtenerCodigoFamiliaCanonica(d.titulo)
+      if (cod) {
+        countPorFamilia.set(cod, (countPorFamilia.get(cod) || 0) + 1)
+      }
+    })
+
     return documentos.map((d) => {
       const j = clasificarDocumento(d.archivo || d.nombreArchivo, d.titulo)
+      const cod = d.familiaCodigo || obtenerCodigoFamiliaCanonica(d.titulo) || ""
+      const totalEnFam = cod ? (countPorFamilia.get(cod) || 1) : 1
       return {
         ...d,
         direccion: d.direccion || j.direccionNombre,
         subcategoria: d.subcategoria || j.subcategoriaNombre,
         tipoDocumental: d.tipoDocumental || j.tipoDocumental,
+        familiaCodigo: cod,
+        totalVersionesEnFamilia: totalEnFam,
       }
     })
   }, [documentos])
@@ -766,6 +778,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
           "SUB-ÁREA",
           "CATEGORÍA / TIPO",
           "FECHA DE EMISIÓN / OFICIAL",
+          "CÓDIGO DE FAMILIA",
           "VERSIÓN",
           "ESTADO DE VIGENCIA",
           "ESTADO DE ARCHIVO DIGITAL",
@@ -789,8 +802,9 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         const subcategoria = d.subcategoria || jerarquia.subcategoriaNombre
         const tipoDoc = d.tipoDocumental || d.categoria || jerarquia.tipoDocumental
 
+        const familiaCod = d.familiaCodigo || obtenerCodigoFamiliaCanonica(d.titulo) || "—"
         const versionStr = d.version || "v1.0"
-        const vigenciaStr = d.esVigente !== false ? "Vigente (Oficial)" : "Histórico - Derogado"
+        const vigenciaStr = d.esVigente !== false ? "Vigente" : "Histórico"
         const disponibilidadStr = d.disponibilidadArchivo === "falta_archivo" ? "FALTA PDF" : "DISPONIBLE"
 
         rows.push([
@@ -800,6 +814,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
           subcategoria,
           tipoDoc,
           fechaOficial || "Sin fecha fija",
+          familiaCod,
           versionStr,
           vigenciaStr,
           disponibilidadStr,
@@ -815,14 +830,15 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         { wch: 30 },  // Sub-área
         { wch: 22 },  // Tipo / Categoría
         { wch: 28 },  // Fecha Oficial
+        { wch: 20 },  // Código de Familia
         { wch: 12 },  // Versión
-        { wch: 24 },  // Vigencia
+        { wch: 20 },  // Vigencia
         { wch: 24 },  // Estado de Archivo
         { wch: 30 },  // Enlace
       ]
 
       // Estilo visual con fondo azul institucional para el encabezado en Excel
-      for (let c = 0; c <= 9; c++) {
+      for (let c = 0; c <= 10; c++) {
         const headerCell = XLSX.utils.encode_cell({ r: 5, c })
         if (ws[headerCell]) {
           ws[headerCell].s = {
@@ -840,7 +856,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
             ? (d.archivo.startsWith("/api/documentos/") ? d.archivo : `/api/documentos/${d.archivo.replace(/^\/?(documentos\/)?/, "")}`)
             : `/api/documentos/${d.archivo}`
           const fullUrl = relPath.startsWith("http") ? relPath : `${PROD_BASE_URL}${relPath}`
-          const cellAddress = XLSX.utils.encode_cell({ r: 6 + idx, c: 9 })
+          const cellAddress = XLSX.utils.encode_cell({ r: 6 + idx, c: 10 })
           ws[cellAddress] = {
             t: "s",
             f: `HYPERLINK("${fullUrl}", "Ver / Descargar Documento")`,
@@ -1369,7 +1385,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
       {/* ══════════════════════════════════════════════════════════════ */}
       {/* VISTA EN TABLA ESTRUCTURADA Y RESPONSIVA AGBC                  */}
       {/* ══════════════════════════════════════════════════════════════ */}
-      <div className="rounded-3xl border-2 border-[#002F6C]/15 bg-white p-4 shadow-sm overflow-hidden">
+      <div id="tour-tabla-documentos" className="rounded-3xl border-2 border-[#002F6C]/15 bg-white p-4 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[750px]">
             <thead>
@@ -1596,6 +1612,15 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                                 </span>
                               )}
                               <p className="font-bold text-[#002F6C] line-clamp-1">{item.titulo}</p>
+                              {/* Código de Familia Normativa */}
+                              {item.familiaCodigo && item.familiaCodigo !== "—" && (
+                                <span
+                                  className="text-[9px] font-black px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 tracking-wider shadow-2xs"
+                                  title={`Familia Normativa: ${item.familiaCodigo} (${item.totalVersionesEnFamilia} versiones registradas)`}
+                                >
+                                  {item.familiaCodigo}
+                                </span>
+                              )}
                               {/* Versión Badge */}
                               <span
                                 className={`text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
@@ -1995,13 +2020,41 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
 
                   {/* Norma Matriz / Familia */}
                   <div className="space-y-1">
-                    <Label className="text-[11px] font-bold text-slate-700">Norma Base / Familia</Label>
-                    <Input
-                      value={docFamiliaCodigo}
-                      onChange={(e) => setDocFamiliaCodigo(e.target.value)}
-                      placeholder="Ej. reglamento-especifico-sabs"
-                      className="h-9 rounded-xl border-slate-200 text-xs bg-white"
-                    />
+                    <Label className="text-[11px] font-bold text-slate-700">Familia / Código de Norma</Label>
+                    <Select
+                      value={
+                        docFamiliaCodigo === "" || docFamiliaCodigo === "—"
+                          ? "__none__"
+                          : ["RE-SABS", "RE-SAP", "RE-SOA", "ETICA"].includes(docFamiliaCodigo)
+                          ? docFamiliaCodigo
+                          : "__custom__"
+                      }
+                      onValueChange={(val) => {
+                        if (val === "__none__") setDocFamiliaCodigo("")
+                        else if (val === "__custom__") setDocFamiliaCodigo("OTRA-NORMA")
+                        else setDocFamiliaCodigo(val)
+                      }}
+                    >
+                      <SelectTrigger className="h-9 rounded-xl text-xs bg-white border-slate-200">
+                        <SelectValue placeholder="Seleccionar Familia" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Sin Familia (Documento Individual)</SelectItem>
+                        <SelectItem value="RE-SABS">RE-SABS (3 versiones registradas)</SelectItem>
+                        <SelectItem value="RE-SAP">RE-SAP (2 versiones registradas)</SelectItem>
+                        <SelectItem value="RE-SOA">RE-SOA (2 versiones registradas)</SelectItem>
+                        <SelectItem value="ETICA">ETICA (2 versiones registradas)</SelectItem>
+                        <SelectItem value="__custom__">Otro código personalizado...</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {docFamiliaCodigo !== "" && !["RE-SABS", "RE-SAP", "RE-SOA", "ETICA"].includes(docFamiliaCodigo) && (
+                      <Input
+                        value={docFamiliaCodigo}
+                        onChange={(e) => setDocFamiliaCodigo(e.target.value.toUpperCase())}
+                        placeholder="Ej. NUEVA-NORMA"
+                        className="h-8 rounded-lg border-slate-200 text-xs bg-white mt-1"
+                      />
+                    )}
                   </div>
                 </div>
               </div>
