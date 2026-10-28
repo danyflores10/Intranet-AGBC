@@ -106,6 +106,9 @@ export interface RegistroHistorialImportacion {
   faltanArchivo: number
   detalles: any
   usuarioNombre: string | null
+  revertido?: boolean | null
+  revertidoAt?: Date | null
+  revertidoPor?: string | null
   createdAt: Date
 }
 
@@ -229,6 +232,26 @@ export async function sincronizarCatalogoExcelAction(
           throw new Error(`No se encontró documento existente para actualizar: ${item.titulo}`)
         }
 
+        // Snapshot de valores previos para permitir reversión / deshacer cambios
+        const estadoAnterior = existing ? {
+          titulo: existing.titulo,
+          numeroCorrelativo: existing.numeroCorrelativo,
+          fechaEmision: existing.fechaEmision,
+          direccionId: existing.direccionId,
+          subcategoriaId: existing.subcategoriaId,
+          categoriaId: existing.categoriaId,
+          tipoDocumental: existing.tipoDocumental,
+          descripcion: existing.descripcion,
+          archivo: existing.archivo,
+          nombreArchivo: existing.nombreArchivo,
+          tipoArchivo: existing.tipoArchivo,
+          tamano: existing.tamano,
+          disponibilidadArchivo: existing.disponibilidadArchivo,
+          familiaCodigo: existing.familiaCodigo,
+          version: existing.version,
+          esVigente: existing.esVigente,
+        } : null
+
         await db
           .update(documentos)
           .set({
@@ -256,6 +279,7 @@ export async function sincronizarCatalogoExcelAction(
           tipo: "actualizado",
           titulo: item.titulo,
           diferencias: item.diferencias || ["Actualización de metadatos"],
+          estadoAnterior,
         })
       } else {
         // Inserción de nuevo documento
@@ -414,7 +438,138 @@ export async function obtenerHistorialImportacionesAction(): Promise<RegistroHis
       faltanArchivo: r.faltanArchivo || 0,
       detalles: parsedDetalles,
       usuarioNombre: r.usuarioNombre,
+      revertido: r.revertido,
+      revertidoAt: r.revertidoAt,
+      revertidoPor: r.revertidoPor,
       createdAt: r.createdAt,
     }
   })
+}
+
+/**
+ * Revierte una importación previa: elimina documentos nuevos y restaura los valores previos de los actualizados.
+ */
+export async function revertirImportacionAction(
+  importacionId: string
+): Promise<{ success: boolean; message: string }> {
+  const sesion = await autorizarAccion(PERMISOS.DOCUMENTOS.EDITAR)
+
+  const [importacion] = await db
+    .select()
+    .from(catalogoImportaciones)
+    .where(eq(catalogoImportaciones.id, importacionId))
+    .limit(1)
+
+  if (!importacion) {
+    throw new Error("Registro de importación no encontrado")
+  }
+
+  if (importacion.revertido) {
+    throw new Error("Esta importación ya fue revertida previamente")
+  }
+
+  let detalles: any[] = []
+  try {
+    detalles = importacion.detalles ? JSON.parse(importacion.detalles) : []
+  } catch {
+    detalles = []
+  }
+
+  let revertidosNuevos = 0
+  let restauradosActualizados = 0
+
+  for (const item of detalles) {
+    try {
+      if (item.tipo === "nuevo" && item.id) {
+        await db.delete(documentos).where(eq(documentos.id, item.id))
+        revertidosNuevos++
+      } else if (item.tipo === "actualizado" && item.id && item.estadoAnterior) {
+        await db
+          .update(documentos)
+          .set({
+            titulo: item.estadoAnterior.titulo,
+            numeroCorrelativo: item.estadoAnterior.numeroCorrelativo,
+            fechaEmision: item.estadoAnterior.fechaEmision,
+            direccionId: item.estadoAnterior.direccionId,
+            subcategoriaId: item.estadoAnterior.subcategoriaId,
+            categoriaId: item.estadoAnterior.categoriaId,
+            tipoDocumental: item.estadoAnterior.tipoDocumental,
+            descripcion: item.estadoAnterior.descripcion,
+            archivo: item.estadoAnterior.archivo,
+            nombreArchivo: item.estadoAnterior.nombreArchivo,
+            tipoArchivo: item.estadoAnterior.tipoArchivo,
+            tamano: item.estadoAnterior.tamano,
+            disponibilidadArchivo: item.estadoAnterior.disponibilidadArchivo,
+            familiaCodigo: item.estadoAnterior.familiaCodigo,
+            version: item.estadoAnterior.version,
+            esVigente: item.estadoAnterior.esVigente,
+            updatedAt: new Date(),
+          })
+          .where(eq(documentos.id, item.id))
+        restauradosActualizados++
+      }
+    } catch (errItem) {
+      console.error("Error revirtiendo elemento:", item, errItem)
+    }
+  }
+
+  // Recalcular versiones del catálogo para asegurar coherencia
+  try {
+    const todosDocs = await db.select().from(documentos)
+    const versionados = calcularVersionesCatalogo(
+      todosDocs.map((d) => ({
+        id: d.id,
+        titulo: d.titulo,
+        fechaEmision: d.fechaEmision,
+        numeroCorrelativo: d.numeroCorrelativo,
+        subcategoriaId: d.subcategoriaId,
+      }))
+    )
+
+    for (const v of versionados) {
+      if (!v.item.id) continue
+      await db
+        .update(documentos)
+        .set({
+          version: v.version,
+          esVigente: v.esVigente,
+          familiaCodigo: v.familiaCodigo,
+        })
+        .where(eq(documentos.id, v.item.id))
+    }
+  } catch (errRecalc) {
+    console.error("Error recalculando versiones tras reversión:", errRecalc)
+  }
+
+  // Obtener nombre del usuario que revierte
+  const [usr] = await db
+    .select({ firstName: users.firstName, lastName: users.lastNamePaternal })
+    .from(users)
+    .where(eq(users.id, sesion.id))
+    .limit(1)
+  const usuarioNombre = usr ? `${usr.firstName || ""} ${usr.lastName || ""}`.trim() : "Administrador AGBC"
+
+  await db
+    .update(catalogoImportaciones)
+    .set({
+      revertido: true,
+      revertidoAt: new Date(),
+      revertidoPor: usuarioNombre,
+    })
+    .where(eq(catalogoImportaciones.id, importacionId))
+
+  await registrarAuditLog({
+    usuario: sesion.id,
+    accion: `Reversión de importación "${importacion.nombreArchivo}": eliminados ${revertidosNuevos} nuevos, restaurados ${restauradosActualizados} modificados`,
+    modulo: "Documentos",
+    resultado: "Exitoso",
+  })
+
+  revalidatePath("/documentos")
+  revalidatePath("/")
+
+  return {
+    success: true,
+    message: `Importación revertida: se eliminaron ${revertidosNuevos} documentos creados y se restauraron ${restauradosActualizados} documentos modificados.`,
+  }
 }

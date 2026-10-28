@@ -23,3 +23,4 @@ export function verificarDisponibilidadFisica(archivoPath?: string | null): {
 
   return { disponible: false }
 }
+

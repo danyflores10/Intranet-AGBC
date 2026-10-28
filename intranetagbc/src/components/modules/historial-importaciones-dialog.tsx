@@ -23,9 +23,11 @@ import {
   FileText,
   Clock,
   Sparkles,
+  Undo2,
 } from "lucide-react"
 import {
   obtenerHistorialImportacionesAction,
+  revertirImportacionAction,
   type RegistroHistorialImportacion,
 } from "@/actions/catalogo-import"
 import toast from "react-hot-toast"
@@ -39,6 +41,7 @@ export function HistorialImportacionesDialog({ open, onClose }: Props) {
   const [registros, setRegistros] = useState<RegistroHistorialImportacion[]>([])
   const [loading, setLoading] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [revertingId, setRevertingId] = useState<string | null>(null)
 
   useEffect(() => {
     if (open) {
@@ -58,6 +61,28 @@ export function HistorialImportacionesDialog({ open, onClose }: Props) {
       toast.error(err?.message || "Error al cargar historial de importaciones")
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleRevertir(reg: RegistroHistorialImportacion) {
+    const confirmar = window.confirm(
+      `¿Desea deshacer y revertir la importación "${reg.nombreArchivo}"?\n\nEsta acción eliminará los documentos nuevos creados en esta importación y restaurará los valores previos de los documentos modificados.`
+    )
+    if (!confirmar) return
+
+    setRevertingId(reg.id)
+    try {
+      const res = await revertirImportacionAction(reg.id)
+      if (res.success) {
+        toast.success(res.message || "Importación revertida con éxito")
+        await cargarHistorial()
+      } else {
+        toast.error("No se pudo revertir la importación")
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Error al revertir la importación")
+    } finally {
+      setRevertingId(null)
     }
   }
 
@@ -189,6 +214,30 @@ export function HistorialImportacionesDialog({ open, onClose }: Props) {
                           {reg.faltanArchivo} Sin PDF
                         </div>
                       )}
+
+                      {/* Botón / Estado de Reversión */}
+                      {reg.revertido ? (
+                        <span className="px-3 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 text-xs font-bold flex items-center gap-1">
+                          <Undo2 className="h-3.5 w-3.5" />
+                          Revertido {reg.revertidoPor ? `(${reg.revertidoPor})` : ""}
+                        </span>
+                      ) : (reg.nuevos > 0 || reg.actualizados > 0) ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={revertingId === reg.id}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRevertir(reg)
+                          }}
+                          className="h-8 rounded-xl text-xs font-bold text-rose-600 hover:text-white hover:bg-rose-600 border-rose-200 dark:border-rose-800 gap-1 cursor-pointer transition-all shadow-2xs"
+                          title="Deshacer los cambios de esta importación y restaurar el catálogo"
+                        >
+                          <Undo2 className={`h-3.5 w-3.5 ${revertingId === reg.id ? "animate-spin" : ""}`} />
+                          <span>{revertingId === reg.id ? "Deshaciendo..." : "Deshacer cambios"}</span>
+                        </Button>
+                      ) : null}
 
                       <Button
                         type="button"

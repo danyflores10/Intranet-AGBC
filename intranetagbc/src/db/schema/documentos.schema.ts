@@ -72,6 +72,9 @@ export const catalogoImportaciones = pgTable(
     sinCambios: integer('sin_cambios').default(0),
     faltanArchivo: integer('faltan_archivo').default(0),
     detalles: text('detalles'), // JSON diff summary
+    revertido: boolean('revertido').default(false),
+    revertidoAt: timestamp('revertido_at', { withTimezone: true }),
+    revertidoPor: varchar('revertido_por', { length: 150 }),
     usuarioId: varchar('usuario_id', { length: 24 }).references(() => users.id),
     usuarioNombre: varchar('usuario_nombre', { length: 150 }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),

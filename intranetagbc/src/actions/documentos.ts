@@ -154,6 +154,12 @@ export async function crearDocumento(data: {
   tipoArchivo?: string
   tamano?: string
   descripcion?: string
+  version?: string
+  esVigente?: boolean
+  familiaCodigo?: string
+  fechaEmision?: string
+  numeroCorrelativo?: number
+  disponibilidadArchivo?: string
 }) {
   const sesion = await autorizarAccion(PERMISOS.DOCUMENTOS.CREAR)
 
@@ -204,11 +210,18 @@ export async function actualizarDocumento(id: string, data: Partial<{
   tipoArchivo: string
   tamano: string
   descripcion: string
+  version: string
+  esVigente: boolean
+  familiaCodigo: string | null
+  fechaEmision: string | null
+  numeroCorrelativo: number | null
+  disponibilidadArchivo: string
 }>) {
   const sesion = await autorizarAccion(PERMISOS.DOCUMENTOS.EDITAR)
   const [actualizado] = await db.update(documentos).set(data).where(eq(documentos.id, id)).returning()
-  await registrarAuditLog({ usuario: sesion.id, accion: `Actualizó documento ID: ${id}`, modulo: "Documentos", resultado: "Exitoso" })
+  await registrarAuditLog({ usuario: sesion.id, accion: `Actualizó documento ID: ${id} (${data.titulo || ""})`, modulo: "Documentos", resultado: "Exitoso" })
   revalidatePath("/documentos")
+  revalidatePath("/")
   return actualizado
 }
 

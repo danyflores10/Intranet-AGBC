@@ -717,7 +717,7 @@ export function ImportarCatalogoDialog({
                 <DialogTitle className="text-xl font-black tracking-tight text-white flex items-center gap-2">
                   Importar y Sincronizar Catálogo Documental
                   <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-white/20 text-[#FFCC00]">
-                    Motor Inteligente con Versionamiento
+                    Catálogo Oficial AGBC
                   </span>
                 </DialogTitle>
                 <p className="text-xs text-blue-100 mt-0.5">
@@ -921,17 +921,6 @@ export function ImportarCatalogoDialog({
                   </div>
                 </div>
               )}
-            </div>
-
-            {/* Aviso de Versionamiento Inteligente */}
-            <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 text-amber-900 text-xs flex items-start gap-3">
-              <SparklesIcon className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p className="font-bold">Detección Inteligente de Versiones y Validación de Vigencia</p>
-                <p className="text-[11px] leading-relaxed text-amber-800">
-                  El sistema agrupa automáticamente los documentos que comparten la misma familia normativa (ej. <em>RE-SABS 2019, 2021 y 2026</em>), asignándoles su versión correlativa (<strong>v1.0</strong>, <strong>v2.0</strong>, <strong>v3.0</strong>) y marcando la más reciente como <strong>Vigente</strong> y las anteriores como <strong>Históricas / Derogadas</strong>.
-                </p>
-              </div>
             </div>
           </div>
         )}

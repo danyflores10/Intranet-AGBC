@@ -27,10 +27,18 @@ async function runMigration() {
       sin_cambios INTEGER DEFAULT 0,
       faltan_archivo INTEGER DEFAULT 0,
       detalles TEXT,
+      revertido BOOLEAN DEFAULT false,
+      revertido_at TIMESTAMP WITH TIME ZONE,
+      revertido_por VARCHAR(150),
       usuario_id VARCHAR(24) REFERENCES users(id),
       usuario_nombre VARCHAR(150),
       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
     );
+
+    ALTER TABLE catalogo_importaciones
+    ADD COLUMN IF NOT EXISTS revertido BOOLEAN DEFAULT false,
+    ADD COLUMN IF NOT EXISTS revertido_at TIMESTAMP WITH TIME ZONE,
+    ADD COLUMN IF NOT EXISTS revertido_por VARCHAR(150);
   `)
   console.log("Tabla 'catalogo_importaciones' verificada / creada.")
 

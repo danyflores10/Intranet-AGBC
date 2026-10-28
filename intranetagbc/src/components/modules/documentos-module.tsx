@@ -64,6 +64,7 @@ import { HistorialImportacionesDialog } from "@/components/modules/historial-imp
 import * as XLSX from "xlsx"
 import { LISTA_DOCUMENTOS_OFICIALES, obtenerFechaOficialDocumento } from "@/lib/documentos-fechas-map"
 import { ESTRUCTURA_JERARQUICA, TIPOS_DOCUMENTALES, clasificarDocumento } from "@/lib/documentos-jerarquia"
+import { normalizarFamiliaCanonica } from "@/lib/documentos-versionador"
 
 export function getDocumentUrl(archivo: string | null): string {
   if (!archivo) return ""
@@ -172,7 +173,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [importCatalogOpen, setImportCatalogOpen] = useState(false)
   const [historialImportOpen, setHistorialImportOpen] = useState(false)
-  const [vigenciaFiltro, setVigenciaFiltro] = useState<"todas" | "vigentes" | "historicos" | "falta_pdf">("todas")
+  const [vigenciaFiltro, setVigenciaFiltro] = useState<"todas" | "vigentes" | "historicos" | "falta_pdf" | "multiversion">("todas")
   const [catDialogOpen, setCatDialogOpen] = useState(false)
   const [previewDoc, setPreviewDoc] = useState<DocRow | null>(null)
   const [editDoc, setEditDoc] = useState<DocRow | null>(null)
@@ -181,10 +182,16 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   const [uploading, setUploading] = useState(false)
   const [uploadedFile, setUploadedFile] = useState<{ url: string; nombre: string; tipo: string; tamano: string } | null>(null)
   
-  // Formulario de documento: selección jerárquica
+  // Formulario de documento: selección jerárquica y metadatos oficiales
   const [docDireccion, setDocDireccion] = useState<string>("")
   const [docSubcategoria, setDocSubcategoria] = useState<string>("")
   const [docTipoDocumental, setDocTipoDocumental] = useState<string>("")
+  const [docFechaEmision, setDocFechaEmision] = useState<string>("")
+  const [docVersion, setDocVersion] = useState<string>("v1.0")
+  const [docEsVigente, setDocEsVigente] = useState<boolean>(true)
+  const [docDisponibilidadArchivo, setDocDisponibilidadArchivo] = useState<"disponible" | "falta_archivo">("disponible")
+  const [docNumeroCorrelativo, setDocNumeroCorrelativo] = useState<string>("")
+  const [docFamiliaCodigo, setDocFamiliaCodigo] = useState<string>("")
   const [estado, setEstado] = useState("borrador")
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -310,11 +317,23 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         setDocSubcategoria(editDoc.subcategoria || j.subcategoriaNombre)
         setDocTipoDocumental(editDoc.tipoDocumental || j.tipoDocumental)
         setEstado(editDoc.estado ?? "borrador")
+        setDocFechaEmision(editDoc.fechaEmision || "")
+        setDocVersion(editDoc.version || "v1.0")
+        setDocEsVigente(editDoc.esVigente !== false)
+        setDocDisponibilidadArchivo((editDoc.disponibilidadArchivo as any) || "disponible")
+        setDocNumeroCorrelativo(editDoc.numeroCorrelativo ? String(editDoc.numeroCorrelativo) : "")
+        setDocFamiliaCodigo(editDoc.familiaCodigo || "")
       } else {
         setDocDireccion("")
         setDocSubcategoria("")
         setDocTipoDocumental("")
         setEstado("borrador")
+        setDocFechaEmision("")
+        setDocVersion("v1.0")
+        setDocEsVigente(true)
+        setDocDisponibilidadArchivo("disponible")
+        setDocNumeroCorrelativo("")
+        setDocFamiliaCodigo("")
       }
     }
   }, [dialogOpen, editDoc])
@@ -396,6 +415,12 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
           categoriaId: tipoRow?.id || subRow?.id || undefined,
           estado,
           descripcion: ((fd.get("descripcion") as string) || "").trim() || undefined,
+          fechaEmision: docFechaEmision.trim() || undefined,
+          version: docVersion.trim() || "v1.0",
+          esVigente: docEsVigente,
+          disponibilidadArchivo: docDisponibilidadArchivo,
+          numeroCorrelativo: docNumeroCorrelativo.trim() ? parseInt(docNumeroCorrelativo.trim(), 10) : undefined,
+          familiaCodigo: docFamiliaCodigo.trim() || undefined,
         }
 
         if (uploadedFile) {
@@ -419,6 +444,12 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         setDocDireccion("")
         setDocSubcategoria("")
         setDocTipoDocumental("")
+        setDocFechaEmision("")
+        setDocVersion("v1.0")
+        setDocEsVigente(true)
+        setDocDisponibilidadArchivo("disponible")
+        setDocNumeroCorrelativo("")
+        setDocFamiliaCodigo("")
         setEstado("borrador")
       } catch {
         toast.error("Error al guardar")
@@ -481,6 +512,12 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
     setDocDireccion("")
     setDocSubcategoria("")
     setDocTipoDocumental("")
+    setDocFechaEmision("")
+    setDocVersion("v1.0")
+    setDocEsVigente(true)
+    setDocDisponibilidadArchivo("disponible")
+    setDocNumeroCorrelativo("")
+    setDocFamiliaCodigo("")
     setEstado("borrador")
     setDialogOpen(true)
   }
@@ -493,6 +530,12 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
     setDocDireccion(doc.direccion || j.direccionNombre)
     setDocSubcategoria(doc.subcategoria || j.subcategoriaNombre)
     setDocTipoDocumental(doc.tipoDocumental || j.tipoDocumental)
+    setDocFechaEmision(doc.fechaEmision || "")
+    setDocVersion(doc.version || "v1.0")
+    setDocEsVigente(doc.esVigente !== false)
+    setDocDisponibilidadArchivo((doc.disponibilidadArchivo as any) || "disponible")
+    setDocNumeroCorrelativo(doc.numeroCorrelativo ? String(doc.numeroCorrelativo) : "")
+    setDocFamiliaCodigo(doc.familiaCodigo || "")
     setEstado(doc.estado)
     setDialogOpen(true)
   }
@@ -550,6 +593,10 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
       if (vigenciaFiltro === "vigentes") matchVigencia = d.esVigente !== false
       else if (vigenciaFiltro === "historicos") matchVigencia = d.esVigente === false
       else if (vigenciaFiltro === "falta_pdf") matchVigencia = d.disponibilidadArchivo === "falta_archivo"
+      else if (vigenciaFiltro === "multiversion") {
+        const countFam = d.familiaCodigo ? docsEnriquecidos.filter((o) => o.familiaCodigo === d.familiaCodigo).length : 1
+        matchVigencia = countFam > 1
+      }
 
       return matchSearch && matchDir && matchSub && matchTipo && matchVigencia
     })
@@ -701,7 +748,8 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
       }
 
       // Catálogo General de Documentos:
-      // Formato oficial optimizado con Versionamiento, Vigencia, Estado Digital y enlaces cliqueables
+      // Formato oficial estructurado sin códigos técnicos (sin código sistema, formato ni tamaño)
+      // Con encabezados en azul institucional AGBC, agrupación por Norma Base / Familia y enlaces cliqueables
       const docsToExport = docsEnriquecidos.length > 0 ? docsEnriquecidos : (LISTA_DOCUMENTOS_OFICIALES as any[])
       const rows = [
         ["AGENCIA BOLIVIANA DE CORREOS - CORREOS DE BOLIVIA (AGBC)"],
@@ -711,19 +759,16 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         [],
         [
           "Nº",
-          "CÓDIGO SISTEMA",
           "TÍTULO DEL DOCUMENTO",
+          "NORMA BASE / FAMILIA",
           "DIRECCIÓN",
           "SUB-ÁREA",
           "CATEGORÍA / TIPO",
+          "FECHA DE EMISIÓN / OFICIAL",
           "VERSIÓN",
           "ESTADO DE VIGENCIA",
-          "FECHA DE EMISIÓN / OFICIAL",
-          "FORMATO",
-          "TAMAÑO",
-          "ESTADO DE ARCHIVO",
-          "ENLACE AL ARCHIVO",
-          "CHECK"
+          "ESTADO DE ARCHIVO DIGITAL",
+          "ENLACE AL DOCUMENTO"
         ]
       ]
 
@@ -743,47 +788,52 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         const subcategoria = d.subcategoria || jerarquia.subcategoriaNombre
         const tipoDoc = d.tipoDocumental || d.categoria || jerarquia.tipoDocumental
 
-        const ext = d.tipoArchivo ? d.tipoArchivo.toUpperCase() : (d.archivo?.split(".").pop()?.toUpperCase() || "PDF")
         const versionStr = d.version || "v1.0"
-        const vigenciaStr = d.esVigente !== false ? "Vigente" : "Histórico - Derogado"
+        const vigenciaStr = d.esVigente !== false ? "Vigente (Oficial)" : "Histórico - Derogado"
         const disponibilidadStr = d.disponibilidadArchivo === "falta_archivo" ? "FALTA PDF" : "DISPONIBLE"
-        const checkStr = d.disponibilidadArchivo === "falta_archivo" ? "FALTA PDF" : "OK"
+        const familiaNombre = d.familiaCodigo ? d.familiaCodigo.replace(/-/g, " ").toUpperCase() : normalizarFamiliaCanonica(d.titulo)
 
         rows.push([
           numCorrelativo,
-          d.id,
           d.titulo,
+          familiaNombre,
           direccion,
           subcategoria,
           tipoDoc,
+          fechaOficial || "Sin fecha fija",
           versionStr,
           vigenciaStr,
-          fechaOficial || "Sin fecha fija",
-          ext,
-          d.tamano || "—",
           disponibilidadStr,
-          fullUrl ? "Ver / Descargar Documento" : "—",
-          checkStr
+          fullUrl ? "Ver / Descargar Documento" : "—"
         ])
       })
 
       const ws = XLSX.utils.aoa_to_sheet(rows)
       ws["!cols"] = [
         { wch: 6 },   // Nº
-        { wch: 26 },  // CÓDIGO SISTEMA
         { wch: 55 },  // Título
+        { wch: 38 },  // Norma Base / Familia
         { wch: 34 },  // Dirección
-        { wch: 32 },  // Sub-área
+        { wch: 30 },  // Sub-área
         { wch: 22 },  // Tipo / Categoría
-        { wch: 10 },  // Versión
-        { wch: 20 },  // Vigencia
         { wch: 28 },  // Fecha Oficial
-        { wch: 10 },  // Formato
-        { wch: 12 },  // Tamaño
-        { wch: 22 },  // Estado de Archivo
+        { wch: 12 },  // Versión
+        { wch: 24 },  // Vigencia
+        { wch: 24 },  // Estado de Archivo
         { wch: 30 },  // Enlace
-        { wch: 14 },  // Check
       ]
+
+      // Estilo visual con fondo azul institucional para el encabezado en Excel
+      for (let c = 0; c <= 10; c++) {
+        const headerCell = XLSX.utils.encode_cell({ r: 5, c })
+        if (ws[headerCell]) {
+          ws[headerCell].s = {
+            fill: { fgColor: { rgb: "002F6C" }, patternType: "solid" },
+            font: { name: "Calibri", sz: 11, bold: true, color: { rgb: "FFFFFF" } },
+            alignment: { vertical: "center", horizontal: "center", wrapText: true }
+          }
+        }
+      }
 
       // Enriquecer cada celda de enlace con hipervínculo nativo cliqueable en Excel apuntando a producción
       docsToExport.forEach((d: any, idx: number) => {
@@ -792,7 +842,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
             ? (d.archivo.startsWith("/api/documentos/") ? d.archivo : `/api/documentos/${d.archivo.replace(/^\/?(documentos\/)?/, "")}`)
             : `/api/documentos/${d.archivo}`
           const fullUrl = relPath.startsWith("http") ? relPath : `${PROD_BASE_URL}${relPath}`
-          const cellAddress = XLSX.utils.encode_cell({ r: 6 + idx, c: 12 })
+          const cellAddress = XLSX.utils.encode_cell({ r: 6 + idx, c: 10 })
           ws[cellAddress] = {
             t: "s",
             f: `HYPERLINK("${fullUrl}", "Ver / Descargar Documento")`,
@@ -1109,6 +1159,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                   <SelectItem value="todas">Todas las Versiones ({docsEnriquecidos.length})</SelectItem>
                   <SelectItem value="vigentes">Solo Vigentes ({docsEnriquecidos.filter((d) => d.esVigente !== false).length})</SelectItem>
                   <SelectItem value="historicos">Históricos / Derogados ({docsEnriquecidos.filter((d) => d.esVigente === false).length})</SelectItem>
+                  <SelectItem value="multiversion">Múltiples Versiones ({docsEnriquecidos.filter((d) => d.familiaCodigo && docsEnriquecidos.filter((o) => o.familiaCodigo === d.familiaCodigo).length > 1).length})</SelectItem>
                   <SelectItem value="falta_pdf">Falta PDF ({docsEnriquecidos.filter((d) => d.disponibilidadArchivo === "falta_archivo").length})</SelectItem>
                 </SelectContent>
               </Select>
@@ -1309,26 +1360,26 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[750px]">
             <thead>
-              <tr className="border-b-2 border-slate-100 bg-gradient-to-r from-sky-50/70 via-blue-50/50 to-amber-50/50 text-[11px] font-black uppercase text-[#002F6C] tracking-wider">
-                <th className="py-3 px-3 text-center w-10">
+              <tr className="border-b-2 border-[#002F6C] bg-[#002F6C] text-white text-[11px] font-black uppercase tracking-wider">
+                <th className="py-3 px-3 text-center w-10 text-white">
                   <button
                     type="button"
                     onClick={() => handleSelectAll(currentList)}
-                    className="text-[#002F6C] hover:text-[#0E5296] transition-colors p-0.5 cursor-pointer"
+                    className="text-white hover:text-[#FFCC00] transition-colors p-0.5 cursor-pointer"
                     title={selectedIds.length === currentList.length && currentList.length > 0 ? "Deseleccionar todos" : "Seleccionar todos"}
                   >
                     {selectedIds.length > 0 && selectedIds.length === currentList.length ? (
-                      <CheckSquareIcon className="h-4 w-4 text-[#0E5296]" />
+                      <CheckSquareIcon className="h-4 w-4 text-[#FFCC00]" />
                     ) : (
-                      <SquareIcon className="h-4 w-4 text-slate-400" />
+                      <SquareIcon className="h-4 w-4 text-white/70" />
                     )}
                   </button>
                 </th>
-                <th className="py-3 px-4">{tab === "categorias" && !catFolderTipoId ? "Categoría / Carpeta" : "Documento"}</th>
-                <th className="py-3 px-4">{tab === "categorias" && !catFolderTipoId ? "Jerarquía / Pertenece a" : "Dirección / Área"}</th>
-                <th className="py-3 px-4">{tab === "categorias" && !catFolderTipoId ? "Contenido / Sub-niveles" : "Tipo Documental"}</th>
-                <th className="py-3 px-4">{tab === "categorias" && !catFolderTipoId ? "Fecha Creación" : "Fecha Oficial"}</th>
-                <th className="py-3 px-4 text-right">Acciones</th>
+                <th className="py-3 px-4 text-white">{tab === "categorias" && !catFolderTipoId ? "Categoría / Carpeta" : "Documento"}</th>
+                <th className="py-3 px-4 text-white">{tab === "categorias" && !catFolderTipoId ? "Jerarquía / Pertenece a" : "Dirección / Área"}</th>
+                <th className="py-3 px-4 text-white">{tab === "categorias" && !catFolderTipoId ? "Contenido / Sub-niveles" : "Tipo Documental"}</th>
+                <th className="py-3 px-4 text-white">{tab === "categorias" && !catFolderTipoId ? "Fecha Creación" : "Fecha Oficial"}</th>
+                <th className="py-3 px-4 text-right text-white">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
@@ -1539,10 +1590,30 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                                     ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
                                     : "bg-slate-100 text-slate-700 border border-slate-300"
                                 }`}
+                                title={
+                                  item.esVigente !== false
+                                    ? "Versión oficial aplicable y vigente actualmente"
+                                    : "Versión histórica superada o derogada por una norma más reciente"
+                                }
                               >
                                 <GitBranchIcon className="h-2.5 w-2.5" />
                                 {item.version || "v1.0"} {item.esVigente !== false ? "• Vigente" : "• Histórico"}
                               </span>
+                              {/* Norma Base / Familia Badge */}
+                              {item.familiaCodigo && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSearchQuery(item.familiaCodigo.replace(/-/g, " "))
+                                    setCurrentPage(1)
+                                  }}
+                                  className="text-[9px] font-bold bg-blue-50 text-[#002F6C] hover:bg-blue-100 border border-blue-200 px-1.5 py-0.5 rounded flex items-center gap-1 cursor-pointer transition-colors"
+                                  title="Haga clic para ver todas las versiones de esta norma matriz"
+                                >
+                                  <LayersIcon className="h-2.5 w-2.5 text-[#0E5296]" />
+                                  <span>Norma: {item.familiaCodigo.replace(/-/g, " ")}</span>
+                                </button>
+                              )}
                               {/* Falta Archivo Badge */}
                               {item.disponibilidadArchivo === "falta_archivo" && (
                                 <span className="text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded flex items-center gap-0.5">
@@ -1846,6 +1917,95 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                     <SelectItem value="borrador">Borrador (Solo Administradores)</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Control de Metadatos Oficiales: Fecha, Versión, Vigencia y Disponibilidad */}
+              <div className="rounded-2xl border border-blue-100 bg-blue-50/40 p-4 space-y-3">
+                <div className="flex items-center gap-1.5 text-xs font-black text-[#002F6C]">
+                  <GitBranchIcon className="h-4 w-4 text-[#0E5296]" />
+                  <span>Control de Versión, Vigencia y Catálogo Oficial</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Fecha de Emisión Oficial */}
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-bold text-slate-700">Fecha Oficial de Emisión</Label>
+                    <Input
+                      value={docFechaEmision}
+                      onChange={(e) => setDocFechaEmision(e.target.value)}
+                      placeholder="Ej. 16 de junio de 2021"
+                      className="h-9 rounded-xl border-slate-200 text-xs bg-white"
+                    />
+                  </div>
+
+                  {/* Número Correlativo */}
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-bold text-slate-700">Nº Correlativo en Catálogo</Label>
+                    <Input
+                      type="number"
+                      value={docNumeroCorrelativo}
+                      onChange={(e) => setDocNumeroCorrelativo(e.target.value)}
+                      placeholder="Ej. 4"
+                      className="h-9 rounded-xl border-slate-200 text-xs bg-white"
+                    />
+                  </div>
+
+                  {/* Versión Normativa */}
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-bold text-slate-700">Versión Normativa</Label>
+                    <Input
+                      value={docVersion}
+                      onChange={(e) => setDocVersion(e.target.value)}
+                      placeholder="Ej. v1.0, v2.0"
+                      className="h-9 rounded-xl border-slate-200 text-xs bg-white"
+                    />
+                  </div>
+
+                  {/* Estado de Vigencia */}
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-bold text-slate-700">Estado de Vigencia</Label>
+                    <Select
+                      value={docEsVigente ? "vigente" : "historico"}
+                      onValueChange={(val) => setDocEsVigente(val === "vigente")}
+                    >
+                      <SelectTrigger className="h-9 rounded-xl text-xs bg-white border-slate-200">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="vigente">Vigente (Norma actual obligatoria)</SelectItem>
+                        <SelectItem value="historico">Histórico / Derogado (Sustituido)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Disponibilidad de Archivo Digital */}
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-bold text-slate-700">Disponibilidad Digital</Label>
+                    <Select
+                      value={docDisponibilidadArchivo}
+                      onValueChange={(val: any) => setDocDisponibilidadArchivo(val)}
+                    >
+                      <SelectTrigger className="h-9 rounded-xl text-xs bg-white border-slate-200">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="disponible">Archivo Disponible</SelectItem>
+                        <SelectItem value="falta_archivo">Falta Archivo Digital (FALTA PDF)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Norma Matriz / Familia */}
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-bold text-slate-700">Norma Base / Familia</Label>
+                    <Input
+                      value={docFamiliaCodigo}
+                      onChange={(e) => setDocFamiliaCodigo(e.target.value)}
+                      placeholder="Ej. reglamento-especifico-sabs"
+                      className="h-9 rounded-xl border-slate-200 text-xs bg-white"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Archivo adjunto */}
