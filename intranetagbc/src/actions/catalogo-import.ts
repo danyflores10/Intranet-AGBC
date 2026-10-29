@@ -72,6 +72,7 @@ export interface ItemSincronizacionCatalogo {
   direccionNombre?: string
   subcategoriaNombre?: string
   tipoDocumental?: string
+  familiaCodigo?: string
   version?: string
   esVigente?: boolean
   fechaOficial?: string
@@ -213,10 +214,10 @@ export async function sincronizarCatalogoExcelAction(
       const normFile = normalizarTexto(item.nombreArchivo || "")
       
       const existing =
-        (item.id ? docsById.get(item.id) : undefined) ||
         (item.numeroCorrelativo ? docsByNum.get(item.numeroCorrelativo) : undefined) ||
-        (normFile ? docsByFile.get(normFile) : undefined) ||
-        (normTitle ? docsByTitle.get(normTitle) : undefined)
+        (item.id ? docsById.get(item.id) : undefined) ||
+        (normTitle ? docsByTitle.get(normTitle) : undefined) ||
+        (normFile ? docsByFile.get(normFile) : undefined)
 
       // Verificar disponibilidad física de archivo
       const checkFisico = verificarDisponibilidadFisica(item.archivoUrl || existing?.archivo)
@@ -224,7 +225,9 @@ export async function sincronizarCatalogoExcelAction(
         item.disponibilidadArchivo ||
         (checkFisico.disponible ? "disponible" : "falta_archivo")
 
-      const familiaSlug = normalizarFamiliaCanonica(item.titulo).replace(/\s+/g, "-")
+      const codFam = item.familiaCodigo !== undefined && item.familiaCodigo !== "—" && item.familiaCodigo !== ""
+        ? item.familiaCodigo
+        : (existing?.familiaCodigo || null)
 
       if (item.accion === "actualizado" || existing) {
         const targetId = existing ? existing.id : item.id
@@ -268,10 +271,21 @@ export async function sincronizarCatalogoExcelAction(
             tipoArchivo: item.tipoArchivo || (existing ? existing.tipoArchivo : "pdf"),
             tamano: item.tamano || (existing ? existing.tamano : null),
             disponibilidadArchivo: dispFinal,
-            familiaCodigo: familiaSlug,
+            familiaCodigo: codFam,
+            version: item.version || (existing ? existing.version : "v1.0"),
+            esVigente: item.esVigente !== undefined ? item.esVigente : (existing ? existing.esVigente : true),
             updatedAt: new Date(),
           })
           .where(eq(documentos.id, targetId))
+
+        // Actualizar en mapa local para consistencia en la misma transacción
+        if (existing) {
+          existing.titulo = item.titulo
+          if (item.numeroCorrelativo !== undefined) existing.numeroCorrelativo = item.numeroCorrelativo
+          existing.version = item.version || existing.version
+          existing.esVigente = item.esVigente !== undefined ? item.esVigente : existing.esVigente
+          existing.familiaCodigo = codFam
+        }
 
         countActualizados++
         detalleCambios.push({
@@ -299,7 +313,7 @@ export async function sincronizarCatalogoExcelAction(
             tipoArchivo: item.tipoArchivo || "pdf",
             tamano: item.tamano || null,
             disponibilidadArchivo: dispFinal,
-            familiaCodigo: familiaSlug,
+            familiaCodigo: codFam,
             version: item.version || "v1.0",
             esVigente: item.esVigente !== undefined ? item.esVigente : true,
             autor: "AGBC Institucional",
@@ -324,35 +338,7 @@ export async function sincronizarCatalogoExcelAction(
     }
   }
 
-  // 3. Recalcular y consolidar versiones de todas las familias de documentos
-  try {
-    const todosDocs = await db.select().from(documentos)
-    const versionados = calcularVersionesCatalogo(
-      todosDocs.map((d) => ({
-        id: d.id,
-        titulo: d.titulo,
-        fechaEmision: d.fechaEmision,
-        numeroCorrelativo: d.numeroCorrelativo,
-        subcategoriaId: d.subcategoriaId,
-      }))
-    )
-
-    for (const v of versionados) {
-      if (!v.item.id) continue
-      await db
-        .update(documentos)
-        .set({
-          version: v.version,
-          esVigente: v.esVigente,
-          familiaCodigo: v.familiaCodigo,
-        })
-        .where(eq(documentos.id, v.item.id))
-    }
-  } catch (errVer) {
-    console.error("Error al recalcular versiones finales:", errVer)
-  }
-
-  // 4. Guardar registro en historial de importaciones
+  // 3. Notificación y registro en historial de importaciones
   try {
     const [usr] = await db
       .select({ firstName: users.firstName, lastName: users.lastNamePaternal })
@@ -393,7 +379,10 @@ export async function sincronizarCatalogoExcelAction(
     }),
   })
 
+  revalidatePath("/(admin)/documentos")
   revalidatePath("/documentos")
+  revalidatePath("/(admin)/dashboard")
+  revalidatePath("/dashboard")
   revalidatePath("/")
 
   return {
@@ -565,7 +554,10 @@ export async function revertirImportacionAction(
     resultado: "Exitoso",
   })
 
+  revalidatePath("/(admin)/documentos")
   revalidatePath("/documentos")
+  revalidatePath("/(admin)/dashboard")
+  revalidatePath("/dashboard")
   revalidatePath("/")
 
   return {

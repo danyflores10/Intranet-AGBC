@@ -207,6 +207,7 @@ const TODOS_LOS_ACCESOS = [
   { id: "secciones", label: "Secciones Landing", desc: "Visibilidad pública", href: "/secciones-landing", icon: EyeIcon, permission: PERMISOS.CONTENIDOS.VER },
   { id: "rrhh", label: "Personal / RRHH", desc: "Nómina de empleados", href: "/rrhh", icon: UsersIcon, permission: PERMISOS.RRHH.VER },
   { id: "documentos", label: "Documentos", desc: "Repositorio digital", href: "/documentos", icon: FileTextIcon, permission: PERMISOS.DOCUMENTOS.VER },
+  { id: "mensajeria", label: "Mensajería", desc: "Despacho institucional", href: "/mensajeria", icon: MailIcon, permission: PERMISOS.DOCUMENTOS.VER },
   { id: "comunicaciones", label: "Comunicados", desc: "Publicaciones oficiales", href: "/comunicaciones", icon: MegaphoneIcon, permission: PERMISOS.COMUNICADOS.VER },
   { id: "usuarios", label: "Usuarios", desc: "Cuentas y accesos", href: "/usuarios", icon: UserIcon, permission: PERMISOS.USUARIOS.VER },
 ]
@@ -394,6 +395,20 @@ export function DashboardModule({
         badgeStyle: "text-[#002F6C] bg-amber-100/90",
       })
     }
+        const puedeVerMensajeria = puedeAcceder({ roles: ["administrador", "admin", "super_admin", "gestor", "usuario"], permissions: [PERMISOS.DOCUMENTOS.VER] }, accessContext)
+    if (puedeVerMensajeria) {
+      cards.push({
+        label: "Mensajería",
+        sublabel: "Despacho Institucional",
+        count: "Activo",
+        icon: MailIcon,
+        href: "/mensajeria",
+        badge: "Mensajes",
+        cardStyle: "bg-gradient-to-br from-indigo-50 via-blue-50/50 to-white border-indigo-200/90 hover:border-[#0E5296]/50 hover:shadow-md hover:shadow-indigo-100",
+        iconStyle: "bg-[#0E5296]/15 text-[#0E5296] group-hover:bg-[#0E5296] group-hover:text-white",
+        badgeStyle: "text-[#0E5296] bg-indigo-100/90",
+      })
+    }
     if (puedeVerAuditoria) {
       cards.push({
         label: "Auditoría",
@@ -546,7 +561,7 @@ export function DashboardModule({
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-black tracking-tight text-[#002F6C]">
-              Panel de Control Principal
+              {(!puedeVerUsuarios && !puedeVerRoles && !puedeVerPersonal) ? "Panel de Gestión Documental y Mensajería" : "Panel de Control Principal"}
             </h1>
             <span className="rounded-full bg-[#0E5296] text-[#FFCC00] text-[10px] font-black px-2.5 py-0.5 uppercase tracking-wider">
               AGBC Oficial

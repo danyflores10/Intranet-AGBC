@@ -475,13 +475,13 @@ export function ImportarCatalogoDialog({
         // Versión calculada
         const vKey = `${row.rawNum || ""}_${normT}`
         const vInfo = mapVersionesPre.get(vKey)
-        const versionCalculada = row.rawVersion || (vInfo ? vInfo.version : (docExistente?.version || "v1.0"))
+        const versionCalculada = row.rawVersion || (docExistente?.version ? docExistente.version : (vInfo ? vInfo.version : "v1.0"))
         const esVigenteCalculado = row.rawVigencia
           ? row.rawVigencia.toLowerCase().includes("vigente")
-          : (vInfo ? vInfo.esVigente : (docExistente?.esVigente !== false))
+          : (docExistente?.esVigente !== undefined && docExistente.esVigente !== null ? docExistente.esVigente : (vInfo ? vInfo.esVigente : true))
         const familiaCodigo = row.rawFamilia && row.rawFamilia !== "—"
           ? row.rawFamilia
-          : (vInfo?.familiaCodigo || obtenerCodigoFamiliaCanonica(row.rawTitulo, docExistente?.familiaCodigo))
+          : (docExistente?.familiaCodigo ? docExistente.familiaCodigo : (vInfo?.familiaCodigo || obtenerCodigoFamiliaCanonica(row.rawTitulo, docExistente?.familiaCodigo)))
         const totalVersiones = vInfo ? vInfo.totalVersionesEnFamilia : 1
 
         // Detección de disponibilidad del archivo PDF
@@ -709,6 +709,7 @@ export function ImportarCatalogoDialog({
           tipoDocumental: item.tipoDocumentalNuevo,
           version: item.versionCalculada,
           esVigente: item.esVigenteCalculado,
+          familiaCodigo: item.familiaCodigo,
           fechaOficial: item.fechaOficialNueva,
           descripcion: item.descripcionNueva,
           archivoUrl: fileUrl,

@@ -138,7 +138,8 @@ export const sidebarData: {
           icon: Mail,
           tourKey: "mensajeria",
           access: {
-            roles: ["administrador", "Administrador"],
+            roles: ["administrador", "Administrador", "gestor", "Gestor", "usuario", "Usuario"],
+            permissions: [PERMISOS.DOCUMENTOS.VER, PERMISOS.ARCHIVO.VER],
           },
         },
         {

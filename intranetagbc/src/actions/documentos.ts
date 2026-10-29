@@ -193,6 +193,9 @@ export async function crearDocumento(data: {
   }
 
   revalidatePath("/documentos")
+  revalidatePath("/(admin)/documentos")
+  revalidatePath("/(admin)/dashboard")
+  revalidatePath("/dashboard")
   revalidatePath("/")
   return nuevo
 }
@@ -221,6 +224,9 @@ export async function actualizarDocumento(id: string, data: Partial<{
   const [actualizado] = await db.update(documentos).set(data).where(eq(documentos.id, id)).returning()
   await registrarAuditLog({ usuario: sesion.id, accion: `Actualizó documento ID: ${id} (${data.titulo || ""})`, modulo: "Documentos", resultado: "Exitoso" })
   revalidatePath("/documentos")
+  revalidatePath("/(admin)/documentos")
+  revalidatePath("/(admin)/dashboard")
+  revalidatePath("/dashboard")
   revalidatePath("/")
   return actualizado
 }

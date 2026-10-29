@@ -119,7 +119,7 @@ export function UserNavDropdown({ usuario: propUser, esAdmin: propEsAdmin, class
   const email = propUser?.email || session?.user?.email || "funcionario@correos.gob.bo"
   const image = propUser?.image || session?.user?.image || null
   const cargo = propUser?.cargo || propUser?.rol || (session?.user as any)?.role || "Funcionario Público"
-  const isAdminUser = propEsAdmin ?? (propUser?.esAdmin || (cargo && /admin|administrador|director/i.test(cargo)))
+  const isAdminUser = propEsAdmin ?? (propUser?.esAdmin || (cargo && /admin|administrador|director|gestor|usuario/i.test(cargo)))
 
   const initials = getInitials(name)
   const avatarColor = getAvatarColor(name)

@@ -17,11 +17,11 @@ export default async function MensajeriaPage() {
     redirect("/")
   }
 
-  const esAdmin = usuario.roles.some((r) =>
-    ["administrador", "admin", "super_admin"].includes(r.toLowerCase().trim())
-  )
+  const tieneAccesoMensajeria = usuario.roles.some((r) =>
+    ["administrador", "admin", "super_admin", "gestor", "usuario"].includes(r.toLowerCase().trim())
+  ) || (usuario.permissions && usuario.permissions.length > 0)
 
-  if (!esAdmin) {
+  if (!tieneAccesoMensajeria) {
     redirect("/dashboard")
   }
 

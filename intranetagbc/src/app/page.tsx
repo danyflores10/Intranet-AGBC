@@ -63,7 +63,12 @@ export default async function HomePage() {
   // Obtener rol y permisos RBAC del usuario
   const usuarioRbac = await obtenerUsuarioRbacActual()
   const estaLogueado = true
-  const esAdmin = usuarioRbac?.roles?.includes("administrador") || usuarioRbac?.roles?.includes("Administrador") || false
+  const tieneAccesoPanel = Boolean(
+    usuarioRbac?.roles?.some((r) =>
+      ["administrador", "admin", "super_admin", "gestor", "usuario"].includes(r.toLowerCase().trim())
+    ) || (usuarioRbac?.permissions && usuarioRbac.permissions.length > 0)
+  )
+  const esAdmin = tieneAccesoPanel
 
   // Carga paralela de datos para la landing
   const [
@@ -209,12 +214,12 @@ export default async function HomePage() {
                 </span>
               </h1>
 
-              {/* Botón: Únicamente para Administrador */}
-              {esAdmin && (
+              {/* Botón: Acceso al Panel para Administrador / Gestor / Usuarios autorizados */}
+              {tieneAccesoPanel && (
                 <div className="pt-2">
                   <Button size="lg" asChild className="h-12 px-8 text-sm font-black bg-[#002F6C] hover:bg-[#0E5296] text-white shadow-xl shadow-[#002F6C]/25 border-0 rounded-2xl transition-all hover:scale-[1.02] cursor-pointer">
                     <Link href="/dashboard">
-                      Ir al Panel de Administración
+                      Ir al Panel de Control
                       <ArrowRight className="ml-2 h-4 w-4 text-[#FFCC00]" />
                     </Link>
                   </Button>

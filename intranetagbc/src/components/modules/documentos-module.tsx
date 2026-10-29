@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition, useRef, useMemo, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import {
   PlusIcon,
   FileTextIcon,
@@ -170,6 +171,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   const [catFolderDirId, setCatFolderDirId] = useState<string | null>(null)
   const [catFolderSubId, setCatFolderSubId] = useState<string | null>(null)
   const [catFolderTipoId, setCatFolderTipoId] = useState<string | null>(null)
+  const router = useRouter()
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [importCatalogOpen, setImportCatalogOpen] = useState(false)
@@ -452,6 +454,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
           toast.success("Documento creado")
         }
 
+        router.refresh()
         setDialogOpen(false)
         setEditDoc(null)
         setUploadedFile(null)
@@ -2388,7 +2391,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         onClose={() => setImportCatalogOpen(false)}
         existingDocs={docsEnriquecidos}
         onSuccess={() => {
-          // Re-render handled by Server Action revalidatePath
+          router.refresh()
         }}
       />
 
