@@ -238,6 +238,12 @@ export function DashboardModule({
     [user]
   )
 
+  const esAdmin = useMemo(() => {
+    return Array.isArray(user.roles) && user.roles.some((r: any) =>
+      ["administrador", "admin", "super_admin"].includes(String(typeof r === "string" ? r : r?.name || "").toLowerCase().trim())
+    )
+  }, [user.roles])
+
   const puedeVerUsuarios = puedeAcceder({ permissions: [PERMISOS.USUARIOS.VER] }, accessContext)
   const puedeVerRoles = puedeAcceder({ permissions: [PERMISOS.ROLES.VER] }, accessContext)
   const puedeVerAuditoria = puedeAcceder({ permissions: [PERMISOS.AUDITORIA.VER] }, accessContext)
@@ -261,6 +267,11 @@ export function DashboardModule({
 
   // Pestañas disponibles según permisos
   const availableTabs = useMemo(() => {
+    if (!esAdmin) {
+      return [
+        { id: "documentos" as const, label: `Catálogo Oficial de Documentos (${documentos.length})`, count: documentos.length, icon: FileTextIcon },
+      ]
+    }
     const list: Array<{ id: "personal" | "documentos" | "comunicados" | "usuarios"; label: string; count: number; icon: any }> = []
     if (puedeVerPersonal) {
       list.push({ id: "personal", label: `Personal (${personal.length})`, count: personal.length, icon: UsersIcon })
@@ -275,7 +286,7 @@ export function DashboardModule({
       list.push({ id: "usuarios", label: `Usuarios (${usuarios.length})`, count: usuarios.length, icon: UserIcon })
     }
     return list
-  }, [puedeVerPersonal, puedeVerDocumentos, puedeVerComunicados, puedeVerUsuarios, personal.length, documentos.length, comunicados.length, usuarios.length])
+  }, [esAdmin, puedeVerPersonal, puedeVerDocumentos, puedeVerComunicados, puedeVerUsuarios, personal.length, documentos.length, comunicados.length, usuarios.length])
 
   // Estado de vista: Tabla (por defecto) o Carrusel
   const [viewMode, setViewMode] = useState<"table" | "carousel">("table")

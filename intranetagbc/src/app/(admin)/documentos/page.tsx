@@ -5,10 +5,19 @@ import { PERMISOS } from "@/lib/auth/permisos"
 import { obtenerDocumentos, obtenerCategorias } from "@/actions/documentos"
 import { DocumentosModule } from "@/components/modules/documentos-module"
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 export default async function DocumentosPage() {
   const usuario = await obtenerUsuarioRbacActual()
   if (!usuario) redirect("/")
-  if (!puedeAccederUsuario(usuario, { permissions: [PERMISOS.DOCUMENTOS.VER] })) redirect("/dashboard")
+
+  const tieneAcceso = puedeAccederUsuario(usuario, {
+    roles: ["administrador", "admin", "super_admin", "gestor"],
+    permissions: [PERMISOS.DOCUMENTOS.VER],
+  })
+
+  if (!tieneAcceso) redirect("/dashboard")
 
   const [documentos, categorias] = await Promise.all([
     obtenerDocumentos(),

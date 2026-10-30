@@ -6,6 +6,9 @@ import {
 } from "@/actions/mensajeria"
 import { MensajeriaModule } from "@/components/modules/mensajeria-module"
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 export const metadata = {
   title: "Mensajería Masiva | Intranet AGBC",
   description: "Despacho de comunicaciones y notificaciones institucionales a todos los usuarios.",

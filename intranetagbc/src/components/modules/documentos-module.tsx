@@ -205,19 +205,25 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
 
   const accessContext = useMemo(() => crearContextoAcceso(usuario), [usuario])
 
+  const esAdminOGestor = useMemo(() => {
+    return (usuario?.roles || []).some((r) =>
+      ["administrador", "admin", "super_admin", "gestor"].includes(r.toLowerCase().trim())
+    )
+  }, [usuario?.roles])
+
   const canCreateDocumento = useMemo(
-    () => puedeAcceder({ permissions: [PERMISOS.DOCUMENTOS.CREAR] }, accessContext),
-    [accessContext],
+    () => esAdminOGestor || puedeAcceder({ permissions: [PERMISOS.DOCUMENTOS.CREAR] }, accessContext),
+    [esAdminOGestor, accessContext],
   )
 
   const canEditDocumento = useMemo(
-    () => puedeAcceder({ permissions: [PERMISOS.DOCUMENTOS.EDITAR] }, accessContext),
-    [accessContext],
+    () => esAdminOGestor || puedeAcceder({ permissions: [PERMISOS.DOCUMENTOS.EDITAR] }, accessContext),
+    [esAdminOGestor, accessContext],
   )
 
   const canDeleteDocumento = useMemo(
-    () => puedeAcceder({ permissions: [PERMISOS.DOCUMENTOS.ELIMINAR] }, accessContext),
-    [accessContext],
+    () => esAdminOGestor || puedeAcceder({ permissions: [PERMISOS.DOCUMENTOS.ELIMINAR] }, accessContext),
+    [esAdminOGestor, accessContext],
   )
 
   // Enriquecer documentos con jerarquía y códigos de familia oficiales
@@ -2392,6 +2398,9 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         existingDocs={docsEnriquecidos}
         onSuccess={() => {
           router.refresh()
+          setTimeout(() => {
+            window.location.reload()
+          }, 350)
         }}
       />
 

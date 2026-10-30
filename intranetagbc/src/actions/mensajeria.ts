@@ -126,12 +126,12 @@ export async function enviarMensajeMasivo(data: EnviarMensajeMasivoInput): Promi
       return { success: false, message: "Sesión no válida o expirada." }
     }
 
-    const esAdmin = usuarioActual.roles.some((r) =>
-      ["administrador", "admin", "super_admin"].includes(r.toLowerCase().trim())
-    )
+    const puedeEnviar = usuarioActual.roles.some((r) =>
+      ["administrador", "admin", "super_admin", "gestor"].includes(r.toLowerCase().trim())
+    ) || (usuarioActual.permissions && usuarioActual.permissions.length > 0)
 
-    if (!esAdmin) {
-      return { success: false, message: "Solo los administradores pueden enviar mensajes masivos." }
+    if (!puedeEnviar) {
+      return { success: false, message: "No tienes permisos para enviar mensajes masivos." }
     }
 
     const asunto = (data.asunto || "").trim()
@@ -277,14 +277,14 @@ export async function eliminarMensajeMasivoCampana(params: {
       return { success: false, message: "Sesión no válida o expirada.", count: 0 }
     }
 
-    const esAdmin = usuarioActual.roles.some((r) =>
-      ["administrador", "admin", "super_admin"].includes(r.toLowerCase().trim())
-    )
+    const puedeEliminar = usuarioActual.roles.some((r) =>
+      ["administrador", "admin", "super_admin", "gestor"].includes(r.toLowerCase().trim())
+    ) || (usuarioActual.permissions && usuarioActual.permissions.length > 0)
 
-    if (!esAdmin) {
+    if (!puedeEliminar) {
       return {
         success: false,
-        message: "Solo los administradores pueden eliminar mensajes masivos.",
+        message: "No tienes permisos para eliminar mensajes masivos.",
         count: 0,
       }
     }

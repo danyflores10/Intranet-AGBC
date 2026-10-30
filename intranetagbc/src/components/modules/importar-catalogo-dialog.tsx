@@ -572,20 +572,20 @@ export function ImportarCatalogoDialog({
           ) {
             diffs.push(`Fecha Oficial: ${fechaAnt} ➔ ${row.rawFecha}`)
           }
-          if (row.rawVersion && docExistente.version && docExistente.version !== versionCalculada) {
-            diffs.push(`Versión: ${docExistente.version} ➔ ${versionCalculada}`)
+          const dbVersion = docExistente.version?.trim() || "v1.0"
+          if (row.rawVersion && row.rawVersion.trim() !== "" && row.rawVersion !== "—" && dbVersion !== versionCalculada) {
+            diffs.push(`Versión: ${dbVersion} ➔ ${versionCalculada}`)
           }
-          if (row.rawVigencia && docExistente.esVigente !== undefined && docExistente.esVigente !== esVigenteCalculado) {
-            diffs.push(`Vigencia: ${docExistente.esVigente ? "Vigente" : "Histórico"} ➔ ${esVigenteCalculado ? "Vigente" : "Histórico"}`)
+
+          const dbVigente = docExistente.esVigente !== null && docExistente.esVigente !== undefined ? Boolean(docExistente.esVigente) : true
+          if (row.rawVigencia && row.rawVigencia.trim() !== "" && dbVigente !== esVigenteCalculado) {
+            diffs.push(`Vigencia: ${dbVigente ? "Vigente" : "Histórico"} ➔ ${esVigenteCalculado ? "Vigente" : "Histórico"}`)
           }
-          if (
-            row.rawFamilia &&
-            row.rawFamilia !== "—" &&
-            docExistente.familiaCodigo &&
-            docExistente.familiaCodigo !== "—" &&
-            docExistente.familiaCodigo !== row.rawFamilia
-          ) {
-            diffs.push(`Familia: ${docExistente.familiaCodigo} ➔ ${row.rawFamilia}`)
+
+          const dbFamilia = docExistente.familiaCodigo?.trim() || "—"
+          const excelFamilia = row.rawFamilia?.trim() || "—"
+          if (excelFamilia !== "—" && dbFamilia !== "—" && dbFamilia !== excelFamilia) {
+            diffs.push(`Familia: ${dbFamilia} ➔ ${excelFamilia}`)
           }
           if (row.rawDesc && row.rawDesc !== "—" && row.rawDesc !== (docExistente.descripcion || "")) {
             diffs.push(`Descripción actualizada`)

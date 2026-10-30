@@ -13,6 +13,9 @@ import { obtenerUsuarios } from "@/actions/usuarios"
 import { obtenerSucursalesActivas } from "@/actions/sucursales"
 import { DashboardModule } from "@/components/modules/dashboard-module"
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 export default async function DashboardPage() {
   const usuario = await obtenerUsuarioRbacActual()
   if (!usuario) redirect("/")

@@ -56,7 +56,11 @@ async function requerirSesionAutenticada(): Promise<SesionConAcceso> {
 
 async function autorizarAccion(permisoRequerido: string): Promise<SesionConAcceso> {
   const sesion = await requerirSesionAutenticada()
-  if (sesion.roles.some((role) => normalizarTexto(role) === ROL_SUPER_ADMIN)) {
+  if (
+    sesion.roles.some((role) =>
+      ["super_admin", "administrador", "admin", "gestor"].includes(normalizarTexto(role))
+    )
+  ) {
     return sesion
   }
   if (!tienePermiso(sesion, permisoRequerido)) {

@@ -28,15 +28,25 @@ export function NavSecondary({
   }[]
   usuario: UsuarioRbac
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
+  const esAdmin = React.useMemo(() => {
+    return (usuario?.roles || []).some((r) =>
+      ["administrador", "admin", "super_admin"].includes(r.toLowerCase().trim())
+    )
+  }, [usuario?.roles])
+
   const accessOpts = React.useMemo(
     () => crearContextoAcceso(usuario),
     [usuario],
   )
 
-  const filteredItems = React.useMemo(
-    () => items.filter((item) => puedeAcceder(item.access, accessOpts)),
-    [items, accessOpts],
-  )
+  const filteredItems = React.useMemo(() => {
+    if (!esAdmin) return []
+    return items.filter((item) => puedeAcceder(item.access, accessOpts))
+  }, [items, accessOpts, esAdmin])
+
+  if (!esAdmin || filteredItems.length === 0) {
+    return null
+  }
 
   return (
     <SidebarGroup {...props}>

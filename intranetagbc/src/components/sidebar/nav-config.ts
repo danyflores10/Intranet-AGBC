@@ -75,6 +75,7 @@ export const sidebarData: {
           icon: Shield,
           tourKey: "gestion-institucional",
           access: {
+            roles: ["administrador", "Administrador", "super_admin"],
             permissions: [
               PERMISOS.USUARIOS.VER,
               PERMISOS.ROLES.VER,
@@ -88,6 +89,7 @@ export const sidebarData: {
               url: "/usuarios",
               icon: Users,
               access: {
+                roles: ["administrador", "Administrador", "super_admin"],
                 permissions: [PERMISOS.USUARIOS.VER],
               },
             },
@@ -96,6 +98,7 @@ export const sidebarData: {
               url: "/roles",
               icon: UserPlus,
               access: {
+                roles: ["administrador", "Administrador", "super_admin"],
                 permissions: [PERMISOS.ROLES.VER],
               },
             },
@@ -104,6 +107,7 @@ export const sidebarData: {
               url: "/auditoria",
               icon: Shield,
               access: {
+                roles: ["administrador", "Administrador", "super_admin"],
                 permissions: [PERMISOS.AUDITORIA.VER],
               },
             },
@@ -112,8 +116,8 @@ export const sidebarData: {
               url: "/sucursales",
               icon: MapPin,
               access: {
+                roles: ["administrador", "Administrador", "super_admin"],
                 permissions: [PERMISOS.SUCURSALES.VER],
-                roles: ["administrador"],
               },
             },
           ],
@@ -124,6 +128,7 @@ export const sidebarData: {
           icon: Megaphone,
           tourKey: "contenidos",
           access: {
+            roles: ["administrador", "Administrador", "super_admin"],
             permissions: [
               PERMISOS.COMUNICADOS.VER,
               PERMISOS.NOTICIAS.VER,
@@ -153,6 +158,7 @@ export const sidebarData: {
               url: "/documentos",
               icon: FileText,
               access: {
+                roles: ["administrador", "Administrador", "gestor", "Gestor", "usuario", "Usuario"],
                 permissions: [PERMISOS.DOCUMENTOS.VER],
               },
             },
@@ -161,6 +167,7 @@ export const sidebarData: {
               url: "/archivo",
               icon: Archive,
               access: {
+                roles: ["administrador", "Administrador", "gestor", "Gestor", "usuario", "Usuario"],
                 permissions: [PERMISOS.ARCHIVO.VER],
               },
             },
@@ -172,6 +179,7 @@ export const sidebarData: {
           icon: Briefcase,
           tourKey: "rrhh",
           access: {
+            roles: ["administrador", "Administrador", "super_admin"],
             permissions: [PERMISOS.RRHH.VER],
           },
         },

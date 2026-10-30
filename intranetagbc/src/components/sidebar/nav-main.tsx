@@ -43,8 +43,20 @@ function getMostSpecificSubRoute(pathname: string, urls: string[]): string | nul
 function filterGroup(
   group: NavGroup,
   accessOpts: ReturnType<typeof crearContextoAcceso>,
+  esAdmin: boolean,
 ): NavGroup {
-  const items: NavItem[] = group.items
+  let initialItems = group.items
+
+  // Para el rol de gestor / usuario (cualquiera que no sea Administrador Central),
+  // se ocultan estrictamente Gestión Institucional, Contenidos, RRHH y Sucursales.
+  if (!esAdmin) {
+    initialItems = initialItems.filter((item) => {
+      const tit = item.title.toLowerCase().trim()
+      return tit === "dashboard" || tit === "mensajería" || tit === "mensajeria" || tit === "documentos"
+    })
+  }
+
+  const items: NavItem[] = initialItems
     .filter((item) => puedeAcceder(item.access as AccessRule, accessOpts))
     .map((item) => {
       const subItems = item.items
@@ -66,6 +78,12 @@ export function NavMain({ groups, usuario }: { groups: NavGroup[]; usuario: Usua
   const pathname = usePathname()
   const [openItems, setOpenItems] = React.useState<Record<string, boolean>>({})
 
+  const esAdmin = React.useMemo(() => {
+    return (usuario?.roles || []).some((r) =>
+      ["administrador", "admin", "super_admin"].includes(r.toLowerCase().trim())
+    )
+  }, [usuario?.roles])
+
   const accessOpts = React.useMemo(
     () => crearContextoAcceso(usuario),
     [usuario],
@@ -75,9 +93,9 @@ export function NavMain({ groups, usuario }: { groups: NavGroup[]; usuario: Usua
     () =>
       groups
         .filter((group) => group.items.length > 0)
-        .map((group) => filterGroup(group, accessOpts))
+        .map((group) => filterGroup(group, accessOpts, esAdmin))
         .filter((group) => group.items.length > 0),
-    [groups, accessOpts],
+    [groups, accessOpts, esAdmin],
   )
 
   // Abrir automáticamente el grupo colapsable si la ruta activa coincide con alguno de sus sub-ítems
