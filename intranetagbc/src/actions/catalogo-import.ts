@@ -146,19 +146,8 @@ export async function sincronizarCatalogoExcelAction(
     }
   }
 
-  // Maps for existing documents
-  const docsById = new Map<string, typeof docsDb[0]>()
-  const docsByNum = new Map<number, typeof docsDb[0]>()
-  const docsByTitle = new Map<string, typeof docsDb[0]>()
-  const docsByFile = new Map<string, typeof docsDb[0]>()
-
-  for (const d of docsDb) {
-    docsById.set(d.id, d)
-    if (d.numeroCorrelativo) docsByNum.set(d.numeroCorrelativo, d)
-    if (d.titulo) docsByTitle.set(normalizarTexto(d.titulo), d)
-    if (d.nombreArchivo) docsByFile.set(normalizarTexto(d.nombreArchivo), d)
-    if (d.archivo) docsByFile.set(normalizarTexto(d.archivo), d)
-  }
+  // Pool de documentos en BD para matching 1-a-1 de alta precisión
+  const availableDocsPool = [...docsDb]
 
   let countNuevos = 0
   let countActualizados = 0
@@ -213,15 +202,96 @@ export async function sincronizarCatalogoExcelAction(
       const subcategoriaId = subObj ? subObj.id : null
       const categoriaId = catObj ? catObj.id : null
 
-      // 2. Verificar existencia con prioridad estricta: ID -> Número Correlativo -> Archivo -> Título
+      // 2. Verificar existencia con pool 1-a-1 de alta precisión jerárquica
       const normTitle = normalizarTexto(item.titulo || "")
       const normFile = normalizarTexto(item.nombreArchivo || "")
-      
-      const existing =
-        (item.numeroCorrelativo ? docsByNum.get(item.numeroCorrelativo) : undefined) ||
-        (item.id ? docsById.get(item.id) : undefined) ||
-        (normTitle ? docsByTitle.get(normTitle) : undefined) ||
-        (normFile ? docsByFile.get(normFile) : undefined)
+      const normSub = normalizarTexto(item.subcategoriaNombre || "")
+      const itemYear = (item.fechaOficial || "").match(/\b(20[1-3]\d)\b/)?.[1] || ""
+
+      let matchIdx = -1
+
+      // Por ID exacto si se provee
+      if (item.id) {
+        matchIdx = availableDocsPool.findIndex((d) => d.id === item.id)
+      }
+
+      // Por Correlativo + Título + Subárea + Versión
+      if (matchIdx === -1 && item.numeroCorrelativo) {
+        matchIdx = availableDocsPool.findIndex(
+          (d) =>
+            d.numeroCorrelativo === item.numeroCorrelativo &&
+            normalizarTexto(d.titulo) === normTitle &&
+            (normSub ? normalizarTexto(d.subcategoriaId || "") === normSub || normalizarTexto(subObj?.nombre || "") === normSub : true) &&
+            d.version === item.version
+        )
+      }
+
+      // Por Correlativo + Título + Subárea
+      if (matchIdx === -1 && item.numeroCorrelativo) {
+        matchIdx = availableDocsPool.findIndex(
+          (d) =>
+            d.numeroCorrelativo === item.numeroCorrelativo &&
+            normalizarTexto(d.titulo) === normTitle &&
+            (normSub ? normalizarTexto(d.subcategoriaId || "") === normSub || normalizarTexto(subObj?.nombre || "") === normSub : true)
+        )
+      }
+
+      // Por Correlativo + Título + Versión
+      if (matchIdx === -1 && item.numeroCorrelativo) {
+        matchIdx = availableDocsPool.findIndex(
+          (d) =>
+            d.numeroCorrelativo === item.numeroCorrelativo &&
+            normalizarTexto(d.titulo) === normTitle &&
+            d.version === item.version
+        )
+      }
+
+      // Por Correlativo + Título
+      if (matchIdx === -1 && item.numeroCorrelativo) {
+        matchIdx = availableDocsPool.findIndex(
+          (d) =>
+            d.numeroCorrelativo === item.numeroCorrelativo &&
+            normalizarTexto(d.titulo) === normTitle
+        )
+      }
+
+      // Por Archivo
+      if (matchIdx === -1 && normFile) {
+        matchIdx = availableDocsPool.findIndex(
+          (d) =>
+            (d.nombreArchivo && normalizarTexto(d.nombreArchivo) === normFile) ||
+            (d.archivo && normalizarTexto(d.archivo).includes(normFile))
+        )
+      }
+
+      // Por Título + Año
+      if (matchIdx === -1 && normTitle && itemYear) {
+        matchIdx = availableDocsPool.findIndex(
+          (d) =>
+            normalizarTexto(d.titulo) === normTitle &&
+            (d.fechaEmision || "").includes(itemYear)
+        )
+      }
+
+      // Por Título
+      if (matchIdx === -1 && normTitle) {
+        matchIdx = availableDocsPool.findIndex(
+          (d) => normalizarTexto(d.titulo) === normTitle
+        )
+      }
+
+      // Por Correlativo único
+      if (matchIdx === -1 && item.numeroCorrelativo) {
+        const byNum = availableDocsPool.filter((d) => d.numeroCorrelativo === item.numeroCorrelativo)
+        if (byNum.length === 1) {
+          matchIdx = availableDocsPool.indexOf(byNum[0])
+        }
+      }
+
+      let existing: typeof docsDb[0] | undefined = undefined
+      if (matchIdx !== -1) {
+        existing = availableDocsPool.splice(matchIdx, 1)[0]
+      }
 
       // Verificar disponibilidad física de archivo
       const checkFisico = verificarDisponibilidadFisica(item.archivoUrl || existing?.archivo)

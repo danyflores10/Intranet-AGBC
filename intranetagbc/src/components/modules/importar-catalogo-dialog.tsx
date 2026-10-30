@@ -304,37 +304,9 @@ export function ImportarCatalogoDialog({
       const colArchivo = findColIdx(["enlace al documento", "enlace al archivo", "enlace", "archivo", "link"])
       const colCheck = findColIdx(["estado de archivo", "disponibilidad", "check"])
 
-      // Mapeos existentes en BD para matching ultra-preciso (Evita falsos "Nuevos")
-      const existingById = new Map<string, DocExistente>()
-      const existingByNum = new Map<number, DocExistente>()
-      const existingByNormTitle = new Map<string, DocExistente>()
-      const existingByNormFile = new Map<string, DocExistente>()
-      const existingByFamiliaAndYear = new Map<string, DocExistente>()
-
-      for (const d of existingDocs) {
-        if (d.id) existingById.set(d.id.trim(), d)
-        if (d.numeroCorrelativo) existingByNum.set(d.numeroCorrelativo, d)
-
-        const normT = normalizar(d.titulo)
-        if (normT) existingByNormTitle.set(normT, d)
-
-        if (d.nombreArchivo) existingByNormFile.set(normalizar(d.nombreArchivo), d)
-        if (d.archivo) {
-          existingByNormFile.set(normalizar(d.archivo), d)
-          // Si el nombre de archivo contiene doc_0XX_
-          const matchDocNum = d.archivo.match(/doc_(\d{3})_/i)
-          if (matchDocNum) {
-            existingByNum.set(parseInt(matchDocNum[1], 10), d)
-          }
-        }
-
-        const fam = normalizarFamiliaCanonica(d.titulo)
-        const fechaDoc = d.fechaEmision || obtenerFechaOficialDocumento(d.archivo, d.titulo, d.nombreArchivo, d.createdAt)
-        const yearDoc = fechaDoc.match(/\b(20[1-3]\d)\b/)?.[1] || ""
-        if (fam && yearDoc) {
-          existingByFamiliaAndYear.set(`${fam}_${yearDoc}`, d)
-        }
-      }
+      // Pool de documentos existentes para matching ultra-preciso 1-a-1
+      // Evita colisiones cuando existen números correlativos idénticos o documentos homónimos
+      const availableDocsPool = [...existingDocs]
 
       // 1. Extraer filas válidas del Excel
       const rawRowsParsed: Array<{
@@ -446,19 +418,109 @@ export function ImportarCatalogoDialog({
         const famT = obtenerCodigoFamiliaCanonica(row.rawTitulo, row.rawFamilia)
         const yearT = row.rawFecha.match(/\b(20[1-3]\d)\b/)?.[1] || ""
 
-        // Matching jerárquico inteligente (Prioridad 1: Correlativo Oficial, Prioridad 2: ID Sistema, Prioridad 3: Título)
+        // Matching jerárquico inteligente 1-a-1 usando el pool de documentos disponibles
         let docExistente: DocExistente | undefined = undefined
 
-        if (row.rawNum && existingByNum.has(row.rawNum)) {
-          docExistente = existingByNum.get(row.rawNum)
-        } else if (row.rawId && existingById.has(row.rawId)) {
-          docExistente = existingById.get(row.rawId)
-        } else if (normT && existingByNormTitle.has(normT)) {
-          docExistente = existingByNormTitle.get(normT)
-        } else if (normF && existingByNormFile.has(normF)) {
-          docExistente = existingByNormFile.get(normF)
-        } else if (famT && yearT && existingByFamiliaAndYear.has(`${famT}_${yearT}`)) {
-          docExistente = existingByFamiliaAndYear.get(`${famT}_${yearT}`)
+        // 1. Número correlativo + Título + Subárea + Versión exacta
+        let matchIdx = availableDocsPool.findIndex(
+          (d) =>
+            d.numeroCorrelativo === row.rawNum &&
+            normalizar(d.titulo) === normT &&
+            normalizar(d.subcategoria) === normalizar(row.rawSub) &&
+            d.version === row.rawVersion
+        )
+
+        // 2. Número correlativo + Título + Subárea + Año
+        if (matchIdx === -1) {
+          matchIdx = availableDocsPool.findIndex(
+            (d) =>
+              d.numeroCorrelativo === row.rawNum &&
+              normalizar(d.titulo) === normT &&
+              normalizar(d.subcategoria) === normalizar(row.rawSub) &&
+              (d.fechaEmision || "").includes(yearT)
+          )
+        }
+
+        // 3. Número correlativo + Título + Subárea
+        if (matchIdx === -1) {
+          matchIdx = availableDocsPool.findIndex(
+            (d) =>
+              d.numeroCorrelativo === row.rawNum &&
+              normalizar(d.titulo) === normT &&
+              normalizar(d.subcategoria) === normalizar(row.rawSub)
+          )
+        }
+
+        // 4. Número correlativo + Título + Versión + Año
+        if (matchIdx === -1) {
+          matchIdx = availableDocsPool.findIndex(
+            (d) =>
+              d.numeroCorrelativo === row.rawNum &&
+              normalizar(d.titulo) === normT &&
+              d.version === row.rawVersion &&
+              (d.fechaEmision || "").includes(yearT)
+          )
+        }
+
+        // 5. Número correlativo + Título + Versión
+        if (matchIdx === -1) {
+          matchIdx = availableDocsPool.findIndex(
+            (d) =>
+              d.numeroCorrelativo === row.rawNum &&
+              normalizar(d.titulo) === normT &&
+              d.version === row.rawVersion
+          )
+        }
+
+        // 6. Número correlativo + Título + Año
+        if (matchIdx === -1 && yearT) {
+          matchIdx = availableDocsPool.findIndex(
+            (d) =>
+              d.numeroCorrelativo === row.rawNum &&
+              normalizar(d.titulo) === normT &&
+              (d.fechaEmision || "").includes(yearT)
+          )
+        }
+
+        // 7. Número correlativo + Título
+        if (matchIdx === -1) {
+          matchIdx = availableDocsPool.findIndex(
+            (d) =>
+              d.numeroCorrelativo === row.rawNum &&
+              normalizar(d.titulo) === normT
+          )
+        }
+
+        // 8. ID de sistema si viene provisto
+        if (matchIdx === -1 && row.rawId) {
+          matchIdx = availableDocsPool.findIndex((d) => d.id === row.rawId)
+        }
+
+        // 9. Título normalizado + Año
+        if (matchIdx === -1 && yearT) {
+          matchIdx = availableDocsPool.findIndex(
+            (d) =>
+              normalizar(d.titulo) === normT &&
+              (d.fechaEmision || "").includes(yearT)
+          )
+        }
+
+        // 10. Título normalizado
+        if (matchIdx === -1) {
+          matchIdx = availableDocsPool.findIndex((d) => normalizar(d.titulo) === normT)
+        }
+
+        // 11. Número correlativo único en pool
+        if (matchIdx === -1 && row.rawNum) {
+          const byNum = availableDocsPool.filter((d) => d.numeroCorrelativo === row.rawNum)
+          if (byNum.length === 1) {
+            matchIdx = availableDocsPool.indexOf(byNum[0])
+          }
+        }
+
+        if (matchIdx !== -1) {
+          // Extraer del pool para garantizar que ningún documento sea duplicado o emparejado dos veces
+          docExistente = availableDocsPool.splice(matchIdx, 1)[0]
         }
 
         // Buscar coincidencia en archivos físicos adjuntados en la sección inferior
