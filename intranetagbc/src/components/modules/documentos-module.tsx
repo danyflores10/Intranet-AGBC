@@ -205,26 +205,11 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
 
   const accessContext = useMemo(() => crearContextoAcceso(usuario), [usuario])
 
-  const esAdminOGestor = useMemo(() => {
-    return (usuario?.roles || []).some((r) =>
-      ["administrador", "admin", "super_admin", "gestor"].includes(r.toLowerCase().trim())
-    )
-  }, [usuario?.roles])
-
-  const canCreateDocumento = useMemo(
-    () => esAdminOGestor || puedeAcceder({ permissions: [PERMISOS.DOCUMENTOS.CREAR] }, accessContext),
-    [esAdminOGestor, accessContext],
-  )
-
-  const canEditDocumento = useMemo(
-    () => esAdminOGestor || puedeAcceder({ permissions: [PERMISOS.DOCUMENTOS.EDITAR] }, accessContext),
-    [esAdminOGestor, accessContext],
-  )
-
-  const canDeleteDocumento = useMemo(
-    () => esAdminOGestor || puedeAcceder({ permissions: [PERMISOS.DOCUMENTOS.ELIMINAR] }, accessContext),
-    [esAdminOGestor, accessContext],
-  )
+  // Todos los usuarios con acceso al módulo de documentos tienen plenos permisos
+  // para Subir documentos, Importar catálogo Excel, Editar y Eliminar
+  const canCreateDocumento = true
+  const canEditDocumento = true
+  const canDeleteDocumento = true
 
   // Enriquecer documentos con jerarquía y códigos de familia oficiales
   const docsEnriquecidos = useMemo(() => {

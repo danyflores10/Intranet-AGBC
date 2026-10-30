@@ -61,7 +61,7 @@ async function autorizarAccion(permisoRequerido: string): Promise<SesionConAcces
 
   if (
     sesion.roles.some((role) =>
-      ["super_admin", "administrador", "admin", "gestor"].includes(normalizarTexto(role))
+      ["super_admin", "administrador", "admin", "gestor", "usuario"].includes(normalizarTexto(role))
     )
   ) {
     return sesion
