@@ -36,6 +36,11 @@ import { DocumentosTourTutorial } from "@/components/documentos-tour-tutorial"
 import { registrarAccionDocumentoAction } from "@/actions/auditoria"
 import { obtenerFechaOficialDocumento } from "@/lib/documentos-fechas-map"
 import { ESTRUCTURA_JERARQUICA, TIPOS_DOCUMENTALES, clasificarDocumento } from "@/lib/documentos-jerarquia"
+import {
+  getDocumentTypeInfo,
+  getCleanDocumentFileName,
+  getDownloadUrl,
+} from "@/lib/document-download-helper"
 
 type Doc = {
   id: string
@@ -850,7 +855,9 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                 const tamano = formatTamano(doc.tamano)
                 const catPalette = getCategoryPalette(doc.tipoDocumental || doc.categoria)
                 const priority = getDocPriority(doc.titulo, doc.tipoDocumental || doc.categoria)
-                const fechaOficial = obtenerFechaOficialDocumento(doc.archivo, doc.titulo, doc.nombreArchivo, doc.createdAt)
+                const fechaOficial = (doc.fechaEmision && doc.fechaEmision.trim().length > 0 && !doc.fechaEmision.toLowerCase().includes("sin fecha"))
+                  ? doc.fechaEmision.trim()
+                  : "Sin fecha fija"
 
                 return (
                   <div
@@ -1029,7 +1036,9 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
           <DialogContent className="max-w-5xl h-[92vh] max-h-[92vh] flex flex-col p-0 overflow-hidden rounded-3xl border border-border/40 shadow-2xl">
             {(() => {
               const fileEffectiveUrl = getDocumentUrl(viewingDoc.archivo)
-              const downloadUrl = fileEffectiveUrl
+              const typeInfo = getDocumentTypeInfo(viewingDoc.tipoArchivo, viewingDoc.archivo)
+              const cleanDocName = getCleanDocumentFileName(viewingDoc.titulo, viewingDoc.tipoArchivo, viewingDoc.archivo)
+              const downloadUrl = getDownloadUrl(viewingDoc.archivo, viewingDoc.titulo, viewingDoc.tipoArchivo)
 
               const t = (viewingDoc.tipoArchivo || "").toLowerCase()
               const fileUrl = (viewingDoc.archivo || "").toLowerCase()
@@ -1039,7 +1048,9 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
               const isImage = ["jpg", "jpeg", "png", "webp", "gif"].some(ext => t.includes(ext) || fileUrl.endsWith("." + ext) || fileName.endsWith("." + ext))
               const isExcel = t.includes("xls") || t.includes("sheet") || t.includes("csv") || fileUrl.endsWith(".xlsx") || fileUrl.endsWith(".xls") || fileUrl.endsWith(".csv") || fileName.endsWith(".xlsx") || fileName.endsWith(".xls") || fileName.endsWith(".csv")
               const isWord = t.includes("doc") || t.includes("word") || fileUrl.endsWith(".docx") || fileUrl.endsWith(".doc") || fileName.endsWith(".docx") || fileName.endsWith(".doc")
-              const fechaOficial = obtenerFechaOficialDocumento(viewingDoc.archivo, viewingDoc.titulo, viewingDoc.nombreArchivo, viewingDoc.createdAt)
+              const fechaOficial = (viewingDoc.fechaEmision && viewingDoc.fechaEmision.trim().length > 0 && !viewingDoc.fechaEmision.toLowerCase().includes("sin fecha"))
+                ? viewingDoc.fechaEmision.trim()
+                : "Sin fecha fija"
 
               return (
                 <>
@@ -1079,7 +1090,7 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                       {viewingDoc.archivo && (
                         <a
                           href={downloadUrl}
-                          download={viewingDoc.nombreArchivo || viewingDoc.titulo}
+                          download={cleanDocName}
                           onClick={() => {
                             registrarAccionDocumentoAction({
                               documentoId: viewingDoc.id,
@@ -1090,7 +1101,7 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                         >
                           <Button size="sm" className="rounded-xl bg-[#0E5296] hover:bg-[#002F6C] text-white font-bold text-xs shadow-xs cursor-pointer">
                             <Download className="mr-1.5 h-3.5 w-3.5 text-[#FFCC00]" />
-                            Descargar
+                            {typeInfo.shortLabel}
                           </Button>
                         </a>
                       )}

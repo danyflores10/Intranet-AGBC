@@ -6,6 +6,7 @@ import { createId } from "@paralleldrive/cuid2"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
 import { PERMISOS } from "@/lib/auth/permisos"
+import { extractDateFromPdfFile } from "@/lib/pdf-date-extractor"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -134,6 +135,15 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer())
     await writeFile(filePath, buffer)
 
+    let fechaDetectada: string | null = null
+    if (ext === "pdf") {
+      try {
+        fechaDetectada = await extractDateFromPdfFile(filePath)
+      } catch (e) {
+        console.warn("No se pudo extraer fecha del PDF:", e)
+      }
+    }
+
     const url = `/documentos/${fileName}`
 
     return NextResponse.json({
@@ -141,6 +151,7 @@ export async function POST(request: NextRequest) {
       nombre: file.name,
       tipo: ext,
       tamano: formatSize(file.size),
+      fechaDetectada,
     })
   } catch (error: any) {
     console.error("Error al subir archivo:", error)

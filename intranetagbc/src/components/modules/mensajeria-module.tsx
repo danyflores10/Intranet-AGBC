@@ -43,6 +43,11 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  getDocumentTypeInfo,
+  getCleanDocumentFileName,
+  getDownloadUrl,
+} from "@/lib/document-download-helper"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
@@ -1081,17 +1086,24 @@ export function MensajeriaModule({
                     <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
                       <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                         <span>Remitente: <strong>{item.remitente}</strong></span>
-                        {item.enlace && (
-                          <a
-                            href={resolverUrlDocumento(item.enlace)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 font-medium hover:underline text-xs"
-                          >
-                            <Paperclip className="h-3.5 w-3.5" />
-                            Ver Documento Adjunto
-                          </a>
-                        )}
+                        {item.enlace && (() => {
+                          const tInfo = getDocumentTypeInfo(null, item.enlace)
+                          const cleanDocName = item.asunto || "Documento Adjunto"
+                          const dUrl = getDownloadUrl(item.enlace, cleanDocName, tInfo.ext)
+                          return (
+                            <a
+                              href={dUrl}
+                              download={getCleanDocumentFileName(cleanDocName, tInfo.ext, item.enlace)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-medium hover:underline text-xs"
+                              title={tInfo.label}
+                            >
+                              <Paperclip className="h-3.5 w-3.5" />
+                              {tInfo.shortLabel}
+                            </a>
+                          )
+                        })()}
                       </div>
 
                       <div className="flex items-center gap-2">
@@ -1372,19 +1384,27 @@ export function MensajeriaModule({
                   </div>
                 </div>
 
-                {detalleModalItem.enlace && (
-                  <div className="text-xs">
-                    <span className="font-semibold text-slate-600 dark:text-slate-300">Documento Adjunto:</span>{" "}
-                    <a
-                      href={resolverUrlDocumento(detalleModalItem.enlace)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 dark:text-blue-400 underline font-mono ml-1"
-                    >
-                      Descargar documento adjunto
-                    </a>
-                  </div>
-                )}
+                {detalleModalItem.enlace && (() => {
+                  const tInfo = getDocumentTypeInfo(null, detalleModalItem.enlace)
+                  const cleanDocName = detalleModalItem.asunto || "Documento Adjunto"
+                  const dUrl = getDownloadUrl(detalleModalItem.enlace, cleanDocName, tInfo.ext)
+                  return (
+                    <div className="text-xs flex items-center gap-2 pt-1">
+                      <span className="font-semibold text-slate-600 dark:text-slate-300">Documento Adjunto:</span>
+                      <a
+                        href={dUrl}
+                        download={getCleanDocumentFileName(cleanDocName, tInfo.ext, detalleModalItem.enlace)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-bold hover:underline"
+                        title={tInfo.label}
+                      >
+                        <Paperclip className="h-3.5 w-3.5" />
+                        {tInfo.label}
+                      </a>
+                    </div>
+                  )
+                })()}
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">

@@ -67,6 +67,11 @@ import * as XLSX from "xlsx"
 import { LISTA_DOCUMENTOS_OFICIALES, obtenerFechaOficialDocumento } from "@/lib/documentos-fechas-map"
 import { ESTRUCTURA_JERARQUICA, TIPOS_DOCUMENTALES, clasificarDocumento } from "@/lib/documentos-jerarquia"
 import { normalizarFamiliaCanonica, obtenerCodigoFamiliaCanonica } from "@/lib/documentos-versionador"
+import {
+  getDocumentTypeInfo,
+  getCleanDocumentFileName,
+  getDownloadUrl,
+} from "@/lib/document-download-helper"
 
 export function getDocumentUrl(archivo: string | null): string {
   if (!archivo) return ""
@@ -374,7 +379,15 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         tipo: data.tipo,
         tamano: data.tamano,
       })
-      toast.success("Archivo subido con éxito")
+      if (data.fechaDetectada) {
+        setDocFechaEmision(data.fechaDetectada)
+        toast.success(`Archivo cargado. Fecha detectada: ${data.fechaDetectada}`)
+      } else {
+        if (!editDoc) {
+          setDocFechaEmision("")
+        }
+        toast.success("Archivo subido. No se detectó fecha en el PDF, ingrésela manualmente.")
+      }
     } catch {
       toast.error("Error al subir archivo")
     } finally {
@@ -422,7 +435,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
           categoriaId: tipoRow?.id || subRow?.id || undefined,
           estado,
           descripcion: ((fd.get("descripcion") as string) || "").trim() || undefined,
-          fechaEmision: docFechaEmision.trim() || undefined,
+          fechaEmision: docFechaEmision.trim() ? docFechaEmision.trim() : (editDoc ? null : undefined),
           version: docVersion.trim() || "v1.0",
           esVigente: docEsVigente,
           disponibilidadArchivo: docDisponibilidadArchivo,
@@ -1576,7 +1589,9 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                   }
 
                   // Vista de Fila de Documento
-                  const fechaOficial = obtenerFechaOficialDocumento(item.archivo, item.titulo, item.nombreArchivo, item.createdAt)
+                  const fechaOficial = (item.fechaEmision && item.fechaEmision.trim().length > 0 && !item.fechaEmision.toLowerCase().includes("sin fecha"))
+                    ? item.fechaEmision.trim()
+                    : "Sin fecha fija"
 
                   return (
                     <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
@@ -1690,23 +1705,28 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                               <EyeIcon className="h-4 w-4" />
                             </button>
                           )}
-                          {item.archivo && (
-                            <a
-                              href={`${getDocumentUrl(item.archivo)}?download=1`}
-                              download={item.nombreArchivo ?? "documento"}
-                              onClick={() => {
-                                registrarAccionDocumentoAction({
-                                  documentoId: item.id,
-                                  titulo: item.titulo,
-                                  accion: "Descargó documento",
-                                }).catch(() => {})
-                              }}
-                              className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors cursor-pointer"
-                              title="Descargar"
-                            >
-                              <DownloadIcon className="h-4 w-4" />
-                            </a>
-                          )}
+                          {item.archivo && (() => {
+                            const tInfo = getDocumentTypeInfo(item.tipoArchivo, item.archivo)
+                            const cleanName = getCleanDocumentFileName(item.titulo, item.tipoArchivo, item.archivo)
+                            const dUrl = getDownloadUrl(getDocumentUrl(item.archivo), item.titulo, item.tipoArchivo)
+                            return (
+                              <a
+                                href={dUrl}
+                                download={cleanName}
+                                onClick={() => {
+                                  registrarAccionDocumentoAction({
+                                    documentoId: item.id,
+                                    titulo: item.titulo,
+                                    accion: "Descargó documento",
+                                  }).catch(() => {})
+                                }}
+                                className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors cursor-pointer"
+                                title={tInfo.label}
+                              >
+                                <DownloadIcon className="h-4 w-4" />
+                              </a>
+                            )
+                          })()}
                           {canEditDocumento && (
                             <button
                               onClick={() => openEditDoc(item)}
@@ -1946,11 +1966,14 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {/* Fecha de Emisión Oficial */}
                   <div className="space-y-1">
-                    <Label className="text-[11px] font-bold text-slate-700">Fecha Oficial de Emisión</Label>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-[11px] font-bold text-slate-700">Fecha Oficial de Emisión</Label>
+                      <span className="text-[10px] text-slate-400 font-medium">Completa o solo año</span>
+                    </div>
                     <Input
                       value={docFechaEmision}
                       onChange={(e) => setDocFechaEmision(e.target.value)}
-                      placeholder="Ej. 16 de junio de 2021"
+                      placeholder="Ej. 16 de junio de 2021 o 2024 (dejar vacío si no tiene fecha)"
                       className="h-9 rounded-xl border-slate-200 text-xs bg-white"
                     />
                   </div>
@@ -2280,8 +2303,12 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
           {previewDoc && (
             (() => {
               const fileEffectiveUrl = getDocumentUrl(previewDoc.archivo)
-              const downloadUrl = `${fileEffectiveUrl}?download=1`
-              const fechaOficial = obtenerFechaOficialDocumento(previewDoc.archivo, previewDoc.titulo, previewDoc.nombreArchivo, previewDoc.createdAt)
+              const typeInfo = getDocumentTypeInfo(previewDoc.tipoArchivo, previewDoc.archivo)
+              const cleanDocName = getCleanDocumentFileName(previewDoc.titulo, previewDoc.tipoArchivo, previewDoc.archivo)
+              const downloadUrl = getDownloadUrl(fileEffectiveUrl, previewDoc.titulo, previewDoc.tipoArchivo)
+              const fechaOficial = (previewDoc.fechaEmision && previewDoc.fechaEmision.trim().length > 0 && !previewDoc.fechaEmision.toLowerCase().includes("sin fecha"))
+                ? previewDoc.fechaEmision.trim()
+                : "Sin fecha fija"
 
               return (
                 <>
@@ -2296,7 +2323,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                       <div className="min-w-0">
                         <p className="text-sm font-bold truncate text-[#002F6C]">{previewDoc.titulo}</p>
                         <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
-                          <span>{previewDoc.nombreArchivo}</span>
+                          <span>{cleanDocName}</span>
                           <span>•</span>
                           <span>{previewDoc.tamano}</span>
                           <span>•</span>
@@ -2308,7 +2335,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                     </div>
                     <a
                       href={downloadUrl}
-                      download={previewDoc.nombreArchivo ?? "archivo"}
+                      download={cleanDocName}
                       onClick={() => {
                         registrarAccionDocumentoAction({
                           documentoId: previewDoc.id,
@@ -2319,7 +2346,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                       className="inline-flex items-center gap-2 rounded-xl bg-[#0E5296] hover:bg-[#002F6C] px-4 py-2 text-xs font-bold text-white shadow-md shadow-[#0E5296]/20 transition-all cursor-pointer"
                     >
                       <DownloadIcon className="h-3.5 w-3.5 text-[#FFB800]" />
-                      Descargar
+                      {typeInfo.shortLabel}
                     </a>
                   </div>
 

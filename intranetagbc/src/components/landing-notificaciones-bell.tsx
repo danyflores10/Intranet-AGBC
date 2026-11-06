@@ -34,6 +34,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
+import {
+  getDocumentTypeInfo,
+  getCleanDocumentFileName,
+  getDownloadUrl,
+} from "@/lib/document-download-helper"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import toast from "react-hot-toast"
@@ -682,24 +687,29 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
                               </Button>
                             )}
 
-                            {selectedNotif.archivoUrl && (
-                              <a
-                                href={selectedNotif.archivoUrl}
-                                download={selectedNotif.archivoNombre || "documento_agbc.pdf"}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="rounded-xl text-xs font-bold text-[#002F6C] border-slate-200 gap-1.5 cursor-pointer hover:bg-slate-50"
+                            {selectedNotif.archivoUrl && (() => {
+                              const tInfo = getDocumentTypeInfo(null, selectedNotif.archivoUrl)
+                              const cleanDocName = selectedNotif.archivoNombre || selectedNotif.titulo || "documento_adjunto"
+                              const dUrl = getDownloadUrl(selectedNotif.archivoUrl, cleanDocName, tInfo.ext)
+                              return (
+                                <a
+                                  href={dUrl}
+                                  download={getCleanDocumentFileName(cleanDocName, tInfo.ext, selectedNotif.archivoUrl)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
                                 >
-                                  <Download className="h-3.5 w-3.5 text-emerald-600" />
-                                  Descargar PDF
-                                </Button>
-                              </a>
-                            )}
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="rounded-xl text-xs font-bold text-[#002F6C] border-slate-200 gap-1.5 cursor-pointer hover:bg-slate-50"
+                                  >
+                                    <Download className="h-3.5 w-3.5 text-emerald-600" />
+                                    {tInfo.shortLabel}
+                                  </Button>
+                                </a>
+                              )
+                            })()}
 
                             <Button
                               variant="ghost"
@@ -739,26 +749,31 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
                         {selectedNotif.mensaje}
                       </p>
 
-                      {selectedNotif.archivoUrl && (
-                        <div className="pt-3">
-                          <a
-                            href={selectedNotif.archivoUrl.startsWith("/api/documentos/") ? selectedNotif.archivoUrl : `/api/documentos/${selectedNotif.archivoUrl.replace(/^\/?(documentos\/)?/, "")}`}
-                            download={selectedNotif.archivoNombre || "documento_adjunto"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="rounded-xl text-xs font-bold text-[#002F6C] border-slate-200 gap-1.5 cursor-pointer hover:bg-slate-50"
+                      {selectedNotif.archivoUrl && (() => {
+                        const tInfo = getDocumentTypeInfo(null, selectedNotif.archivoUrl)
+                        const cleanDocName = selectedNotif.archivoNombre || "documento_adjunto"
+                        const dUrl = getDownloadUrl(selectedNotif.archivoUrl, cleanDocName, tInfo.ext)
+                        return (
+                          <div className="pt-3">
+                            <a
+                              href={dUrl}
+                              download={getCleanDocumentFileName(cleanDocName, tInfo.ext, selectedNotif.archivoUrl)}
+                              target="_blank"
+                              rel="noopener noreferrer"
                             >
-                              <Download className="h-3.5 w-3.5 text-emerald-600" />
-                              Descargar Documento Adjunto ({selectedNotif.archivoNombre ? selectedNotif.archivoNombre.split(".").pop()?.toUpperCase() : "ARCHIVO"})
-                            </Button>
-                          </a>
-                        </div>
-                      )}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="rounded-xl text-xs font-bold text-[#002F6C] border-slate-200 gap-1.5 cursor-pointer hover:bg-slate-50"
+                              >
+                                <Download className="h-3.5 w-3.5 text-emerald-600" />
+                                {tInfo.label}
+                              </Button>
+                            </a>
+                          </div>
+                        )
+                      })()}
 
                       <div className="pt-4 border-t border-slate-100 text-xs text-slate-500 flex items-center gap-2 font-medium">
                         <CheckCircle2 className="h-4.5 w-4.5 text-emerald-600 shrink-0" />

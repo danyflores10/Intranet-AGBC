@@ -74,10 +74,18 @@ export async function GET(
 
     const isDownload = request.nextUrl.searchParams.get("download") === "1"
     const fileNameOnly = decodedPath.split("/").pop() || "documento"
+    const queryFilename = request.nextUrl.searchParams.get("filename")
+    const effectiveFilename = queryFilename
+      ? queryFilename.replace(/[\\/:*?"<>|]/g, " ").replace(/\s+/g, " ").trim()
+      : fileNameOnly
 
     // Range requests handling for PDF streaming / media
     const rangeHeader = request.headers.get("range")
     const fileSize = fileStat.size
+
+    const disposition = isDownload
+      ? `attachment; filename="${encodeURIComponent(effectiveFilename)}"; filename*=UTF-8''${encodeURIComponent(effectiveFilename)}`
+      : `inline; filename="${encodeURIComponent(effectiveFilename)}"`
 
     if (rangeHeader) {
       const parts = rangeHeader.replace(/bytes=/, "").split("-")
@@ -97,10 +105,6 @@ export async function GET(
       const fileBuffer = await readFile(filePath)
       const chunk = fileBuffer.subarray(start, end + 1)
 
-      const disposition = isDownload
-        ? `attachment; filename="${encodeURIComponent(fileNameOnly)}"`
-        : `inline; filename="${encodeURIComponent(fileNameOnly)}"`
-
       return new NextResponse(chunk, {
         status: 206,
         headers: {
@@ -115,9 +119,6 @@ export async function GET(
     }
 
     const fileBuffer = await readFile(filePath)
-    const disposition = isDownload
-      ? `attachment; filename="${encodeURIComponent(fileNameOnly)}"`
-      : `inline; filename="${encodeURIComponent(fileNameOnly)}"`
 
     return new NextResponse(fileBuffer, {
       status: 200,
