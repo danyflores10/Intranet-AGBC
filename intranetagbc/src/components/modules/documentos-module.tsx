@@ -36,6 +36,7 @@ import {
   UploadCloudIcon,
   HistoryIcon,
   GitBranchIcon,
+  ArchiveIcon,
 } from "lucide-react"
 import toast from "react-hot-toast"
 
@@ -202,6 +203,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   const [docNumeroCorrelativo, setDocNumeroCorrelativo] = useState<string>("")
   const [docFamiliaCodigo, setDocFamiliaCodigo] = useState<string>("")
   const [estado, setEstado] = useState("borrador")
+  const [descargandoBackup, setDescargandoBackup] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Formulario de categoría: selección jerárquica
@@ -885,6 +887,35 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
     }
   }
 
+  function handleDescargarBackup() {
+    setDescargandoBackup(true)
+    const toastId = toast.loading(
+      "Preparando backup comprimido con las 4 Direcciones, Áreas y Categorías (PDF, Excel, Word)..."
+    )
+
+    try {
+      const fechaHoy = new Date().toISOString().slice(0, 10)
+      const link = document.createElement("a")
+      link.href = "/api/documentos/backup"
+      link.setAttribute("download", `Backup_Documental_AGBC_${fechaHoy}.zip`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      setTimeout(() => {
+        setDescargandoBackup(false)
+        toast.success(
+          "¡Copia de seguridad iniciada! Se descargará una carpeta comprimida con todas las Direcciones, Áreas y Categorías.",
+          { id: toastId, duration: 5000 }
+        )
+      }, 2000)
+    } catch (error) {
+      console.error("Error iniciando descarga de backup:", error)
+      setDescargandoBackup(false)
+      toast.error("No se pudo iniciar la descarga del backup", { id: toastId })
+    }
+  }
+
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-blue-50/25 to-amber-50/20 min-h-screen">
       {/* ── Encabezado Institucional ── */}
@@ -1095,6 +1126,23 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                 <span>Importar Catálogo</span>
               </Button>
             )}
+
+            {/* BOTÓN: "Descargar Backup (Carpetas Jerárquicas)" */}
+            <Button
+              id="tour-btn-backup"
+              type="button"
+              onClick={handleDescargarBackup}
+              disabled={descargandoBackup}
+              className="bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs gap-1.5 h-9 cursor-pointer shadow-xs flex items-center px-3.5 transition-all"
+              title="Descargar respaldo comprimido con las 4 Direcciones, Subáreas y Categorías en carpetas con sus documentos PDF, Excel y Word"
+            >
+              {descargandoBackup ? (
+                <Loader2Icon className="h-4 w-4 animate-spin text-[#FFCC00]" />
+              ) : (
+                <ArchiveIcon className="h-4 w-4 text-[#FFCC00]" />
+              )}
+              <span>{descargandoBackup ? "Generando Backup..." : "Descargar Backup (.zip)"}</span>
+            </Button>
 
             <span className="text-xs font-bold text-[#0E5296] bg-blue-50/80 border border-[#0E5296]/20 px-3 py-1.5 rounded-xl shadow-2xs">
               {currentList.length} encontrados

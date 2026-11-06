@@ -26,6 +26,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@paralleldrive/cuid2": "^3.3.0",
     "@types/canvas-confetti": "^1.9.0",
+    "archiver": "^7.0.1",
     "better-auth": "^1.6.0",
     "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
@@ -59,6 +60,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.2",
+    "@types/archiver": "^8.0.0",
     "@types/node": "^20.19.39",
     "@types/nodemailer": "^8.0.0",
     "@types/pg": "^8.20.0",

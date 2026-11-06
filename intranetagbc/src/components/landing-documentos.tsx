@@ -27,6 +27,7 @@ import {
   RotateCcw,
   Sparkles,
   Home,
+  Archive,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
@@ -494,15 +495,27 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                 </div>
               </div>
 
-              {/* Botón de Lanzamiento de Tutorial Interactivo */}
-              <Button
-                type="button"
-                onClick={() => setTourOpen(true)}
-                className="rounded-2xl bg-[#002F6C] hover:bg-[#0E5296] text-white font-black text-xs gap-2 shadow-md shadow-[#002F6C]/20 hover:scale-105 transition-all cursor-pointer"
-              >
-                <PlayCircle className="h-4 w-4 text-[#FFCC00]" />
-                <span>Ver Tutorial Interactivo</span>
-              </Button>
+              {/* Botones de Acción: Tutorial y Descarga de Backup */}
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  onClick={() => setTourOpen(true)}
+                  className="rounded-2xl bg-[#002F6C] hover:bg-[#0E5296] text-white font-black text-xs gap-2 shadow-md shadow-[#002F6C]/20 hover:scale-105 transition-all cursor-pointer"
+                >
+                  <PlayCircle className="h-4 w-4 text-[#FFCC00]" />
+                  <span>Ver Tutorial Interactivo</span>
+                </Button>
+
+                <a
+                  href="/api/documentos/backup"
+                  download
+                  className="inline-flex items-center gap-2 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-black text-xs px-4 py-2 shadow-md hover:scale-105 transition-all cursor-pointer"
+                  title="Descargar respaldo documental completo organizado por Direcciones, Subáreas y Categorías en carpetas"
+                >
+                  <Archive className="h-4 w-4 text-[#FFCC00]" />
+                  <span>Descargar Backup (.zip)</span>
+                </a>
+              </div>
             </div>
 
             {/* Grid de Pasos */}
@@ -519,8 +532,8 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                   <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-[#002F6C] text-[#FFCC00] text-xs font-black shadow-xs">
                     1
                   </span>
-                  <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-[10px] font-black text-red-700 border border-red-200">
-                    Prioridad Alta
+                  <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-black text-[#002F6C] border border-blue-200">
+                    Norma Fundamental
                   </span>
                 </div>
                 <h4 className="text-xs font-black text-[#002F6C] group-hover:text-[#0E5296] line-clamp-2">
@@ -547,8 +560,8 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                   <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-[#0E5296] text-white text-xs font-black shadow-xs">
                     2
                   </span>
-                  <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-[10px] font-black text-red-700 border border-red-200">
-                    Prioridad Alta
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-black text-emerald-800 border border-emerald-200">
+                    Seguridad Digital
                   </span>
                 </div>
                 <h4 className="text-xs font-black text-[#002F6C] group-hover:text-[#0E5296] line-clamp-2">
