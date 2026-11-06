@@ -6,6 +6,7 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { db, pool } from '@/db';
 import { assignAvatars } from '@/scripts/assign-avatars';
 import { sincronizarTodoPersonalConUsuarios } from '@/lib/services/personal-user-sync';
+import { sincronizarJerarquiaCategorias } from '@/lib/services/jerarquia-sync-service';
 
 /**
  * Servicio seguro de migración y sincronización automática para LOCALHOST y PRODUCCIÓN.
@@ -124,6 +125,14 @@ export async function runAutoMigrations(options?: { silent?: boolean }) {
       log('✅ Asignación de avatares completada.');
     } catch (avatarErr) {
       console.error('[AGBC Auto-Migrate] Advertencia en asignación de avatares:', avatarErr);
+    }
+
+    // 7. Sincronización oficial de las 118 Categorías Jerárquicas (4 Direcciones, 12 Subcategorías, 102 Tipos)
+    try {
+      const resJerarquia = await sincronizarJerarquiaCategorias();
+      log(`✅ Categorías Jerárquicas oficiales (118) verificadas: ${resJerarquia.totalCategorias || 118} activas.`);
+    } catch (jerarquiaErr) {
+      console.error('[AGBC Auto-Migrate] Advertencia en sincronización de categorías jerárquicas:', jerarquiaErr);
     }
 
     log('🎉 Sincronización de base de datos finalizada exitosamente.');

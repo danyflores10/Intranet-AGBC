@@ -9,6 +9,7 @@ import { registrarAuditLog } from "@/actions/auditoria"
 import { PERMISOS } from "@/lib/auth/permisos"
 import { obtenerSesionConAccesoActual, type SesionConAcceso } from "@/lib/auth/session-access"
 import { clasificarDocumento } from "@/lib/documentos-jerarquia"
+import { sincronizarJerarquiaCategorias } from "@/lib/services/jerarquia-sync-service"
 
 const ROL_SUPER_ADMIN = "super_admin"
 
@@ -130,7 +131,7 @@ export async function obtenerDocumentos() {
 export async function obtenerCategorias() {
   await requerirSesionAutenticada()
 
-  return db
+  let cats = await db
     .select({
       id: documentoCategorias.id,
       nombre: documentoCategorias.nombre,
@@ -143,6 +144,30 @@ export async function obtenerCategorias() {
     })
     .from(documentoCategorias)
     .orderBy(documentoCategorias.nivel, documentoCategorias.orden, documentoCategorias.nombre)
+
+  // Auto-sincronización instantánea en producción si faltan las 118 categorías jerárquicas
+  if (cats.length < 118 || !cats.some((c) => c.nivel === 2)) {
+    try {
+      await sincronizarJerarquiaCategorias()
+      cats = await db
+        .select({
+          id: documentoCategorias.id,
+          nombre: documentoCategorias.nombre,
+          descripcion: documentoCategorias.descripcion,
+          parentId: documentoCategorias.parentId,
+          nivel: documentoCategorias.nivel,
+          orden: documentoCategorias.orden,
+          createdAt: documentoCategorias.createdAt,
+          updatedAt: documentoCategorias.updatedAt,
+        })
+        .from(documentoCategorias)
+        .orderBy(documentoCategorias.nivel, documentoCategorias.orden, documentoCategorias.nombre)
+    } catch (syncErr) {
+      console.error("[obtenerCategorias] Error auto-sincronizando categorias jerárquicas:", syncErr)
+    }
+  }
+
+  return cats
 }
 
 export async function crearDocumento(data: {

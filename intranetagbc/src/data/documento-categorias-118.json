@@ -1,0 +1,1182 @@
+[
+  {
+    "id": "jizmrznho3tjp1vgqq72ua0p",
+    "nombre": "Dirección General Ejecutiva",
+    "descripcion": "Máxima autoridad institucional y dirección estratégica de la AGBC",
+    "parent_id": null,
+    "nivel": 1,
+    "orden": 1,
+    "created_at": "2026-10-22T14:15:18.794Z",
+    "updated_at": "2026-10-22T14:15:18.794Z"
+  },
+  {
+    "id": "dg7xuv9o4datddl5zgxn0tb2",
+    "nombre": "Dirección Administrativa Financiera",
+    "descripcion": "Administración de recursos humanos, gestión presupuestaria, contable y activos",
+    "parent_id": null,
+    "nivel": 1,
+    "orden": 2,
+    "created_at": "2026-10-22T14:15:18.801Z",
+    "updated_at": "2026-10-22T14:15:18.801Z"
+  },
+  {
+    "id": "qhfrwmps6hkx509ci8arsew5",
+    "nombre": "Dirección de Operaciones",
+    "descripcion": "Gestión logística, red postal, casillas y aseguramiento de calidad operativa",
+    "parent_id": null,
+    "nivel": 1,
+    "orden": 3,
+    "created_at": "2026-10-22T14:15:18.804Z",
+    "updated_at": "2026-10-22T14:15:18.804Z"
+  },
+  {
+    "id": "apaixifg921qg88dl90zkoi6",
+    "nombre": "Dirección Comercial",
+    "descripcion": "Estrategia comercial, marketing, atención al cliente y relaciones institucionales",
+    "parent_id": null,
+    "nivel": 1,
+    "orden": 4,
+    "created_at": "2026-10-22T14:15:18.807Z",
+    "updated_at": "2026-10-22T14:15:18.807Z"
+  },
+  {
+    "id": "g09qmx8z6ss0v4bwecefu22w",
+    "nombre": "Desarrollo de Calidad",
+    "descripcion": "Control y aseguramiento de calidad operativa postal, casillas y seguridad",
+    "parent_id": "qhfrwmps6hkx509ci8arsew5",
+    "nivel": 2,
+    "orden": 1,
+    "created_at": "2026-10-22T14:15:18.821Z",
+    "updated_at": "2026-10-22T14:15:18.821Z"
+  },
+  {
+    "id": "ozc9sq7x9rz4hi0180tarfh5",
+    "nombre": "Planificación",
+    "descripcion": "Planificación estratégica, POA, estructura y diseño organizacional",
+    "parent_id": "jizmrznho3tjp1vgqq72ua0p",
+    "nivel": 2,
+    "orden": 1,
+    "created_at": "2026-10-22T14:15:18.810Z",
+    "updated_at": "2026-10-22T14:15:18.810Z"
+  },
+  {
+    "id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "nombre": "Recursos Humanos",
+    "descripcion": "Administración de personal, bienestar social, inducción y reglamentos laborales",
+    "parent_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "nivel": 2,
+    "orden": 1,
+    "created_at": "2026-10-22T14:15:18.817Z",
+    "updated_at": "2026-10-22T14:15:18.817Z"
+  },
+  {
+    "id": "la226esdyncv79xtvl9jv51f",
+    "nombre": "Relaciones Internacionales Marketing y Comunicación",
+    "descripcion": "Relaciones Institucionales, Marketing y Comercial, atención de quejas y reclamos",
+    "parent_id": "apaixifg921qg88dl90zkoi6",
+    "nivel": 2,
+    "orden": 1,
+    "created_at": "2026-10-22T14:15:18.823Z",
+    "updated_at": "2026-10-27T19:38:00.970Z"
+  },
+  {
+    "id": "v8tz7n4ytelg96nqyjtzuvrf",
+    "nombre": "Contabilidad Nacional e Internacional",
+    "descripcion": "Tesorería, recaudaciones, compras y activos fijos, presupuestos y fondo rotativo",
+    "parent_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "nivel": 2,
+    "orden": 2,
+    "created_at": "2026-10-22T14:15:18.819Z",
+    "updated_at": "2026-10-22T14:15:18.819Z"
+  },
+  {
+    "id": "dto7ovc42hspqrey3jb2axh7",
+    "nombre": "Legal",
+    "descripcion": "Asesoría jurídica, procesos normativos, sumarios y contrataciones",
+    "parent_id": "jizmrznho3tjp1vgqq72ua0p",
+    "nivel": 2,
+    "orden": 2,
+    "created_at": "2026-10-22T14:15:18.811Z",
+    "updated_at": "2026-10-22T14:15:18.811Z"
+  },
+  {
+    "id": "xb5iqnlyt5xdojx9uzrychmp",
+    "nombre": "Tesorería Facturación y Cobranzas",
+    "descripcion": "Gestión de tesorería, cobros, facturación, cuentas bancarias y recaudación",
+    "parent_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "nivel": 2,
+    "orden": 2,
+    "created_at": "2026-10-27T19:38:00.976Z",
+    "updated_at": "2026-10-27T19:38:00.976Z"
+  },
+  {
+    "id": "friffghkj3l07a10oh3voso5",
+    "nombre": "Auditoria Interna",
+    "descripcion": "Control interno, auditoría gubernamental y evaluación de gestión",
+    "parent_id": "jizmrznho3tjp1vgqq72ua0p",
+    "nivel": 2,
+    "orden": 3,
+    "created_at": "2026-10-22T14:15:18.813Z",
+    "updated_at": "2026-10-27T19:38:00.964Z"
+  },
+  {
+    "id": "c9j0a2a68k609ck52i3g6t8o",
+    "nombre": "Sistemas",
+    "descripcion": "Tecnologías de información, infraestructura, software, seguridad informática y soporte",
+    "parent_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "nivel": 2,
+    "orden": 3,
+    "created_at": "2026-10-27T19:38:00.990Z",
+    "updated_at": "2026-10-27T19:38:00.990Z"
+  },
+  {
+    "id": "cuwchlvp2i2nfj5djeq1tgol",
+    "nombre": "Presupuesto y Adquisiciones",
+    "descripcion": "Programación presupuestaria, contrataciones, compras y adquisiciones institucionales",
+    "parent_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "nivel": 2,
+    "orden": 4,
+    "created_at": "2026-10-27T19:38:00.999Z",
+    "updated_at": "2026-10-27T19:38:00.999Z"
+  },
+  {
+    "id": "lsqhdz9m217brsow2s0qbwz3",
+    "nombre": "Transparencia",
+    "descripcion": "Lucha contra la corrupción, ética pública y acceso a la información",
+    "parent_id": "jizmrznho3tjp1vgqq72ua0p",
+    "nivel": 2,
+    "orden": 4,
+    "created_at": "2026-10-22T14:15:18.815Z",
+    "updated_at": "2026-10-22T14:15:18.815Z"
+  },
+  {
+    "id": "ebqo0h39zhwqekva7ght2ywq",
+    "nombre": "Bienes de Uso, Bienes de Consumo y Servicios Generales",
+    "descripcion": "Activos fijos, almacenes, inventarios, vehículos y servicios generales",
+    "parent_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "nivel": 2,
+    "orden": 6,
+    "created_at": "2026-10-27T19:38:01.009Z",
+    "updated_at": "2026-10-27T19:38:01.009Z"
+  },
+  {
+    "id": "r4juwh26bwhomtj9gd5cd922",
+    "nombre": "Actas",
+    "descripcion": "Tipo documental Actas",
+    "parent_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:21:44.594Z",
+    "updated_at": "2026-11-06T04:21:44.594Z"
+  },
+  {
+    "id": "kl8ztxk54tffuwq97prnx4hz",
+    "nombre": "Actas",
+    "descripcion": "Tipo documental Actas",
+    "parent_id": "g09qmx8z6ss0v4bwecefu22w",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:22:53.084Z",
+    "updated_at": "2026-11-06T04:22:53.084Z"
+  },
+  {
+    "id": "ubd4czpnoz5d5f0fdm2g4nm3",
+    "nombre": "Catálogo",
+    "descripcion": "Tipo documental Catálogo",
+    "parent_id": "g09qmx8z6ss0v4bwecefu22w",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:22:53.123Z",
+    "updated_at": "2026-11-06T04:22:53.123Z"
+  },
+  {
+    "id": "ahhpxqfkqngs0y1gler2sior",
+    "nombre": "Documentos de apoyo",
+    "descripcion": "Tipo documental Documentos de apoyo",
+    "parent_id": "v8tz7n4ytelg96nqyjtzuvrf",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:22:53.115Z",
+    "updated_at": "2026-11-06T04:22:53.115Z"
+  },
+  {
+    "id": "lv0n855a0u3h89p6tp41cvnz",
+    "nombre": "Documentos de apoyo",
+    "descripcion": "Tipo documental Documentos de apoyo",
+    "parent_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:22:53.029Z",
+    "updated_at": "2026-11-06T04:22:53.029Z"
+  },
+  {
+    "id": "i13uw3vq24kcch84u89wf4vf",
+    "nombre": "Documentos de apoyo",
+    "descripcion": "Tipo documental Documentos de apoyo",
+    "parent_id": "xb5iqnlyt5xdojx9uzrychmp",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:22:52.855Z",
+    "updated_at": "2026-11-06T04:22:52.855Z"
+  },
+  {
+    "id": "stxd9jzgj378vyl4kyfg708s",
+    "nombre": "Documentos de apoyo",
+    "descripcion": "Tipo documental Documentos de apoyo",
+    "parent_id": "g09qmx8z6ss0v4bwecefu22w",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:22:52.464Z",
+    "updated_at": "2026-11-06T04:22:52.464Z"
+  },
+  {
+    "id": "rcnkdljlnpyhcu4dkjxogxiw",
+    "nombre": "Fichas",
+    "descripcion": "Tipo documental Fichas",
+    "parent_id": "ebqo0h39zhwqekva7ght2ywq",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:22:52.765Z",
+    "updated_at": "2026-11-06T04:22:52.765Z"
+  },
+  {
+    "id": "xaiduh9fgcwhs0w0ehmii54r",
+    "nombre": "Fichas",
+    "descripcion": "Tipo documental Fichas",
+    "parent_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:22:53.054Z",
+    "updated_at": "2026-11-06T04:22:53.054Z"
+  },
+  {
+    "id": "z1lhcfo571k5v3l0ilv6153k",
+    "nombre": "Fichas",
+    "descripcion": "Tipo documental Fichas",
+    "parent_id": "g09qmx8z6ss0v4bwecefu22w",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:21:44.489Z",
+    "updated_at": "2026-11-06T04:21:44.489Z"
+  },
+  {
+    "id": "pfaoslagxz1p8y6ghwx5sre7",
+    "nombre": "Guía de Usuario",
+    "descripcion": "Tipo documental Guía de Usuario",
+    "parent_id": "c9j0a2a68k609ck52i3g6t8o",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:22:52.668Z",
+    "updated_at": "2026-11-06T04:22:52.668Z"
+  },
+  {
+    "id": "qwvpdgvaplg3c50w5sl8umng",
+    "nombre": "Manual de Usuario",
+    "descripcion": "Tipo documental Manual de Usuario",
+    "parent_id": "c9j0a2a68k609ck52i3g6t8o",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:22:53.190Z",
+    "updated_at": "2026-11-06T04:22:53.190Z"
+  },
+  {
+    "id": "prtyz9struyf14c2b9hprm2x",
+    "nombre": "Manual de Usuario",
+    "descripcion": "Tipo documental Manual de Usuario",
+    "parent_id": "g09qmx8z6ss0v4bwecefu22w",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:22:53.203Z",
+    "updated_at": "2026-11-06T04:22:53.203Z"
+  },
+  {
+    "id": "fguurxvi7toni3ci3bn6awng",
+    "nombre": "Procedimiento",
+    "descripcion": "Tipo documental Procedimiento",
+    "parent_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:21:44.564Z",
+    "updated_at": "2026-11-06T04:21:44.564Z"
+  },
+  {
+    "id": "a0cl3yja1qfzppgljzosq19t",
+    "nombre": "Procedimiento",
+    "descripcion": "Tipo documental Procedimiento",
+    "parent_id": "cuwchlvp2i2nfj5djeq1tgol",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:21:44.397Z",
+    "updated_at": "2026-11-06T04:21:44.397Z"
+  },
+  {
+    "id": "ea8c8vp8fptmemtrih5iqkef",
+    "nombre": "Procedimiento",
+    "descripcion": "Tipo documental Procedimiento",
+    "parent_id": "la226esdyncv79xtvl9jv51f",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:22:52.881Z",
+    "updated_at": "2026-11-06T04:22:52.881Z"
+  },
+  {
+    "id": "v4dzoan57qm4udra9o66kctb",
+    "nombre": "Procedimiento",
+    "descripcion": "Tipo documental Procedimiento",
+    "parent_id": "xb5iqnlyt5xdojx9uzrychmp",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:21:44.421Z",
+    "updated_at": "2026-11-06T04:21:44.421Z"
+  },
+  {
+    "id": "xm13w65r6aavaszblnw7zfs4",
+    "nombre": "Procedimiento",
+    "descripcion": "Tipo documental Procedimiento",
+    "parent_id": "v8tz7n4ytelg96nqyjtzuvrf",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:22:52.778Z",
+    "updated_at": "2026-11-06T04:22:52.778Z"
+  },
+  {
+    "id": "yszy823lsvyu48rejcxz9b6a",
+    "nombre": "Procedimiento",
+    "descripcion": "Tipo documental Procedimiento",
+    "parent_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:21:44.406Z",
+    "updated_at": "2026-11-06T04:21:44.406Z"
+  },
+  {
+    "id": "o522390484k1dqe203jifnnn",
+    "nombre": "Procedimiento",
+    "descripcion": "Tipo documental Procedimiento",
+    "parent_id": "ebqo0h39zhwqekva7ght2ywq",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:21:44.605Z",
+    "updated_at": "2026-11-06T04:21:44.605Z"
+  },
+  {
+    "id": "xmg4yc0jnw0910kbc1zi1i87",
+    "nombre": "Procedimiento",
+    "descripcion": "Tipo documental Procedimiento",
+    "parent_id": "g09qmx8z6ss0v4bwecefu22w",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:21:44.383Z",
+    "updated_at": "2026-11-06T04:21:44.383Z"
+  },
+  {
+    "id": "ky1yirbg706yejh1wfaky12z",
+    "nombre": "Procedimiento",
+    "descripcion": "Tipo documental Procedimiento",
+    "parent_id": "lsqhdz9m217brsow2s0qbwz3",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:22:52.962Z",
+    "updated_at": "2026-11-06T04:22:52.962Z"
+  },
+  {
+    "id": "chp3b0bb2b55dqbc8k8msca1",
+    "nombre": "Reglamentos Específicos",
+    "descripcion": "Tipo documental Reglamentos Específicos",
+    "parent_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:21:44.503Z",
+    "updated_at": "2026-11-06T04:21:44.503Z"
+  },
+  {
+    "id": "q0s4vci88ve9mitl69ab4ctj",
+    "nombre": "Reglamentos Específicos",
+    "descripcion": "Tipo documental Reglamentos Específicos",
+    "parent_id": "v8tz7n4ytelg96nqyjtzuvrf",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:21:44.471Z",
+    "updated_at": "2026-11-06T04:21:44.471Z"
+  },
+  {
+    "id": "hc0htf5ohdvus92ymotp1x7w",
+    "nombre": "Reglamentos Específicos",
+    "descripcion": "Tipo documental Reglamentos Específicos",
+    "parent_id": "xb5iqnlyt5xdojx9uzrychmp",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:21:44.462Z",
+    "updated_at": "2026-11-06T04:21:44.462Z"
+  },
+  {
+    "id": "nmw4w4564ymbjkxrnllk9p1f",
+    "nombre": "Reglamentos Específicos",
+    "descripcion": "Tipo documental Reglamentos Específicos",
+    "parent_id": "cuwchlvp2i2nfj5djeq1tgol",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:21:44.453Z",
+    "updated_at": "2026-11-06T04:21:44.453Z"
+  },
+  {
+    "id": "cf1ma10d0ry6pafc65e7nkrc",
+    "nombre": "Reglamentos Específicos",
+    "descripcion": "Tipo documental Reglamentos Específicos",
+    "parent_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:21:44.438Z",
+    "updated_at": "2026-11-06T04:21:44.438Z"
+  },
+  {
+    "id": "hgrj7gvsywopd7br1ylikv4a",
+    "nombre": "Reglamentos Específicos",
+    "descripcion": "Tipo documental Reglamentos Específicos",
+    "parent_id": "ebqo0h39zhwqekva7ght2ywq",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:22:53.153Z",
+    "updated_at": "2026-11-06T04:22:53.153Z"
+  },
+  {
+    "id": "tdkj04uxytfw6va40yyabwwu",
+    "nombre": "Reglamentos Específicos",
+    "descripcion": "Tipo documental Reglamentos Específicos",
+    "parent_id": "dto7ovc42hspqrey3jb2axh7",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:22:53.182Z",
+    "updated_at": "2026-11-06T04:22:53.182Z"
+  },
+  {
+    "id": "rpnx91dszw99x2sj1bq0j077",
+    "nombre": "Tutorial",
+    "descripcion": "Tipo documental Tutorial",
+    "parent_id": "c9j0a2a68k609ck52i3g6t8o",
+    "nivel": 3,
+    "orden": 0,
+    "created_at": "2026-11-06T04:22:53.218Z",
+    "updated_at": "2026-11-06T04:22:53.218Z"
+  },
+  {
+    "id": "ahurnx2ei91mxl1cok0d3i9q",
+    "nombre": "Circulares",
+    "descripcion": "Circulares del área de Transparencia (Dirección General Ejecutiva)",
+    "parent_id": "lsqhdz9m217brsow2s0qbwz3",
+    "nivel": 3,
+    "orden": 1,
+    "created_at": "2026-10-22T14:15:18.847Z",
+    "updated_at": "2026-10-22T14:15:18.847Z"
+  },
+  {
+    "id": "aen6sx1shmv3x4n10udwkqfg",
+    "nombre": "Circulares",
+    "descripcion": "Circulares del área de Planificación (Dirección General Ejecutiva)",
+    "parent_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "nivel": 3,
+    "orden": 1,
+    "created_at": "2026-10-22T14:15:18.825Z",
+    "updated_at": "2026-10-22T14:15:18.825Z"
+  },
+  {
+    "id": "mupfunzpa9kkh8twn8hys1tb",
+    "nombre": "Circulares",
+    "descripcion": "Circulares del área de Legal (Dirección General Ejecutiva)",
+    "parent_id": "dto7ovc42hspqrey3jb2axh7",
+    "nivel": 3,
+    "orden": 1,
+    "created_at": "2026-10-22T14:15:18.832Z",
+    "updated_at": "2026-10-22T14:15:18.832Z"
+  },
+  {
+    "id": "k8m7k1mgherj8plz86rfs8fu",
+    "nombre": "Circulares",
+    "descripcion": "Circulares del área de Auditoría (Dirección General Ejecutiva)",
+    "parent_id": "friffghkj3l07a10oh3voso5",
+    "nivel": 3,
+    "orden": 1,
+    "created_at": "2026-10-22T14:15:18.839Z",
+    "updated_at": "2026-10-22T14:15:18.839Z"
+  },
+  {
+    "id": "gm1m7p4ebow3eiwi42mibhjn",
+    "nombre": "Circulares",
+    "descripcion": "Circulares del área de Recursos Humanos (Dirección Administrativa Financiera)",
+    "parent_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "nivel": 3,
+    "orden": 1,
+    "created_at": "2026-10-22T14:15:18.854Z",
+    "updated_at": "2026-10-22T14:15:18.854Z"
+  },
+  {
+    "id": "qu5zobn417m0u98mtoujvcfx",
+    "nombre": "Circulares",
+    "descripcion": "Circulares del área de Contabilidad Nacional e Internacional (Dirección Administrativa Financiera)",
+    "parent_id": "v8tz7n4ytelg96nqyjtzuvrf",
+    "nivel": 3,
+    "orden": 1,
+    "created_at": "2026-10-22T14:15:18.865Z",
+    "updated_at": "2026-10-22T14:15:18.865Z"
+  },
+  {
+    "id": "xzuvhjhdai9idpizk47ibgw6",
+    "nombre": "Circulares",
+    "descripcion": "Circulares del área de Desarrollo de Calidad (Dirección de Operaciones)",
+    "parent_id": "g09qmx8z6ss0v4bwecefu22w",
+    "nivel": 3,
+    "orden": 1,
+    "created_at": "2026-10-22T14:15:18.872Z",
+    "updated_at": "2026-10-22T14:15:18.872Z"
+  },
+  {
+    "id": "ebiaucuwst2od4lcv98a1tt1",
+    "nombre": "Circulares",
+    "descripcion": "Circulares del área de Relaciones I. M. C. (Dirección Comercial)",
+    "parent_id": "la226esdyncv79xtvl9jv51f",
+    "nivel": 3,
+    "orden": 1,
+    "created_at": "2026-10-22T14:15:18.879Z",
+    "updated_at": "2026-10-22T14:15:18.879Z"
+  },
+  {
+    "id": "jnc7bdedg78cxap2foe3m4pa",
+    "nombre": "Circulares",
+    "descripcion": "Circulares correspondientes a Tesorería Facturación y Cobranzas",
+    "parent_id": "xb5iqnlyt5xdojx9uzrychmp",
+    "nivel": 3,
+    "orden": 1,
+    "created_at": "2026-10-27T19:38:00.981Z",
+    "updated_at": "2026-10-27T19:38:00.981Z"
+  },
+  {
+    "id": "rnmc7w4atb44ntl2v4femvb6",
+    "nombre": "Circulares",
+    "descripcion": "Circulares correspondientes a Sistemas",
+    "parent_id": "c9j0a2a68k609ck52i3g6t8o",
+    "nivel": 3,
+    "orden": 1,
+    "created_at": "2026-10-27T19:38:00.992Z",
+    "updated_at": "2026-10-27T19:38:00.992Z"
+  },
+  {
+    "id": "s9yh8fteyv9b2ms3vvn933nv",
+    "nombre": "Circulares",
+    "descripcion": "Circulares correspondientes a Presupuesto y Adquisiciones",
+    "parent_id": "cuwchlvp2i2nfj5djeq1tgol",
+    "nivel": 3,
+    "orden": 1,
+    "created_at": "2026-10-27T19:38:01.001Z",
+    "updated_at": "2026-10-27T19:38:01.001Z"
+  },
+  {
+    "id": "dwwcjxjb4ybm7mjyctyotv8n",
+    "nombre": "Circulares",
+    "descripcion": "Circulares correspondientes a Bienes de Uso, Bienes de Consumo y Servicios Generales",
+    "parent_id": "ebqo0h39zhwqekva7ght2ywq",
+    "nivel": 3,
+    "orden": 1,
+    "created_at": "2026-10-27T19:38:01.011Z",
+    "updated_at": "2026-10-27T19:38:01.011Z"
+  },
+  {
+    "id": "sgw176ex9219b0ofopl5tnoq",
+    "nombre": "Formularios",
+    "descripcion": "Formularios del área de Planificación (Dirección General Ejecutiva)",
+    "parent_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "nivel": 3,
+    "orden": 2,
+    "created_at": "2026-10-22T14:15:18.826Z",
+    "updated_at": "2026-10-22T14:15:18.826Z"
+  },
+  {
+    "id": "peh0w902usqiogond42p7ri3",
+    "nombre": "Formularios",
+    "descripcion": "Formularios correspondientes a Bienes de Uso, Bienes de Consumo y Servicios Generales",
+    "parent_id": "ebqo0h39zhwqekva7ght2ywq",
+    "nivel": 3,
+    "orden": 2,
+    "created_at": "2026-10-27T19:38:01.012Z",
+    "updated_at": "2026-10-27T19:38:01.012Z"
+  },
+  {
+    "id": "ng16v6huqjvh78cdqxwbciwo",
+    "nombre": "Formularios",
+    "descripcion": "Formularios del área de Contabilidad Nacional e Internacional (Dirección Administrativa Financiera)",
+    "parent_id": "v8tz7n4ytelg96nqyjtzuvrf",
+    "nivel": 3,
+    "orden": 2,
+    "created_at": "2026-10-22T14:15:18.866Z",
+    "updated_at": "2026-10-22T14:15:18.866Z"
+  },
+  {
+    "id": "jjifsi6y4c8qa120hylkv8n5",
+    "nombre": "Formularios",
+    "descripcion": "Formularios del área de Auditoría (Dirección General Ejecutiva)",
+    "parent_id": "friffghkj3l07a10oh3voso5",
+    "nivel": 3,
+    "orden": 2,
+    "created_at": "2026-10-22T14:15:18.840Z",
+    "updated_at": "2026-10-22T14:15:18.840Z"
+  },
+  {
+    "id": "xzayye0jzl2s6zejunh6uwf7",
+    "nombre": "Formularios",
+    "descripcion": "Formularios del área de Relaciones I. M. C. (Dirección Comercial)",
+    "parent_id": "la226esdyncv79xtvl9jv51f",
+    "nivel": 3,
+    "orden": 2,
+    "created_at": "2026-10-22T14:15:18.880Z",
+    "updated_at": "2026-10-22T14:15:18.880Z"
+  },
+  {
+    "id": "wqm6u6lq12yawb1id0vanbvz",
+    "nombre": "Formularios",
+    "descripcion": "Formularios del área de Legal (Dirección General Ejecutiva)",
+    "parent_id": "dto7ovc42hspqrey3jb2axh7",
+    "nivel": 3,
+    "orden": 2,
+    "created_at": "2026-10-22T14:15:18.834Z",
+    "updated_at": "2026-10-22T14:15:18.834Z"
+  },
+  {
+    "id": "sn9en0ehvb1m2j8atqqhjkr6",
+    "nombre": "Formularios",
+    "descripcion": "Formularios correspondientes a Sistemas",
+    "parent_id": "c9j0a2a68k609ck52i3g6t8o",
+    "nivel": 3,
+    "orden": 2,
+    "created_at": "2026-10-27T19:38:00.993Z",
+    "updated_at": "2026-10-27T19:38:00.993Z"
+  },
+  {
+    "id": "cibojnc4mw4xmt56bjupad7y",
+    "nombre": "Formularios",
+    "descripcion": "Formularios correspondientes a Tesorería Facturación y Cobranzas",
+    "parent_id": "xb5iqnlyt5xdojx9uzrychmp",
+    "nivel": 3,
+    "orden": 2,
+    "created_at": "2026-10-27T19:38:00.983Z",
+    "updated_at": "2026-10-27T19:38:00.983Z"
+  },
+  {
+    "id": "ybzbiyasfbaswc8tgspxbdom",
+    "nombre": "Formularios",
+    "descripcion": "Formularios del área de Transparencia (Dirección General Ejecutiva)",
+    "parent_id": "lsqhdz9m217brsow2s0qbwz3",
+    "nivel": 3,
+    "orden": 2,
+    "created_at": "2026-10-22T14:15:18.848Z",
+    "updated_at": "2026-10-22T14:15:18.848Z"
+  },
+  {
+    "id": "a97f5kcv2ng1xht88tv0n479",
+    "nombre": "Formularios",
+    "descripcion": "Formularios correspondientes a Presupuesto y Adquisiciones",
+    "parent_id": "cuwchlvp2i2nfj5djeq1tgol",
+    "nivel": 3,
+    "orden": 2,
+    "created_at": "2026-10-27T19:38:01.002Z",
+    "updated_at": "2026-10-27T19:38:01.002Z"
+  },
+  {
+    "id": "q3apxbpf0gn3syd69cds6txh",
+    "nombre": "Formularios",
+    "descripcion": "Formularios del área de Recursos Humanos (Dirección Administrativa Financiera)",
+    "parent_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "nivel": 3,
+    "orden": 2,
+    "created_at": "2026-10-22T14:15:18.856Z",
+    "updated_at": "2026-10-22T14:15:18.856Z"
+  },
+  {
+    "id": "pdazmmdrdw5ar6arjqtj8gdw",
+    "nombre": "Formularios",
+    "descripcion": "Formularios del área de Desarrollo de Calidad (Dirección de Operaciones)",
+    "parent_id": "g09qmx8z6ss0v4bwecefu22w",
+    "nivel": 3,
+    "orden": 2,
+    "created_at": "2026-10-22T14:15:18.873Z",
+    "updated_at": "2026-10-22T14:15:18.873Z"
+  },
+  {
+    "id": "nbv6c12fp21of2drw1cywohs",
+    "nombre": "Instructivos",
+    "descripcion": "Instructivos correspondientes a Sistemas",
+    "parent_id": "c9j0a2a68k609ck52i3g6t8o",
+    "nivel": 3,
+    "orden": 3,
+    "created_at": "2026-10-27T19:38:00.994Z",
+    "updated_at": "2026-10-27T19:38:00.994Z"
+  },
+  {
+    "id": "iv57mc9zze29f9b0nlcme0cv",
+    "nombre": "Instructivos",
+    "descripcion": "Instructivos correspondientes a Presupuesto y Adquisiciones",
+    "parent_id": "cuwchlvp2i2nfj5djeq1tgol",
+    "nivel": 3,
+    "orden": 3,
+    "created_at": "2026-10-27T19:38:01.004Z",
+    "updated_at": "2026-10-27T19:38:01.004Z"
+  },
+  {
+    "id": "jnktcyg6hzqe5jaowdbpg3c2",
+    "nombre": "Instructivos",
+    "descripcion": "Instructivos correspondientes a Bienes de Uso, Bienes de Consumo y Servicios Generales",
+    "parent_id": "ebqo0h39zhwqekva7ght2ywq",
+    "nivel": 3,
+    "orden": 3,
+    "created_at": "2026-10-27T19:38:01.014Z",
+    "updated_at": "2026-10-27T19:38:01.014Z"
+  },
+  {
+    "id": "t2wpn40t2c6kcxh3s15e91o8",
+    "nombre": "Instructivos",
+    "descripcion": "Instructivos del área de Relaciones I. M. C. (Dirección Comercial)",
+    "parent_id": "la226esdyncv79xtvl9jv51f",
+    "nivel": 3,
+    "orden": 3,
+    "created_at": "2026-10-22T14:15:18.881Z",
+    "updated_at": "2026-10-22T14:15:18.881Z"
+  },
+  {
+    "id": "xmetw4rqgdszc6w695kkd312",
+    "nombre": "Instructivos",
+    "descripcion": "Instructivos del área de Recursos Humanos (Dirección Administrativa Financiera)",
+    "parent_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "nivel": 3,
+    "orden": 3,
+    "created_at": "2026-10-22T14:15:18.859Z",
+    "updated_at": "2026-10-22T14:15:18.859Z"
+  },
+  {
+    "id": "sb2i8hxl2egiqfcrdvjxirit",
+    "nombre": "Instructivos",
+    "descripcion": "Instructivos del área de Auditoría (Dirección General Ejecutiva)",
+    "parent_id": "friffghkj3l07a10oh3voso5",
+    "nivel": 3,
+    "orden": 3,
+    "created_at": "2026-10-22T14:15:18.841Z",
+    "updated_at": "2026-10-22T14:15:18.841Z"
+  },
+  {
+    "id": "kn1r1ls3rg8gzgha33gwblm2",
+    "nombre": "Instructivos",
+    "descripcion": "Instructivos del área de Contabilidad Nacional e Internacional (Dirección Administrativa Financiera)",
+    "parent_id": "v8tz7n4ytelg96nqyjtzuvrf",
+    "nivel": 3,
+    "orden": 3,
+    "created_at": "2026-10-22T14:15:18.867Z",
+    "updated_at": "2026-10-22T14:15:18.867Z"
+  },
+  {
+    "id": "g7pftiqv8pyo183iuvs08ksz",
+    "nombre": "Instructivos",
+    "descripcion": "Instructivos del área de Legal (Dirección General Ejecutiva)",
+    "parent_id": "dto7ovc42hspqrey3jb2axh7",
+    "nivel": 3,
+    "orden": 3,
+    "created_at": "2026-10-22T14:15:18.835Z",
+    "updated_at": "2026-10-22T14:15:18.835Z"
+  },
+  {
+    "id": "e0r146rwrc6cb0rjdx5fhg21",
+    "nombre": "Instructivos",
+    "descripcion": "Instructivos correspondientes a Tesorería Facturación y Cobranzas",
+    "parent_id": "xb5iqnlyt5xdojx9uzrychmp",
+    "nivel": 3,
+    "orden": 3,
+    "created_at": "2026-10-27T19:38:00.984Z",
+    "updated_at": "2026-10-27T19:38:00.984Z"
+  },
+  {
+    "id": "anxc0e58cfw5g8jwy8u2bm2d",
+    "nombre": "Instructivos",
+    "descripcion": "Instructivos del área de Desarrollo de Calidad (Dirección de Operaciones)",
+    "parent_id": "g09qmx8z6ss0v4bwecefu22w",
+    "nivel": 3,
+    "orden": 3,
+    "created_at": "2026-10-22T14:15:18.874Z",
+    "updated_at": "2026-10-22T14:15:18.874Z"
+  },
+  {
+    "id": "z039niux1tgjiytsq7p6gff5",
+    "nombre": "Instructivos",
+    "descripcion": "Instructivos del área de Planificación (Dirección General Ejecutiva)",
+    "parent_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "nivel": 3,
+    "orden": 3,
+    "created_at": "2026-10-22T14:15:18.827Z",
+    "updated_at": "2026-10-22T14:15:18.827Z"
+  },
+  {
+    "id": "eigdjtibw0e80neo0vd1gzgh",
+    "nombre": "Instructivos",
+    "descripcion": "Instructivos del área de Transparencia (Dirección General Ejecutiva)",
+    "parent_id": "lsqhdz9m217brsow2s0qbwz3",
+    "nivel": 3,
+    "orden": 3,
+    "created_at": "2026-10-22T14:15:18.849Z",
+    "updated_at": "2026-10-22T14:15:18.849Z"
+  },
+  {
+    "id": "g77iywc4prvxp10rw9fxtaly",
+    "nombre": "Manuales",
+    "descripcion": "Manuales del área de Relaciones I. M. C. (Dirección Comercial)",
+    "parent_id": "la226esdyncv79xtvl9jv51f",
+    "nivel": 3,
+    "orden": 4,
+    "created_at": "2026-10-22T14:15:18.882Z",
+    "updated_at": "2026-10-22T14:15:18.882Z"
+  },
+  {
+    "id": "kwzqkerhfp4qa36cbfbsjooy",
+    "nombre": "Manuales",
+    "descripcion": "Manuales correspondientes a Tesorería Facturación y Cobranzas",
+    "parent_id": "xb5iqnlyt5xdojx9uzrychmp",
+    "nivel": 3,
+    "orden": 4,
+    "created_at": "2026-10-27T19:38:00.986Z",
+    "updated_at": "2026-10-27T19:38:00.986Z"
+  },
+  {
+    "id": "r5fxcipul4pk246n0ew4js2x",
+    "nombre": "Manuales",
+    "descripcion": "Manuales del área de Desarrollo de Calidad (Dirección de Operaciones)",
+    "parent_id": "g09qmx8z6ss0v4bwecefu22w",
+    "nivel": 3,
+    "orden": 4,
+    "created_at": "2026-10-22T14:15:18.875Z",
+    "updated_at": "2026-10-22T14:15:18.875Z"
+  },
+  {
+    "id": "a17qh8n0c50oe9v1poc409qt",
+    "nombre": "Manuales",
+    "descripcion": "Manuales del área de Planificación (Dirección General Ejecutiva)",
+    "parent_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "nivel": 3,
+    "orden": 4,
+    "created_at": "2026-10-22T14:15:18.828Z",
+    "updated_at": "2026-10-22T14:15:18.828Z"
+  },
+  {
+    "id": "hkxzv0sbke0z5mgyji3s19fe",
+    "nombre": "Manuales",
+    "descripcion": "Manuales correspondientes a Sistemas",
+    "parent_id": "c9j0a2a68k609ck52i3g6t8o",
+    "nivel": 3,
+    "orden": 4,
+    "created_at": "2026-10-27T19:38:00.996Z",
+    "updated_at": "2026-10-27T19:38:00.996Z"
+  },
+  {
+    "id": "jkhycox5kkzovr0zku7xxqed",
+    "nombre": "Manuales",
+    "descripcion": "Manuales correspondientes a Presupuesto y Adquisiciones",
+    "parent_id": "cuwchlvp2i2nfj5djeq1tgol",
+    "nivel": 3,
+    "orden": 4,
+    "created_at": "2026-10-27T19:38:01.005Z",
+    "updated_at": "2026-10-27T19:38:01.005Z"
+  },
+  {
+    "id": "ie5f22ry8530e8mfixfvhj2g",
+    "nombre": "Manuales",
+    "descripcion": "Manuales correspondientes a Bienes de Uso, Bienes de Consumo y Servicios Generales",
+    "parent_id": "ebqo0h39zhwqekva7ght2ywq",
+    "nivel": 3,
+    "orden": 4,
+    "created_at": "2026-10-27T19:38:01.015Z",
+    "updated_at": "2026-10-27T19:38:01.015Z"
+  },
+  {
+    "id": "uj23du59g11yy23tcehszahw",
+    "nombre": "Manuales",
+    "descripcion": "Manuales del área de Contabilidad Nacional e Internacional (Dirección Administrativa Financiera)",
+    "parent_id": "v8tz7n4ytelg96nqyjtzuvrf",
+    "nivel": 3,
+    "orden": 4,
+    "created_at": "2026-10-22T14:15:18.869Z",
+    "updated_at": "2026-10-22T14:15:18.869Z"
+  },
+  {
+    "id": "hfjoas6k8hbptg2lhfy16ivb",
+    "nombre": "Manuales",
+    "descripcion": "Manuales del área de Recursos Humanos (Dirección Administrativa Financiera)",
+    "parent_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "nivel": 3,
+    "orden": 4,
+    "created_at": "2026-10-22T14:15:18.861Z",
+    "updated_at": "2026-10-22T14:15:18.861Z"
+  },
+  {
+    "id": "rhgc0ohpim0z1gswy4rougo3",
+    "nombre": "Manuales",
+    "descripcion": "Manuales del área de Transparencia (Dirección General Ejecutiva)",
+    "parent_id": "lsqhdz9m217brsow2s0qbwz3",
+    "nivel": 3,
+    "orden": 4,
+    "created_at": "2026-10-22T14:15:18.850Z",
+    "updated_at": "2026-10-22T14:15:18.850Z"
+  },
+  {
+    "id": "enk40z6eoib3cq03qec35w5n",
+    "nombre": "Manuales",
+    "descripcion": "Manuales del área de Auditoría (Dirección General Ejecutiva)",
+    "parent_id": "friffghkj3l07a10oh3voso5",
+    "nivel": 3,
+    "orden": 4,
+    "created_at": "2026-10-22T14:15:18.842Z",
+    "updated_at": "2026-10-22T14:15:18.842Z"
+  },
+  {
+    "id": "vjvo92r3midyplv90vxkpm6n",
+    "nombre": "Manuales",
+    "descripcion": "Manuales del área de Legal (Dirección General Ejecutiva)",
+    "parent_id": "dto7ovc42hspqrey3jb2axh7",
+    "nivel": 3,
+    "orden": 4,
+    "created_at": "2026-10-22T14:15:18.836Z",
+    "updated_at": "2026-10-22T14:15:18.836Z"
+  },
+  {
+    "id": "gvb84fajnvw6gu8j36loe8ap",
+    "nombre": "Normativas",
+    "descripcion": "Normativas del área de Recursos Humanos (Dirección Administrativa Financiera)",
+    "parent_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "nivel": 3,
+    "orden": 5,
+    "created_at": "2026-10-22T14:15:18.862Z",
+    "updated_at": "2026-10-22T14:15:18.862Z"
+  },
+  {
+    "id": "vioka3aoqdb704ihfgyje4vt",
+    "nombre": "Normativas",
+    "descripcion": "Normativas correspondientes a Bienes de Uso, Bienes de Consumo y Servicios Generales",
+    "parent_id": "ebqo0h39zhwqekva7ght2ywq",
+    "nivel": 3,
+    "orden": 5,
+    "created_at": "2026-10-27T19:38:01.016Z",
+    "updated_at": "2026-10-27T19:38:01.016Z"
+  },
+  {
+    "id": "t4hf5c2tdkvq1cifu8ier5yl",
+    "nombre": "Normativas",
+    "descripcion": "Normativas del área de Transparencia (Dirección General Ejecutiva)",
+    "parent_id": "lsqhdz9m217brsow2s0qbwz3",
+    "nivel": 3,
+    "orden": 5,
+    "created_at": "2026-10-22T14:15:18.852Z",
+    "updated_at": "2026-10-22T14:15:18.852Z"
+  },
+  {
+    "id": "wn4q6zk5bb0457hmdvuhztsi",
+    "nombre": "Normativas",
+    "descripcion": "Normativas del área de Desarrollo de Calidad (Dirección de Operaciones)",
+    "parent_id": "g09qmx8z6ss0v4bwecefu22w",
+    "nivel": 3,
+    "orden": 5,
+    "created_at": "2026-10-22T14:15:18.876Z",
+    "updated_at": "2026-10-22T14:15:18.876Z"
+  },
+  {
+    "id": "h3fgxk082sz62djr6vp3o144",
+    "nombre": "Normativas",
+    "descripcion": "Normativas correspondientes a Presupuesto y Adquisiciones",
+    "parent_id": "cuwchlvp2i2nfj5djeq1tgol",
+    "nivel": 3,
+    "orden": 5,
+    "created_at": "2026-10-27T19:38:01.006Z",
+    "updated_at": "2026-10-27T19:38:01.006Z"
+  },
+  {
+    "id": "vde5q8qjychdvf5wf3l5s8yq",
+    "nombre": "Normativas",
+    "descripcion": "Normativas del área de Auditoría (Dirección General Ejecutiva)",
+    "parent_id": "friffghkj3l07a10oh3voso5",
+    "nivel": 3,
+    "orden": 5,
+    "created_at": "2026-10-22T14:15:18.844Z",
+    "updated_at": "2026-10-22T14:15:18.844Z"
+  },
+  {
+    "id": "bh30lp2v4uloi6xsny3iflyo",
+    "nombre": "Normativas",
+    "descripcion": "Normativas correspondientes a Sistemas",
+    "parent_id": "c9j0a2a68k609ck52i3g6t8o",
+    "nivel": 3,
+    "orden": 5,
+    "created_at": "2026-10-27T19:38:00.997Z",
+    "updated_at": "2026-10-27T19:38:00.997Z"
+  },
+  {
+    "id": "z099sh76xf0au8xa2yo0cxyf",
+    "nombre": "Normativas",
+    "descripcion": "Normativas del área de Legal (Dirección General Ejecutiva)",
+    "parent_id": "dto7ovc42hspqrey3jb2axh7",
+    "nivel": 3,
+    "orden": 5,
+    "created_at": "2026-10-22T14:15:18.837Z",
+    "updated_at": "2026-10-22T14:15:18.837Z"
+  },
+  {
+    "id": "cbgu1krw8h7t72t7mw32e2cq",
+    "nombre": "Normativas",
+    "descripcion": "Normativas del área de Relaciones I. M. C. (Dirección Comercial)",
+    "parent_id": "la226esdyncv79xtvl9jv51f",
+    "nivel": 3,
+    "orden": 5,
+    "created_at": "2026-10-22T14:15:18.883Z",
+    "updated_at": "2026-10-22T14:15:18.883Z"
+  },
+  {
+    "id": "ana7tzzx7kgr44lnllvwyrho",
+    "nombre": "Normativas",
+    "descripcion": "Normativas correspondientes a Tesorería Facturación y Cobranzas",
+    "parent_id": "xb5iqnlyt5xdojx9uzrychmp",
+    "nivel": 3,
+    "orden": 5,
+    "created_at": "2026-10-27T19:38:00.987Z",
+    "updated_at": "2026-10-27T19:38:00.987Z"
+  },
+  {
+    "id": "ffv7ona5o23w8wkovg1v4a1j",
+    "nombre": "Normativas",
+    "descripcion": "Normativas del área de Planificación (Dirección General Ejecutiva)",
+    "parent_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "nivel": 3,
+    "orden": 5,
+    "created_at": "2026-10-22T14:15:18.830Z",
+    "updated_at": "2026-10-22T14:15:18.830Z"
+  },
+  {
+    "id": "e6wu9iaprq8lc0ve53j1ej0b",
+    "nombre": "Normativas",
+    "descripcion": "Normativas del área de Contabilidad Nacional e Internacional (Dirección Administrativa Financiera)",
+    "parent_id": "v8tz7n4ytelg96nqyjtzuvrf",
+    "nivel": 3,
+    "orden": 5,
+    "created_at": "2026-10-22T14:15:18.870Z",
+    "updated_at": "2026-10-22T14:15:18.870Z"
+  },
+  {
+    "id": "vcpsxb7zy695y00kd2j5dzm3",
+    "nombre": "Reglamentos",
+    "descripcion": "Reglamentos correspondientes a Bienes de Uso, Bienes de Consumo y Servicios Generales",
+    "parent_id": "ebqo0h39zhwqekva7ght2ywq",
+    "nivel": 3,
+    "orden": 6,
+    "created_at": "2026-10-27T19:38:01.017Z",
+    "updated_at": "2026-10-27T19:38:01.017Z"
+  },
+  {
+    "id": "wzh3i54eb6ighx7y756sqg0v",
+    "nombre": "Reglamentos",
+    "descripcion": "Reglamentos del área de Planificación (Dirección General Ejecutiva)",
+    "parent_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "nivel": 3,
+    "orden": 6,
+    "created_at": "2026-10-22T14:15:18.831Z",
+    "updated_at": "2026-10-22T14:15:18.831Z"
+  },
+  {
+    "id": "nhww8n77v6js30t84dgt1uug",
+    "nombre": "Reglamentos",
+    "descripcion": "Reglamentos correspondientes a Tesorería Facturación y Cobranzas",
+    "parent_id": "xb5iqnlyt5xdojx9uzrychmp",
+    "nivel": 3,
+    "orden": 6,
+    "created_at": "2026-10-27T19:38:00.989Z",
+    "updated_at": "2026-10-27T19:38:00.989Z"
+  },
+  {
+    "id": "y0ufeaduvkg4vo74hqa9wppo",
+    "nombre": "Reglamentos",
+    "descripcion": "Reglamentos correspondientes a Presupuesto y Adquisiciones",
+    "parent_id": "cuwchlvp2i2nfj5djeq1tgol",
+    "nivel": 3,
+    "orden": 6,
+    "created_at": "2026-10-27T19:38:01.008Z",
+    "updated_at": "2026-10-27T19:38:01.008Z"
+  },
+  {
+    "id": "xqbkwhjgfkzj7r7e0j9ocg1z",
+    "nombre": "Reglamentos",
+    "descripcion": "Reglamentos del área de Transparencia (Dirección General Ejecutiva)",
+    "parent_id": "lsqhdz9m217brsow2s0qbwz3",
+    "nivel": 3,
+    "orden": 6,
+    "created_at": "2026-10-22T14:15:18.853Z",
+    "updated_at": "2026-10-22T14:15:18.853Z"
+  },
+  {
+    "id": "ziefxf2byu7luhmgir0fqfbf",
+    "nombre": "Reglamentos",
+    "descripcion": "Reglamentos del área de Legal (Dirección General Ejecutiva)",
+    "parent_id": "dto7ovc42hspqrey3jb2axh7",
+    "nivel": 3,
+    "orden": 6,
+    "created_at": "2026-10-22T14:15:18.838Z",
+    "updated_at": "2026-10-22T14:15:18.838Z"
+  },
+  {
+    "id": "hn38a7hmqzxkep0lbnnb9byh",
+    "nombre": "Reglamentos",
+    "descripcion": "Reglamentos del área de Recursos Humanos (Dirección Administrativa Financiera)",
+    "parent_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "nivel": 3,
+    "orden": 6,
+    "created_at": "2026-10-22T14:15:18.864Z",
+    "updated_at": "2026-10-22T14:15:18.864Z"
+  },
+  {
+    "id": "yz6jcp4ngd3api5shfia3j3s",
+    "nombre": "Reglamentos",
+    "descripcion": "Reglamentos del área de Desarrollo de Calidad (Dirección de Operaciones)",
+    "parent_id": "g09qmx8z6ss0v4bwecefu22w",
+    "nivel": 3,
+    "orden": 6,
+    "created_at": "2026-10-22T14:15:18.877Z",
+    "updated_at": "2026-10-22T14:15:18.877Z"
+  },
+  {
+    "id": "djmrse9d2rupiixyvpjgcpqd",
+    "nombre": "Reglamentos",
+    "descripcion": "Reglamentos correspondientes a Sistemas",
+    "parent_id": "c9j0a2a68k609ck52i3g6t8o",
+    "nivel": 3,
+    "orden": 6,
+    "created_at": "2026-10-27T19:38:00.998Z",
+    "updated_at": "2026-10-27T19:38:00.998Z"
+  },
+  {
+    "id": "tg9w0wtoqcvoty7hymb4ptpm",
+    "nombre": "Reglamentos",
+    "descripcion": "Reglamentos del área de Auditoría (Dirección General Ejecutiva)",
+    "parent_id": "friffghkj3l07a10oh3voso5",
+    "nivel": 3,
+    "orden": 6,
+    "created_at": "2026-10-22T14:15:18.845Z",
+    "updated_at": "2026-10-22T14:15:18.845Z"
+  },
+  {
+    "id": "h88d7o2jxhe88r2pq446eiv2",
+    "nombre": "Reglamentos",
+    "descripcion": "Reglamentos del área de Contabilidad Nacional e Internacional (Dirección Administrativa Financiera)",
+    "parent_id": "v8tz7n4ytelg96nqyjtzuvrf",
+    "nivel": 3,
+    "orden": 6,
+    "created_at": "2026-10-22T14:15:18.871Z",
+    "updated_at": "2026-10-22T14:15:18.871Z"
+  },
+  {
+    "id": "f362jayawpca51n6lhwfvh6w",
+    "nombre": "Reglamentos",
+    "descripcion": "Reglamentos del área de Relaciones I. M. C. (Dirección Comercial)",
+    "parent_id": "la226esdyncv79xtvl9jv51f",
+    "nivel": 3,
+    "orden": 6,
+    "created_at": "2026-10-22T14:15:18.884Z",
+    "updated_at": "2026-10-22T14:15:18.884Z"
+  }
+]

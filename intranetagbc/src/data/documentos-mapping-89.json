@@ -1,0 +1,714 @@
+[
+  {
+    "id": "s2znc2ycqocdoju7ia37i7vp",
+    "titulo": "Código De ética R.a. N 11.18",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "lsqhdz9m217brsow2s0qbwz3",
+    "tipo_documental": "Normativas",
+    "categoria_id": "t4hf5c2tdkvq1cifu8ier5yl"
+  },
+  {
+    "id": "eqnumapa9hpbinurvsek4uo9",
+    "titulo": "Acta de Reuniones",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "tipo_documental": "Actas",
+    "categoria_id": "r4juwh26bwhomtj9gd5cd922"
+  },
+  {
+    "id": "hhnins8hdx7td09bky1dsfam",
+    "titulo": "Ficha de Solicitud de Servicio Adicional en Casillas",
+    "direccion_id": "qhfrwmps6hkx509ci8arsew5",
+    "subcategoria_id": "g09qmx8z6ss0v4bwecefu22w",
+    "tipo_documental": "Fichas",
+    "categoria_id": "z1lhcfo571k5v3l0ilv6153k"
+  },
+  {
+    "id": "fc174080dsndmabw2306h55j",
+    "titulo": "Reglamento De Fondo Rotativo AGBC",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "v8tz7n4ytelg96nqyjtzuvrf",
+    "tipo_documental": "Reglamentos",
+    "categoria_id": "h88d7o2jxhe88r2pq446eiv2"
+  },
+  {
+    "id": "bn07jafmieyqbtjqok7w0bhk",
+    "titulo": "Catálogo de Artículos Peligrosos y Prohibidos",
+    "direccion_id": "qhfrwmps6hkx509ci8arsew5",
+    "subcategoria_id": "g09qmx8z6ss0v4bwecefu22w",
+    "tipo_documental": "Catálogo",
+    "categoria_id": "ubd4czpnoz5d5f0fdm2g4nm3"
+  },
+  {
+    "id": "kthvtrm4v4u7run2lsduj7aq",
+    "titulo": "Formulario De Rendicion De Cuentas Fondo Rotativo",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "v8tz7n4ytelg96nqyjtzuvrf",
+    "tipo_documental": "Formularios",
+    "categoria_id": "ng16v6huqjvh78cdqxwbciwo"
+  },
+  {
+    "id": "yjl06ivrfr8rahf9zzsxng1q",
+    "titulo": "Reglamento de la Unidad de Transparencia y Lucha Contra la Corrupción",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "lsqhdz9m217brsow2s0qbwz3",
+    "tipo_documental": "Reglamentos",
+    "categoria_id": "xqbkwhjgfkzj7r7e0j9ocg1z"
+  },
+  {
+    "id": "ieyeo50w8votvio3vik8u6vi",
+    "titulo": "Manual Organizacional Unidad de Transparencia y Lucha Contra la Corrupción",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "lsqhdz9m217brsow2s0qbwz3",
+    "tipo_documental": "Manuales",
+    "categoria_id": "rhgc0ohpim0z1gswy4rougo3"
+  },
+  {
+    "id": "pfcoerb1lr77kcl17gnpwy9e",
+    "titulo": "Procedimiento Para El Diagnostico Diseno Y Rediseno Organiza",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "tipo_documental": "Procedimiento",
+    "categoria_id": "yszy823lsvyu48rejcxz9b6a"
+  },
+  {
+    "id": "xbk789b82rx5yqxipkflse4h",
+    "titulo": "Formulario para la ejecución de recursos del Fondo Rotativo",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "v8tz7n4ytelg96nqyjtzuvrf",
+    "tipo_documental": "Formularios",
+    "categoria_id": "ng16v6huqjvh78cdqxwbciwo"
+  },
+  {
+    "id": "eq6bliq4sfzgympyw3wfo06m",
+    "titulo": "Tutorial Para Generar Plantilla En SIGEC",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "c9j0a2a68k609ck52i3g6t8o",
+    "tipo_documental": "Tutorial",
+    "categoria_id": "rpnx91dszw99x2sj1bq0j077"
+  },
+  {
+    "id": "xb90otu5vic31w7ow6lpa2g7",
+    "titulo": "Formulario De Solicitud De Mantenimiento Y Reparacion Vehiculos",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "ebqo0h39zhwqekva7ght2ywq",
+    "tipo_documental": "Formularios",
+    "categoria_id": "peh0w902usqiogond42p7ri3"
+  },
+  {
+    "id": "z431qd9x5sodgsemrdn0n8hx",
+    "titulo": "Ficha Técnica de Unidad yo Área",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "tipo_documental": "Fichas",
+    "categoria_id": "xaiduh9fgcwhs0w0ehmii54r"
+  },
+  {
+    "id": "l6cdyr4g1yzraaq0078heqzv",
+    "titulo": "Formulario único De Reclamos CN-08",
+    "direccion_id": "apaixifg921qg88dl90zkoi6",
+    "subcategoria_id": "la226esdyncv79xtvl9jv51f",
+    "tipo_documental": "Formularios",
+    "categoria_id": "xzayye0jzl2s6zejunh6uwf7"
+  },
+  {
+    "id": "lrrwdcdtyanafb1gaeavnxtl",
+    "titulo": "Instructivo Operativo Para La Emisión De Resoluciones Administrativas",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "dto7ovc42hspqrey3jb2axh7",
+    "tipo_documental": "Instructivos",
+    "categoria_id": "g7pftiqv8pyo183iuvs08ksz"
+  },
+  {
+    "id": "e8rggm9pwnihfbapxu5h8bj1",
+    "titulo": "Ficha Técnica Vehicular",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "ebqo0h39zhwqekva7ght2ywq",
+    "tipo_documental": "Fichas",
+    "categoria_id": "rcnkdljlnpyhcu4dkjxogxiw"
+  },
+  {
+    "id": "xu17ikv5t2xc7xwoezjbppfm",
+    "titulo": "Formulario para la Revisión de Documentos Normativos",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "tipo_documental": "Formularios",
+    "categoria_id": "sgw176ex9219b0ofopl5tnoq"
+  },
+  {
+    "id": "cpxs10i1roh7zgd7x3axy32x",
+    "titulo": "Reglamento De Administración De Recursos Del Fondo Social",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "tipo_documental": "Reglamentos",
+    "categoria_id": "hn38a7hmqzxkep0lbnnb9byh"
+  },
+  {
+    "id": "kqip92hxhqoz92ulm39646dr",
+    "titulo": "Procedimiento Para El Tratamiento De Denuncias A Transparencia",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "lsqhdz9m217brsow2s0qbwz3",
+    "tipo_documental": "Procedimiento",
+    "categoria_id": "ky1yirbg706yejh1wfaky12z"
+  },
+  {
+    "id": "nt9euqvikcg5ikwlxnnr09fl",
+    "titulo": "Guia De Usuario SIGEC",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "c9j0a2a68k609ck52i3g6t8o",
+    "tipo_documental": "Guía de Usuario",
+    "categoria_id": "pfaoslagxz1p8y6ghwx5sre7"
+  },
+  {
+    "id": "g2lqnppitfyoy147dqgsc7pb",
+    "titulo": "Formulario Solicitud de Vehículo",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "ebqo0h39zhwqekva7ght2ywq",
+    "tipo_documental": "Formularios",
+    "categoria_id": "peh0w902usqiogond42p7ri3"
+  },
+  {
+    "id": "rtxzfu4yalrpmnpw0hs7evm6",
+    "titulo": "Formulario de Denuncia por Presuntos Actos de Corrupción",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "lsqhdz9m217brsow2s0qbwz3",
+    "tipo_documental": "Formularios",
+    "categoria_id": "ybzbiyasfbaswc8tgspxbdom"
+  },
+  {
+    "id": "rmd3er8ii8mswuq8gycmkaft",
+    "titulo": "Formulario de Denuncia por Negativa Injustificada de Acceso a la Información",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "lsqhdz9m217brsow2s0qbwz3",
+    "tipo_documental": "Formularios",
+    "categoria_id": "ybzbiyasfbaswc8tgspxbdom"
+  },
+  {
+    "id": "qn5ng4hew96n7q9dvsgni795",
+    "titulo": "Formulario de Quejas",
+    "direccion_id": "apaixifg921qg88dl90zkoi6",
+    "subcategoria_id": "la226esdyncv79xtvl9jv51f",
+    "tipo_documental": "Formularios",
+    "categoria_id": "xzayye0jzl2s6zejunh6uwf7"
+  },
+  {
+    "id": "ydgtms9sy79avhcqwovfqbhi",
+    "titulo": "Formulario de Solicitud de Reclamación Postal Internacional",
+    "direccion_id": "apaixifg921qg88dl90zkoi6",
+    "subcategoria_id": "la226esdyncv79xtvl9jv51f",
+    "tipo_documental": "Formularios",
+    "categoria_id": "xzayye0jzl2s6zejunh6uwf7"
+  },
+  {
+    "id": "g4pt4w86ynd9g1408ih8i6u2",
+    "titulo": "Acta de Información en caso de Incautación de Envío Postal",
+    "direccion_id": "qhfrwmps6hkx509ci8arsew5",
+    "subcategoria_id": "g09qmx8z6ss0v4bwecefu22w",
+    "tipo_documental": "Actas",
+    "categoria_id": "kl8ztxk54tffuwq97prnx4hz"
+  },
+  {
+    "id": "fu56jxg1207v3g5ozih6oxv5",
+    "titulo": "Formulario de Reclamación Directa",
+    "direccion_id": "apaixifg921qg88dl90zkoi6",
+    "subcategoria_id": "la226esdyncv79xtvl9jv51f",
+    "tipo_documental": "Formularios",
+    "categoria_id": "xzayye0jzl2s6zejunh6uwf7"
+  },
+  {
+    "id": "io62ofeqcftzhmsxgd8v2gqo",
+    "titulo": "Manual Organizacional Administrativa Financiera",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "tipo_documental": "Manuales",
+    "categoria_id": "hfjoas6k8hbptg2lhfy16ivb"
+  },
+  {
+    "id": "znel9x4qy206skudqn5apkcy",
+    "titulo": "Procedimiento De Comunicación Interna, Manejo De La Correspondencia Y Material De Presentación",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "tipo_documental": "Procedimiento",
+    "categoria_id": "fguurxvi7toni3ci3bn6awng"
+  },
+  {
+    "id": "n41ejiy4bbjviehla12s0f5y",
+    "titulo": "Gestión de Cambio de Chapas",
+    "direccion_id": "qhfrwmps6hkx509ci8arsew5",
+    "subcategoria_id": "g09qmx8z6ss0v4bwecefu22w",
+    "tipo_documental": "Documentos de apoyo",
+    "categoria_id": "stxd9jzgj378vyl4kyfg708s"
+  },
+  {
+    "id": "gbe75xji3o0o0g3a28kyysq5",
+    "titulo": "Procedimiento Para El Control De Vehículos",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "ebqo0h39zhwqekva7ght2ywq",
+    "tipo_documental": "Procedimiento",
+    "categoria_id": "o522390484k1dqe203jifnnn"
+  },
+  {
+    "id": "oop0r2ujnshse4cna9pqdtw4",
+    "titulo": "Procedimiento Para El Manejo Y Control De La Recaudacion",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "xb5iqnlyt5xdojx9uzrychmp",
+    "tipo_documental": "Procedimiento",
+    "categoria_id": "v4dzoan57qm4udra9o66kctb"
+  },
+  {
+    "id": "d8hb3u0ijve1808lkvwug3wl",
+    "titulo": "Codigo de etica",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "lsqhdz9m217brsow2s0qbwz3",
+    "tipo_documental": "Normativas",
+    "categoria_id": "t4hf5c2tdkvq1cifu8ier5yl"
+  },
+  {
+    "id": "poiap9e0oem4xp7ppefr0gm7",
+    "titulo": "Reglamento Interno Del Comité De Reclamaciones",
+    "direccion_id": "apaixifg921qg88dl90zkoi6",
+    "subcategoria_id": "la226esdyncv79xtvl9jv51f",
+    "tipo_documental": "Reglamentos",
+    "categoria_id": "f362jayawpca51n6lhwfvh6w"
+  },
+  {
+    "id": "as4rj9dcx7ygodt3w9m4s0gb",
+    "titulo": "Procedimiento Para La Atención Y Tratamiento De Quejas Y Reclamaciones",
+    "direccion_id": "apaixifg921qg88dl90zkoi6",
+    "subcategoria_id": "la226esdyncv79xtvl9jv51f",
+    "tipo_documental": "Procedimiento",
+    "categoria_id": "ea8c8vp8fptmemtrih5iqkef"
+  },
+  {
+    "id": "ugbtvd7r0n375lt1m0zivzvn",
+    "titulo": "Procedimiento Para El Control De Inspecciones De La FELCN Y Correspondencia Retenida",
+    "direccion_id": "qhfrwmps6hkx509ci8arsew5",
+    "subcategoria_id": "g09qmx8z6ss0v4bwecefu22w",
+    "tipo_documental": "Procedimiento",
+    "categoria_id": "xmg4yc0jnw0910kbc1zi1i87"
+  },
+  {
+    "id": "epskkr59qr3dv0wmcz52nhdf",
+    "titulo": "Procedimiento De Pagos Con Orden De Pago Vía SIGEP",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "xb5iqnlyt5xdojx9uzrychmp",
+    "tipo_documental": "Procedimiento",
+    "categoria_id": "v4dzoan57qm4udra9o66kctb"
+  },
+  {
+    "id": "hi46ewt93f4uqr91b35xj52w",
+    "titulo": "Notificación de Evento en Casilla Postal",
+    "direccion_id": "qhfrwmps6hkx509ci8arsew5",
+    "subcategoria_id": "g09qmx8z6ss0v4bwecefu22w",
+    "tipo_documental": "Documentos de apoyo",
+    "categoria_id": "stxd9jzgj378vyl4kyfg708s"
+  },
+  {
+    "id": "bqhpwvok1nb2eexq6gdwgo27",
+    "titulo": "Politica Para La Seguridad De La Información Y Las Comunicaciones",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "c9j0a2a68k609ck52i3g6t8o",
+    "tipo_documental": "Normativas",
+    "categoria_id": "bh30lp2v4uloi6xsny3iflyo"
+  },
+  {
+    "id": "o3r9uocs5esu383q432yw363",
+    "titulo": "Procedimiento De Cobranza R.a. 30.18",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "xb5iqnlyt5xdojx9uzrychmp",
+    "tipo_documental": "Procedimiento",
+    "categoria_id": "v4dzoan57qm4udra9o66kctb"
+  },
+  {
+    "id": "vhvlmibc2hd8scz794q2hcwn",
+    "titulo": "Organigrama Institucional",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "tipo_documental": "Normativas",
+    "categoria_id": "gvb84fajnvw6gu8j36loe8ap"
+  },
+  {
+    "id": "g9t4v3pef5b4lqpoua7vn6cm",
+    "titulo": "Politica De Calidad",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "tipo_documental": "Normativas",
+    "categoria_id": "ffv7ona5o23w8wkovg1v4a1j"
+  },
+  {
+    "id": "b2dozdx73w71m00ik0j29vd5",
+    "titulo": "Reglamento De Rezagos R.a. N 33.19",
+    "direccion_id": "qhfrwmps6hkx509ci8arsew5",
+    "subcategoria_id": "g09qmx8z6ss0v4bwecefu22w",
+    "tipo_documental": "Reglamentos",
+    "categoria_id": "yz6jcp4ngd3api5shfia3j3s"
+  },
+  {
+    "id": "uanmt4qffbmedwj9rxnnof32",
+    "titulo": "Manual Organizacional Dirección de Operaciones",
+    "direccion_id": "qhfrwmps6hkx509ci8arsew5",
+    "subcategoria_id": "g09qmx8z6ss0v4bwecefu22w",
+    "tipo_documental": "Manuales",
+    "categoria_id": "r5fxcipul4pk246n0ew4js2x"
+  },
+  {
+    "id": "edinezus30cyb9dnpb86p2x2",
+    "titulo": "Manual Organizacional Unidad Legal",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "dto7ovc42hspqrey3jb2axh7",
+    "tipo_documental": "Manuales",
+    "categoria_id": "vjvo92r3midyplv90vxkpm6n"
+  },
+  {
+    "id": "l229besu3txxt09b6vgj7v4h",
+    "titulo": "Manual de Usuario de Sistema SIRECO",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "c9j0a2a68k609ck52i3g6t8o",
+    "tipo_documental": "Manual de Usuario",
+    "categoria_id": "qwvpdgvaplg3c50w5sl8umng"
+  },
+  {
+    "id": "ncwvbz3t5epaz7f0yycw0p4k",
+    "titulo": "Manual Organizacional Unidad de Planificación",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "tipo_documental": "Manuales",
+    "categoria_id": "a17qh8n0c50oe9v1poc409qt"
+  },
+  {
+    "id": "u2kxhki2su2gv57xwv2qaz08",
+    "titulo": "Manual Organizacional Unidad de Auditoría Interna",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "friffghkj3l07a10oh3voso5",
+    "tipo_documental": "Manuales",
+    "categoria_id": "enk40z6eoib3cq03qec35w5n"
+  },
+  {
+    "id": "pz20rzxlilgn083t0llsglof",
+    "titulo": "Manual Organizacional Dirección Comercial",
+    "direccion_id": "apaixifg921qg88dl90zkoi6",
+    "subcategoria_id": "la226esdyncv79xtvl9jv51f",
+    "tipo_documental": "Manuales",
+    "categoria_id": "g77iywc4prvxp10rw9fxtaly"
+  },
+  {
+    "id": "se6gnoemtksysnvnbfpl4d87",
+    "titulo": "Reporte Consolidado de Recaudación Diaria Regional",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "xb5iqnlyt5xdojx9uzrychmp",
+    "tipo_documental": "Documentos de apoyo",
+    "categoria_id": "i13uw3vq24kcch84u89wf4vf"
+  },
+  {
+    "id": "cssfagwig390lvn43hjxlo8h",
+    "titulo": "Reglamento De Pasajes Y Viaticos",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "tipo_documental": "Reglamentos",
+    "categoria_id": "hn38a7hmqzxkep0lbnnb9byh"
+  },
+  {
+    "id": "ip8rvu5tl50wjl49xw7twli1",
+    "titulo": "Reglamento Interno De Cargos De Cuenta",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "xb5iqnlyt5xdojx9uzrychmp",
+    "tipo_documental": "Reglamentos",
+    "categoria_id": "nhww8n77v6js30t84dgt1uug"
+  },
+  {
+    "id": "bgqphxdu6tettosr9nfkmeda",
+    "titulo": "Reglamento Especifico Del Sistema De Programación De Operaciones R.a. N° 35. 2018",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "tipo_documental": "Reglamentos Específicos",
+    "categoria_id": "cf1ma10d0ry6pafc65e7nkrc"
+  },
+  {
+    "id": "rf2fqcqxnwd4xaweiw81nopd",
+    "titulo": "Reglamento Especifico Del Sistema De Presupuestos R.a. N° 41. 2018",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "cuwchlvp2i2nfj5djeq1tgol",
+    "tipo_documental": "Reglamentos Específicos",
+    "categoria_id": "nmw4w4564ymbjkxrnllk9p1f"
+  },
+  {
+    "id": "tjr6kvso6giuvdmmnvo94tff",
+    "titulo": "Reglamento Especifico del Sistema de Administración de Bienes y Servicios - RE-SABS",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "ebqo0h39zhwqekva7ght2ywq",
+    "tipo_documental": "Reglamentos Específicos",
+    "categoria_id": "hgrj7gvsywopd7br1ylikv4a"
+  },
+  {
+    "id": "ui1406o5hd0qxzv7wq1gazt8",
+    "titulo": "Procedimiento De Contratación Por Excepción R.a. 17.18",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "cuwchlvp2i2nfj5djeq1tgol",
+    "tipo_documental": "Procedimiento",
+    "categoria_id": "a0cl3yja1qfzppgljzosq19t"
+  },
+  {
+    "id": "f5mhfyzcqdb93jdqxyasaej0",
+    "titulo": "Reglamento Especifico Del Sistema De Tesorería R.a. N° 047. 2018",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "xb5iqnlyt5xdojx9uzrychmp",
+    "tipo_documental": "Reglamentos Específicos",
+    "categoria_id": "hc0htf5ohdvus92ymotp1x7w"
+  },
+  {
+    "id": "waykfr0s7h7pwqk7sk5er052",
+    "titulo": "Reglamento Especifico Del Sistema De Contabilidad Integrada R.a. N° 048. 2018",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "v8tz7n4ytelg96nqyjtzuvrf",
+    "tipo_documental": "Reglamentos Específicos",
+    "categoria_id": "q0s4vci88ve9mitl69ab4ctj"
+  },
+  {
+    "id": "dd6m8xyvx0lcefd5o5f7op4v",
+    "titulo": "Kardex llaves blancas",
+    "direccion_id": "qhfrwmps6hkx509ci8arsew5",
+    "subcategoria_id": "g09qmx8z6ss0v4bwecefu22w",
+    "tipo_documental": "Documentos de apoyo",
+    "categoria_id": "stxd9jzgj378vyl4kyfg708s"
+  },
+  {
+    "id": "opr7z863x69daj4z2m2z8gn2",
+    "titulo": "Procedimiento Para El Control Y Dotación De Sellos Postales A Las Oficinas Regionales",
+    "direccion_id": "apaixifg921qg88dl90zkoi6",
+    "subcategoria_id": "la226esdyncv79xtvl9jv51f",
+    "tipo_documental": "Procedimiento",
+    "categoria_id": "ea8c8vp8fptmemtrih5iqkef"
+  },
+  {
+    "id": "qnmyocj5xnnnxg8hiurrccvg",
+    "titulo": "Reglamento Especifico del Sistema de Administración de Personal",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "tipo_documental": "Reglamentos Específicos",
+    "categoria_id": "chp3b0bb2b55dqbc8k8msca1"
+  },
+  {
+    "id": "tv5agdhcta2wxr4wa7xfd3tp",
+    "titulo": "Formulario de Solicitud de Mantenimiento y Reparación Vehicular",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "ebqo0h39zhwqekva7ght2ywq",
+    "tipo_documental": "Formularios",
+    "categoria_id": "peh0w902usqiogond42p7ri3"
+  },
+  {
+    "id": "d63l3urbnzrxvu2y9d7zjhbo",
+    "titulo": "Procedimiento Operativo De Control Aduanero De Los Envíos Internacionales R.a. N 16.18",
+    "direccion_id": "qhfrwmps6hkx509ci8arsew5",
+    "subcategoria_id": "g09qmx8z6ss0v4bwecefu22w",
+    "tipo_documental": "Procedimiento",
+    "categoria_id": "xmg4yc0jnw0910kbc1zi1i87"
+  },
+  {
+    "id": "t762g8sozk6w01vh3kdci9nf",
+    "titulo": "Reglamento Especifico Del Sistema De Administración De Personal RE-SAP",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "tipo_documental": "Reglamentos Específicos",
+    "categoria_id": "chp3b0bb2b55dqbc8k8msca1"
+  },
+  {
+    "id": "p2w9hvp4ccfg631fv9tc6509",
+    "titulo": "Procedimiento Para El Control De Casillas Postales",
+    "direccion_id": "qhfrwmps6hkx509ci8arsew5",
+    "subcategoria_id": "g09qmx8z6ss0v4bwecefu22w",
+    "tipo_documental": "Procedimiento",
+    "categoria_id": "xmg4yc0jnw0910kbc1zi1i87"
+  },
+  {
+    "id": "h43wjnpov9vgi2mza9ihjdt3",
+    "titulo": "Reglamento Interno De Pasantia AGBC",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "tipo_documental": "Reglamentos",
+    "categoria_id": "hn38a7hmqzxkep0lbnnb9byh"
+  },
+  {
+    "id": "f2apt0ku0wwz5z9srdd6tvo0",
+    "titulo": "Procedimiento De Recaudación De Recursos Por Venta De Servicios Postales R.a. 21.18",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "xb5iqnlyt5xdojx9uzrychmp",
+    "tipo_documental": "Procedimientos",
+    "categoria_id": "xb5iqnlyt5xdojx9uzrychmp"
+  },
+  {
+    "id": "ips0p4inh3f5sdxz6ykxjbis",
+    "titulo": "Ficha de Asignación - T y C de alquiler de casillas",
+    "direccion_id": "qhfrwmps6hkx509ci8arsew5",
+    "subcategoria_id": "g09qmx8z6ss0v4bwecefu22w",
+    "tipo_documental": "Fichas",
+    "categoria_id": "z1lhcfo571k5v3l0ilv6153k"
+  },
+  {
+    "id": "k01g60fcemeyu2p9m7engrk1",
+    "titulo": "Reglamento Interno Para El Pago De Refrigerios R.a. N 23.19",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "tipo_documental": "Reglamentos",
+    "categoria_id": "hn38a7hmqzxkep0lbnnb9byh"
+  },
+  {
+    "id": "sslpqzo6tv8forkwdw2w2wzc",
+    "titulo": "Reglamento Especifico Del Sistema De Organización Administrativa RE-SOA",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "tipo_documental": "Reglamentos Específicos",
+    "categoria_id": "cf1ma10d0ry6pafc65e7nkrc"
+  },
+  {
+    "id": "mgb6ed7peb64qreakvj37cv7",
+    "titulo": "Politica Organizacional Y De Gestion Por Procesos",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "tipo_documental": "Normativas",
+    "categoria_id": "ffv7ona5o23w8wkovg1v4a1j"
+  },
+  {
+    "id": "xif1zcjpz9vc6kzfct8pkje3",
+    "titulo": "Procedimiento Para La Asignacion Y Control De Uso De Telefonos Y Fax",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "ebqo0h39zhwqekva7ght2ywq",
+    "tipo_documental": "Procedimiento",
+    "categoria_id": "o522390484k1dqe203jifnnn"
+  },
+  {
+    "id": "a38jfxvqxors55no7uqvhz0i",
+    "titulo": "Procedimiento Para La Administración Del Fondo Rotativo",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "v8tz7n4ytelg96nqyjtzuvrf",
+    "tipo_documental": "Procedimiento",
+    "categoria_id": "xm13w65r6aavaszblnw7zfs4"
+  },
+  {
+    "id": "wdqjn6uvfnyetr68xdqs91l8",
+    "titulo": "Matriz de Diagnóstico Organizacional Retrospectivo",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "tipo_documental": "Documentos de apoyo",
+    "categoria_id": "lv0n855a0u3h89p6tp41cvnz"
+  },
+  {
+    "id": "i7rkx3y59l73dpnlh7ox97z9",
+    "titulo": "Formulario de Rendición de Cuentas - Fondo Rotativo",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "v8tz7n4ytelg96nqyjtzuvrf",
+    "tipo_documental": "Formularios",
+    "categoria_id": "ng16v6huqjvh78cdqxwbciwo"
+  },
+  {
+    "id": "vdh8jn3l0c6yq1osjrjwq21h",
+    "titulo": "Reglamento Especifico Del Sistema De Administración De Bienes Y Servicios R.a. N° 013 . 2019",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "tipo_documental": "Reglamentos Específicos",
+    "categoria_id": "chp3b0bb2b55dqbc8k8msca1"
+  },
+  {
+    "id": "hyk80ryrw3w8bdrtkbpa5ndz",
+    "titulo": "RA 40 Aprobación de Manuales Organizacionales",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "tipo_documental": "Manuales",
+    "categoria_id": "hfjoas6k8hbptg2lhfy16ivb"
+  },
+  {
+    "id": "nhb3u9j77voezwjk0cik1mv4",
+    "titulo": "Procedimiento Para El Uso, Mantenimiento Y Reparación De Los Equipos Escáner De Rayos X",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "ebqo0h39zhwqekva7ght2ywq",
+    "tipo_documental": "Procedimiento",
+    "categoria_id": "o522390484k1dqe203jifnnn"
+  },
+  {
+    "id": "tqcy21qmapjhguse2blei6nw",
+    "titulo": "Manual de Funciones Profesional de Planificación",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "tipo_documental": "Manuales",
+    "categoria_id": "a17qh8n0c50oe9v1poc409qt"
+  },
+  {
+    "id": "xjhth8nt51c2z9mpfh92ctxm",
+    "titulo": "Reglamento Interno De Personal",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "tipo_documental": "Reglamentos",
+    "categoria_id": "hn38a7hmqzxkep0lbnnb9byh"
+  },
+  {
+    "id": "bkzh1l6l238iyozt7a5cczoz",
+    "titulo": "Procedimiento Para El Diagnóstico, Diseño Y Rediseño Organizacional",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "tipo_documental": "Procedimiento",
+    "categoria_id": "yszy823lsvyu48rejcxz9b6a"
+  },
+  {
+    "id": "p6v46bbugygayy0lj5wtv3u1",
+    "titulo": "Matriz de Diagnóstico Organizacional Prospectivo",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "ozc9sq7x9rz4hi0180tarfh5",
+    "tipo_documental": "Documentos de apoyo",
+    "categoria_id": "lv0n855a0u3h89p6tp41cvnz"
+  },
+  {
+    "id": "wq9c328wosl558mo75c7n8f8",
+    "titulo": "Recibo de Retención Tributaria",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "v8tz7n4ytelg96nqyjtzuvrf",
+    "tipo_documental": "Documentos de apoyo",
+    "categoria_id": "ahhpxqfkqngs0y1gler2sior"
+  },
+  {
+    "id": "a11tbo5sj23vv65dixuh99co",
+    "titulo": "Reglamento Especifico De Proceso Sumario Agencia Boliviana De Correos",
+    "direccion_id": "jizmrznho3tjp1vgqq72ua0p",
+    "subcategoria_id": "dto7ovc42hspqrey3jb2axh7",
+    "tipo_documental": "Reglamentos Específicos",
+    "categoria_id": "tdkj04uxytfw6va40yyabwwu"
+  },
+  {
+    "id": "gvyas31f2njeenrgtk3oh6ap",
+    "titulo": "Manual de Usuario de Sistema de Casillas “SENCA”",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "c9j0a2a68k609ck52i3g6t8o",
+    "tipo_documental": "Manual de Usuario",
+    "categoria_id": "qwvpdgvaplg3c50w5sl8umng"
+  },
+  {
+    "id": "aaktbivbroxh5nl46l0il394",
+    "titulo": "Reglamento Específico del Sistema de Administracion de Bienes y Servicios (RE-SABS)",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "ebqo0h39zhwqekva7ght2ywq",
+    "tipo_documental": "Reglamentos Específicos",
+    "categoria_id": "hgrj7gvsywopd7br1ylikv4a"
+  },
+  {
+    "id": "u9mvb43mi9e1zxr6c6agppv7",
+    "titulo": "Reglamento Interno Para La Adquisición, Dotación Y Uso De Ropa De Trabajo, Equipo Y Uniforme R.a. N 28.18",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "ebqo0h39zhwqekva7ght2ywq",
+    "tipo_documental": "Reglamentos",
+    "categoria_id": "vcpsxb7zy695y00kd2j5dzm3"
+  },
+  {
+    "id": "qeyeu45ldsp4k73t0b60z810",
+    "titulo": "Reglamento Especifico para Cumplimiento Oportuno de la Declaración Jurada de Bienes y Rentas",
+    "direccion_id": "dg7xuv9o4datddl5zgxn0tb2",
+    "subcategoria_id": "iyf0hqxvhq5cf24jzsoaimyn",
+    "tipo_documental": "Reglamentos Específicos",
+    "categoria_id": "chp3b0bb2b55dqbc8k8msca1"
+  },
+  {
+    "id": "m1x3szdgsd1iyz0e4hpf4qqv",
+    "titulo": "Manual de Usuario de Sistema de Seguimiento de Paquetería Postal para Mejora del Servicio del Control y Despacho de Envíos a Nivel Nacional “TRACKINGBO”",
+    "direccion_id": "qhfrwmps6hkx509ci8arsew5",
+    "subcategoria_id": "g09qmx8z6ss0v4bwecefu22w",
+    "tipo_documental": "Manual de Usuario",
+    "categoria_id": "prtyz9struyf14c2b9hprm2x"
+  }
+]
