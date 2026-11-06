@@ -121,15 +121,59 @@ export const ESTRUCTURA_JERARQUICA: DireccionDef[] = [
 ]
 
 export const TIPOS_DOCUMENTALES = [
-  "Circulares",
+  "Reglamentos",
+  "Manuales",
+  "Procedimientos",
   "Formularios",
   "Instructivos",
-  "Manuales",
   "Normativas",
-  "Reglamentos",
+  "Circulares",
 ] as const
 
 export type TipoDocumental = typeof TIPOS_DOCUMENTALES[number]
+
+export function obtenerGrupoJerarquico(
+  tipoDocumental?: string | null,
+  categoria?: string | null,
+  titulo?: string | null
+): string {
+  const norm = `${tipoDocumental || ""} ${categoria || ""} ${titulo || ""}`.toLowerCase()
+
+  if (/reglamento|re-sabs|re-sap|re-soa|estatuto/i.test(norm)) return "Reglamentos"
+  if (/manual|guia|guía|politica|política|organigrama/i.test(norm)) return "Manuales"
+  if (/procedimiento|proceso/i.test(norm)) return "Procedimientos"
+  if (/formulario|ficha|kardex|acta|recibo|matriz|notificacion|notificación|reporte/i.test(norm)) return "Formularios"
+  if (/instructivo/i.test(norm)) return "Instructivos"
+  if (/circular/i.test(norm)) return "Circulares"
+  if (/norma|codigo|código|resolucion|resolución|etica|ética/i.test(norm)) return "Normativas"
+  return "Otros"
+}
+
+export function obtenerPesoJerarquico(
+  tipoDocumental?: string | null,
+  categoria?: string | null,
+  titulo?: string | null
+): number {
+  const grupo = obtenerGrupoJerarquico(tipoDocumental, categoria, titulo)
+  switch (grupo) {
+    case "Reglamentos":
+      return 1
+    case "Manuales":
+      return 2
+    case "Procedimientos":
+      return 3
+    case "Formularios":
+      return 4
+    case "Instructivos":
+      return 5
+    case "Normativas":
+      return 6
+    case "Circulares":
+      return 7
+    default:
+      return 8
+  }
+}
 
 export function clasificarDocumento(archivo?: string | null, titulo?: string | null): {
   direccionNombre: string
@@ -138,19 +182,21 @@ export function clasificarDocumento(archivo?: string | null, titulo?: string | n
 } {
   const norm = `${archivo || ""} ${titulo || ""}`.toLowerCase()
 
-  // 1. Tipo Documental
+  // 1. Tipo Documental Jerárquico
   let tipoDocumental = "Normativas"
-  if (/reglamento/i.test(norm)) {
+  if (/reglamento|re-sabs|re-sap|re-soa|estatuto/i.test(norm)) {
     tipoDocumental = "Reglamentos"
+  } else if (/procedimiento|proceso/i.test(norm)) {
+    tipoDocumental = "Procedimientos"
+  } else if (/manual|guia|guía|organigrama/i.test(norm)) {
+    tipoDocumental = "Manuales"
+  } else if (/formulario|ficha|kardex|acta|recibo|matriz|notificacion|notificación|reporte/i.test(norm)) {
+    tipoDocumental = "Formularios"
   } else if (/instructivo/i.test(norm)) {
     tipoDocumental = "Instructivos"
-  } else if (/manual|procedimiento|guia/i.test(norm)) {
-    tipoDocumental = "Manuales"
-  } else if (/formulario|ficha|kardex|acta|recibo|matriz|notificacion|reporte/i.test(norm)) {
-    tipoDocumental = "Formularios"
   } else if (/circular/i.test(norm)) {
     tipoDocumental = "Circulares"
-  } else if (/politica|codigo|organigrama|catalogo|chapas/i.test(norm)) {
+  } else if (/politica|política|codigo|código|catalogo|chapas|norma|resolucion/i.test(norm)) {
     tipoDocumental = "Normativas"
   }
 

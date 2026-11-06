@@ -81,3 +81,4 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         res = extract_date_from_pdf(sys.argv[1])
         print(json.dumps({"fecha": res}))
+

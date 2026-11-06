@@ -107,3 +107,4 @@ export function extractDateFromText(text: string): string | null {
 
   return null
 }
+

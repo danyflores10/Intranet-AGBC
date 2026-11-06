@@ -35,7 +35,13 @@ import { getDocumentUrl } from "@/components/modules/documentos-module"
 import { DocumentosTourTutorial } from "@/components/documentos-tour-tutorial"
 import { registrarAccionDocumentoAction } from "@/actions/auditoria"
 import { obtenerFechaOficialDocumento } from "@/lib/documentos-fechas-map"
-import { ESTRUCTURA_JERARQUICA, TIPOS_DOCUMENTALES, clasificarDocumento } from "@/lib/documentos-jerarquia"
+import {
+  ESTRUCTURA_JERARQUICA,
+  TIPOS_DOCUMENTALES,
+  clasificarDocumento,
+  obtenerGrupoJerarquico,
+  obtenerPesoJerarquico,
+} from "@/lib/documentos-jerarquia"
 import {
   getDocumentTypeInfo,
   getCleanDocumentFileName,
@@ -85,28 +91,6 @@ function buildPagination(current: number, total: number): Array<number | "ellips
   return [1, "ellipsis", current - 1, current, current + 1, "ellipsis", total]
 }
 
-function getDocPriority(titulo?: string | null, categoria?: string | null) {
-  const text = `${titulo || ""} ${categoria || ""}`.toLowerCase()
-  if (/instructivo|induccion|seguridad|normativa|politica|contrasenia/i.test(text)) {
-    return {
-      label: "Prioridad Alta",
-      dot: "🔴",
-      badgeClass: "bg-red-50 text-red-700 border-red-200",
-    }
-  }
-  if (/reglamento|manual|procedimiento|operativo|correspondencia|circular/i.test(text)) {
-    return {
-      label: "Prioridad Media",
-      dot: "🟡",
-      badgeClass: "bg-amber-50 text-amber-800 border-amber-200",
-    }
-  }
-  return {
-    label: "Consulta General",
-    dot: "🟢",
-    badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  }
-}
 
 const ICONOS_DIRECCION: Record<string, any> = {
   "Dirección General Ejecutiva": Building2,
@@ -155,25 +139,81 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
     return dir ? dir.subcategorias.map((s) => ({ ...s, dirNombre: dir.nombre })) : []
   }, [direccionActiva])
 
-  // Filtrado de documentos
-  const docsFiltrados = docsEnriquecidos.filter((doc) => {
-    const coincideDireccion = !direccionActiva || doc.direccion === direccionActiva
-    const coincideSubcategoria = !subcategoriaActiva || doc.subcategoria === subcategoriaActiva
-    const coincideTipo = !tipoDocumentalActivo || doc.tipoDocumental === tipoDocumentalActivo
-    
-    const searchLower = busqueda.toLowerCase().trim()
-    const coincideBusqueda =
-      !searchLower ||
-      doc.titulo.toLowerCase().includes(searchLower) ||
-      doc.descripcion?.toLowerCase().includes(searchLower) ||
-      doc.direccion?.toLowerCase().includes(searchLower) ||
-      doc.subcategoria?.toLowerCase().includes(searchLower) ||
-      doc.tipoDocumental?.toLowerCase().includes(searchLower) ||
-      doc.categoria?.toLowerCase().includes(searchLower) ||
-      (doc.nombreArchivo && doc.nombreArchivo.toLowerCase().includes(searchLower))
+  // Categorías presentes en la subcategoría activa con conteos dinámicos reales
+  const categoriasDisponiblesEnSub = useMemo(() => {
+    if (!direccionActiva || !subcategoriaActiva) return []
+    const docsEnSub = docsEnriquecidos.filter(
+      (d) => d.direccion === direccionActiva && d.subcategoria === subcategoriaActiva
+    )
 
-    return coincideDireccion && coincideSubcategoria && coincideTipo && coincideBusqueda
-  })
+    return TIPOS_DOCUMENTALES.map((tipo) => {
+      const count = docsEnSub.filter(
+        (d) => obtenerGrupoJerarquico(d.tipoDocumental, d.categoria, d.titulo) === tipo
+      ).length
+      return { tipo, count }
+    }).filter((c) => c.count > 0)
+  }, [docsEnriquecidos, direccionActiva, subcategoriaActiva])
+
+  // Filtrado de documentos con ordenamiento jerárquico estricto
+  const docsFiltrados = useMemo(() => {
+    return docsEnriquecidos
+      .filter((doc) => {
+        const coincideDireccion = !direccionActiva || doc.direccion === direccionActiva
+        const coincideSubcategoria = !subcategoriaActiva || doc.subcategoria === subcategoriaActiva
+        const grupoDoc = obtenerGrupoJerarquico(doc.tipoDocumental, doc.categoria, doc.titulo)
+        const coincideTipo = !tipoDocumentalActivo || grupoDoc === tipoDocumentalActivo
+        
+        const searchLower = busqueda.toLowerCase().trim()
+        const coincideBusqueda =
+          !searchLower ||
+          doc.titulo.toLowerCase().includes(searchLower) ||
+          doc.descripcion?.toLowerCase().includes(searchLower) ||
+          doc.direccion?.toLowerCase().includes(searchLower) ||
+          doc.subcategoria?.toLowerCase().includes(searchLower) ||
+          doc.tipoDocumental?.toLowerCase().includes(searchLower) ||
+          doc.categoria?.toLowerCase().includes(searchLower) ||
+          (doc.nombreArchivo && doc.nombreArchivo.toLowerCase().includes(searchLower))
+
+        return coincideDireccion && coincideSubcategoria && coincideTipo && coincideBusqueda
+      })
+      .sort((a, b) => {
+        const pesoA = obtenerPesoJerarquico(a.tipoDocumental, a.categoria, a.titulo)
+        const pesoB = obtenerPesoJerarquico(b.tipoDocumental, b.categoria, b.titulo)
+        if (pesoA !== pesoB) return pesoA - pesoB
+        const numA = a.numeroCorrelativo ? parseInt(String(a.numeroCorrelativo).replace(/\D/g, "")) || 9999 : 9999
+        const numB = b.numeroCorrelativo ? parseInt(String(b.numeroCorrelativo).replace(/\D/g, "")) || 9999 : 9999
+        if (numA !== numB) return numA - numB
+        return a.titulo.localeCompare(b.titulo)
+      })
+  }, [docsEnriquecidos, direccionActiva, subcategoriaActiva, tipoDocumentalActivo, busqueda])
+
+  // Agrupación jerárquica cuando se está en una subárea y "Todas las categorías" está seleccionada
+  const gruposJerarquicosSubcategoria = useMemo(() => {
+    if (!subcategoriaActiva || tipoDocumentalActivo || busqueda.trim()) return null
+    const grupos: { tipo: string; peso: number; docs: typeof docsFiltrados }[] = []
+
+    TIPOS_DOCUMENTALES.forEach((tipo) => {
+      const docs = docsFiltrados.filter(
+        (d) => obtenerGrupoJerarquico(d.tipoDocumental, d.categoria, d.titulo) === tipo
+      )
+      if (docs.length > 0) {
+        grupos.push({
+          tipo,
+          peso: obtenerPesoJerarquico(tipo, tipo, tipo),
+          docs,
+        })
+      }
+    })
+
+    const docsOtros = docsFiltrados.filter(
+      (d) => !TIPOS_DOCUMENTALES.includes(obtenerGrupoJerarquico(d.tipoDocumental, d.categoria, d.titulo) as any)
+    )
+    if (docsOtros.length > 0) {
+      grupos.push({ tipo: "Otros Documentos", peso: 99, docs: docsOtros })
+    }
+
+    return grupos.sort((a, b) => a.peso - b.peso)
+  }, [subcategoriaActiva, tipoDocumentalActivo, busqueda, docsFiltrados])
 
   const hayFiltrosActivos = !!(direccionActiva || subcategoriaActiva || tipoDocumentalActivo || busqueda)
 
@@ -278,7 +318,142 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
       }
     }
 
+    if (c.includes("procedimiento") || c.includes("proceso")) {
+      return {
+        bg: "bg-teal-100 dark:bg-teal-950/40",
+        icon: "text-teal-700 dark:text-teal-400",
+        pill: "bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300",
+      }
+    }
+    if (c.includes("circular")) {
+      return {
+        bg: "bg-indigo-100 dark:bg-indigo-950/40",
+        icon: "text-indigo-600 dark:text-indigo-400",
+        pill: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300",
+      }
+    }
+    if (c.includes("normativa") || c.includes("codigo") || c.includes("código")) {
+      return {
+        bg: "bg-slate-100 dark:bg-slate-800",
+        icon: "text-slate-700 dark:text-slate-300",
+        pill: "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200",
+      }
+    }
+
     return defaultColor
+  }
+
+  const renderDocCard = (doc: Doc, idx: number) => {
+    const color = getFileColor(doc.tipoArchivo)
+    const IconComponent = getFileIcon(doc.tipoArchivo)
+    const tamano = formatTamano(doc.tamano)
+    const grupoJerarquico = obtenerGrupoJerarquico(doc.tipoDocumental, doc.categoria, doc.titulo)
+    const catPalette = getCategoryPalette(grupoJerarquico || doc.tipoDocumental || doc.categoria)
+    const fechaOficial = (doc.fechaEmision && doc.fechaEmision.trim().length > 0 && !doc.fechaEmision.toLowerCase().includes("sin fecha"))
+      ? doc.fechaEmision.trim()
+      : "Sin fecha fija"
+
+    return (
+      <div
+        key={doc.id}
+        data-tour-doc={idx}
+        className="group relative flex flex-col justify-between overflow-hidden rounded-3xl bg-card border-2 border-border/60 shadow-xs hover:shadow-xl hover:shadow-[#0E5296]/10 hover:border-[#0E5296]/40 transition-all duration-300 hover:-translate-y-1"
+      >
+        <div>
+          {/* Icono de tipo de archivo con badge de extensión (Sin prioridad) */}
+          <div className="flex items-center justify-center pt-7 pb-3">
+            <div className={`relative flex h-16 w-16 items-center justify-center rounded-2xl ${catPalette.bg} transition-transform duration-300 group-hover:scale-110 shadow-xs`}>
+              <IconComponent className={`h-8 w-8 ${catPalette.icon}`} />
+              <span className={`absolute -bottom-1 -right-1 rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase ${color.bg} ${color.text} border border-current/10 shadow-2xs`}>
+                {color.label}
+              </span>
+            </div>
+          </div>
+
+          {/* Info del Documento */}
+          <div className="px-4 pb-3 space-y-2.5 text-center">
+            {/* Título en la parte superior */}
+            <h3 className="text-xs sm:text-sm font-black text-[#002F6C] dark:text-foreground line-clamp-2 leading-snug group-hover:text-[#0E5296] transition-colors min-h-[2.5rem]">
+              {doc.titulo}
+            </h3>
+
+            {/* Directamente DEBAJO del título: Número correlativo, Fecha Oficial, Versión y Vigencia */}
+            <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground font-medium flex-wrap">
+              {doc.numeroCorrelativo && (
+                <span className="inline-flex items-center text-[9px] font-black bg-[#002F6C] text-[#FFCC00] px-1.5 py-0.5 rounded shadow-2xs">
+                  Nº {doc.numeroCorrelativo}
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1 text-[#002F6C] dark:text-[#FFCC00] font-bold bg-blue-50/80 px-2 py-0.5 rounded-md border border-blue-100">
+                <CalendarDays className="h-3 w-3 text-[#0E5296]" />
+                {fechaOficial}
+              </span>
+              <span
+                className={`inline-flex items-center text-[9px] font-black px-1.5 py-0.5 rounded ${
+                  doc.esVigente !== false
+                    ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                    : "bg-slate-100 text-slate-700 border border-slate-300"
+                }`}
+              >
+                {doc.version || "v1.0"} {doc.esVigente !== false ? "• Vigente" : "• Histórico"}
+              </span>
+              {doc.disponibilidadArchivo === "falta_archivo" && (
+                <span className="inline-flex items-center text-[9px] font-bold bg-red-100 text-red-800 border border-red-300 px-1.5 py-0.5 rounded">
+                  FALTA PDF
+                </span>
+              )}
+              {tamano && (
+                <span className="inline-flex items-center gap-1 text-slate-500">
+                  <HardDrive className="h-3 w-3" />
+                  {tamano}
+                </span>
+              )}
+            </div>
+
+            {/* Jerarquía en Badges: Dirección / Sub-área / Categoría Jerárquica */}
+            <div className="pt-1 flex flex-wrap items-center justify-center gap-1">
+              {doc.direccion && (
+                <span className="inline-flex items-center rounded-md bg-[#002F6C]/10 text-[#002F6C] px-2 py-0.5 text-[9.5px] font-black">
+                  {doc.direccion.replace("Dirección ", "")}
+                </span>
+              )}
+              {doc.subcategoria && (
+                <span className="inline-flex items-center rounded-md bg-slate-100 text-slate-700 px-2 py-0.5 text-[9.5px] font-bold border border-slate-200">
+                  {doc.subcategoria}
+                </span>
+              )}
+              <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[9.5px] font-black ${catPalette.pill}`}>
+                {grupoJerarquico || doc.tipoDocumental || doc.categoria || "Normativa"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer con el Ojito */}
+        <div className="p-4 pt-2 flex items-center justify-between border-t border-border/40 bg-slate-50/50">
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+            Documento Oficial
+          </span>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                setViewingDoc(doc)
+                registrarAccionDocumentoAction({
+                  documentoId: doc.id,
+                  titulo: doc.titulo,
+                  accion: "Visualizó documento",
+                })
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-[#0E5296] dark:text-[#FFCC00] hover:bg-[#0E5296] hover:text-white dark:hover:bg-[#FFCC00] dark:hover:text-[#002F6C] transition-all cursor-pointer shadow-xs border border-blue-200 dark:border-blue-900"
+              title="Ver documento"
+            >
+              <Eye className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -763,11 +938,8 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                         </span>
                       </button>
 
-                      {TIPOS_DOCUMENTALES.map((tipo) => {
+                      {categoriasDisponiblesEnSub.map(({ tipo, count }) => {
                         const isSelected = tipoDocumentalActivo === tipo
-                        const countInSub = docsEnriquecidos.filter(
-                          (d) => d.direccion === direccionActiva && d.subcategoria === subcategoriaActiva && d.tipoDocumental === tipo
-                        ).length
 
                         return (
                           <button
@@ -787,7 +959,7 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                             <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
                               isSelected ? "bg-[#002F6C]/20 text-[#002F6C]" : "bg-slate-100 text-slate-500"
                             }`}>
-                              {countInSub}
+                              {count}
                             </span>
                           </button>
                         )
@@ -847,133 +1019,37 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                     Restablecer y volver al inicio
                   </button>
                 </div>
+              ) : gruposJerarquicosSubcategoria && gruposJerarquicosSubcategoria.length > 0 ? (
+                <div className="space-y-10">
+                  {gruposJerarquicosSubcategoria.map((grupo, gIdx) => (
+                    <div key={grupo.tipo} className="space-y-4">
+                      <div className="flex items-center justify-between pb-2.5 border-b-2 border-slate-200">
+                        <div className="flex items-center gap-2.5">
+                          <span className="flex items-center justify-center h-6 w-6 rounded-md bg-[#002F6C] text-[#FFCC00] font-black text-xs shadow-2xs">
+                            {gIdx + 1}º
+                          </span>
+                          <h4 className="text-sm font-black text-[#002F6C] uppercase tracking-wider">
+                            {grupo.tipo}
+                          </h4>
+                        </div>
+                        <span className="text-xs font-bold text-[#0E5296] bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
+                          {grupo.docs.length} {grupo.docs.length === 1 ? "documento" : "documentos"}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                        {grupo.docs.map((doc, idx) => renderDocCard(doc, idx))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {paginatedDocs.map((doc, idx) => {
-                const color = getFileColor(doc.tipoArchivo)
-                const IconComponent = getFileIcon(doc.tipoArchivo)
-                const tamano = formatTamano(doc.tamano)
-                const catPalette = getCategoryPalette(doc.tipoDocumental || doc.categoria)
-                const priority = getDocPriority(doc.titulo, doc.tipoDocumental || doc.categoria)
-                const fechaOficial = (doc.fechaEmision && doc.fechaEmision.trim().length > 0 && !doc.fechaEmision.toLowerCase().includes("sin fecha"))
-                  ? doc.fechaEmision.trim()
-                  : "Sin fecha fija"
+                  {paginatedDocs.map((doc, idx) => renderDocCard(doc, idx))}
+                </div>
+              )}
 
-                return (
-                  <div
-                    key={doc.id}
-                    data-tour-doc={idx}
-                    className="group relative flex flex-col justify-between overflow-hidden rounded-3xl bg-card border-2 border-border/60 shadow-xs hover:shadow-xl hover:shadow-[#0E5296]/10 hover:border-[#0E5296]/40 transition-all duration-300 hover:-translate-y-1"
-                  >
-                    {/* Badge de Prioridad en la Esquina Superior Derecha */}
-                    <div className="absolute top-3 right-3 z-10">
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[9.5px] font-black border shadow-2xs ${priority.badgeClass}`}>
-                        <span>{priority.dot}</span>
-                        <span>{priority.label}</span>
-                      </span>
-                    </div>
-
-                    <div>
-                      {/* Icono de tipo de archivo con badge */}
-                      <div className="flex items-center justify-center pt-8 pb-3">
-                        <div className={`relative flex h-16 w-16 items-center justify-center rounded-2xl ${catPalette.bg} transition-transform duration-300 group-hover:scale-110 shadow-xs`}>
-                          <IconComponent className={`h-8 w-8 ${catPalette.icon}`} />
-                          <span className={`absolute -bottom-1 -right-1 rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase ${color.bg} ${color.text} border border-current/10 shadow-2xs`}>
-                            {color.label}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Info del Documento */}
-                      <div className="px-4 pb-2 space-y-2 text-center">
-                        {/* Fecha Oficial, Versión y tamaño */}
-                        <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground font-medium flex-wrap">
-                          {doc.numeroCorrelativo && (
-                            <span className="inline-flex items-center text-[9px] font-black bg-[#002F6C] text-[#FFCC00] px-1.5 py-0.5 rounded shadow-2xs">
-                              Nº {doc.numeroCorrelativo}
-                            </span>
-                          )}
-                          <span className="inline-flex items-center gap-1 text-[#002F6C] dark:text-[#FFCC00] font-bold bg-blue-50/80 px-2 py-0.5 rounded-md border border-blue-100">
-                            <CalendarDays className="h-3 w-3 text-[#0E5296]" />
-                            {fechaOficial}
-                          </span>
-                          <span
-                            className={`inline-flex items-center text-[9px] font-black px-1.5 py-0.5 rounded ${
-                              doc.esVigente !== false
-                                ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                                : "bg-slate-100 text-slate-700 border border-slate-300"
-                            }`}
-                          >
-                            {doc.version || "v1.0"} {doc.esVigente !== false ? "• Vigente" : "• Histórico"}
-                          </span>
-                          {doc.disponibilidadArchivo === "falta_archivo" && (
-                            <span className="inline-flex items-center text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded">
-                              FALTA PDF
-                            </span>
-                          )}
-                          {tamano && (
-                            <span className="inline-flex items-center gap-1 text-slate-500">
-                              <HardDrive className="h-3 w-3" />
-                              {tamano}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Título */}
-                        <h3 className="text-xs sm:text-sm font-black text-[#002F6C] dark:text-foreground line-clamp-2 leading-snug group-hover:text-[#0E5296] transition-colors min-h-[2.5rem]">
-                          {doc.titulo}
-                        </h3>
-
-                        {/* Jerarquía en Badges: Dirección / Sub-área / Tipo */}
-                        <div className="pt-1 flex flex-wrap items-center justify-center gap-1">
-                          {doc.direccion && (
-                            <span className="inline-flex items-center rounded-md bg-[#002F6C]/10 text-[#002F6C] px-2 py-0.5 text-[9.5px] font-black">
-                              {doc.direccion.replace("Dirección ", "")}
-                            </span>
-                          )}
-                          {doc.subcategoria && (
-                            <span className="inline-flex items-center rounded-md bg-slate-100 text-slate-700 px-2 py-0.5 text-[9.5px] font-bold border border-slate-200">
-                              {doc.subcategoria}
-                            </span>
-                          )}
-                          <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[9.5px] font-black ${catPalette.pill}`}>
-                            {doc.tipoDocumental || doc.categoria || "Normativa"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Footer con el Ojito */}
-                    <div className="p-4 pt-2 flex items-center justify-between border-t border-border/40 bg-slate-50/50">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                        Documento Oficial
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setViewingDoc(doc)
-                            registrarAccionDocumentoAction({
-                              documentoId: doc.id,
-                              titulo: doc.titulo,
-                              accion: "Visualizó documento",
-                            })
-                          }}
-                          className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-[#0E5296] dark:text-[#FFCC00] hover:bg-[#0E5296] hover:text-white dark:hover:bg-[#FFCC00] dark:hover:text-[#002F6C] transition-all cursor-pointer shadow-xs border border-blue-200 dark:border-blue-900"
-                          title="Ver documento"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          {/* Paginación Centrada */}
-          {totalPages > 1 && (
+              {/* Paginación Centrada (cuando no está agrupado por categorías) */}
+              {!gruposJerarquicosSubcategoria && totalPages > 1 && (
             <div className="flex flex-col items-center justify-center gap-2 pt-4 border-t border-border/40 text-center">
               <div className="flex items-center justify-center gap-1">
                 <Button
