@@ -104,6 +104,24 @@ export async function runAutoMigrations(options?: { silent?: boolean }) {
       console.warn('[AGBC Auto-Migrate] Tabla intranet_visitas_seccion ya verificada:', visitasErr);
     }
 
+    // 3.7. Eliminar restricción obsoleta UNIQUE("nombre") en documento_categorias
+    try {
+      await client.query(`
+        ALTER TABLE "documento_categorias" DROP CONSTRAINT IF EXISTS "documento_categorias_nombre_unique";
+        DROP INDEX IF EXISTS "documento_categorias_nombre_unique";
+        ALTER TABLE "documento_categorias" ALTER COLUMN "nombre" TYPE varchar(255);
+        ALTER TABLE "documento_categorias" ADD COLUMN IF NOT EXISTS "parent_id" varchar(24);
+        ALTER TABLE "documento_categorias" ADD COLUMN IF NOT EXISTS "nivel" integer DEFAULT 1;
+        ALTER TABLE "documento_categorias" ADD COLUMN IF NOT EXISTS "orden" integer DEFAULT 0;
+        ALTER TABLE "documentos" ADD COLUMN IF NOT EXISTS "direccion_id" varchar(24);
+        ALTER TABLE "documentos" ADD COLUMN IF NOT EXISTS "subcategoria_id" varchar(24);
+        ALTER TABLE "documentos" ADD COLUMN IF NOT EXISTS "tipo_documental" varchar(50);
+      `);
+      log('Estructura jerárquica de documento_categorias y documentos verificada.');
+    } catch (catColErr) {
+      console.warn('[AGBC Auto-Migrate] Estructura jerárquica ya verificada:', catColErr);
+    }
+
     client.release();
 
     // 4. Ejecutar migraciones incrementales de Drizzle
