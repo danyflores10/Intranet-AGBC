@@ -6,7 +6,7 @@ import { createId } from "@paralleldrive/cuid2"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
 import { PERMISOS } from "@/lib/auth/permisos"
-import { extractDateFromPdfFile } from "@/lib/pdf-date-extractor"
+import { extractDateFromPdfFile, extractDateFromExcelBuffer } from "@/lib/pdf-date-extractor"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -141,6 +141,12 @@ export async function POST(request: NextRequest) {
         fechaDetectada = await extractDateFromPdfFile(filePath)
       } catch (e) {
         console.warn("No se pudo extraer fecha del PDF:", e)
+      }
+    } else if (ext === "xlsx" || ext === "xls") {
+      try {
+        fechaDetectada = extractDateFromExcelBuffer(buffer)
+      } catch (e) {
+        console.warn("No se pudo extraer fecha del Excel:", e)
       }
     }
 

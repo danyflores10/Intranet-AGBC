@@ -1,7 +1,8 @@
 import { execFile } from "node:child_process"
 import { promisify } from "node:util"
 import { join } from "node:path"
-import { existsSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
+import * as XLSX from "xlsx"
 
 const execFileAsync = promisify(execFile)
 
@@ -25,7 +26,7 @@ const MESES_REGEX = Object.keys(MESES).join("|")
 
 /**
  * Intenta extraer la fecha oficial de emisión desde un archivo PDF
- * Inspecciona las primeras 5 hojas y las últimas 5 hojas.
+ * Inspecciona las primeras 5-6 hojas y las últimas 5 hojas.
  * Si encuentra día, mes y año retorna ej. "21 de agosto de 2018".
  * Si solo encuentra el año, retorna ej. "2024".
  * Si no encuentra fecha, retorna null.
@@ -46,9 +47,56 @@ export async function extractDateFromPdfFile(filePath: string): Promise<string |
       }
     }
   } catch (err) {
-    // Continuar a fallback interno
+    // Continuar a fallback interno en Node.js
   }
 
+  // 2. Fallback nativo Node.js sin dependencias externas:
+  //    Leer los primeros y últimos bloques de bytes en busca de patrones de fecha
+  try {
+    const buffer = readFileSync(filePath)
+    const rawHead = buffer.subarray(0, Math.min(buffer.length, 120000)).toString("latin1")
+    const dateFromHead = extractDateFromText(rawHead)
+    if (dateFromHead) return dateFromHead
+
+    if (buffer.length > 120000) {
+      const rawTail = buffer.subarray(buffer.length - 80000).toString("latin1")
+      const dateFromTail = extractDateFromText(rawTail)
+      if (dateFromTail) return dateFromTail
+    }
+  } catch (bufErr) {
+    console.warn("[pdf-date-extractor] Fallback error:", bufErr)
+  }
+
+  return null
+}
+
+/**
+ * Extrae fecha u oficial año de emisión desde un archivo Excel (XLSX / XLS)
+ */
+export function extractDateFromExcelBuffer(buffer: Buffer): string | null {
+  try {
+    const wb = XLSX.read(buffer, { type: "buffer" })
+    if (!wb.SheetNames || wb.SheetNames.length === 0) return null
+
+    // Inspeccionar la primera hoja
+    const sheet = wb.Sheets[wb.SheetNames[0]]
+    if (!sheet) return null
+
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][]
+    // Buscar en las primeras 25 filas
+    for (let r = 0; r < Math.min(rows.length, 25); r++) {
+      const row = rows[r]
+      if (!Array.isArray(row)) continue
+      for (const cell of row) {
+        if (!cell) continue
+        const str = String(cell).trim()
+        const found = extractDateFromText(str)
+        if (found) return found
+      }
+    }
+  } catch (e) {
+    console.warn("[extractDateFromExcelBuffer] Error:", e)
+  }
   return null
 }
 

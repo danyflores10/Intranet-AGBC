@@ -81,7 +81,7 @@ export async function obtenerDocumentos() {
   const dirCat = alias(documentoCategorias, "dirCat")
   const subCat = alias(documentoCategorias, "subCat")
 
-  const rows = await db
+  let rows = await db
     .select({
       id: documentos.id,
       titulo: documentos.titulo,
@@ -113,6 +113,47 @@ export async function obtenerDocumentos() {
     .leftJoin(dirCat, eq(documentos.direccionId, dirCat.id))
     .leftJoin(subCat, eq(documentos.subcategoriaId, subCat.id))
     .orderBy(desc(documentos.createdAt))
+
+  // Auto-sincronización instantánea de los 89 documentos oficiales si faltan fechas oficiales
+  if (rows.length < 89 || rows.some((r) => !r.fechaEmision || r.fechaEmision === "Sin fecha fija")) {
+    try {
+      await sincronizarJerarquiaCategorias()
+      rows = await db
+        .select({
+          id: documentos.id,
+          titulo: documentos.titulo,
+          categoriaId: documentos.categoriaId,
+          categoria: documentoCategorias.nombre,
+          direccionId: documentos.direccionId,
+          direccion: dirCat.nombre,
+          subcategoriaId: documentos.subcategoriaId,
+          subcategoria: subCat.nombre,
+          tipoDocumental: documentos.tipoDocumental,
+          autor: documentos.autor,
+          estado: documentos.estado,
+          archivo: documentos.archivo,
+          nombreArchivo: documentos.nombreArchivo,
+          tipoArchivo: documentos.tipoArchivo,
+          tamano: documentos.tamano,
+          descripcion: documentos.descripcion,
+          version: documentos.version,
+          esVigente: documentos.esVigente,
+          familiaCodigo: documentos.familiaCodigo,
+          fechaEmision: documentos.fechaEmision,
+          numeroCorrelativo: documentos.numeroCorrelativo,
+          disponibilidadArchivo: documentos.disponibilidadArchivo,
+          createdAt: documentos.createdAt,
+          updatedAt: documentos.updatedAt,
+        })
+        .from(documentos)
+        .leftJoin(documentoCategorias, eq(documentos.categoriaId, documentoCategorias.id))
+        .leftJoin(dirCat, eq(documentos.direccionId, dirCat.id))
+        .leftJoin(subCat, eq(documentos.subcategoriaId, subCat.id))
+        .orderBy(desc(documentos.createdAt))
+    } catch (e) {
+      console.error("[obtenerDocumentos] Error auto-sincronizando documentos oficiales:", e)
+    }
+  }
 
   return rows.map((r) => {
     if (!r.direccion || !r.subcategoria || !r.tipoDocumental) {
