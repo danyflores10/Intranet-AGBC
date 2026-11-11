@@ -34,6 +34,56 @@ function cleanHtmlTable(rawHtml: string): string {
   return match[0]
 }
 
+function findBestInitialSheet(wb: XLSX.WorkBook, docTitle?: string): string {
+  if (!wb || !wb.SheetNames || wb.SheetNames.length === 0) return ""
+  if (wb.SheetNames.length === 1) return wb.SheetNames[0]
+
+  // 1. Si el libro tiene activeTab guardado en WBView (como lo guarda Excel de escritorio al guardar el archivo)
+  const wbView = (wb.Workbook as any)?.WBView?.[0] || (wb.Workbook as any)?.Views?.[0]
+  const activeTabIdx = wbView?.activeTab ?? wbView?.activetab
+  if (typeof activeTabIdx === "number" && wb.SheetNames[activeTabIdx]) {
+    return wb.SheetNames[activeTabIdx]
+  }
+
+  // 2. Si hay título de documento, buscar cuál hoja contiene el texto del título en sus celdas
+  if (docTitle) {
+    const tokens = docTitle
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, " ")
+      .split(/\s+/)
+      .filter((w) => w.length > 3)
+
+    let bestScore = -1
+    let bestSheet = wb.SheetNames[0]
+
+    for (const name of wb.SheetNames) {
+      const ws = wb.Sheets[name]
+      if (!ws) continue
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1 }) as any[][]
+      const textHead = data
+        .slice(0, 15)
+        .flat()
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+
+      let score = 0
+      for (const t of tokens) {
+        if (textHead.includes(t)) score++
+      }
+
+      if (score > bestScore) {
+        bestScore = score
+        bestSheet = name
+      }
+    }
+
+    if (bestScore > 0) return bestSheet
+  }
+
+  return wb.SheetNames[0]
+}
+
 export function DocumentContentViewer({
   url,
   fileName,
@@ -85,9 +135,9 @@ export function DocumentContentViewer({
           }
           setWorkbook(wb)
           setSheets(wb.SheetNames)
-          const firstSheet = wb.SheetNames[0]
-          setActiveSheet(firstSheet)
-          const sheet = wb.Sheets[firstSheet]
+          const initialSheet = findBestInitialSheet(wb, title || fileName)
+          setActiveSheet(initialSheet)
+          const sheet = wb.Sheets[initialSheet]
           const tableHtml = XLSX.utils.sheet_to_html(sheet, { id: "excel-preview-grid" })
           setExcelHtml(cleanHtmlTable(tableHtml))
         } else if (typeInfo.isWord) {
@@ -144,7 +194,7 @@ export function DocumentContentViewer({
     return () => {
       isCancelled = true
     }
-  }, [effectiveUrl, typeInfo.isExcel, typeInfo.isWord, fileName])
+  }, [effectiveUrl, typeInfo.isExcel, typeInfo.isWord, fileName, title])
 
   const handleSheetChange = (sheetName: string) => {
     if (!workbook) return
