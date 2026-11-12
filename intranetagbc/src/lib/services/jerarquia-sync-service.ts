@@ -223,6 +223,30 @@ export async function sincronizarJerarquiaCategorias(force: boolean = false) {
     }
 
     // 5. Limpiar o despublicar registros duplicados o corruptos que no pertenezcan a los 89 oficiales
+    //    Específicamente eliminar la v2 accidental de RE-SOA y notificaciones asociadas
+    try {
+      await client.query(`
+        DELETE FROM "documentos"
+        WHERE (
+          LOWER(COALESCE("familia_codigo", '')) = 're-soa'
+          OR LOWER("titulo") LIKE '%organizaci%n administrativa%'
+          OR LOWER("titulo") LIKE '%re-soa%'
+        )
+        AND (
+          "version" ILIKE '%2%'
+          OR "direccion_id" IS NULL
+          OR "subcategoria_id" IS NULL
+          OR "id" != 'sslpqzo6tv8forkwdw2w2wzc'
+        );
+
+        DELETE FROM "notificaciones"
+        WHERE LOWER("titulo") LIKE '%organizaci%n administrativa%'
+          AND "created_at" >= '2026-11-10';
+      `)
+    } catch (cleanErr) {
+      console.warn("[AGBC Jerarquía] Advertencia limpiando versión accidental RE-SOA:", cleanErr)
+    }
+
     const idsDocArray = Array.from(validDocIds)
     if (idsDocArray.length > 0) {
       await client.query(

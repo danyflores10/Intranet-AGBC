@@ -398,11 +398,6 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
               >
                 {doc.version || "v1.0"} {doc.esVigente !== false ? "• Vigente" : "• Histórico"}
               </span>
-              {doc.disponibilidadArchivo === "falta_archivo" && (
-                <span className="inline-flex items-center text-[9px] font-bold bg-red-100 text-red-800 border border-red-300 px-1.5 py-0.5 rounded">
-                  FALTA PDF
-                </span>
-              )}
               {tamano && (
                 <span className="inline-flex items-center gap-1 text-slate-500">
                   <HardDrive className="h-3 w-3" />

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition, useRef, useMemo, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
   PlusIcon,
   FileTextIcon,
@@ -245,6 +245,23 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
 
   const docsConArchivo = useMemo(() => docsEnriquecidos.filter((d) => d.archivo), [docsEnriquecidos])
 
+  const searchParams = useSearchParams()
+  useEffect(() => {
+    if (!searchParams) return
+    const docId = searchParams.get("docId")
+    const buscar = searchParams.get("buscar")
+    if (docId) {
+      const found = docsEnriquecidos.find((d) => d.id === docId)
+      if (found) {
+        setPreviewDoc(found)
+        setTab("todos")
+      }
+    } else if (buscar) {
+      setSearchQuery(buscar)
+      setTab("todos")
+    }
+  }, [searchParams, docsEnriquecidos])
+
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [showPermanentDeleteModal, setShowPermanentDeleteModal] = useState(false)
   const [isProcessingBulk, setIsProcessingBulk] = useState(false)
@@ -411,6 +428,19 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
       return
     }
 
+    if (!docDireccion || docDireccion === "__none__" || !docDireccion.trim()) {
+      toast.error("Debes seleccionar una Dirección institucional obligatoriamente.")
+      return
+    }
+    if (!docSubcategoria || docSubcategoria === "__none__" || !docSubcategoria.trim()) {
+      toast.error("Debes seleccionar una Subcategoría / Área obligatoriamente.")
+      return
+    }
+    if (!docTipoDocumental || docTipoDocumental === "__none__" || !docTipoDocumental.trim()) {
+      toast.error("Debes seleccionar un Tipo Documental obligatoriamente.")
+      return
+    }
+
     startTransition(async () => {
       try {
         const titulo = fd.get("titulo") as string
@@ -539,9 +569,10 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
     setDocVersion("v1.0")
     setDocEsVigente(true)
     setDocDisponibilidadArchivo("disponible")
-    setDocNumeroCorrelativo("")
+    const nextCorrelativo = Math.max(0, ...documentos.map((d) => d.numeroCorrelativo || 0)) + 1
+    setDocNumeroCorrelativo(String(nextCorrelativo))
     setDocFamiliaCodigo("")
-    setEstado("borrador")
+    setEstado("publicado")
     setDialogOpen(true)
   }
 
@@ -814,7 +845,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         const familiaCod = d.familiaCodigo || obtenerCodigoFamiliaCanonica(d.titulo) || "—"
         const versionStr = d.version || "v1.0"
         const vigenciaStr = d.esVigente !== false ? "Vigente" : "Histórico"
-        const disponibilidadStr = d.disponibilidadArchivo === "falta_archivo" ? "FALTA PDF" : "DISPONIBLE"
+        const disponibilidadStr = "DISPONIBLE"
 
         rows.push([
           numCorrelativo,
@@ -1694,13 +1725,6 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                                 <GitBranchIcon className="h-2.5 w-2.5" />
                                 {item.version || "v1.0"} {item.esVigente !== false ? "• Vigente" : "• Histórico"}
                               </span>
-                              {/* Falta Archivo Badge */}
-                              {item.disponibilidadArchivo === "falta_archivo" && (
-                                <span className="text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                                  <AlertTriangleIcon className="h-2.5 w-2.5" />
-                                  FALTA PDF
-                                </span>
-                              )}
                             </div>
                             {item.nombreArchivo && (
                               <p className="text-[10px] text-slate-400 truncate max-w-[280px] font-mono mt-0.5">{item.nombreArchivo}</p>
@@ -1916,18 +1940,16 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                   <div className="space-y-1">
                     <Label className="text-[11px] font-bold text-slate-700">1. Dirección *</Label>
                     <Select
-                      value={docDireccion || "__none__"}
+                      value={docDireccion || undefined}
                       onValueChange={(val) => {
-                        const v = val === "__none__" ? "" : val
-                        setDocDireccion(v)
+                        setDocDireccion(val)
                         setDocSubcategoria("")
                       }}
                     >
                       <SelectTrigger className="h-9 rounded-xl text-xs bg-white">
-                        <SelectValue placeholder="Dirección" />
+                        <SelectValue placeholder="Seleccione Dirección *" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="__none__">Sin Dirección fija</SelectItem>
                         {ESTRUCTURA_JERARQUICA.map((dir) => (
                           <SelectItem key={dir.codigo} value={dir.nombre}>
                             {dir.codigo} - {dir.nombre.replace("Dirección ", "")}
@@ -1939,16 +1961,16 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
 
                   {/* 2. Subcategoría */}
                   <div className="space-y-1">
-                    <Label className="text-[11px] font-bold text-slate-700">2. Subcategoría *</Label>
+                    <Label className="text-[11px] font-bold text-slate-700">2. Subcategoría / Área *</Label>
                     <Select
-                      value={docSubcategoria || "__none__"}
-                      onValueChange={(val) => setDocSubcategoria(val === "__none__" ? "" : val)}
+                      value={docSubcategoria || undefined}
+                      onValueChange={(val) => setDocSubcategoria(val)}
+                      disabled={!docDireccion}
                     >
                       <SelectTrigger className="h-9 rounded-xl text-xs bg-white">
-                        <SelectValue placeholder="Área" />
+                        <SelectValue placeholder={docDireccion ? "Seleccione Área *" : "Primero elija Dirección"} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="__none__">Área General</SelectItem>
                         {subcategoriasDialogDisponibles.map((sub) => (
                           <SelectItem key={sub.codigo} value={sub.nombre}>
                             {sub.nombre}
@@ -1960,16 +1982,15 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
 
                   {/* 3. Tipo Documental */}
                   <div className="space-y-1">
-                    <Label className="text-[11px] font-bold text-slate-700">3. Tipo *</Label>
+                    <Label className="text-[11px] font-bold text-slate-700">3. Tipo Documental *</Label>
                     <Select
-                      value={docTipoDocumental || "__none__"}
-                      onValueChange={(val) => setDocTipoDocumental(val === "__none__" ? "" : val)}
+                      value={docTipoDocumental || undefined}
+                      onValueChange={(val) => setDocTipoDocumental(val)}
                     >
                       <SelectTrigger className="h-9 rounded-xl text-xs bg-white">
-                        <SelectValue placeholder="Tipo" />
+                        <SelectValue placeholder="Seleccione Tipo *" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="__none__">Normativa</SelectItem>
                         {TIPOS_DOCUMENTALES.map((tipo) => (
                           <SelectItem key={tipo} value={tipo}>
                             {tipo}
@@ -2078,7 +2099,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="disponible">Archivo Disponible</SelectItem>
-                        <SelectItem value="falta_archivo">Falta Archivo Digital (FALTA PDF)</SelectItem>
+                        <SelectItem value="falta_archivo">Archivo Pendiente</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

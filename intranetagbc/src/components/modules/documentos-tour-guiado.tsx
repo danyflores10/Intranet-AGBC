@@ -175,7 +175,7 @@ export function DocumentosTourGuiado({ open, onClose }: Props) {
               Aísla las familias normativas que han evolucionado en el tiempo (ej. v1.0, v2.0, v3.0).
             </div>
             <div className="p-2 rounded-xl bg-amber-50 border border-amber-200">
-              <strong className="text-amber-900 block">• Falta PDF:</strong>
+              <strong className="text-amber-900 block">• Pendiente:</strong>
               Muestra documentos aprobados que tienen pendiente la carga de su archivo físico digital.
             </div>
           </div>
@@ -266,7 +266,7 @@ export function DocumentosTourGuiado({ open, onClose }: Props) {
             </div>
             <div className="p-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800">
               <strong className="block text-sm font-black">15</strong>
-              <span className="font-bold">Falta PDF</span>
+              <span className="font-bold">Pendiente</span>
             </div>
           </div>
 
@@ -274,7 +274,7 @@ export function DocumentosTourGuiado({ open, onClose }: Props) {
             <p><strong>• Nuevos:</strong> Documentos agregados a la planilla que no existían.</p>
             <p><strong>• Modificados:</strong> Registros existentes con cambios en fecha, dirección, etc.</p>
             <p><strong>• Sin Cambios:</strong> Registros idénticos a los de la base de datos.</p>
-            <p><strong>• Falta PDF:</strong> Documentos del catálogo pendientes de archivo físico.</p>
+            <p><strong>• Pendiente:</strong> Documentos del catálogo pendientes de archivo físico.</p>
           </div>
         </div>
       ),
@@ -366,7 +366,7 @@ export function DocumentosTourGuiado({ open, onClose }: Props) {
             </div>
             <div>
               <span className="font-bold text-[#002F6C] block">Archivo Digital:</span>
-              <span className="text-slate-500">Disponible vs. Falta PDF</span>
+              <span className="text-slate-500">Disponible vs. Pendiente</span>
             </div>
           </div>
 

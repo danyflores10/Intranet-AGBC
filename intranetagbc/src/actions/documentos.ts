@@ -2,7 +2,7 @@
 
 import { db } from "@/db"
 import { documentos, documentoCategorias, archivos } from "@/db/schema"
-import { eq, desc, inArray } from "drizzle-orm"
+import { eq, desc, inArray, sql } from "drizzle-orm"
 import { alias } from "drizzle-orm/pg-core"
 import { revalidatePath } from "next/cache"
 import { registrarAuditLog } from "@/actions/auditoria"
@@ -242,11 +242,20 @@ export async function crearDocumento(data: {
     if (!tipoDoc) tipoDoc = deduced.tipoDocumental
   }
 
+  let numCorrelativo = data.numeroCorrelativo
+  if (!numCorrelativo) {
+    const maxRes = await db
+      .select({ maxVal: sql<number>`COALESCE(MAX(${documentos.numeroCorrelativo}), 0)` })
+      .from(documentos)
+    numCorrelativo = Number(maxRes[0]?.maxVal || 0) + 1
+  }
+
   const payload = {
     ...data,
     direccionId: dirId || undefined,
     subcategoriaId: subId || undefined,
     tipoDocumental: tipoDoc || undefined,
+    numeroCorrelativo: numCorrelativo,
     autor: (data.autor || "").trim() || "AGBC Institucional",
   }
   const [nuevo] = await db.insert(documentos).values(payload).returning()
@@ -446,6 +455,10 @@ export async function importarDocumentosLote(items: DocumentoImportItem[]): Prom
   })
 
   revalidatePath("/documentos")
+  revalidatePath("/(admin)/documentos")
+  revalidatePath("/(admin)/dashboard")
+  revalidatePath("/dashboard")
+  revalidatePath("/")
   return resultado
 }
 

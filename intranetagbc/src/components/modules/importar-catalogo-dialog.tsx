@@ -561,7 +561,7 @@ export function ImportarCatalogoDialog({
           motivoDisp = `Archivo físico nuevo adjuntado (${matchedPhysicalFile.name})`
         } else if (checkReportado) {
           disponibilidadFinal = "falta_archivo"
-          motivoDisp = "Reportado como FALTA PDF en el catálogo"
+          motivoDisp = "Reportado como Pendiente en el catálogo"
         } else if (docExistente?.archivo && archivoRegistradoEnDb) {
           disponibilidadFinal = "disponible"
           motivoDisp = "Archivo digital verificado en sistema"
@@ -1089,7 +1089,7 @@ export function ImportarCatalogoDialog({
                     Atención: Se detectaron {totalFaltanArchivo} documentos sin archivo digital PDF
                   </p>
                   <p className="text-[11px] leading-relaxed text-amber-800 dark:text-amber-300">
-                    Estos documentos están registrados en el Excel pero no cuentan con archivo físico en el servidor. Puedes importarlos con la marca <strong>FALTA PDF</strong> para completar sus metadatos y asociar el archivo posteriormente.
+                    Estos documentos están registrados en el Excel pero no cuentan con archivo físico en el servidor. Puedes importarlos con la marca <strong>Pendiente</strong> para completar sus metadatos y asociar el archivo posteriormente.
                   </p>
                 </div>
               </div>
@@ -1246,7 +1246,7 @@ export function ImportarCatalogoDialog({
                             {esFaltaPdf ? (
                               <span className="text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-300 px-2 py-0.5 rounded-md flex items-center gap-1">
                                 <AlertTriangleIcon className="h-2.5 w-2.5" />
-                                FALTA PDF
+                                Pendiente
                               </span>
                             ) : (
                               <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md flex items-center gap-1">

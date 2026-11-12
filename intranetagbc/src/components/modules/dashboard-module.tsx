@@ -1029,7 +1029,7 @@ export function DashboardModule({
                               </td>
                               <td className="py-3 px-4 text-right">
                                 <Link
-                                  href="/documentos"
+                                  href={`/documentos?docId=${d.id}&buscar=${encodeURIComponent(d.titulo)}`}
                                   className="inline-flex items-center gap-1 rounded-lg bg-blue-50 hover:bg-[#0E5296] text-[#0E5296] hover:text-white px-2.5 py-1 text-xs font-bold transition-all"
                                 >
                                   <span>Ver Documento</span>
@@ -1368,7 +1368,7 @@ export function DashboardModule({
                                   {(item as DocumentoItem).tamano || "Archivo"}
                                 </span>
                                 <Link
-                                  href="/documentos"
+                                  href={`/documentos?docId=${(item as DocumentoItem).id}&buscar=${encodeURIComponent((item as DocumentoItem).titulo)}`}
                                   className="text-[10px] font-black text-[#0E5296] hover:underline"
                                 >
                                   Abrir →

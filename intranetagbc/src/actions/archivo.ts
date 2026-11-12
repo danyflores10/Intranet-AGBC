@@ -6,6 +6,7 @@ import { eq, desc } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { registrarAuditLog } from "@/actions/auditoria"
 
+
 type DocumentoPapeleraPayload = {
   source: "documentos"
   version: number

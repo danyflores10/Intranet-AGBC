@@ -192,7 +192,7 @@ Disponibilidad: Archivo físico registrado en catálogo; pendiente de escaneo/as
       fechaOficial,
       d.version || "v1.0",
       d.esVigente !== false ? "Vigente" : "Histórico",
-      physicalPath ? "Archivo Digital Incluido" : "FALTA PDF (Pendiente)",
+      physicalPath ? "Archivo Digital Incluido" : "Digitalización Pendiente",
       `${cleanDir} > ${cleanSub} > ${cleanTipo} > ${finalFileName}`,
     ])
   })
