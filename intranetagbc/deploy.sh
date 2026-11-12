@@ -10,6 +10,9 @@ echo "   Iniciando Despliegue de Intranet AGBC en Producción"
 echo "========================================================"
 echo ""
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
 # 1. Asegurar rama main y descargar cambios
 echo "📥 [1/5] Actualizando repositorio desde Git..."
 git pull origin main
