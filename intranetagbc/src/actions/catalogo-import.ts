@@ -2,7 +2,7 @@
 
 import { db } from "@/db"
 import { documentos, documentoCategorias, catalogoImportaciones, users } from "@/db/schema"
-import { eq, desc } from "drizzle-orm"
+import { eq, desc, and, ne, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { registrarAuditLog } from "@/actions/auditoria"
 import { PERMISOS } from "@/lib/auth/permisos"
@@ -371,15 +371,21 @@ export async function sincronizarCatalogoExcelAction(
         })
       } else {
         // Inserción de nuevo documento
+        let correlativoItem = item.numeroCorrelativo
+        if (!correlativoItem) {
+          const maxR = await db.select({ maxVal: sql<number>`COALESCE(MAX(${documentos.numeroCorrelativo}), 0)` }).from(documentos)
+          correlativoItem = Number(maxR[0]?.maxVal || 0) + 1
+        }
+
         const [nuevoDoc] = await db
           .insert(documentos)
           .values({
             titulo: item.titulo,
-            numeroCorrelativo: item.numeroCorrelativo || null,
+            numeroCorrelativo: correlativoItem,
             fechaEmision: item.fechaOficial || "Sin fecha fija",
             direccionId: direccionId || undefined,
             subcategoriaId: subcategoriaId || undefined,
-            categoriaId: categoriaId || undefined,
+            categoriaId: categoriaId || subcategoriaId || direccionId || undefined,
             tipoDocumental: tipoDoc || "Normativas",
             descripcion: item.descripcion || null,
             archivo: item.archivoUrl || null,
@@ -395,6 +401,17 @@ export async function sincronizarCatalogoExcelAction(
             creadoPor: sesion.id,
           })
           .returning({ id: documentos.id })
+
+        if (codFam && (item.esVigente !== false) && nuevoDoc) {
+          try {
+            await db
+              .update(documentos)
+              .set({ esVigente: false })
+              .where(and(eq(documentos.familiaCodigo, codFam), ne(documentos.id, nuevoDoc.id)))
+          } catch (famErr) {
+            console.warn("Error actualizando versiones anteriores en import:", famErr)
+          }
+        }
 
         countNuevos++
         detalleCambios.push({
@@ -452,6 +469,20 @@ export async function sincronizarCatalogoExcelAction(
       errores: countErrores,
     }),
   })
+
+  if (countNuevos > 0) {
+    try {
+      const { crearNotificacionParaTodos } = await import("@/actions/notificaciones")
+      await crearNotificacionParaTodos({
+        titulo: `Catálogo Actualizado: ${countNuevos} nuevo(s) documento(s)`,
+        mensaje: `Se han incorporado ${countNuevos} nuevo(s) documento(s) oficial(es) a la Biblioteca Digital mediante importación de catálogo.`,
+        tipo: "comunicado",
+        enlace: "/#documentos",
+      })
+    } catch (notifErr) {
+      console.warn("Error emitiendo notificación de importación:", notifErr)
+    }
+  }
 
   revalidatePath("/(admin)/documentos")
   revalidatePath("/documentos")

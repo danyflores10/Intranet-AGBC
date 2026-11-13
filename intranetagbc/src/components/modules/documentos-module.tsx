@@ -66,8 +66,8 @@ import { HistorialImportacionesDialog } from "@/components/modules/historial-imp
 import { DocumentosTourGuiado } from "@/components/modules/documentos-tour-guiado"
 import * as XLSX from "xlsx"
 import { LISTA_DOCUMENTOS_OFICIALES, obtenerFechaOficialDocumento } from "@/lib/documentos-fechas-map"
-import { ESTRUCTURA_JERARQUICA, TIPOS_DOCUMENTALES, clasificarDocumento } from "@/lib/documentos-jerarquia"
-import { normalizarFamiliaCanonica, obtenerCodigoFamiliaCanonica } from "@/lib/documentos-versionador"
+import { ESTRUCTURA_JERARQUICA, TIPOS_DOCUMENTALES, clasificarDocumento, obtenerGrupoJerarquico } from "@/lib/documentos-jerarquia"
+import { normalizarFamiliaCanonica, obtenerCodigoFamiliaCanonica, calcularVersionesCatalogo } from "@/lib/documentos-versionador"
 import {
   getDocumentTypeInfo,
   getCleanDocumentFileName,
@@ -218,30 +218,42 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   const canEditDocumento = true
   const canDeleteDocumento = true
 
-  // Enriquecer documentos con jerarquía y códigos de familia oficiales
+  // Enriquecer documentos con jerarquía y códigos de familia oficiales dinámicos
   const docsEnriquecidos = useMemo(() => {
-    const countPorFamilia = new Map<string, number>()
-    documentos.forEach((d) => {
-      const cod = d.familiaCodigo || obtenerCodigoFamiliaCanonica(d.titulo)
-      if (cod) {
-        countPorFamilia.set(cod, (countPorFamilia.get(cod) || 0) + 1)
-      }
-    })
-
-    return documentos.map((d) => {
-      const j = clasificarDocumento(d.archivo || d.nombreArchivo, d.titulo)
-      const cod = d.familiaCodigo || obtenerCodigoFamiliaCanonica(d.titulo) || ""
-      const totalEnFam = cod ? (countPorFamilia.get(cod) || 1) : 1
+    const versionados = calcularVersionesCatalogo(documentos)
+    return versionados.map(({ item, familiaCodigo, version, esVigente, totalVersionesEnFamilia, historialVersiones }) => {
+      const j = clasificarDocumento(item.archivo || item.nombreArchivo, item.titulo)
       return {
-        ...d,
-        direccion: d.direccion || j.direccionNombre,
-        subcategoria: d.subcategoria || j.subcategoriaNombre,
-        tipoDocumental: d.tipoDocumental || j.tipoDocumental,
-        familiaCodigo: cod,
-        totalVersionesEnFamilia: totalEnFam,
+        ...item,
+        direccion: item.direccion || j.direccionNombre,
+        subcategoria: item.subcategoria || j.subcategoriaNombre,
+        tipoDocumental: item.tipoDocumental || j.tipoDocumental,
+        familiaCodigo,
+        version,
+        esVigente,
+        totalVersionesEnFamilia,
+        historialVersiones,
       }
     })
   }, [documentos])
+
+  // Familias dinámicas con conteo de versiones en tiempo real
+  const familiasDinamicas = useMemo(() => {
+    const mapa = new Map<string, number>()
+    const base = ["RE-SABS", "RE-SAP", "RE-SOA", "ETICA"]
+    base.forEach((b) => mapa.set(b, 0))
+
+    docsEnriquecidos.forEach((d) => {
+      const f = (d.familiaCodigo || "").trim().toUpperCase()
+      if (f && f !== "—") {
+        mapa.set(f, (mapa.get(f) || 0) + 1)
+      }
+    })
+
+    return Array.from(mapa.entries())
+      .map(([codigo, count]) => ({ codigo, count }))
+      .sort((a, b) => a.codigo.localeCompare(b.codigo))
+  }, [docsEnriquecidos])
 
   const docsConArchivo = useMemo(() => docsEnriquecidos.filter((d) => d.archivo), [docsEnriquecidos])
 
@@ -614,29 +626,36 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
     })
   }
 
-  // Filtrado de documentos con filtros jerárquicos
+  // Filtrado de documentos con filtros jerárquicos y grupos documentales inteligentes
   const filteredDocs = useMemo(() => {
     return docsEnriquecidos.filter((d) => {
+      const q = searchQuery.toLowerCase().trim()
       const matchSearch =
-        !searchQuery ||
-        d.titulo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (d.descripcion && d.descripcion.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (d.categoria && d.categoria.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (d.direccion && d.direccion.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (d.subcategoria && d.subcategoria.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (d.tipoDocumental && d.tipoDocumental.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (d.nombreArchivo && d.nombreArchivo.toLowerCase().includes(searchQuery.toLowerCase()))
+        !q ||
+        d.titulo.toLowerCase().includes(q) ||
+        (d.descripcion && d.descripcion.toLowerCase().includes(q)) ||
+        (d.categoria && d.categoria.toLowerCase().includes(q)) ||
+        (d.direccion && d.direccion.toLowerCase().includes(q)) ||
+        (d.subcategoria && d.subcategoria.toLowerCase().includes(q)) ||
+        (d.tipoDocumental && d.tipoDocumental.toLowerCase().includes(q)) ||
+        (d.familiaCodigo && d.familiaCodigo.toLowerCase().includes(q)) ||
+        (d.version && d.version.toLowerCase().includes(q)) ||
+        (d.nombreArchivo && d.nombreArchivo.toLowerCase().includes(q))
 
-      const matchDir = !direccionFiltro || d.direccion === direccionFiltro
-      const matchSub = !subcategoriaFiltro || d.subcategoria === subcategoriaFiltro
-      const matchTipo = !tipoDocumentalFiltro || d.tipoDocumental === tipoDocumentalFiltro
+      const matchDir = !direccionFiltro || d.direccion?.toLowerCase() === direccionFiltro.toLowerCase()
+      const matchSub = !subcategoriaFiltro || d.subcategoria?.toLowerCase() === subcategoriaFiltro.toLowerCase()
+
+      const grupoDoc = obtenerGrupoJerarquico(d.tipoDocumental, d.categoria, d.titulo)
+      const matchTipo =
+        !tipoDocumentalFiltro ||
+        d.tipoDocumental?.toLowerCase() === tipoDocumentalFiltro.toLowerCase() ||
+        grupoDoc.toLowerCase() === tipoDocumentalFiltro.toLowerCase()
 
       let matchVigencia = true
       if (vigenciaFiltro === "vigentes") matchVigencia = d.esVigente !== false
       else if (vigenciaFiltro === "historicos") matchVigencia = d.esVigente === false
       else if (vigenciaFiltro === "multiversion") {
-        const countFam = d.familiaCodigo ? docsEnriquecidos.filter((o) => o.familiaCodigo === d.familiaCodigo).length : 1
-        matchVigencia = countFam > 1
+        matchVigencia = (d.totalVersionesEnFamilia || 1) > 1
       }
 
       return matchSearch && matchDir && matchSub && matchTipo && matchVigencia
@@ -1262,7 +1281,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                   <SelectItem value="todas">Todas las Versiones ({docsEnriquecidos.length})</SelectItem>
                   <SelectItem value="vigentes">Solo Vigentes ({docsEnriquecidos.filter((d) => d.esVigente !== false).length})</SelectItem>
                   <SelectItem value="historicos">Históricos / Derogados ({docsEnriquecidos.filter((d) => d.esVigente === false).length})</SelectItem>
-                  <SelectItem value="multiversion">Múltiples Versiones ({docsEnriquecidos.filter((d) => d.familiaCodigo && docsEnriquecidos.filter((o) => o.familiaCodigo === d.familiaCodigo).length > 1).length})</SelectItem>
+                  <SelectItem value="multiversion">Múltiples Versiones ({docsEnriquecidos.filter((d) => (d.totalVersionesEnFamilia || 1) > 1).length})</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -2099,7 +2118,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                       value={
                         docFamiliaCodigo === "" || docFamiliaCodigo === "—"
                           ? "__none__"
-                          : ["RE-SABS", "RE-SAP", "RE-SOA", "ETICA"].includes(docFamiliaCodigo)
+                          : familiasDinamicas.some((f) => f.codigo === docFamiliaCodigo)
                           ? docFamiliaCodigo
                           : "__custom__"
                       }
@@ -2114,14 +2133,15 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none__">Sin Familia (Documento Individual)</SelectItem>
-                        <SelectItem value="RE-SABS">RE-SABS (3 versiones registradas)</SelectItem>
-                        <SelectItem value="RE-SAP">RE-SAP (2 versiones registradas)</SelectItem>
-                        <SelectItem value="RE-SOA">RE-SOA (2 versiones registradas)</SelectItem>
-                        <SelectItem value="ETICA">ETICA (2 versiones registradas)</SelectItem>
-                        <SelectItem value="__custom__">Otro código personalizado...</SelectItem>
+                        {familiasDinamicas.map((fam) => (
+                          <SelectItem key={fam.codigo} value={fam.codigo}>
+                            {fam.codigo} ({fam.count} {fam.count === 1 ? "versión registrada" : "versiones registradas"})
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="__custom__">+ Otro código de norma personalizado...</SelectItem>
                       </SelectContent>
                     </Select>
-                    {docFamiliaCodigo !== "" && !["RE-SABS", "RE-SAP", "RE-SOA", "ETICA"].includes(docFamiliaCodigo) && (
+                    {docFamiliaCodigo !== "" && !familiasDinamicas.some((f) => f.codigo === docFamiliaCodigo) && (
                       <Input
                         value={docFamiliaCodigo}
                         onChange={(e) => setDocFamiliaCodigo(e.target.value.toUpperCase())}

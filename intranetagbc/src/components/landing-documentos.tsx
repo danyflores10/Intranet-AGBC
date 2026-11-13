@@ -811,9 +811,6 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                                 <h4 className="text-sm font-black text-[#002F6C] group-hover:text-[#0E5296] transition-colors line-clamp-1">
                                   {dir.nombre}
                                 </h4>
-                                <p className="text-[11px] text-slate-500 font-medium line-clamp-2 mt-1 leading-relaxed">
-                                  {dir.descripcion}
-                                </p>
                               </div>
 
                               {/* Vista previa de subcategorías */}
@@ -885,13 +882,6 @@ export function LandingDocumentos({ documentos }: { documentos: Doc[] }) {
                                 <h4 className="text-sm font-black text-[#002F6C] group-hover:text-[#0E5296] transition-colors">
                                   {sub.nombre}
                                 </h4>
-                                <p className="text-[11px] text-slate-500 font-medium line-clamp-2 mt-1 leading-relaxed">
-                                  {sub.descripcion}
-                                </p>
-                              </div>
-
-                              <div className="text-[10px] font-bold text-slate-500 bg-white/80 p-2 rounded-xl border border-slate-200">
-                                6 Categorías disponibles: Circulares, Formularios, Instructivos, Manuales, Normativas, Reglamentos
                               </div>
                             </div>
 
