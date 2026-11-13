@@ -124,7 +124,23 @@ export async function crearNotificacionParaTodos(data: {
     }))
 
     await db.insert(notificaciones).values(rows)
+
+    try {
+      if ((global as any).io) {
+        (global as any).io.emit("notification:new", {
+          titulo: data.titulo,
+          mensaje: data.mensaje,
+          tipo: data.tipo || "info",
+          enlace: data.enlace || null,
+          createdAt: new Date().toISOString(),
+        })
+      }
+    } catch (sockErr) {
+      console.warn("Socket broadcast error:", sockErr)
+    }
+
     revalidatePath("/dashboard")
+    revalidatePath("/notificaciones")
     revalidatePath("/")
   } catch (error) {
     console.error("Error al crear notificación para todos:", error)

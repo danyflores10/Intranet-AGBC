@@ -39,6 +39,8 @@ interface DocItem {
   tipoArchivo?: string | null
   tamano?: string | null
   descripcion?: string | null
+  numeroCorrelativo?: number | null
+  familiaCodigo?: string | null
   createdAt?: Date | string | null
   updatedAt?: Date | string | null
 }
@@ -54,7 +56,7 @@ export function NuevoDocumentoModal({ documentos, usuarioId }: Props) {
   const [visitedIndices, setVisitedIndices] = useState<Set<number>>(new Set([0]))
   const [countdown, setCountdown] = useState<number>(5)
 
-  // 1. Filtrar documentos publicados recientes (últimos 5 días)
+  // 1. Filtrar documentos publicados nuevos (subidos al sistema recientemente, excluyendo el catálogo base inicial de 89)
   const docsNuevos = useMemo(() => {
     if (!documentos || documentos.length === 0) return []
 
@@ -64,10 +66,17 @@ export function NuevoDocumentoModal({ documentos, usuarioId }: Props) {
     return documentos
       .filter((d) => {
         if (d.estado !== "publicado" || !d.archivo) return false
+        
+        // Regla esencial: Los 89 documentos base del catálogo inicial nunca deben disparar la ventana modal
+        if (typeof d.numeroCorrelativo === "number" && d.numeroCorrelativo <= 89) {
+          return false
+        }
+
         // Excluir la versión accidental de RE-SOA si existiera en memoria
         if (d.titulo?.toLowerCase().includes("re-soa") && d.titulo?.toLowerCase().includes("v2")) {
           return false
         }
+
         if (!d.createdAt) return false
         const t = new Date(d.createdAt).getTime()
         return ahora - t <= CINCO_DIAS_MS

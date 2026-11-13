@@ -222,8 +222,7 @@ export async function sincronizarJerarquiaCategorias(force: boolean = false) {
       sincronizadosDocs++
     }
 
-    // 5. Limpiar o despublicar registros duplicados o corruptos que no pertenezcan a los 89 oficiales
-    //    Específicamente eliminar la v2 accidental de RE-SOA y notificaciones asociadas
+    // 5. Limpieza específica de la v2 accidental de RE-SOA sin dirección ni subárea
     try {
       await client.query(`
         DELETE FROM "documentos"
@@ -232,34 +231,20 @@ export async function sincronizarJerarquiaCategorias(force: boolean = false) {
           OR LOWER("titulo") LIKE '%organizaci%n administrativa%'
           OR LOWER("titulo") LIKE '%re-soa%'
         )
-        AND (
-          "version" ILIKE '%2%'
-          OR "direccion_id" IS NULL
-          OR "subcategoria_id" IS NULL
-          OR "id" != 'sslpqzo6tv8forkwdw2w2wzc'
-        );
+        AND "version" ILIKE '%2%'
+        AND ("direccion_id" IS NULL OR "subcategoria_id" IS NULL);
 
         DELETE FROM "notificaciones"
         WHERE LOWER("titulo") LIKE '%organizaci%n administrativa%'
+          AND LOWER("titulo") LIKE '%v2%'
           AND "created_at" >= '2026-11-10';
       `)
     } catch (cleanErr) {
       console.warn("[AGBC Jerarquía] Advertencia limpiando versión accidental RE-SOA:", cleanErr)
     }
 
-    const idsDocArray = Array.from(validDocIds)
-    if (idsDocArray.length > 0) {
-      await client.query(
-        `
-        DELETE FROM "documentos" 
-        WHERE id != ALL($1)
-      `,
-        [idsDocArray]
-      )
-    }
-
     console.log(
-      `[AGBC Jerarquía] ✅ Sincronización exitosa: 118 categorías activas y ${sincronizadosDocs} documentos oficiales sincronizados al 100%.`
+      `[AGBC Jerarquía] ✅ Sincronización exitosa: 118 categorías activas y ${sincronizadosDocs} documentos oficiales sincronizados al 100%. Los documentos subidos por usuarios se preservan íntegramente.`
     )
 
     return {

@@ -90,11 +90,19 @@ export async function POST(request: NextRequest) {
 
     const roles = usuario.roles ?? []
     const permissions = usuario.permissions ?? []
-    const esSuperAdmin = roles.some((rol) => normalizarTexto(rol) === ROL_SUPER_ADMIN)
+    const rolesNormalizados = roles.map(normalizarTexto)
+    const esSuperAdmin = rolesNormalizados.includes("super_admin") || rolesNormalizados.includes("superadmin")
+    const esAdminOGestor =
+      esSuperAdmin ||
+      rolesNormalizados.includes("administrador") ||
+      rolesNormalizados.includes("admin") ||
+      rolesNormalizados.includes("gestor") ||
+      rolesNormalizados.includes("usuario")
+
     const puedeSubir =
-      esSuperAdmin
-      || tienePermiso(permissions, PERMISOS.DOCUMENTOS.CREAR)
-      || tienePermiso(permissions, PERMISOS.DOCUMENTOS.EDITAR)
+      esAdminOGestor ||
+      tienePermiso(permissions, PERMISOS.DOCUMENTOS.CREAR) ||
+      tienePermiso(permissions, PERMISOS.DOCUMENTOS.EDITAR)
 
     if (!puedeSubir) {
       return NextResponse.json(

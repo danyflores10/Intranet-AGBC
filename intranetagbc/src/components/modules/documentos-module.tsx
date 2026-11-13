@@ -183,7 +183,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   const [importCatalogOpen, setImportCatalogOpen] = useState(false)
   const [historialImportOpen, setHistorialImportOpen] = useState(false)
   const [tourOpen, setTourOpen] = useState(false)
-  const [vigenciaFiltro, setVigenciaFiltro] = useState<"todas" | "vigentes" | "historicos" | "falta_pdf" | "multiversion">("todas")
+  const [vigenciaFiltro, setVigenciaFiltro] = useState<"todas" | "vigentes" | "historicos" | "multiversion">("todas")
   const [catDialogOpen, setCatDialogOpen] = useState(false)
   const [previewDoc, setPreviewDoc] = useState<DocRow | null>(null)
   const [editDoc, setEditDoc] = useState<DocRow | null>(null)
@@ -341,31 +341,18 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   }
 
   useEffect(() => {
-    if (dialogOpen) {
-      if (editDoc) {
-        const j = clasificarDocumento(editDoc.archivo || editDoc.nombreArchivo, editDoc.titulo)
-        setDocDireccion(editDoc.direccion || j.direccionNombre)
-        setDocSubcategoria(editDoc.subcategoria || j.subcategoriaNombre)
-        setDocTipoDocumental(editDoc.tipoDocumental || j.tipoDocumental)
-        setEstado(editDoc.estado ?? "borrador")
-        setDocFechaEmision(editDoc.fechaEmision || "")
-        setDocVersion(editDoc.version || "v1.0")
-        setDocEsVigente(editDoc.esVigente !== false)
-        setDocDisponibilidadArchivo((editDoc.disponibilidadArchivo as any) || "disponible")
-        setDocNumeroCorrelativo(editDoc.numeroCorrelativo ? String(editDoc.numeroCorrelativo) : "")
-        setDocFamiliaCodigo(editDoc.familiaCodigo || "")
-      } else {
-        setDocDireccion("")
-        setDocSubcategoria("")
-        setDocTipoDocumental("")
-        setEstado("borrador")
-        setDocFechaEmision("")
-        setDocVersion("v1.0")
-        setDocEsVigente(true)
-        setDocDisponibilidadArchivo("disponible")
-        setDocNumeroCorrelativo("")
-        setDocFamiliaCodigo("")
-      }
+    if (dialogOpen && editDoc) {
+      const j = clasificarDocumento(editDoc.archivo || editDoc.nombreArchivo, editDoc.titulo)
+      setDocDireccion(editDoc.direccion || j.direccionNombre)
+      setDocSubcategoria(editDoc.subcategoria || j.subcategoriaNombre)
+      setDocTipoDocumental(editDoc.tipoDocumental || j.tipoDocumental)
+      setEstado(editDoc.estado ?? "publicado")
+      setDocFechaEmision(editDoc.fechaEmision || "")
+      setDocVersion(editDoc.version || "v1.0")
+      setDocEsVigente(editDoc.esVigente !== false)
+      setDocDisponibilidadArchivo((editDoc.disponibilidadArchivo as any) || "disponible")
+      setDocNumeroCorrelativo(editDoc.numeroCorrelativo ? String(editDoc.numeroCorrelativo) : "")
+      setDocFamiliaCodigo(editDoc.familiaCodigo || "")
     }
   }, [dialogOpen, editDoc])
 
@@ -503,9 +490,10 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
         setDocDisponibilidadArchivo("disponible")
         setDocNumeroCorrelativo("")
         setDocFamiliaCodigo("")
-        setEstado("borrador")
-      } catch {
-        toast.error("Error al guardar")
+        setEstado("publicado")
+      } catch (err: any) {
+        console.error("Error al guardar documento:", err)
+        toast.error(err?.message || "Error al guardar el documento")
       }
     })
   }
@@ -558,13 +546,13 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
     })
   }
 
-  function openCreateDoc() {
+  function openCreateDoc(prefill?: { direccion?: string; subcategoria?: string; tipo?: string }) {
     if (!canCreateDocumento) return
     setEditDoc(null)
     setUploadedFile(null)
-    setDocDireccion("")
-    setDocSubcategoria("")
-    setDocTipoDocumental("")
+    setDocDireccion(prefill?.direccion || "")
+    setDocSubcategoria(prefill?.subcategoria || "")
+    setDocTipoDocumental(prefill?.tipo || "")
     setDocFechaEmision("")
     setDocVersion("v1.0")
     setDocEsVigente(true)
@@ -646,7 +634,6 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
       let matchVigencia = true
       if (vigenciaFiltro === "vigentes") matchVigencia = d.esVigente !== false
       else if (vigenciaFiltro === "historicos") matchVigencia = d.esVigente === false
-      else if (vigenciaFiltro === "falta_pdf") matchVigencia = d.disponibilidadArchivo === "falta_archivo"
       else if (vigenciaFiltro === "multiversion") {
         const countFam = d.familiaCodigo ? docsEnriquecidos.filter((o) => o.familiaCodigo === d.familiaCodigo).length : 1
         matchVigencia = countFam > 1
@@ -989,10 +976,11 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
               onClick={() => {
                 if (tab === "categorias") {
                   if (catFolderTipoId) {
-                    setDocDireccion(selectedDir?.nombre || "")
-                    setDocSubcategoria(selectedSub?.nombre || "")
-                    setDocTipoDocumental(selectedTipo?.nombre || "")
-                    openCreateDoc()
+                    openCreateDoc({
+                      direccion: selectedDir?.nombre || "",
+                      subcategoria: selectedSub?.nombre || "",
+                      tipo: selectedTipo?.nombre || "",
+                    })
                   } else {
                     setEditCat(null)
                     if (!catFolderDirId) {
@@ -1275,7 +1263,6 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                   <SelectItem value="vigentes">Solo Vigentes ({docsEnriquecidos.filter((d) => d.esVigente !== false).length})</SelectItem>
                   <SelectItem value="historicos">Históricos / Derogados ({docsEnriquecidos.filter((d) => d.esVigente === false).length})</SelectItem>
                   <SelectItem value="multiversion">Múltiples Versiones ({docsEnriquecidos.filter((d) => d.familiaCodigo && docsEnriquecidos.filter((o) => o.familiaCodigo === d.familiaCodigo).length > 1).length})</SelectItem>
-                  <SelectItem value="falta_pdf">Falta PDF ({docsEnriquecidos.filter((d) => d.disponibilidadArchivo === "falta_archivo").length})</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1512,10 +1499,11 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                           <Button
                             size="sm"
                             onClick={() => {
-                              setDocDireccion(selectedDir?.nombre || "")
-                              setDocSubcategoria(selectedSub?.nombre || "")
-                              setDocTipoDocumental(selectedTipo?.nombre || "")
-                              openCreateDoc()
+                              openCreateDoc({
+                                direccion: selectedDir?.nombre || "",
+                                subcategoria: selectedSub?.nombre || "",
+                                tipo: selectedTipo?.nombre || "",
+                              })
                             }}
                             className="mt-2 bg-[#0E5296] hover:bg-[#002F6C] text-white text-xs font-bold rounded-xl cursor-pointer"
                           >

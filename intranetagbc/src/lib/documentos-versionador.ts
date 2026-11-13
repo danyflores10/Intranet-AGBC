@@ -222,7 +222,8 @@ export function calcularVersionesCatalogo<
       const verNum = idx + 1
       const esUltimo = idx === total - 1
       const verStr = doc.version && doc.version.startsWith("v") ? doc.version : `v${verNum}.0`
-      const vig = doc.esVigente !== undefined && doc.esVigente !== null ? doc.esVigente : esUltimo
+      // La última versión es la única vigente en la familia; todas las anteriores se convierten automáticamente en históricos
+      const vig = esUltimo
       return {
         id: doc.id,
         numeroCorrelativo: doc.numeroCorrelativo,

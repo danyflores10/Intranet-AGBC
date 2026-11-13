@@ -2,7 +2,7 @@
 
 import { db } from "@/db"
 import { documentos, documentoCategorias, archivos } from "@/db/schema"
-import { eq, desc, inArray, sql } from "drizzle-orm"
+import { eq, desc, inArray, sql, and, ne } from "drizzle-orm"
 import { alias } from "drizzle-orm/pg-core"
 import { revalidatePath } from "next/cache"
 import { registrarAuditLog } from "@/actions/auditoria"
@@ -10,6 +10,7 @@ import { PERMISOS } from "@/lib/auth/permisos"
 import { obtenerSesionConAccesoActual, type SesionConAcceso } from "@/lib/auth/session-access"
 import { clasificarDocumento } from "@/lib/documentos-jerarquia"
 import { sincronizarJerarquiaCategorias } from "@/lib/services/jerarquia-sync-service"
+import { obtenerCodigoFamiliaCanonica } from "@/lib/documentos-versionador"
 
 const ROL_SUPER_ADMIN = "super_admin"
 
@@ -233,9 +234,12 @@ export async function crearDocumento(data: {
 }) {
   const sesion = await autorizarAccion(PERMISOS.DOCUMENTOS.CREAR)
 
-  let dirId = data.direccionId
-  let subId = data.subcategoriaId
-  let tipoDoc = data.tipoDocumental
+  const cleanId = (val?: string | null) => (val && val.trim().length > 0 && val !== "__none__" ? val.trim() : null)
+
+  let dirId = cleanId(data.direccionId)
+  let subId = cleanId(data.subcategoriaId)
+  let tipoDoc = cleanId(data.tipoDocumental)
+  let catId = cleanId(data.categoriaId)
 
   if (!dirId || !subId || !tipoDoc) {
     const deduced = clasificarDocumento(data.archivo || data.nombreArchivo, data.titulo)
@@ -250,25 +254,48 @@ export async function crearDocumento(data: {
     numCorrelativo = Number(maxRes[0]?.maxVal || 0) + 1
   }
 
+  const rawFam = (data.familiaCodigo || "").trim()
+  const famCod = rawFam && rawFam !== "—" ? rawFam.toUpperCase() : obtenerCodigoFamiliaCanonica(data.titulo)
+
   const payload = {
     ...data,
+    categoriaId: catId || subId || dirId || undefined,
     direccionId: dirId || undefined,
     subcategoriaId: subId || undefined,
     tipoDocumental: tipoDoc || undefined,
     numeroCorrelativo: numCorrelativo,
+    familiaCodigo: famCod || undefined,
     autor: (data.autor || "").trim() || "AGBC Institucional",
+    estado: data.estado || "publicado",
+    esVigente: data.esVigente !== false,
   }
   const [nuevo] = await db.insert(documentos).values(payload).returning()
   await registrarAuditLog({ usuario: sesion.id, accion: `Creó documento: ${data.titulo}`, modulo: "Documentos", resultado: "Exitoso" })
+
+  // Regla de familias: la nueva versión es vigente, las versiones anteriores se convierten automáticamente en históricos
+  if (famCod && nuevo.esVigente) {
+    try {
+      await db
+        .update(documentos)
+        .set({ esVigente: false })
+        .where(and(eq(documentos.familiaCodigo, famCod), ne(documentos.id, nuevo.id)))
+    } catch (famErr) {
+      console.warn("Error actualizando vigencia de versiones anteriores de familia:", famErr)
+    }
+  }
   
-  if (data.estado === "publicado" || !data.estado) {
-    const { crearNotificacionParaTodos } = await import("@/actions/notificaciones")
-    await crearNotificacionParaTodos({
-      titulo: `Nuevo Documento: ${data.titulo}`,
-      mensaje: (data.descripcion || "Se ha publicado un nuevo documento oficial en la Biblioteca Digital de la AGBC.").slice(0, 250),
-      tipo: "comunicado",
-      enlace: `/#documentos?docId=${nuevo.id}`,
-    })
+  if (payload.estado === "publicado") {
+    try {
+      const { crearNotificacionParaTodos } = await import("@/actions/notificaciones")
+      await crearNotificacionParaTodos({
+        titulo: `Nuevo Documento: ${data.titulo}`,
+        mensaje: (data.descripcion || "Se ha publicado un nuevo documento oficial en la Biblioteca Digital de la AGBC.").slice(0, 250),
+        tipo: "comunicado",
+        enlace: `/#documentos?docId=${nuevo.id}`,
+      })
+    } catch (notifErr) {
+      console.warn("Error emitiendo notificación de nuevo documento:", notifErr)
+    }
   }
 
   revalidatePath("/documentos")
@@ -302,6 +329,19 @@ export async function actualizarDocumento(id: string, data: Partial<{
   const sesion = await autorizarAccion(PERMISOS.DOCUMENTOS.EDITAR)
   const [actualizado] = await db.update(documentos).set(data).where(eq(documentos.id, id)).returning()
   await registrarAuditLog({ usuario: sesion.id, accion: `Actualizó documento ID: ${id} (${data.titulo || ""})`, modulo: "Documentos", resultado: "Exitoso" })
+
+  // Si se actualizó una familia y quedó como vigente, todas las demás versiones se convierten en históricas
+  const famCod = (data.familiaCodigo || actualizado.familiaCodigo || "").trim().toUpperCase()
+  if (famCod && famCod !== "—" && (data.esVigente === true || (data.esVigente === undefined && actualizado.esVigente))) {
+    try {
+      await db
+        .update(documentos)
+        .set({ esVigente: false })
+        .where(and(eq(documentos.familiaCodigo, famCod), ne(documentos.id, id)))
+    } catch (famErr) {
+      console.warn("Error actualizando vigencia de versiones anteriores en edición:", famErr)
+    }
+  }
   revalidatePath("/documentos")
   revalidatePath("/(admin)/documentos")
   revalidatePath("/(admin)/dashboard")
@@ -453,6 +493,20 @@ export async function importarDocumentosLote(items: DocumentoImportItem[]): Prom
     modulo: "Documentos",
     resultado: "Exitoso",
   })
+
+  if (resultado.nuevos > 0) {
+    try {
+      const { crearNotificacionParaTodos } = await import("@/actions/notificaciones")
+      await crearNotificacionParaTodos({
+        titulo: `Nuevos Documentos Publicados (${resultado.nuevos})`,
+        mensaje: `Se han incorporado ${resultado.nuevos} nuevo(s) documento(s) oficial(es) a la Biblioteca Digital de la AGBC.`,
+        tipo: "comunicado",
+        enlace: "/#documentos",
+      })
+    } catch (notifErr) {
+      console.warn("Error emitiendo notificación masiva:", notifErr)
+    }
+  }
 
   revalidatePath("/documentos")
   revalidatePath("/(admin)/documentos")
