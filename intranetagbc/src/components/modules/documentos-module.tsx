@@ -655,7 +655,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
       if (vigenciaFiltro === "vigentes") matchVigencia = d.esVigente !== false
       else if (vigenciaFiltro === "historicos") matchVigencia = d.esVigente === false
       else if (vigenciaFiltro === "multiversion") {
-        matchVigencia = (d.totalVersionesEnFamilia || 1) > 1
+        matchVigencia = Boolean(d.familiaCodigo && d.familiaCodigo.trim() !== "" && d.familiaCodigo !== "—")
       }
 
       return matchSearch && matchDir && matchSub && matchTipo && matchVigencia
@@ -1281,7 +1281,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                   <SelectItem value="todas">Todas las Versiones ({docsEnriquecidos.length})</SelectItem>
                   <SelectItem value="vigentes">Solo Vigentes ({docsEnriquecidos.filter((d) => d.esVigente !== false).length})</SelectItem>
                   <SelectItem value="historicos">Históricos / Derogados ({docsEnriquecidos.filter((d) => d.esVigente === false).length})</SelectItem>
-                  <SelectItem value="multiversion">Múltiples Versiones ({docsEnriquecidos.filter((d) => (d.totalVersionesEnFamilia || 1) > 1).length})</SelectItem>
+                  <SelectItem value="multiversion">Familias Normativas ({docsEnriquecidos.filter((d) => d.familiaCodigo && d.familiaCodigo.trim() !== "" && d.familiaCodigo !== "—").length})</SelectItem>
                 </SelectContent>
               </Select>
             </div>
