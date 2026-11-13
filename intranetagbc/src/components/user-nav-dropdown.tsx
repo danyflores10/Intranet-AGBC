@@ -119,7 +119,10 @@ export function UserNavDropdown({ usuario: propUser, esAdmin: propEsAdmin, class
   const email = propUser?.email || session?.user?.email || "funcionario@correos.gob.bo"
   const image = propUser?.image || session?.user?.image || null
   const cargo = propUser?.cargo || propUser?.rol || (session?.user as any)?.role || "Funcionario Público"
-  const isAdminUser = propEsAdmin ?? (propUser?.esAdmin || (cargo && /admin|administrador|director|gestor|usuario/i.test(cargo)))
+  // Panel Administrativo visible ÚNICAMENTE para Administradores y Gestores (NUNCA para rol usuario)
+  const isAdminUser = propEsAdmin !== undefined
+    ? propEsAdmin
+    : (propUser?.esAdmin || (cargo && /admin|administrador|super_admin|gestor/i.test(cargo) && !/usuario/i.test(cargo)))
 
   const initials = getInitials(name)
   const avatarColor = getAvatarColor(name)

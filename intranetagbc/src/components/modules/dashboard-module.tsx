@@ -406,7 +406,7 @@ export function DashboardModule({
         badgeStyle: "text-[#002F6C] bg-amber-100/90",
       })
     }
-        const puedeVerMensajeria = puedeAcceder({ roles: ["administrador", "admin", "super_admin", "gestor", "usuario"], permissions: [PERMISOS.DOCUMENTOS.VER] }, accessContext)
+        const puedeVerMensajeria = puedeAcceder({ roles: ["administrador", "admin", "super_admin", "gestor"], permissions: [PERMISOS.DOCUMENTOS.VER] }, accessContext)
     if (puedeVerMensajeria) {
       cards.push({
         label: "Mensajería",

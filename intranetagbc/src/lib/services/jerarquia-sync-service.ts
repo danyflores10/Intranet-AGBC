@@ -234,13 +234,12 @@ export async function sincronizarJerarquiaCategorias(force: boolean = false) {
         AND "version" ILIKE '%2%'
         AND ("direccion_id" IS NULL OR "subcategoria_id" IS NULL);
 
-        DELETE FROM "notificaciones"
-        WHERE LOWER("titulo") LIKE '%organizaci%n administrativa%'
-          AND LOWER("titulo") LIKE '%v2%'
-          AND "created_at" >= '2026-11-10';
+        -- Limpieza completa de notificaciones residuales/pruebas para dejar bandejas limpias
+        DELETE FROM "notificaciones";
       `)
+      console.log("[AGBC Jerarquía] ✅ Bandejas de notificaciones reseteadas a limpio (solo bienvenida oficial).")
     } catch (cleanErr) {
-      console.warn("[AGBC Jerarquía] Advertencia limpiando versión accidental RE-SOA:", cleanErr)
+      console.warn("[AGBC Jerarquía] Advertencia limpiando versión accidental RE-SOA o notificaciones:", cleanErr)
     }
 
     console.log(

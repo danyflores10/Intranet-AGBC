@@ -25,6 +25,25 @@ import {
   Layers,
 } from "lucide-react"
 import { getDocumentUrl } from "@/components/modules/documentos-module"
+import baseDocsJson from "@/data/documentos-oficiales-89-completos.json"
+
+const BASE_DOC_IDS = new Set<string>((baseDocsJson as Array<{ id: string }>).map((d) => d.id))
+
+/**
+ * Calcula la clave de ciclo diario basada en las 08:30 AM.
+ * Antes de las 08:30 AM pertenece al ciclo del día anterior.
+ * A partir de las 08:30 AM pertenece al ciclo de hoy.
+ */
+function getCiclo830Key(): string {
+  const ahora = new Date()
+  const corteHoy = new Date(ahora)
+  corteHoy.setHours(8, 30, 0, 0)
+
+  if (ahora.getTime() < corteHoy.getTime()) {
+    corteHoy.setDate(corteHoy.getDate() - 1)
+  }
+  return corteHoy.toISOString().slice(0, 10) + "_0830"
+}
 
 interface DocItem {
   id: string
@@ -61,14 +80,17 @@ export function NuevoDocumentoModal({ documentos, usuarioId }: Props) {
     if (!documentos || documentos.length === 0) return []
 
     const ahora = Date.now()
-    const CINCO_DIAS_MS = 5 * 24 * 60 * 60 * 1000
+    const TRES_DIAS_MS = 3 * 24 * 60 * 60 * 1000
 
     return documentos
       .filter((d) => {
         if (d.estado !== "publicado" || !d.archivo) return false
         
-        // Regla esencial: Los 89 documentos base del catálogo inicial nunca deben disparar la ventana modal
-        if (typeof d.numeroCorrelativo === "number" && d.numeroCorrelativo <= 89) {
+        // Regla esencial: Los documentos base del catálogo inicial (IDs fijos o correlativo <= 90) NUNCA se muestran
+        if (BASE_DOC_IDS.has(d.id)) {
+          return false
+        }
+        if (typeof d.numeroCorrelativo === "number" && d.numeroCorrelativo <= 90) {
           return false
         }
 
@@ -79,22 +101,23 @@ export function NuevoDocumentoModal({ documentos, usuarioId }: Props) {
 
         if (!d.createdAt) return false
         const t = new Date(d.createdAt).getTime()
-        return ahora - t <= CINCO_DIAS_MS
+        // Solo documentos nuevos subidos dentro de los últimos 3 días
+        return ahora - t <= TRES_DIAS_MS
       })
       .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
   }, [documentos])
 
-  // 2. Control de frecuencia: Solo una vez al día por usuario/navegador
+  // 2. Control de frecuencia: Una única vez por ciclo diario de las 08:30 AM
   useEffect(() => {
     if (docsNuevos.length === 0) return
 
     try {
-      const hoy = new Date().toISOString().slice(0, 10)
+      const cicloKey = getCiclo830Key()
       const storageKey = usuarioId ? `agbc_modal_docs_${usuarioId}` : "agbc_modal_docs_visto"
-      const vistoHoy = localStorage.getItem(storageKey)
+      const vistoCiclo = localStorage.getItem(storageKey)
 
-      if (vistoHoy === hoy) {
-        return // Ya lo vio hoy
+      if (vistoCiclo === cicloKey) {
+        return // Ya lo vio en este ciclo diario de las 08:30 AM
       }
 
       // Desplegar suavemente con retardo de 800ms
@@ -150,9 +173,9 @@ export function NuevoDocumentoModal({ documentos, usuarioId }: Props) {
   const handleCerrar = () => {
     if (!canClose) return
     try {
-      const hoy = new Date().toISOString().slice(0, 10)
+      const cicloKey = getCiclo830Key()
       const storageKey = usuarioId ? `agbc_modal_docs_${usuarioId}` : "agbc_modal_docs_visto"
-      localStorage.setItem(storageKey, hoy)
+      localStorage.setItem(storageKey, cicloKey)
     } catch {}
     setOpen(false)
   }
@@ -186,7 +209,7 @@ export function NuevoDocumentoModal({ documentos, usuarioId }: Props) {
     currentDoc.nombreArchivo?.toLowerCase().endsWith(".pdf")
 
   const diffMs = currentDoc.createdAt ? Date.now() - new Date(currentDoc.createdAt).getTime() : 0
-  const diasRestantes = Math.max(1, Math.ceil(5 - diffMs / (1000 * 60 * 60 * 24)))
+  const diasRestantes = Math.max(1, Math.min(3, Math.ceil(3 - diffMs / (1000 * 60 * 60 * 24))))
 
   const fechaFormateada = currentDoc.createdAt
     ? new Date(currentDoc.createdAt).toLocaleDateString("es-BO", {

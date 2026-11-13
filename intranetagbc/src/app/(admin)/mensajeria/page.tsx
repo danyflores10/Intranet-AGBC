@@ -21,8 +21,8 @@ export default async function MensajeriaPage() {
   }
 
   const tieneAccesoMensajeria = usuario.roles.some((r) =>
-    ["administrador", "admin", "super_admin", "gestor", "usuario"].includes(r.toLowerCase().trim())
-  ) || (usuario.permissions && usuario.permissions.length > 0)
+    ["administrador", "admin", "super_admin", "gestor"].includes(r.toLowerCase().trim())
+  )
 
   if (!tieneAccesoMensajeria) {
     redirect("/dashboard")

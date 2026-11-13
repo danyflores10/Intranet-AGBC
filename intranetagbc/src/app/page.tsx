@@ -66,11 +66,12 @@ export default async function HomePage() {
   // Obtener rol y permisos RBAC del usuario
   const usuarioRbac = await obtenerUsuarioRbacActual()
   const estaLogueado = true
-  const tieneAccesoPanel = Boolean(
-    usuarioRbac?.roles?.some((r) =>
-      ["administrador", "admin", "super_admin", "gestor", "usuario"].includes(r.toLowerCase().trim())
-    ) || (usuarioRbac?.permissions && usuarioRbac.permissions.length > 0)
+  const rolesUsuario = (usuarioRbac?.roles || []).map((r) => r.toLowerCase().trim())
+  // Acceso al panel administrativo EXCLUSIVO para administradores, super_admin y gestores autorizados
+  const esAdminOGestor = rolesUsuario.some((r) =>
+    ["administrador", "admin", "super_admin", "gestor"].includes(r)
   )
+  const tieneAccesoPanel = esAdminOGestor
   const esAdmin = tieneAccesoPanel
 
   // Carga paralela de datos para la landing

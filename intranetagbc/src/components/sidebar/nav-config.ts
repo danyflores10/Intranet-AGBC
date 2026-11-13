@@ -143,7 +143,7 @@ export const sidebarData: {
           icon: Mail,
           tourKey: "mensajeria",
           access: {
-            roles: ["administrador", "Administrador", "gestor", "Gestor", "usuario", "Usuario"],
+            roles: ["administrador", "Administrador", "super_admin", "gestor", "Gestor"],
             permissions: [PERMISOS.DOCUMENTOS.VER, PERMISOS.ARCHIVO.VER],
           },
         },
@@ -158,7 +158,7 @@ export const sidebarData: {
               url: "/documentos",
               icon: FileText,
               access: {
-                roles: ["administrador", "Administrador", "gestor", "Gestor", "usuario", "Usuario"],
+                roles: ["administrador", "Administrador", "super_admin", "gestor", "Gestor"],
                 permissions: [PERMISOS.DOCUMENTOS.VER],
               },
             },
@@ -167,7 +167,7 @@ export const sidebarData: {
               url: "/archivo",
               icon: Archive,
               access: {
-                roles: ["administrador", "Administrador", "gestor", "Gestor", "usuario", "Usuario"],
+                roles: ["administrador", "Administrador", "super_admin", "gestor", "Gestor"],
                 permissions: [PERMISOS.ARCHIVO.VER],
               },
             },

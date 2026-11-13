@@ -18,6 +18,16 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
     redirect("/")
   }
 
+  // Protección estricta: usuarios con rol 'usuario' o sin rol administrativo no pueden entrar a ninguna ruta de (admin)
+  const roles = (usuario.roles || []).map((r) => r.toLowerCase().trim())
+  const esAutorizado = roles.some((r) =>
+    ["administrador", "admin", "super_admin", "gestor"].includes(r)
+  )
+
+  if (!esAutorizado) {
+    redirect("/")
+  }
+
   return (
     <SidebarProvider>
       <AppSidebar usuario={usuario} />

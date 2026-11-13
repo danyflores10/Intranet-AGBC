@@ -13,7 +13,7 @@ export default async function DocumentosPage() {
   if (!usuario) redirect("/")
 
   const tieneAcceso = puedeAccederUsuario(usuario, {
-    roles: ["administrador", "admin", "super_admin", "gestor", "usuario"],
+    roles: ["administrador", "admin", "super_admin", "gestor"],
     permissions: [PERMISOS.DOCUMENTOS.VER],
   })
 

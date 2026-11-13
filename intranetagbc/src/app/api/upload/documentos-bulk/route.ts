@@ -96,8 +96,7 @@ export async function POST(request: NextRequest) {
       esSuperAdmin ||
       rolesNormalizados.includes("administrador") ||
       rolesNormalizados.includes("admin") ||
-      rolesNormalizados.includes("gestor") ||
-      rolesNormalizados.includes("usuario")
+      rolesNormalizados.includes("gestor")
 
     const puedeSubir =
       esAdminOGestor ||
