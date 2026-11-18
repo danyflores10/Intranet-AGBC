@@ -784,12 +784,32 @@ export function ImportarCatalogoDialog({
         }
       })
 
-      const resAction = await sincronizarCatalogoExcelAction(
-        payload,
-        excelFile?.name || "catalogo_documentos.xlsx",
-        totalSinCambiosCount,
-        totalFaltaArchivoCount
-      )
+      let resAction: any
+      try {
+        const response = await fetch("/api/documentos/sincronizar-catalogo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: payload,
+            nombreArchivoOrigen: excelFile?.name || "catalogo_documentos.xlsx",
+            sinCambiosCount: totalSinCambiosCount,
+            faltanArchivoCount: totalFaltaArchivoCount,
+          }),
+        })
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}))
+          throw new Error(errData.error || `HTTP error ${response.status}`)
+        }
+        resAction = await response.json()
+      } catch (apiErr: any) {
+        console.warn("API route fallback, executing server action:", apiErr)
+        resAction = await sincronizarCatalogoExcelAction(
+          payload,
+          excelFile?.name || "catalogo_documentos.xlsx",
+          totalSinCambiosCount,
+          totalFaltaArchivoCount
+        )
+      }
 
       if (resAction.success) {
         toast.success(
