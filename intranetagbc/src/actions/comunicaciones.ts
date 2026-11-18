@@ -94,6 +94,21 @@ export async function actualizarComunicado(id: string, data: Partial<{
 }>) {
   const [actualizado] = await db.update(comunicados).set(data).where(eq(comunicados.id, id)).returning()
   await registrarAuditLog({ usuario: "sistema", accion: `Actualizó comunicado ID: ${id}`, modulo: "Comunicaciones", resultado: "Exitoso" })
+
+  if (actualizado.estado === "publicado") {
+    try {
+      const { crearNotificacionParaTodos } = await import("@/actions/notificaciones")
+      await crearNotificacionParaTodos({
+        titulo: `Comunicado Oficial: ${actualizado.titulo}`,
+        mensaje: (actualizado.contenido || "").slice(0, 250) + ((actualizado.contenido || "").length > 250 ? "..." : ""),
+        tipo: "comunicado",
+        enlace: "/#comunicados",
+      })
+    } catch (e) {
+      console.warn("Error enviando notificación de comunicado:", e)
+    }
+  }
+
   revalidatePath("/comunicaciones")
   revalidatePath("/")
   return actualizado

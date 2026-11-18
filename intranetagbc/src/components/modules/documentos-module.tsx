@@ -752,23 +752,124 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
   const totalPages = Math.max(1, Math.ceil(currentList.length / pageSize))
   const paginatedList = currentList.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
-  // Subcategorías disponibles en el modal según dirección seleccionada
+  // Subcategorías disponibles en el modal según dirección seleccionada (de BD + fallback estático)
   const subcategoriasDialogDisponibles = useMemo(() => {
     if (!docDireccion) {
+      const subsFromDb = categorias.filter((c) => c.nivel === 2).map((c) => ({ codigo: c.id, nombre: c.nombre }))
+      if (subsFromDb.length > 0) return subsFromDb
       return ESTRUCTURA_JERARQUICA.flatMap((d) => d.subcategorias)
     }
-    const dir = ESTRUCTURA_JERARQUICA.find((d) => d.nombre === docDireccion)
-    return dir ? dir.subcategorias : []
-  }, [docDireccion])
+
+    const dirCat = categorias.find(
+      (c) => c.nivel === 1 && c.nombre.toLowerCase().trim() === docDireccion.toLowerCase().trim()
+    )
+
+    if (dirCat) {
+      const subsFromDb = categorias
+        .filter((c) => c.nivel === 2 && c.parentId === dirCat.id)
+        .map((c) => ({ codigo: c.id, nombre: c.nombre }))
+      if (subsFromDb.length > 0) return subsFromDb
+    }
+
+    const dirStatic = ESTRUCTURA_JERARQUICA.find(
+      (d) => d.nombre.toLowerCase().trim() === docDireccion.toLowerCase().trim()
+    )
+    return dirStatic ? dirStatic.subcategorias : []
+  }, [docDireccion, categorias])
+
+  // Tipos Documentales disponibles en el modal según la Subcategoría/Área seleccionada
+  const tiposDocumentalesDialogDisponibles = useMemo(() => {
+    if (!docSubcategoria) {
+      return TIPOS_DOCUMENTALES
+    }
+
+    let dirCatId: string | undefined
+    if (docDireccion) {
+      const dirCat = categorias.find(
+        (c) => c.nivel === 1 && c.nombre.toLowerCase().trim() === docDireccion.toLowerCase().trim()
+      )
+      dirCatId = dirCat?.id
+    }
+
+    const subCat = categorias.find(
+      (c) =>
+        c.nivel === 2 &&
+        c.nombre.toLowerCase().trim() === docSubcategoria.toLowerCase().trim() &&
+        (dirCatId ? c.parentId === dirCatId : true)
+    )
+
+    if (subCat) {
+      const l3Cats = categorias.filter((c) => c.nivel === 3 && c.parentId === subCat.id)
+      if (l3Cats.length > 0) {
+        const l3Nombres = Array.from(new Set(l3Cats.map((c) => c.nombre.trim())))
+        const combinados = [
+          ...l3Nombres,
+          ...TIPOS_DOCUMENTALES.filter((t) => !l3Nombres.some((n) => n.toLowerCase() === t.toLowerCase())),
+        ]
+        return combinados
+      }
+    }
+
+    return TIPOS_DOCUMENTALES
+  }, [docDireccion, docSubcategoria, categorias])
 
   // Subcategorías disponibles para el filtro superior
   const subcategoriasFiltroDisponibles = useMemo(() => {
     if (!direccionFiltro) {
+      const subsFromDb = categorias.filter((c) => c.nivel === 2).map((c) => ({ codigo: c.id, nombre: c.nombre }))
+      if (subsFromDb.length > 0) return subsFromDb
       return ESTRUCTURA_JERARQUICA.flatMap((d) => d.subcategorias)
+    }
+    const dirCat = categorias.find(
+      (c) => c.nivel === 1 && c.nombre.toLowerCase().trim() === direccionFiltro.toLowerCase().trim()
+    )
+    if (dirCat) {
+      const subsFromDb = categorias
+        .filter((c) => c.nivel === 2 && c.parentId === dirCat.id)
+        .map((c) => ({ codigo: c.id, nombre: c.nombre }))
+      if (subsFromDb.length > 0) return subsFromDb
     }
     const dir = ESTRUCTURA_JERARQUICA.find((d) => d.nombre === direccionFiltro)
     return dir ? dir.subcategorias : []
-  }, [direccionFiltro])
+  }, [direccionFiltro, categorias])
+
+  // Tipos Documentales disponibles para el filtro superior
+  const tiposDocumentalesFiltroDisponibles = useMemo(() => {
+    if (!subcategoriaFiltro) {
+      const allL3 = categorias.filter((c) => c.nivel === 3).map((c) => c.nombre.trim())
+      const unique = Array.from(new Set([...TIPOS_DOCUMENTALES, ...allL3]))
+      return unique
+    }
+
+    let dirCatId: string | undefined
+    if (direccionFiltro) {
+      const dirCat = categorias.find(
+        (c) => c.nivel === 1 && c.nombre.toLowerCase().trim() === direccionFiltro.toLowerCase().trim()
+      )
+      dirCatId = dirCat?.id
+    }
+
+    const subCat = categorias.find(
+      (c) =>
+        c.nivel === 2 &&
+        c.nombre.toLowerCase().trim() === subcategoriaFiltro.toLowerCase().trim() &&
+        (dirCatId ? c.parentId === dirCatId : true)
+    )
+
+    if (subCat) {
+      const l3Cats = categorias.filter((c) => c.nivel === 3 && c.parentId === subCat.id)
+      if (l3Cats.length > 0) {
+        const l3Nombres = Array.from(new Set(l3Cats.map((c) => c.nombre.trim())))
+        const combinados = [
+          ...l3Nombres,
+          ...TIPOS_DOCUMENTALES.filter((t) => !l3Nombres.some((n) => n.toLowerCase() === t.toLowerCase())),
+        ]
+        return combinados
+      }
+    }
+
+    return TIPOS_DOCUMENTALES
+  }, [direccionFiltro, subcategoriaFiltro, categorias])
 
   // ══════════════════════════════════════════════════════════════
   // EXPORTACIÓN A EXCEL: CATÁLOGO OFICIAL CON ENLACES CLIQUEABLES
@@ -1255,7 +1356,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all__">Todos los Tipos</SelectItem>
-                  {TIPOS_DOCUMENTALES.map((tipo) => (
+                  {tiposDocumentalesFiltroDisponibles.map((tipo) => (
                     <SelectItem key={tipo} value={tipo}>
                       {tipo}
                     </SelectItem>
@@ -1998,7 +2099,7 @@ export function DocumentosModule({ documentos, categorias, usuario }: Props) {
                         <SelectValue placeholder="Seleccione Tipo *" />
                       </SelectTrigger>
                       <SelectContent>
-                        {TIPOS_DOCUMENTALES.map((tipo) => (
+                        {tiposDocumentalesDialogDisponibles.map((tipo) => (
                           <SelectItem key={tipo} value={tipo}>
                             {tipo}
                           </SelectItem>

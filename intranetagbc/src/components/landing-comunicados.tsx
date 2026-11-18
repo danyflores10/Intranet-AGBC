@@ -70,15 +70,24 @@ export function LandingComunicados({ comunicados, estaLogueado = false }: { comu
 
   const ITEMS_PER_PAGE = 3
 
-  // Auto-mostrar el comunicado destacado oficial si existe (una vez por sesión)
+  // Auto-mostrar comunicado reciente en ventana emergente (solo UNA única vez por cada nuevo comunicado)
   useEffect(() => {
-    const key = "agbc_comunicado_mostrado"
-    if (typeof window !== "undefined" && !sessionStorage.getItem(key)) {
-      const destacado = comunicados.find((c) => c.destacado && c.estado === "publicado")
-      if (destacado) {
-        setViewing(destacado)
-        sessionStorage.setItem(key, "1")
-      }
+    if (typeof window === "undefined" || !comunicados || comunicados.length === 0) return
+    const publicados = comunicados.filter((c) => c.estado === "publicado")
+    if (publicados.length === 0) return
+
+    // Buscar el más reciente (destacado si existe, o el primero publicado)
+    const newest = publicados.find((c) => c.destacado) || publicados[0]
+    if (!newest) return
+
+    const seenKey = `agbc_comunicado_visto_${newest.id}`
+    const alreadySeen = localStorage.getItem(seenKey)
+
+    if (!alreadySeen) {
+      setViewing(newest)
+      try {
+        localStorage.setItem(seenKey, "1")
+      } catch {}
     }
   }, [comunicados])
 

@@ -623,6 +623,9 @@ export function ImportarCatalogoDialog({
           if (tipoFinal && normalizar(tipoAnt) !== normalizar(tipoFinal)) {
             diffs.push(`Tipo: ${tipoAnt} ➔ ${tipoFinal}`)
           }
+          if (row.rawTitulo && row.rawTitulo.trim() !== (docExistente.titulo || "").trim()) {
+            diffs.push(`Título: "${docExistente.titulo}" ➔ "${row.rawTitulo.trim()}"`)
+          }
           if (
             row.rawFecha &&
             row.rawFecha !== "—" &&
@@ -704,13 +707,13 @@ export function ImportarCatalogoDialog({
   // 3. APLICAR IMPORTACIÓN / SINCRONIZACIÓN FINAL
   // ─────────────────────────────────────────────────────────────
   async function aplicarSincronizacion() {
-    const itemsAplicar = itemsAnalizados.filter((item) => item.estadoCambio !== "sin_cambios")
+    let itemsAplicar = itemsAnalizados.filter((item) => item.estadoCambio !== "sin_cambios")
     const totalSinCambiosCount = itemsAnalizados.filter((i) => i.estadoCambio === "sin_cambios").length
     const totalFaltaArchivoCount = itemsAnalizados.filter((i) => i.disponibilidadArchivo === "falta_archivo").length
 
     if (itemsAplicar.length === 0) {
-      toast("No se detectaron cambios ni documentos nuevos para aplicar. El catálogo ya se encuentra 100% sincronizado.", { icon: "ℹ️" })
-      return
+      // Si no hubo diferencias estructurales pero el usuario desea confirmar y sincronizar el Excel de todas formas:
+      itemsAplicar = itemsAnalizados
     }
 
     setIsSubmitting(true)
@@ -1385,7 +1388,7 @@ export function ImportarCatalogoDialog({
               <Button
                 type="button"
                 size="sm"
-                disabled={isSubmitting || totalNuevos + totalModificados === 0}
+                disabled={isSubmitting || itemsAnalizados.length === 0}
                 onClick={aplicarSincronizacion}
                 className="bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold gap-2 cursor-pointer shadow-sm px-5"
               >
@@ -1399,7 +1402,7 @@ export function ImportarCatalogoDialog({
                     <CheckCircle2Icon className="h-4 w-4 text-[#FFCC00]" />
                     <span>
                       {totalNuevos + totalModificados === 0
-                        ? "Catálogo Sincronizado (0 cambios)"
+                        ? "Guardar y Sincronizar Catálogo"
                         : `Confirmar e Importar (${totalNuevos} nuevos, ${totalModificados} modificados)`}
                     </span>
                   </>

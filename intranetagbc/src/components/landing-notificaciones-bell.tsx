@@ -136,7 +136,13 @@ export function LandingNotificacionesBell({ usuarioId, esAdmin }: Props) {
     socket.on("notification:read-all", onAny)
     socket.on("notification:delete", onAny)
 
+    // Polling de sincronización cada 10 segundos para máxima confiabilidad
+    const pollTimer = setInterval(() => {
+      void cargarNotificaciones()
+    }, 10000)
+
     return () => {
+      clearInterval(pollTimer)
       socket.emit("user:leave", usuarioId)
       socket.off("connect", onAny)
       socket.off("notification:new", onNew)

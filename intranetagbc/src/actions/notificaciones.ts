@@ -157,6 +157,8 @@ export async function crearNotificacionParaTodos(data: {
     revalidatePath("/dashboard")
     revalidatePath("/notificaciones")
     revalidatePath("/")
+    revalidatePath("/documentos")
+    revalidatePath("/comunicaciones")
   } catch (error) {
     console.error("Error al crear notificación para todos:", error)
   }
