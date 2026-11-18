@@ -44,14 +44,25 @@ function filterGroup(
   group: NavGroup,
   accessOpts: ReturnType<typeof crearContextoAcceso>,
   esAdmin: boolean,
+  esGestor: boolean,
 ): NavGroup {
   let initialItems = group.items
 
-  // Para el rol de gestor / usuario (cualquiera que no sea Administrador Central),
-  // se ocultan estrictamente Gestión Institucional, Contenidos, RRHH y Sucursales.
+  // Para el rol de gestor: se permiten Dashboard, Mensajería, Documentos y Contenidos
+  // (pero se ocultan estrictamente Gestión Institucional, RRHH y Sucursales).
+  // Para cualquier otro rol no admin: solo los módulos básicos.
   if (!esAdmin) {
     initialItems = initialItems.filter((item) => {
       const tit = item.title.toLowerCase().trim()
+      if (esGestor) {
+        return (
+          tit === "dashboard" ||
+          tit === "mensajería" ||
+          tit === "mensajeria" ||
+          tit === "documentos" ||
+          tit === "contenidos"
+        )
+      }
       return tit === "dashboard" || tit === "mensajería" || tit === "mensajeria" || tit === "documentos"
     })
   }
@@ -84,6 +95,12 @@ export function NavMain({ groups, usuario }: { groups: NavGroup[]; usuario: Usua
     )
   }, [usuario?.roles])
 
+  const esGestor = React.useMemo(() => {
+    return (usuario?.roles || []).some((r) =>
+      ["gestor", "gestora"].includes(r.toLowerCase().trim())
+    )
+  }, [usuario?.roles])
+
   const accessOpts = React.useMemo(
     () => crearContextoAcceso(usuario),
     [usuario],
@@ -93,9 +110,9 @@ export function NavMain({ groups, usuario }: { groups: NavGroup[]; usuario: Usua
     () =>
       groups
         .filter((group) => group.items.length > 0)
-        .map((group) => filterGroup(group, accessOpts, esAdmin))
+        .map((group) => filterGroup(group, accessOpts, esAdmin, esGestor))
         .filter((group) => group.items.length > 0),
-    [groups, accessOpts, esAdmin],
+    [groups, accessOpts, esAdmin, esGestor],
   )
 
   // Abrir automáticamente el grupo colapsable si la ruta activa coincide con alguno de sus sub-ítems

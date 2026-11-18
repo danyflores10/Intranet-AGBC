@@ -303,7 +303,13 @@ export function NotificacionesBell({ usuarioId, notificacionesIniciales, countIn
     }
 
     const onNotificationNew = (payload: NotificacionSocketPayload) => {
-      if (payload.usuarioId !== usuarioId) return
+      if (payload.usuarioId && payload.usuarioId !== usuarioId) return
+
+      if (!payload.usuarioId || !payload.id) {
+        void sincronizarNotificaciones()
+        playNotifSound()
+        return
+      }
 
       const notif = normalizarNotificacion(payload)
       const shouldAutoRead = isOnSoportePage && notif.tipo === "soporte"

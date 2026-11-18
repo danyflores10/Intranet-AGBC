@@ -138,17 +138,25 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
   const [noticiaTipoForm, setNoticiaTipoForm] = useState<"institucional" | "facebook">("institucional")
   const accessContext = useMemo(() => crearContextoAcceso(usuario), [usuario])
 
+  const esGestor = useMemo(() => {
+    return (usuario?.roles || []).some((r) =>
+      ["gestor", "gestora"].includes(r.toLowerCase().trim())
+    ) && !(usuario?.roles || []).some((r) =>
+      ["administrador", "admin", "super_admin"].includes(r.toLowerCase().trim())
+    )
+  }, [usuario?.roles])
+
   const puedeCrear = useMemo(
-    () => puedeAcceder({ permissions: [PERMISOS.COMUNICADOS.CREAR] }, accessContext),
-    [accessContext],
+    () => esGestor || puedeAcceder({ permissions: [PERMISOS.COMUNICADOS.CREAR] }, accessContext),
+    [accessContext, esGestor],
   )
   const puedeEditar = useMemo(
-    () => puedeAcceder({ permissions: [PERMISOS.COMUNICADOS.EDITAR] }, accessContext),
-    [accessContext],
+    () => esGestor || puedeAcceder({ permissions: [PERMISOS.COMUNICADOS.EDITAR] }, accessContext),
+    [accessContext, esGestor],
   )
   const puedeEliminar = useMemo(
-    () => puedeAcceder({ permissions: [PERMISOS.COMUNICADOS.ELIMINAR] }, accessContext),
-    [accessContext],
+    () => esGestor || puedeAcceder({ permissions: [PERMISOS.COMUNICADOS.ELIMINAR] }, accessContext),
+    [accessContext, esGestor],
   )
 
   const editCom = editItem && "contenido" in editItem ? (editItem as ComunicadoRow) : null
@@ -487,8 +495,10 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
       <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-slate-100/80 p-1.5 border border-[#002F6C]/10 w-fit">
         {([
           { key: "comunicados" as Tab, label: "Comunicados Oficiales", icon: MegaphoneIcon, count: comunicados.length },
-          { key: "noticias" as Tab, label: "Noticias", icon: ImageIcon, count: noticias.length },
-          { key: "accesos" as Tab, label: "Accesos Directos", icon: Link2Icon, count: accesosDirectos.length },
+          ...(!esGestor ? [
+            { key: "noticias" as Tab, label: "Noticias", icon: ImageIcon, count: noticias.length },
+            { key: "accesos" as Tab, label: "Accesos Directos", icon: Link2Icon, count: accesosDirectos.length },
+          ] : []),
         ]).map((t) => (
           <button
             key={t.key}
@@ -1095,16 +1105,16 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
 
       {/* ── Modal ver comunicado (grande, profesional) ── */}
       <Dialog open={viewOpen} onOpenChange={(v) => { if (!v) { setViewOpen(false); setViewItem(null) } }}>
-        <DialogContent className="!w-[95vw] !max-w-[95vw] sm:!max-w-[980px] max-h-[92vh] overflow-y-auto overflow-x-hidden p-0 gap-0 rounded-2xl border-border/50">
+        <DialogContent className="!w-[96vw] !max-w-[96vw] sm:!max-w-[1100px] h-[92vh] max-h-[92vh] flex flex-col p-0 gap-0 rounded-2xl border-border/50 overflow-hidden">
           <DialogTitle className="sr-only">{viewItem?.titulo ?? "Vista previa de comunicado"}</DialogTitle>
           {viewItem && (
             <>
-              <div className="h-1.5 w-full bg-gradient-to-r from-[#FFB800] via-[#0077EE] to-[#0E5296]" />
+              <div className="h-1.5 w-full shrink-0 bg-gradient-to-r from-[#FFB800] via-[#0077EE] to-[#0E5296]" />
 
-              <div className="flex items-center justify-between px-8 pt-6 pb-2">
+              <div className="flex items-center justify-between px-6 pt-4 pb-2 shrink-0 border-b border-border/20">
                 <div className="flex items-center gap-3">
-                  <img src="/image/Logooriginal.png" alt="AGBC" className="h-10 object-contain dark:hidden" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
-                  <img src="/image/LogoAmarillo.png" alt="AGBC" className="h-10 object-contain hidden dark:block" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
+                  <img src="/image/Logooriginal.png" alt="AGBC" className="h-9 object-contain dark:hidden" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
+                  <img src="/image/LogoAmarillo.png" alt="AGBC" className="h-9 object-contain hidden dark:block" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
                 </div>
                 <div className="text-right">
                   <p className="text-xs font-bold uppercase tracking-widest text-[#FFB800]">Correos de Bolivia</p>
@@ -1112,57 +1122,74 @@ export function ComunicacionesModule({ comunicados, noticias, accesosDirectos, u
                 </div>
               </div>
 
-              <div className="px-8 pb-8 pt-2">
-                <div className="text-center mb-6">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#FFB800] mb-2">Comunicado</p>
-                  <h2 className="text-2xl font-extrabold tracking-tight leading-tight">{viewItem.titulo}</h2>
-                  <div className="mx-auto mt-3 h-1 w-16 rounded-full bg-gradient-to-r from-[#FFB800] to-[#FFB800]" />
+              <div className="flex-1 overflow-y-auto px-6 py-4">
+                <div className="text-center mb-4">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#FFB800] bg-amber-500/10 px-3 py-1 rounded-full">COMUNICADO OFICIAL</span>
+                  <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight mt-2 text-[#002F6C]">{viewItem.titulo}</h2>
+                  <div className="mx-auto mt-2 h-1 w-16 rounded-full bg-[#FFB800]" />
                 </div>
 
-                <div className="flex items-center justify-center gap-3 mb-6 flex-wrap">
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <CalendarIcon className="h-4 w-4" />
+                <div className="flex items-center justify-center gap-3 mb-4 flex-wrap">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <CalendarIcon className="h-3.5 w-3.5 text-[#0E5296]" />
                     <span>{formatDate(viewItem.createdAt)}</span>
                   </div>
                   <StatusBadge status={viewItem.estado as "publicado" | "borrador" | "pendiente"} />
                   {viewItem.destacado && <span className="rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 px-2.5 py-0.5 text-xs font-bold">⭐ Destacado</span>}
                 </div>
 
-                <div className="rounded-xl bg-muted/20 border border-border/30 p-6 mb-6">
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{viewItem.contenido}</p>
+                <div className="rounded-xl bg-slate-50 border border-slate-200/80 p-4 mb-4">
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap text-slate-800">{viewItem.contenido}</p>
                 </div>
 
                 {viewItem.archivoUrl && (
-                  <div className="mb-6">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Archivo adjunto</p>
-                    {viewItem.archivoTipo === "imagen" ? (
-                      <div className="rounded-xl border border-border/40 overflow-hidden bg-muted/10 flex items-center justify-center p-4">
-                        <img src={viewItem.archivoUrl} alt={viewItem.archivoNombre ?? "Imagen"} className="max-h-[400px] rounded-lg object-contain shadow-lg" />
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Archivo adjunto</p>
+                      <a
+                        href={viewItem.archivoUrl}
+                        download={viewItem.archivoNombre ?? "archivo_comunicado"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button variant="outline" size="sm" className="h-7 text-xs rounded-lg gap-1 border-slate-300">
+                          <DownloadIcon className="h-3.5 w-3.5 text-[#0E5296]" />
+                          Descargar archivo
+                        </Button>
+                      </a>
+                    </div>
+                    {viewItem.archivoTipo === "imagen" || /\.(jpe?g|png|webp|gif|avif)$/i.test(viewItem.archivoUrl) ? (
+                      <div className="rounded-xl border border-border/40 overflow-hidden bg-slate-100 flex items-center justify-center p-3">
+                        <img
+                          src={viewItem.archivoUrl}
+                          alt={viewItem.archivoNombre ?? "Imagen"}
+                          className="max-h-[420px] rounded-lg object-contain shadow-md"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            if (viewItem.archivoUrl && !target.src.includes("/api/comunicados-archivos/")) {
+                              const fname = viewItem.archivoUrl.split("/").pop()
+                              if (fname) target.src = `/api/comunicados-archivos/${fname}`
+                            }
+                          }}
+                        />
                       </div>
                     ) : (
-                      <div className="rounded-xl border border-border/40 bg-muted/10 p-4">
-                        <div className="flex items-center gap-4">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-red-500/10">
-                            <FileTextIcon className="h-7 w-7 text-red-500" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-sm truncate">{viewItem.archivoNombre}</p>
-                            <p className="text-xs text-muted-foreground">Documento PDF adjunto</p>
-                          </div>
-                          <a href={viewItem.archivoUrl} download={viewItem.archivoNombre ?? "documento.pdf"} className="shrink-0">
-                            <Button variant="outline" size="sm" className="rounded-xl"><DownloadIcon className="mr-1 h-4 w-4" />Descargar</Button>
-                          </a>
-                        </div>
+                      <div className="rounded-xl border border-slate-300 bg-white overflow-hidden shadow-inner h-[500px] flex flex-col">
+                        <iframe
+                          src={`${viewItem.archivoUrl}#toolbar=1&navpanes=0&scrollbar=1`}
+                          title={viewItem.archivoNombre ?? "Documento PDF"}
+                          className="w-full h-full border-0"
+                        />
                       </div>
                     )}
                   </div>
                 )}
 
-                <div className="text-center border-t border-border/30 pt-5">
+                <div className="text-center border-t border-border/30 pt-4 mt-4">
                   <p className="text-xs text-muted-foreground">Agradecemos de antemano su participación.</p>
-                  <p className="mt-2 text-sm font-bold tracking-wide">CORREOS DE BOLIVIA</p>
+                  <p className="mt-1 text-sm font-bold tracking-wide text-[#002F6C]">CORREOS DE BOLIVIA</p>
                   <div className="mx-auto mt-1 h-0.5 w-12 bg-[#FFB300]" />
-                  <p className="mt-2 text-[10px] text-muted-foreground">www.correos.gob.bo</p>
+                  <p className="mt-1 text-[10px] text-muted-foreground">www.correos.gob.bo</p>
                 </div>
               </div>
             </>

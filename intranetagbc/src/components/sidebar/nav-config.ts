@@ -128,7 +128,7 @@ export const sidebarData: {
           icon: Megaphone,
           tourKey: "contenidos",
           access: {
-            roles: ["administrador", "Administrador", "super_admin"],
+            roles: ["administrador", "Administrador", "super_admin", "gestor", "Gestor"],
             permissions: [
               PERMISOS.COMUNICADOS.VER,
               PERMISOS.NOTICIAS.VER,

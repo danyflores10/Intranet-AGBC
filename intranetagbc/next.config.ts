@@ -22,6 +22,11 @@ const nextConfig: NextConfig = {
         source: "/documentos/:file([^/]+\\.[a-zA-Z0-9]{2,8})",
         destination: "/api/documentos/:file",
       },
+      {
+        // Reescribe archivos de comunicados para evitar errores 404 en producción PM2
+        source: "/image/comunicados/:file*",
+        destination: "/api/comunicados-archivos/:file*",
+      },
     ]
   },
 };

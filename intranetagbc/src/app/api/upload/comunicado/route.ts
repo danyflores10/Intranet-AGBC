@@ -48,7 +48,18 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer())
     await writeFile(filePath, buffer)
 
-    const url = `/image/comunicados/${fileName}`
+    // Si es PDF, también dejamos copia en public/documentos para compatibilidad total
+    if (ext === "pdf") {
+      try {
+        const dirDocs = join(process.cwd(), "public", "documentos")
+        await mkdir(dirDocs, { recursive: true })
+        await writeFile(join(dirDocs, fileName), buffer)
+      } catch (errCopy) {
+        console.warn("No se pudo duplicar PDF a public/documentos:", errCopy)
+      }
+    }
+
+    const url = `/api/comunicados-archivos/${fileName}`
 
     return NextResponse.json({
       url,

@@ -8,7 +8,18 @@ import { ComunicacionesModule } from "@/components/modules/comunicaciones-module
 export default async function ComunicacionesPage() {
   const usuario = await obtenerUsuarioRbacActual()
   if (!usuario) redirect("/")
-  if (!puedeAccederUsuario(usuario, { permissions: [PERMISOS.COMUNICADOS.VER, PERMISOS.NOTICIAS.VER, PERMISOS.ACCESOS.VER, PERMISOS.CONTENIDOS.VER] })) redirect("/dashboard")
+
+  const tienePermiso = puedeAccederUsuario(usuario, {
+    roles: ["administrador", "admin", "super_admin", "gestor"],
+    permissions: [
+      PERMISOS.COMUNICADOS.VER,
+      PERMISOS.NOTICIAS.VER,
+      PERMISOS.ACCESOS.VER,
+      PERMISOS.CONTENIDOS.VER,
+    ],
+  })
+
+  if (!tienePermiso) redirect("/dashboard")
 
   const [comunicados, banners, accesosDirectos] = await Promise.all([
     obtenerComunicados(),

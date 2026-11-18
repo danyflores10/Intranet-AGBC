@@ -42,8 +42,11 @@ export async function GET(
     const decodedPath = decodeURIComponent(rawPath).replace(/\.\./g, "").replace(/^\/+/, "")
     const cleanPath = decodedPath.replace(/^documentos\//, "")
     
-    // Path resolution: search in public/documentos, public/documentos/documentos AGBC, or public
+    // Path resolution: search in public/documentos, public/image/comunicados, public/documentos/documentos AGBC, or public
     let filePath = join(process.cwd(), "public", "documentos", cleanPath)
+    if (!existsSync(filePath)) {
+      filePath = join(process.cwd(), "public", "image", "comunicados", cleanPath)
+    }
     if (!existsSync(filePath)) {
       filePath = join(process.cwd(), "public", "documentos", "documentos AGBC", cleanPath)
     }
@@ -52,6 +55,9 @@ export async function GET(
     }
     if (!existsSync(filePath)) {
       filePath = join(process.cwd(), "public", "documentos", decodedPath)
+    }
+    if (!existsSync(filePath)) {
+      filePath = join(process.cwd(), "public", "image", "comunicados", decodedPath)
     }
     if (!existsSync(filePath)) {
       filePath = join(process.cwd(), "public", "documentos", "documentos AGBC", decodedPath)

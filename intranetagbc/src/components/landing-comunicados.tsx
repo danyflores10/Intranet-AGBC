@@ -35,6 +35,20 @@ function formatDate(dateStr: string) {
   })
 }
 
+function isPdf(url?: string | null, tipo?: string | null): boolean {
+  if (!url) return false
+  if (tipo === "pdf" || tipo?.includes("pdf")) return true
+  const clean = url.split("?")[0].toLowerCase()
+  return clean.endsWith(".pdf")
+}
+
+function isImage(url?: string | null, tipo?: string | null): boolean {
+  if (!url) return false
+  if (tipo === "imagen" || tipo?.startsWith("image/")) return true
+  const clean = url.split("?")[0].toLowerCase()
+  return /\.(jpe?g|png|webp|gif|avif)$/i.test(clean)
+}
+
 /* ── Visor limpio de imagen (sin lupa) ── */
 function ImageMagnifier({ src, alt }: { src: string; alt: string }) {
   return (
@@ -137,11 +151,11 @@ export function LandingComunicados({ comunicados, estaLogueado = false }: { comu
                 >
                 {/* Thumbnail */}
                 <div className="relative flex h-48 w-full items-center justify-center overflow-hidden bg-gradient-to-br from-[#FFB800]/15 via-[#0E5296]/10 to-[#0077EE]/15">
-                  {com.archivoUrl && com.archivoTipo === "imagen" ? (
+                  {com.archivoUrl && isImage(com.archivoUrl, com.archivoTipo) ? (
                     <img src={com.archivoUrl} alt={com.titulo} className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0E5296] text-[#FFB800] shadow-lg shadow-[#0E5296]/20">
-                      {com.archivoTipo === "pdf"
+                      {isPdf(com.archivoUrl, com.archivoTipo)
                         ? <FileTextIcon className="h-7 w-7" />
                         : <MegaphoneIcon className="h-7 w-7" />}
                     </div>
@@ -159,7 +173,7 @@ export function LandingComunicados({ comunicados, estaLogueado = false }: { comu
                       </span>
                     </div>
                   )}
-                  {com.archivoTipo === "pdf" && com.archivoUrl && (
+                  {isPdf(com.archivoUrl, com.archivoTipo) && (
                     <div className="absolute top-3 left-3">
                       <span className="rounded-full bg-[#0E5296] text-white px-2 py-1 text-[10px] font-bold uppercase tracking-wider shadow-sm flex items-center gap-1">
                         <FileTextIcon className="h-3 w-3" />PDF
@@ -236,8 +250,13 @@ export function LandingComunicados({ comunicados, estaLogueado = false }: { comu
                 </p>
               </div>
               <div className="ml-3 flex shrink-0 items-center gap-2">
-                {viewing.archivoUrl && viewing.archivoTipo === "pdf" && (
-                  <a href={viewing.archivoUrl} download={viewing.archivoNombre ?? "documento.pdf"} target="_blank" rel="noopener noreferrer">
+                {viewing.archivoUrl && (
+                  <a
+                    href={viewing.archivoUrl}
+                    download={viewing.archivoNombre ?? (isPdf(viewing.archivoUrl, viewing.archivoTipo) ? "documento.pdf" : "archivo")}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <Button size="sm" className="rounded-lg bg-[#0E5296] text-white hover:bg-[#003B73]">
                       <DownloadIcon className="mr-2 h-4 w-4" />
                       Descargar
@@ -254,17 +273,17 @@ export function LandingComunicados({ comunicados, estaLogueado = false }: { comu
             </div>
 
             <div className="relative min-h-0 flex-1 overflow-hidden">
-              {viewing.archivoUrl && viewing.archivoTipo === "imagen" ? (
+              {isImage(viewing.archivoUrl, viewing.archivoTipo) ? (
                 <div className="h-full px-2 pb-2 pt-0.5 md:px-3 md:pb-3 md:pt-0.5">
                   <ImageMagnifier
-                    src={viewing.archivoUrl}
+                    src={viewing.archivoUrl!}
                     alt={viewing.archivoNombre ?? viewing.titulo}
                   />
                 </div>
-              ) : viewing.archivoUrl && viewing.archivoTipo === "pdf" ? (
+              ) : isPdf(viewing.archivoUrl, viewing.archivoTipo) ? (
                 <div className="h-full flex flex-col">
                   <iframe
-                    src={viewing.archivoUrl}
+                    src={`${viewing.archivoUrl!}#toolbar=1&navpanes=0&scrollbar=1`}
                     title={viewing.archivoNombre ?? "Documento PDF"}
                     className="w-full flex-1 rounded-b-2xl border-0"
                     style={{ minHeight: 0 }}

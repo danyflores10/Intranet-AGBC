@@ -123,10 +123,11 @@ export async function crearNotificacionParaTodos(data: {
       leida: false,
     }))
 
-    await db.insert(notificaciones).values(rows)
+    const inserted = await db.insert(notificaciones).values(rows).returning()
 
     try {
       if ((global as any).io) {
+        // Emitir evento global para bandejas generales
         (global as any).io.emit("notification:new", {
           titulo: data.titulo,
           mensaje: data.mensaje,
@@ -134,6 +135,20 @@ export async function crearNotificacionParaTodos(data: {
           enlace: data.enlace || null,
           createdAt: new Date().toISOString(),
         })
+
+        // Emitir a la sala de cada usuario específico para notificaciones en vivo
+        for (const notif of inserted) {
+          (global as any).io.to(`user:${notif.usuarioId}`).emit("notification:new", {
+            id: notif.id,
+            titulo: notif.titulo,
+            mensaje: notif.mensaje,
+            tipo: notif.tipo,
+            leida: notif.leida,
+            usuarioId: notif.usuarioId,
+            enlace: notif.enlace ?? null,
+            createdAt: notif.createdAt,
+          })
+        }
       }
     } catch (sockErr) {
       console.warn("Socket broadcast error:", sockErr)

@@ -247,7 +247,19 @@ export async function crearDocumento(data: {
   }
 
   let numCorrelativo = data.numeroCorrelativo
-  if (!numCorrelativo) {
+  if (numCorrelativo) {
+    const [dup] = await db
+      .select({ id: documentos.id })
+      .from(documentos)
+      .where(eq(documentos.numeroCorrelativo, numCorrelativo))
+      .limit(1)
+    if (dup) {
+      const maxRes = await db
+        .select({ maxVal: sql<number>`COALESCE(MAX(${documentos.numeroCorrelativo}), 0)` })
+        .from(documentos)
+      numCorrelativo = Number(maxRes[0]?.maxVal || 0) + 1
+    }
+  } else {
     const maxRes = await db
       .select({ maxVal: sql<number>`COALESCE(MAX(${documentos.numeroCorrelativo}), 0)` })
       .from(documentos)
@@ -327,6 +339,21 @@ export async function actualizarDocumento(id: string, data: Partial<{
   disponibilidadArchivo: string
 }>) {
   const sesion = await autorizarAccion(PERMISOS.DOCUMENTOS.EDITAR)
+
+  if (data.numeroCorrelativo) {
+    const [conflict] = await db
+      .select({ id: documentos.id })
+      .from(documentos)
+      .where(and(eq(documentos.numeroCorrelativo, data.numeroCorrelativo), ne(documentos.id, id)))
+      .limit(1)
+    if (conflict) {
+      const maxRes = await db
+        .select({ maxVal: sql<number>`COALESCE(MAX(${documentos.numeroCorrelativo}), 0)` })
+        .from(documentos)
+      data.numeroCorrelativo = Number(maxRes[0]?.maxVal || 0) + 1
+    }
+  }
+
   const [actualizado] = await db.update(documentos).set(data).where(eq(documentos.id, id)).returning()
   await registrarAuditLog({ usuario: sesion.id, accion: `Actualizó documento ID: ${id} (${data.titulo || ""})`, modulo: "Documentos", resultado: "Exitoso" })
 
